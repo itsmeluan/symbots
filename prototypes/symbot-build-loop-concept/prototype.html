@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<!-- PROTOTYPE - NOT FOR PRODUCTION -->
+<!-- Question: Does assembling a Symbot from parts create ownership and motivation to return? -->
+<!-- Date: 2026-07-09 -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Symbots — Build Loop Prototype</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #080810; color: #d8d8f0;
+      font-family: 'Courier New', Courier, monospace;
+      min-height: 100vh; padding: 16px;
+    }
+    .screen { max-width: 980px; margin: 0 auto; }
+    .hidden { display: none !important; }
+
+    h1 { color: #00e5ff; letter-spacing: 4px; font-size: 1.3em; margin-bottom: 6px; }
+    h2 { color: #80deea; letter-spacing: 2px; font-size: 0.8em; margin-bottom: 10px; text-transform: uppercase; }
+    .subtitle { color: #555; font-size: 0.75em; margin-bottom: 18px; }
+
+    /* ── WORKSHOP ─────────────────────────────────────────── */
+    .parts-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .slot-col {
+      background: #10101e; border: 1px solid #1c1c30;
+      border-radius: 6px; padding: 10px;
+    }
+    .slot-label {
+      display: block; color: #00e5ff; font-size: 0.65em;
+      letter-spacing: 3px; margin-bottom: 8px;
+    }
+    .part-opt { display: block; margin-bottom: 6px; cursor: pointer; }
+    .part-opt input[type=radio] { display: none; }
+    .part-card {
+      background: #14142a; border: 1px solid #222240;
+      border-radius: 4px; padding: 7px 8px;
+      font-size: 0.7em; cursor: pointer; transition: border-color 0.1s;
+    }
+    .part-card:hover { border-color: #334; }
+    .part-opt input:checked + .part-card { border-color: #00e5ff; background: #0a1c28; }
+    .pname { color: #eee; margin-bottom: 3px; font-size: 1.0em; }
+    .pstats { color: #888; line-height: 1.5; }
+    .pability { color: #80deea; margin-top: 3px; font-size: 0.95em; }
+    .ppassive { color: #666; margin-top: 3px; font-size: 0.95em; }
+    .e-fire { color: #ff7043; }
+    .e-electric { color: #00e5ff; }
+    .e-physical { color: #90a4ae; }
+
+    .stat-row {
+      display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;
+    }
+    .stat-box {
+      background: #10101e; border: 1px solid #1c1c30;
+      border-radius: 5px; padding: 8px 14px; min-width: 75px;
+    }
+    .slbl { color: #555; font-size: 0.6em; letter-spacing: 2px; margin-bottom: 2px; }
+    .sval { color: #00e5ff; font-size: 1.4em; font-weight: bold; }
+    .sval.elem { font-size: 1em; letter-spacing: 1px; }
+
+    .synergy-box {
+      background: #10101e; border: 1px solid #1c1c30;
+      border-radius: 5px; padding: 10px 14px; margin-bottom: 12px;
+      font-size: 0.78em;
+    }
+    .syn-fire   { border-color: #ff7043; color: #ff7043; }
+    .syn-elec   { border-color: #00e5ff; color: #00e5ff; }
+    .syn-phys   { border-color: #90a4ae; color: #90a4ae; }
+
+    .ability-box {
+      background: #10101e; border: 1px solid #1c1c30;
+      border-radius: 5px; padding: 10px 14px; margin-bottom: 14px;
+    }
+    .ab-row { font-size: 0.77em; color: #bbb; margin-bottom: 5px; }
+    .ab-row strong { color: #00e5ff; }
+
+    .inv-box {
+      background: #10101e; border: 1px solid #1c1c30;
+      border-radius: 5px; padding: 10px 14px; margin-bottom: 14px;
+      font-size: 0.77em; color: #555;
+    }
+    .inv-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+    .chip {
+      background: #14142a; border: 1px solid #222240;
+      border-radius: 3px; padding: 2px 7px; font-size: 0.9em; color: #aaa;
+    }
+
+    .btn {
+      background: #00e5ff; color: #000; border: none;
+      padding: 11px 28px; font-family: monospace;
+      font-size: 0.9em; letter-spacing: 2px; cursor: pointer;
+      border-radius: 4px; font-weight: bold; transition: background 0.1s;
+    }
+    .btn:hover { background: #80f0ff; }
+    .btn:disabled { background: #1c3040; color: #456; cursor: not-allowed; }
+    .btn-sec {
+      background: transparent; color: #00e5ff;
+      border: 1px solid #00e5ff;
+    }
+    .btn-sec:hover { background: #041520; }
+
+    /* ── BATTLE ───────────────────────────────────────────── */
+    .battle-top { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+    .comb-panel {
+      background: #10101e; border: 1px solid #1c1c30;
+      border-radius: 6px; padding: 14px;
+    }
+    .cname { color: #eee; font-size: 1.0em; margin-bottom: 8px; }
+    .hp-lbl { color: #888; font-size: 0.7em; margin-bottom: 3px; }
+    .hp-track { height: 7px; background: #1c1c30; border-radius: 3px; overflow: hidden; margin-bottom: 7px; }
+    .hp-fill { height: 100%; background: #00e5ff; transition: width 0.3s; border-radius: 3px; }
+    .hp-fill.enemy { background: #ff7043; }
+    .hp-fill.low   { background: #f44336; }
+    .cstats { font-size: 0.72em; color: #666; }
+    .cstats span { color: #aaa; }
+    .status-row { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+    .stag { background: #141428; border-radius: 3px; padding: 2px 5px; font-size: 0.65em; }
+    .stag.buff { color: #00e675; border: 1px solid #00e675; }
+    .stag.debuff { color: #f44336; border: 1px solid #f44336; }
+
+    .parts-box {
+      background: #10101e; border: 1px solid #1c1c30;
+      border-radius: 6px; padding: 12px; margin-bottom: 12px;
+    }
+    .break-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; font-size: 0.77em; }
+    .break-label { min-width: 130px; color: #bbb; }
+    .pips { display: flex; gap: 3px; }
+    .pip {
+      width: 13px; height: 13px; border-radius: 2px;
+      border: 1px solid #222240; background: #14142a;
+    }
+    .pip.filled { background: #ff9500; border-color: #ff9500; }
+    .pip.broken { background: #f44336; border-color: #f44336; }
+    .brk-tag { color: #f44336; font-size: 0.85em; font-weight: bold; }
+    .parts-note { color: #444; font-size: 0.68em; margin-top: 6px; }
+
+    .target-row { margin-bottom: 12px; }
+    .target-row label { color: #888; font-size: 0.72em; display: block; margin-bottom: 5px; }
+    .target-row select {
+      width: 100%; background: #14142a; color: #d8d8f0;
+      border: 1px solid #222240; padding: 6px 10px;
+      border-radius: 4px; font-family: monospace; font-size: 0.82em; cursor: pointer;
+    }
+
+    .moves-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+    .mbtn {
+      background: #14142a; border: 1px solid #222240; color: #d8d8f0;
+      padding: 9px 6px; border-radius: 4px; cursor: pointer;
+      font-family: monospace; font-size: 0.7em; text-align: center;
+      transition: border-color 0.1s;
+    }
+    .mbtn:hover:not(:disabled) { border-color: #00e5ff; background: #0a1c28; }
+    .mbtn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .mname { display: block; color: #fff; font-size: 1.08em; margin-bottom: 3px; }
+    .mdesc { display: block; color: #777; font-size: 0.92em; }
+    .mbtn.m-fire    { border-color: #ff7043; }
+    .mbtn.m-electric { border-color: #00e5ff; }
+
+    .log-box {
+      background: #050510; border: 1px solid #1c1c30;
+      border-radius: 6px; padding: 10px 12px; height: 150px;
+      overflow-y: auto; font-size: 0.75em;
+    }
+    .le { margin-bottom: 4px; color: #555; }
+    .le.pa { color: #80deea; }
+    .le.ea { color: #ff9500; }
+    .le.sys { color: #444; font-style: italic; }
+    .le.brk { color: #f44336; font-weight: bold; }
+    .le.win { color: #00e5ff; font-weight: bold; font-size: 1.1em; }
+
+    /* ── DROPS ────────────────────────────────────────────── */
+    .drops-wrap { max-width: 580px; margin: 0 auto; }
+    .win-banner { text-align: center; margin-bottom: 22px; }
+    .win-banner h1 { font-size: 1.8em; margin-bottom: 6px; }
+    .win-sub { color: #555; font-size: 0.8em; }
+    .drop-item {
+      background: #10101e; border: 1px solid #1c1c30;
+      border-radius: 6px; padding: 12px; margin-bottom: 9px;
+      display: flex; align-items: flex-start; gap: 12px;
+    }
+    .drop-item.bonus { border-color: #ff9500; }
+    .dicon { font-size: 1.4em; }
+    .ddetail { flex: 1; }
+    .dname { color: #eee; font-size: 0.9em; margin-bottom: 2px; }
+    .dslot { color: #444; font-size: 0.65em; letter-spacing: 2px; text-transform: uppercase; }
+    .dstats { color: #888; font-size: 0.75em; margin-top: 3px; }
+    .dbonus { color: #ff9500; font-size: 0.7em; margin-top: 3px; }
+    .act-row { display: flex; gap: 10px; justify-content: center; margin-top: 22px; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════
+     WORKSHOP SCREEN
+══════════════════════════════════════════════════════ -->
+<div id="screen-workshop" class="screen">
+  <h1>⚙ SYMBOTS — WORKSHOP</h1>
+  <p class="subtitle">You are a Symbot Mechanic. Select one part per slot to build your Symbot, then deploy it.</p>
+
+  <div class="parts-grid" id="parts-grid"></div>
+
+  <div class="stat-row">
+    <div class="stat-box"><div class="slbl">HP</div><div class="sval" id="s-hp">—</div></div>
+    <div class="stat-box"><div class="slbl">ATK</div><div class="sval" id="s-atk">—</div></div>
+    <div class="stat-box"><div class="slbl">DEF</div><div class="sval" id="s-def">—</div></div>
+    <div class="stat-box"><div class="slbl">SPD</div><div class="sval" id="s-spd">—</div></div>
+    <div class="stat-box"><div class="slbl">ELEMENT</div><div class="sval elem" id="s-elem">—</div></div>
+  </div>
+
+  <div class="synergy-box" id="synergy-box">
+    <span style="color:#333">SYNERGY: Equip 2+ parts of the same element to activate a set bonus.</span>
+  </div>
+
+  <div class="ability-box">
+    <h2>Equipped Abilities</h2>
+    <div id="ab-list"><div style="color:#333;font-size:0.8em">Select all 5 parts to see abilities.</div></div>
+  </div>
+
+  <div class="inv-box">
+    <strong style="color:#666">INVENTORY</strong> — <span id="inv-count">0 parts collected</span>
+    <div class="inv-chips" id="inv-chips"></div>
+  </div>
+
+  <button class="btn" id="deploy-btn" onclick="deploySymbot()" disabled>DEPLOY SYMBOT →</button>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     BATTLE SCREEN
+══════════════════════════════════════════════════════ -->
+<div id="screen-battle" class="screen hidden">
+  <h1>⚔ SYMBOTS — BATTLE</h1>
+
+  <div class="battle-top">
+    <div class="comb-panel">
+      <div class="cname">YOUR SYMBOT</div>
+      <div class="hp-lbl">HP: <span id="p-hp">0</span> / <span id="p-maxhp">0</span></div>
+      <div class="hp-track"><div class="hp-fill" id="p-bar" style="width:100%"></div></div>
+      <div class="cstats">ATK: <span id="b-atk">0</span> &nbsp; DEF: <span id="b-def">0</span> &nbsp; SPD: <span id="b-spd">0</span></div>
+      <div class="status-row" id="p-statuses"></div>
+    </div>
+    <div class="comb-panel">
+      <div class="cname">RUSTCRAWLER <span style="color:#555;font-size:0.8em">[Physical Type]</span></div>
+      <div class="hp-lbl">HP: <span id="e-hp">120</span> / 120</div>
+      <div class="hp-track"><div class="hp-fill enemy" id="e-bar" style="width:100%"></div></div>
+      <div class="cstats">ATK: <span id="e-atk">25</span> &nbsp; DEF: <span id="e-def">15</span> &nbsp; SPD: <span id="e-spd">12</span></div>
+      <div class="status-row" id="e-statuses"></div>
+    </div>
+  </div>
+
+  <div class="parts-box">
+    <h2>Enemy Parts — break them for bonus drops</h2>
+    <div class="break-row">
+      <div class="break-label">📡 Sensor Array</div>
+      <div class="pips" id="pip-antenna"></div>
+      <div id="tag-antenna"></div>
+    </div>
+    <div class="break-row">
+      <div class="break-label">🦾 Claw</div>
+      <div class="pips" id="pip-claw"></div>
+      <div id="tag-claw"></div>
+    </div>
+    <div class="break-row">
+      <div class="break-label">⚙ Engine Core</div>
+      <div class="pips" id="pip-engine"></div>
+      <div id="tag-engine"></div>
+    </div>
+    <div class="parts-note">●●● = broken (3 hits to target zone). Breaking a part guarantees its drop after battle.</div>
+  </div>
+
+  <div class="target-row">
+    <label>TARGET MODE — focusing on a part reduces damage -10% but adds +30% break chance per hit:</label>
+    <select id="target-sel">
+      <option value="none">— Standard Attack (full damage, no part focus)</option>
+      <option value="antenna">🎯 Target: Sensor Array → guarantees Rustcrawler Sensor drop</option>
+      <option value="claw">🎯 Target: Claw → guarantees Rustcrawler Claw drop</option>
+      <option value="engine">🎯 Target: Engine Core → guarantees Rust Engine drop</option>
+    </select>
+  </div>
+
+  <div class="moves-grid" id="moves-grid"></div>
+
+  <div class="log-box" id="blog">
+    <div class="le sys">Battle started. Select a move.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     DROPS SCREEN
+══════════════════════════════════════════════════════ -->
+<div id="screen-drops" class="screen hidden">
+  <div class="drops-wrap">
+    <div class="win-banner">
+      <h1>BATTLE COMPLETE</h1>
+      <div class="win-sub" id="win-sub"></div>
+    </div>
+    <h2>Parts Acquired</h2>
+    <div id="drop-list"></div>
+    <div class="act-row">
+      <button class="btn" onclick="goWorkshop()">⚙ RETURN TO WORKSHOP</button>
+      <button class="btn btn-sec" onclick="battleAgain()">⚔ BATTLE AGAIN</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// PROTOTYPE - NOT FOR PRODUCTION
+// Question: Does assembling a Symbot from parts create ownership and motivation to return?
+
+// ── PART DATA ─────────────────────────────────────────────────────────────────
+const PARTS = {
+  head: [
+    { id:'scanner', name:'Scanner Head',  atk:15, def:0,  spd:8,  hp:0,  elem:'none',
+      aName:'Analyze',       aDesc:'Deal damage + mark: +25% dmg next turn',   aMod:0.9,  aFx:'analyze' },
+    { id:'turret',  name:'Turret Head',   atk:22, def:0,  spd:0,  hp:0,  elem:'fire',
+      aName:'Flamethrower',  aDesc:'Fire blast (1.2× ATK)',                     aMod:1.2,  aFx:null },
+    { id:'guard',   name:'Guard Head',    atk:5,  def:18, spd:0,  hp:12, elem:'none',
+      aName:'Fortify',       aDesc:'Raise own DEF +20 for 2 turns',             aMod:0,    aFx:'fortify' },
+    { id:'sensor',  name:'Sensor Head',   atk:10, def:0,  spd:15, hp:0,  elem:'electric',
+      aName:'Shock Arc',     aDesc:'Electric hit (1.1× ATK), enemy −5 SPD',    aMod:1.1,  aFx:'slow' },
+  ],
+  body: [
+    { id:'armor',    name:'Armor Body',    atk:0,  def:20, spd:-5, hp:40, elem:'none',   pass:'10% damage reduction' },
+    { id:'speed',    name:'Speed Body',    atk:5,  def:0,  spd:25, hp:15, elem:'none',   pass:'Acts first when SPD ≥ enemy' },
+    { id:'balanced', name:'Balanced Body', atk:8,  def:10, spd:5,  hp:25, elem:'none',   pass:'No passive' },
+    { id:'charger',  name:'Charge Body',   atk:12, def:5,  spd:0,  hp:20, elem:'none',   pass:'+5 ATK each turn (max ×3)' },
+  ],
+  arms: [
+    { id:'drill',   name:'Drill Arms',   atk:18, def:0,  spd:0,  hp:0,  elem:'physical',
+      aName:'Drill Strike',  aDesc:'Physical hit + +35% part-break chance',   aMod:1.0,  aFx:'break_bonus' },
+    { id:'shield',  name:'Shield Arms',  atk:0,  def:30, spd:0,  hp:10, elem:'none',
+      aName:'Block Stance',  aDesc:'Reduce next hit by 60%',                  aMod:0,    aFx:'block' },
+    { id:'blade',   name:'Blade Arms',   atk:28, def:0,  spd:5,  hp:0,  elem:'physical',
+      aName:'Slash',         aDesc:'High physical damage (1.3× ATK)',         aMod:1.3,  aFx:null },
+    { id:'magnet',  name:'Magnet Arms',  atk:14, def:0,  spd:10, hp:0,  elem:'electric',
+      aName:'Magnet Burst',  aDesc:'Electric hit (1.1× ATK), enemy −8 DEF',  aMod:1.1,  aFx:'reduce_def' },
+  ],
+  weapon: [
+    { id:'flame',   name:'Flamethrower', atk:30, def:0, spd:-5,  hp:0, elem:'fire',
+      mName:'Inferno',       mDesc:'Heavy fire damage (1.5× ATK)',             mMod:1.5, mFx:null },
+    { id:'laser',   name:'Laser Cannon', atk:25, def:0, spd:0,   hp:0, elem:'electric',
+      mName:'Laser Beam',    mDesc:'Electric shot, ignores 30% enemy DEF',     mMod:1.15,mFx:'pierce' },
+    { id:'gatling', name:'Gatling Gun',  atk:20, def:0, spd:8,   hp:0, elem:'physical',
+      mName:'Barrage',       mDesc:'3 light physical hits (0.4× each)',         mMod:0.4, mFx:'x3' },
+    { id:'rocket',  name:'Rocket Pod',   atk:35, def:0, spd:-10, hp:0, elem:'physical',
+      mName:'Missile Strike',mDesc:'Massive damage (1.6× ATK)',                mMod:1.6, mFx:null },
+  ],
+  core: [
+    { id:'power',  name:'Power Core',  atk:20, def:0,  spd:0,  hp:0,  elem:'none', pass:'+10% to all damage',         pid:'dmg_up' },
+    { id:'shield', name:'Shield Core', atk:0,  def:20, spd:0,  hp:15, elem:'none', pass:'Regenerate 6 HP per turn',   pid:'regen' },
+    { id:'speed',  name:'Speed Core',  atk:0,  def:0,  spd:20, hp:0,  elem:'none', pass:'+20 SPD; free Basic Attack on turn 1', pid:'haste' },
+    { id:'fire',   name:'Fire Core',   atk:15, def:0,  spd:5,  hp:0,  elem:'fire', pass:'Fire attacks +20% damage',   pid:'fire_up' },
+  ],
+};
+
+const DROPS_BASE = [
+  { name:'Scrap Metal',       slot:'material', icon:'🔩', stats:'Upgrade material' },
+  { name:'Basic Actuator',    slot:'arms',     icon:'🦾', stats:'ATK+10, SPD+3' },
+  { name:'Old Sensor Module', slot:'head',     icon:'📡', stats:'ATK+8, SPD+5' },
+  { name:'Salvage Battery',   slot:'core',     icon:'⚙',  stats:'DEF+8, HP+10' },
+  { name:'Scrap Plating',     slot:'body',     icon:'🛡',  stats:'DEF+12, HP+15' },
+];
+const DROPS_BREAK = {
+  antenna: { name:'Rustcrawler Sensor',    slot:'head', icon:'📡', stats:'ATK+20, SPD+10, Element: ⚡ Electric', bonus:true },
+  claw:    { name:'Rustcrawler Claw',      slot:'arms', icon:'🦾', stats:'ATK+25, Physical, +20% break chance',   bonus:true },
+  engine:  { name:'Rust Engine Core',      slot:'core', icon:'⚙',  stats:'ATK+18, DEF+12, Regen 3 HP/turn',       bonus:true },
+};
+
+// ── STATE ──────────────────────────────────────────────────────────────────────
+let sel = { head:null, body:null, arms:null, weapon:null, core:null };
+let inventory = [];
+let bs = {};  // battle state
+let breakProg = {};
+let broken    = {};
+let playerTurn = true;
+let battleDone = false;
+let turnCount  = 0;
+let hasteUsed  = false;
+
+// ── TYPE CHART ─────────────────────────────────────────────────────────────────
+function typeEff(atkElem, defElem) {
+  if (atkElem==='none' || defElem==='none') return 1;
+  const beats = { fire:'physical', electric:'fire', physical:'electric' };
+  if (beats[atkElem]===defElem) return 1.5;
+  if (beats[defElem]===atkElem) return 0.75;
+  return 1;
+}
+
+// ── SYNERGY ────────────────────────────────────────────────────────────────────
+function getSynergy(elements) {
+  const cnt = {};
+  elements.forEach(e => cnt[e]=(cnt[e]||0)+1);
+  for (const [e, c] of Object.entries(cnt)) {
+    if (c >= 2) return {
+      fire:     { label:'🔥 FIRE SYNC',     desc:'Fire attacks +15% damage', cls:'syn-fire', elem:'fire'     },
+      electric: { label:'⚡ ELECTRIC SYNC',  desc:'Electric attacks +15% damage & slow', cls:'syn-elec', elem:'electric' },
+      physical: { label:'⚙ PHYSICAL SYNC',  desc:'Physical attacks +20% break chance',  cls:'syn-phys', elem:'physical' },
+    }[e] || null;
+  }
+  return null;
+}
+
+function getElems() {
+  return Object.values(sel).filter(p=>p&&p.elem!=='none').map(p=>p.elem);
+}
+
+// ── PLAYER STATS ───────────────────────────────────────────────────────────────
+function calcStats() {
+  const s = { hp:60, atk:10, def:5, spd:5 };
+  for (const p of Object.values(sel)) {
+    if (!p) continue;
+    s.hp  += p.hp  || 0;
+    s.atk += p.atk || 0;
+    s.def += p.def || 0;
+    s.spd += (p.spd || 0);
+  }
+  s.synergy = getSynergy(getElems());
+  s.domElem = (() => {
+    const elems = getElems();
+    if (!elems.length) return 'none';
+    const c = {}; elems.forEach(e=>c[e]=(c[e]||0)+1);
+    return Object.entries(c).sort((a,b)=>b[1]-a[1])[0][0];
+  })();
+  return s;
+}
+
+// ── WORKSHOP UI ────────────────────────────────────────────────────────────────
+function buildWorkshop() {
+  const grid = document.getElementById('parts-grid');
+  grid.innerHTML = '';
+  const labels = { head:'HEAD', body:'BODY', arms:'ARMS', weapon:'WEAPON', core:'CORE' };
+
+  for (const [slot, parts] of Object.entries(PARTS)) {
+    const col = document.createElement('div');
+    col.className = 'slot-col';
+    col.innerHTML = `<span class="slot-label">${labels[slot]}</span>`;
+
+    parts.forEach((p, i) => {
+      const bits = [];
+      if (p.atk) bits.push(`ATK+${p.atk}`);
+      if (p.def) bits.push(`DEF+${p.def}`);
+      if (p.spd !== 0) bits.push(`SPD${p.spd>0?'+':''}${p.spd}`);
+      if (p.hp)  bits.push(`HP+${p.hp}`);
+
+      const eCls  = p.elem !== 'none' ? `e-${p.elem}` : '';
+      const eTag  = p.elem !== 'none' ? ` <span class="${eCls}">[${p.elem.toUpperCase()}]</span>` : '';
+      const abLine = p.aName
+        ? `<div class="pability">▶ ${p.aName}: ${p.aDesc}</div>`
+        : (p.pass && p.pass !== 'No passive')
+          ? `<div class="ppassive">◆ ${p.pass}</div>`
+          : '';
+
+      const lbl = document.createElement('label');
+      lbl.className = 'part-opt';
+      lbl.innerHTML = `
+        <input type="radio" name="s-${slot}" value="${i}" onchange="pickPart('${slot}',${i})">
+        <div class="part-card">
+          <div class="pname">${p.name}${eTag}</div>
+          <div class="pstats">${bits.join(' &nbsp;') || '—'}</div>
+          ${abLine}
+        </div>`;
+      col.appendChild(lbl);
+    });
+    grid.appendChild(col);
+  }
+}
+
+function pickPart(slot, idx) {
+  sel[slot] = PARTS[slot][idx];
+  refreshStats();
+}
+
+function refreshStats() {
+  const allPicked = Object.values(sel).every(p=>p!==null);
+  document.getElementById('deploy-btn').disabled = !allPicked;
+  if (!Object.values(sel).some(p=>p)) return;
+
+  const s = calcStats();
+  document.getElementById('s-hp').textContent  = s.hp;
+  document.getElementById('s-atk').textContent = s.atk;
+  document.getElementById('s-def').textContent = s.def;
+  document.getElementById('s-spd').textContent = s.spd;
+  const eLabel = { fire:'🔥 FIRE', electric:'⚡ ELEC', physical:'⚙ PHYS', none:'— NONE' };
+  document.getElementById('s-elem').textContent = eLabel[s.domElem];
+
+  // Synergy
+  const sb = document.getElementById('synergy-box');
+  if (s.synergy) {
+    sb.className = `synergy-box ${s.synergy.cls}`;
+    sb.innerHTML = `<strong>${s.synergy.label}</strong> — ${s.synergy.desc}`;
+  } else {
+    sb.className = 'synergy-box';
+    sb.innerHTML = '<span style="color:#333">SYNERGY: Equip 2+ parts of the same element to activate a set bonus.</span>';
+  }
+
+  // Abilities
+  const ab = document.getElementById('ab-list');
+  const rows = [];
+  if (sel.head?.aName)   rows.push(`<div class="ab-row"><strong>HEAD:</strong> ${sel.head.aName} — ${sel.head.aDesc}</div>`);
+  if (sel.arms?.aName)   rows.push(`<div class="ab-row"><strong>ARMS:</strong> ${sel.arms.aName} — ${sel.arms.aDesc}</div>`);
+  if (sel.weapon?.mName) rows.push(`<div class="ab-row"><strong>WEAPON:</strong> ${sel.weapon.mName} — ${sel.weapon.mDesc}</div>`);
+  if (sel.body?.pass && sel.body.pass !== 'No passive')  rows.push(`<div class="ab-row"><strong>BODY:</strong> ${sel.body.pass}</div>`);
+  if (sel.core?.pass)    rows.push(`<div class="ab-row"><strong>CORE:</strong> ${sel.core.pass}</div>`);
+  ab.innerHTML = rows.join('') || '<div style="color:#333;font-size:0.8em">Select all 5 parts to see abilities.</div>';
+
+  // Inventory
+  document.getElementById('inv-count').textContent = inventory.length
+    ? `${inventory.length} parts collected`
+    : '0 parts — go battle to collect some!';
+  document.getElementById('inv-chips').innerHTML =
+    inventory.slice(-8).map(d=>`<div class="chip">${d.icon} ${d.name}</div>`).join('');
+}
+
+// ── DEPLOY ─────────────────────────────────────────────────────────────────────
+function deploySymbot() {
+  const s = calcStats();
+  bs = {
+    pHp: s.hp, pMaxHp: s.hp, pAtk: s.atk, pDef: s.def, pSpd: s.spd,
+    synergy: s.synergy,
+    eHp: 120, eMaxHp: 120, eAtk: 25, eDef: 15, eSpd: 12,
+    fortifyBonus: 0, fortifyTurns: 0,
+    chargeStacks: 0,
+    eDefMod: 0, eSpdMod: 0,
+    analyze: false, blockPending: false,
+  };
+  breakProg = { antenna:0, claw:0, engine:0 };
+  broken    = { antenna:false, claw:false, engine:false };
+  playerTurn = true; battleDone = false; turnCount = 0; hasteUsed = false;
+
+  showScreen('battle');
+  initBattleUI();
+}
+
+// ── BATTLE UI ──────────────────────────────────────────────────────────────────
+function initBattleUI() {
+  refreshBattleHp();
+  renderPips();
+  buildMoves();
+  const blog = document.getElementById('blog');
+  blog.innerHTML = '';
+  log('sys','Battle started! Rustcrawler is physical type — fire attacks hit hard.');
+  log('sys','Tip: Select a target part to increase break chance (+30%) at -10% damage.');
+
+  // Speed Core haste
+  if (sel.core?.pid==='haste' && !hasteUsed) {
+    hasteUsed = true;
+    setTimeout(()=>{
+      log('pa','⚡ Speed Core: free Basic Attack before battle begins!');
+      doPlayerAttack('basic', true);
+    }, 400);
+  }
+}
+
+function buildMoves() {
+  const moves = getMoves();
+  document.getElementById('moves-grid').innerHTML = moves.map(m => `
+    <button class="mbtn ${m.cls}" onclick="doPlayerAttack('${m.id}')"
+      ${battleDone||!playerTurn?'disabled':''}>
+      <span class="mname">${m.name}</span>
+      <span class="mdesc">${m.desc}</span>
+    </button>`).join('');
+}
+
+function getMoves() {
+  const h = sel.head, a = sel.arms, w = sel.weapon;
+  const moves = [{ id:'basic', name:'Basic Attack', desc:'Simple strike (1.0× ATK)', cls:'' }];
+  if (h?.aName) moves.push({ id:'head',   name:h.aName, desc:h.aDesc, cls:h.elem!=='none'?`m-${h.elem}`:'' });
+  if (a?.aName) moves.push({ id:'arms',   name:a.aName, desc:a.aDesc, cls:a.elem!=='none'?`m-${a.elem}`:'' });
+  if (w?.mName) moves.push({ id:'weapon', name:w.mName, desc:w.mDesc, cls:w.elem!=='none'?`m-${w.elem}`:'' });
+  return moves;
+}
+
+function log(cls, msg) {
+  const box = document.getElementById('blog');
+  const d = document.createElement('div');
+  d.className = `le ${cls}`;
+  d.textContent = msg;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+}
+
+function renderPips() {
+  ['antenna','claw','engine'].forEach(p=>{
+    const bar = document.getElementById(`pip-${p}`);
+    bar.innerHTML = '';
+    for (let i=0;i<3;i++){
+      const pip = document.createElement('div');
+      pip.className = 'pip' + (broken[p]?' broken': i<breakProg[p]?' filled':'');
+      bar.appendChild(pip);
+    }
+    document.getElementById(`tag-${p}`).innerHTML = broken[p]
+      ? '<span class="brk-tag">BROKEN ✓</span>' : '';
+  });
+}
+
+function refreshBattleHp() {
+  document.getElementById('p-hp').textContent    = bs.pHp;
+  document.getElementById('p-maxhp').textContent = bs.pMaxHp;
+  const pPct = bs.pHp / bs.pMaxHp * 100;
+  const pBar = document.getElementById('p-bar');
+  pBar.style.width = pPct + '%';
+  pBar.className = 'hp-fill' + (pPct<30?' low':'');
+
+  document.getElementById('e-hp').textContent = bs.eHp;
+  document.getElementById('e-bar').style.width = (bs.eHp / bs.eMaxHp * 100) + '%';
+
+  document.getElementById('b-atk').textContent = bs.pAtk + bs.chargeStacks*5;
+  document.getElementById('b-def').textContent = bs.pDef + bs.fortifyBonus;
+  document.getElementById('b-spd').textContent = bs.pSpd;
+  document.getElementById('e-atk').textContent = bs.eAtk;
+  document.getElementById('e-def').textContent = bs.eDef - bs.eDefMod;
+  document.getElementById('e-spd').textContent = bs.eSpd - bs.eSpdMod;
+
+  const ps = [];
+  if (bs.analyze)       ps.push('<span class="stag buff">ANALYZED</span>');
+  if (bs.blockPending)  ps.push('<span class="stag buff">BLOCKING</span>');
+  if (bs.fortifyTurns>0)ps.push(`<span class="stag buff">FORTIFY(${bs.fortifyTurns})</span>`);
+  if (bs.chargeStacks>0)ps.push(`<span class="stag buff">CHARGE×${bs.chargeStacks}</span>`);
+  document.getElementById('p-statuses').innerHTML = ps.join('');
+
+  const es = [];
+  if (bs.eDefMod>0) es.push(`<span class="stag debuff">DEF−${bs.eDefMod}</span>`);
+  if (bs.eSpdMod>0) es.push(`<span class="stag debuff">SPD−${bs.eSpdMod}</span>`);
+  document.getElementById('e-statuses').innerHTML = es.join('');
+}
+
+// ── PLAYER MOVE ────────────────────────────────────────────────────────────────
+function doPlayerAttack(moveId, free=false) {
+  if (battleDone) return;
+  if (!free && !playerTurn) return;
+
+  turnCount++;
+
+  // Charger body
+  if (sel.body?.id==='charger' && bs.chargeStacks<3 && !free) {
+    bs.chargeStacks++;
+    log('sys',`⚙ Charge Body: ATK +5 (stack ${bs.chargeStacks}/3)`);
+  }
+  // Shield core regen
+  if (sel.core?.pid==='regen' && !free) {
+    bs.pHp = Math.min(bs.pMaxHp, bs.pHp+6);
+    log('sys','🛡 Shield Core: +6 HP regen');
+  }
+  // Fortify decay
+  if (bs.fortifyTurns>0 && !free) {
+    bs.fortifyTurns--;
+    if (bs.fortifyTurns===0) { bs.fortifyBonus=0; log('sys','Fortify expired.'); }
+  }
+
+  const effAtk = bs.pAtk + bs.chargeStacks*5;
+  const tgt    = document.getElementById('target-sel').value;
+  const dmgMod = (tgt!=='none') ? 0.90 : 1.0;
+  const effDef = Math.max(0, bs.eDef - bs.eDefMod);
+
+  let dmg=0, elem='none', label='', extra='';
+
+  // ── compute move ──
+  if (moveId==='basic') {
+    dmg = Math.max(1, Math.floor(effAtk * 1.0 * dmgMod - effDef*0.5));
+    elem = 'none'; label = 'Basic Attack';
+  } else if (moveId==='head') {
+    const h = sel.head;
+    if (h.aFx==='fortify') {
+      bs.fortifyBonus=20; bs.fortifyTurns=2;
+      log('pa','🛡 Fortify! DEF +20 for 2 turns.');
+      scheduleEnemy(); return;
+    }
+    dmg  = Math.max(1, Math.floor(effAtk * h.aMod * dmgMod - effDef*0.5));
+    elem = h.elem; label = h.aName;
+    if (h.aFx==='analyze')  { bs.analyze=true; extra=' [Weakness marked: +25% next hit]'; }
+    if (h.aFx==='slow')     { bs.eSpdMod = Math.min(bs.eSpdMod+5,10); extra=` [Enemy SPD −5]`; }
+  } else if (moveId==='arms') {
+    const a = sel.arms;
+    if (a.aFx==='block') {
+      bs.blockPending=true;
+      log('pa','🛡 Block Stance! Next hit reduced by 60%.');
+      scheduleEnemy(); return;
+    }
+    dmg  = Math.max(1, Math.floor(effAtk * a.aMod * dmgMod - effDef*0.5));
+    elem = a.elem; label = a.aName;
+    if (a.aFx==='reduce_def') { bs.eDefMod = Math.min(bs.eDefMod+8,12); extra=` [Enemy DEF −8]`; }
+  } else if (moveId==='weapon') {
+    const w = sel.weapon;
+    if (w.mFx==='x3') {
+      let tot=0;
+      for (let i=0;i<3;i++) tot += Math.max(1, Math.floor(effAtk*w.mMod*dmgMod - effDef*0.5));
+      dmg=tot; extra=' (3 hits)';
+    } else if (w.mFx==='pierce') {
+      dmg = Math.max(1, Math.floor(effAtk*w.mMod*dmgMod - effDef*0.5*0.7));
+    } else {
+      dmg = Math.max(1, Math.floor(effAtk*w.mMod*dmgMod - effDef*0.5));
+    }
+    elem = w.elem; label = w.mName;
+  }
+
+  // Type vs Rustcrawler (physical type)
+  const eff = typeEff(elem, 'physical');
+  if (eff>1)  { dmg=Math.floor(dmg*eff); extra+=' ✦ SUPER EFFECTIVE!'; }
+  if (eff<1)  { dmg=Math.floor(dmg*eff); extra+=' ✧ Not very effective…'; }
+
+  // Synergy
+  if (bs.synergy && elem===bs.synergy.elem) {
+    if (bs.synergy.elem!=='physical') { dmg=Math.floor(dmg*1.15); extra+=` ⚡ SYNC +15%`; }
+  }
+  // Power Core
+  if (sel.core?.pid==='dmg_up') dmg = Math.floor(dmg*1.10);
+  // Fire Core
+  if (sel.core?.pid==='fire_up' && elem==='fire') dmg = Math.floor(dmg*1.20);
+  // Analyze
+  if (bs.analyze && moveId!=='head') { dmg=Math.floor(dmg*1.25); bs.analyze=false; extra+=' [ANALYZED +25%]'; }
+
+  bs.eHp = Math.max(0, bs.eHp - dmg);
+  log('pa', `▶ ${label}: ${dmg} damage to Rustcrawler!${extra}`);
+
+  // Part break
+  if (tgt!=='none' && !broken[tgt]) {
+    const drillBonus = (moveId==='arms' && sel.arms?.id==='drill') ? 0.35 : 0;
+    const physBonus  = (bs.synergy?.elem==='physical') ? 0.20 : 0;
+    const drillFx    = (moveId==='arms' && sel.arms?.aFx==='break_bonus') ? 0.35 : 0;
+    const chance     = 0.25 + drillFx + drillBonus + physBonus;
+    if (Math.random()<chance) {
+      breakProg[tgt]++;
+      if (breakProg[tgt]>=3) {
+        broken[tgt]=true;
+        log('brk',`💥 ${tgt.toUpperCase()} BROKEN! Bonus drop guaranteed.`);
+      } else {
+        log('pa',`🔩 ${tgt} break progress: ${breakProg[tgt]}/3`);
+      }
+    }
+    renderPips();
+  }
+
+  refreshBattleHp();
+
+  if (bs.eHp<=0) {
+    battleDone=true;
+    log('win','✦ RUSTCRAWLER DEFEATED! ✦');
+    buildMoves();
+    setTimeout(showDrops, 1200);
+    return;
+  }
+
+  if (!free) scheduleEnemy();
+}
+
+function scheduleEnemy() {
+  playerTurn=false;
+  buildMoves();
+  setTimeout(enemyTurn, 750);
+}
+
+// ── ENEMY MOVE ─────────────────────────────────────────────────────────────────
+function enemyTurn() {
+  if (battleDone) return;
+  const moves = [
+    { name:'Rusty Claw',  mod:1.2, elem:'physical', fx:null },
+    { name:'Corrosion',   mod:0.8, elem:'none',      fx:'reduce_p_def' },
+    { name:'Spark Burst', mod:1.5, elem:'electric',  fx:null, miss:0.25 },
+  ];
+  const m = moves[Math.floor(Math.random()*moves.length)];
+
+  if (m.miss && Math.random()<m.miss) {
+    log('ea',`◀ Rustcrawler used ${m.name}… and missed!`);
+    playerTurn=true; buildMoves(); return;
+  }
+
+  const effDef = bs.pDef + bs.fortifyBonus;
+  let dmg = Math.max(1, Math.floor(bs.eAtk * m.mod - effDef*0.5));
+
+  // Type vs player dominant element
+  const domElem = calcStats().domElem;
+  const eff = typeEff(m.elem, domElem);
+  let extra = '';
+  if (eff>1) { dmg=Math.floor(dmg*eff); extra=' ✦ SUPER EFFECTIVE!'; }
+  if (eff<1) { dmg=Math.floor(dmg*eff); extra=' ✧ Not very effective…'; }
+
+  if (bs.blockPending) { dmg=Math.floor(dmg*0.4); bs.blockPending=false; extra+=' 🛡 BLOCKED!'; }
+  if (sel.body?.id==='armor') dmg = Math.floor(dmg*0.9);
+  dmg = Math.max(1,dmg);
+
+  bs.pHp = Math.max(0, bs.pHp - dmg);
+  log('ea',`◀ Rustcrawler used ${m.name}: ${dmg} damage!${extra}`);
+
+  refreshBattleHp();
+
+  if (bs.pHp<=0) {
+    battleDone=true;
+    log('brk','✖ YOUR SYMBOT WAS DEFEATED. Returning to workshop…');
+    buildMoves();
+    setTimeout(()=>showScreen('workshop'), 2200);
+    return;
+  }
+
+  playerTurn=true;
+  buildMoves();
+}
+
+// ── DROPS ──────────────────────────────────────────────────────────────────────
+function showDrops() {
+  const drops = [];
+  const pool = [...DROPS_BASE].sort(()=>Math.random()-0.5);
+  drops.push(pool[0], pool[1]);
+  for (const [part, brk] of Object.entries(broken)) {
+    if (brk) drops.push(DROPS_BREAK[part]);
+  }
+
+  drops.forEach(d => { if (!inventory.find(i=>i.name===d.name)) inventory.push(d); });
+
+  showScreen('drops');
+  const brkList = Object.entries(broken).filter(([,v])=>v).map(([k])=>k.toUpperCase());
+  document.getElementById('win-sub').innerHTML =
+    `Turns: ${turnCount} &nbsp;|&nbsp; Parts broken: ${brkList.length ? brkList.join(', ')+' ✓' : 'None'}`;
+
+  document.getElementById('drop-list').innerHTML = drops.map(d=>`
+    <div class="drop-item ${d.bonus?'bonus':''}">
+      <div class="dicon">${d.icon}</div>
+      <div class="ddetail">
+        <div class="dname">${d.name} ${d.bonus?'★':''}</div>
+        <div class="dslot">${d.slot}</div>
+        ${d.stats?`<div class="dstats">${d.stats}</div>`:''}
+        ${d.bonus?'<div class="dbonus">▲ BONUS DROP — part was broken!</div>':''}
+      </div>
+    </div>`).join('');
+}
+
+function goWorkshop() { showScreen('workshop'); refreshStats(); }
+function battleAgain() {
+  if (Object.values(sel).every(p=>p)) deploySymbot();
+  else showScreen('workshop');
+}
+
+// ── UTILS ──────────────────────────────────────────────────────────────────────
+function showScreen(name) {
+  ['workshop','battle','drops'].forEach(s=>{
+    document.getElementById(`screen-${s}`).classList.toggle('hidden', s!==name);
+  });
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────────
+buildWorkshop();
+refreshStats();
+</script>
+</body>
+</html>

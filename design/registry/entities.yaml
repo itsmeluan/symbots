@@ -37,7 +37,7 @@
 #   Each entry: name, status, source, referenced_by[], attributes{}, added, revised
 
 version: 1
-last_updated: ""
+last_updated: "2026-07-09"
 
 # ─── ENTITIES ────────────────────────────────────────────────────────────────
 # Named game-world objects: enemies, NPCs, characters, factions, bosses.
@@ -106,7 +106,24 @@ items: []
 #   output_range[min, max], added
 # Optional: expression (the actual formula), notes
 
-formulas: []
+formulas:
+  - name: DF-1
+    status: active
+    source: design/gdd/damage-formula.md
+    referenced_by:
+      - design/gdd/damage-formula.md
+    variables:
+      - A (attacker power stat)
+      - D (target defense stat)
+      - T (type effectiveness multiplier)
+      - crit_mult
+      - EPSILON
+      - DAMAGE_FLOOR
+    output_range: [1, 165]
+    expression: "max(DAMAGE_FLOOR, floor((A*A/(A+D)) * T * crit_mult + EPSILON))"
+    notes: "Realistic range 3–106. PHYSICAL path: A=physical_power, D=armor. ENERGY path: A=energy_power, D=resistance."
+    added: 2026-07-09
+    revised: ""
 
 # Example:
 #
@@ -139,7 +156,27 @@ formulas: []
 #
 # Required fields: name, status, source, referenced_by, value, unit, added
 
-constants: []
+constants:
+  - name: DAMAGE_FLOOR
+    status: active
+    source: design/gdd/damage-formula.md
+    referenced_by:
+      - design/gdd/damage-formula.md
+    value: 1
+    unit: Structure points (integer damage)
+    added: 2026-07-09
+    revised: ""
+
+  - name: DAMAGE_FORMULA_EPSILON
+    status: active
+    source: design/gdd/damage-formula.md
+    referenced_by:
+      - design/gdd/damage-formula.md
+    value: 0.0001
+    unit: dimensionless float offset
+    notes: "IEEE 754 nudge for floor() in Formula DF-1. Fixed — not a tuning knob."
+    added: 2026-07-09
+    revised: ""
 
 # Example:
 #
