@@ -38,7 +38,10 @@ Every task follows: **Question -> Options -> Decision -> Draft -> Approval**
 - Agents MUST ask "May I write this to [filepath]?" before using Write/Edit tools
 - Agents MUST show drafts or summaries before requesting approval
 - Multi-file changes require explicit approval for the full changeset
-- No commits without user instruction
+- No commits without user instruction — **exception**: a Stop hook
+  (`.claude/hooks/auto-commit.sh`) auto-commits uncommitted work at the end of
+  each turn, per the user's explicit, durable authorization. This is
+  commit-only — push always remains a manual, deliberate action.
 
 See `docs/COLLABORATIVE-DESIGN-PRINCIPLE.md` for full protocol and examples.
 

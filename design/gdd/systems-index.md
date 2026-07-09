@@ -28,7 +28,7 @@ designed first.
 | 1 | Part Database | Foundation | MVP | Approved | design/gdd/part-database.md | — |
 | 1a | Move Database | Foundation | MVP | Not Started | — | Part Database |
 | 1b | Passive Database | Foundation | MVP | Not Started | — | Part Database |
-| 2 | Enemy Database | Foundation | MVP | Not Started | — | Part Database |
+| 2 | Enemy Database | Foundation | MVP | Designed | design/gdd/enemy-database.md | Part Database |
 | 3 | Damage Formula System | Foundation | MVP | Approved | design/gdd/damage-formula.md | Part Database |
 | 4 | Symbot Assembly System | Gameplay | MVP | Not Started | — | Part Database |
 | 5 | Synergy System | Gameplay | MVP | Not Started | — | Part Database, Symbot Assembly |
@@ -198,7 +198,7 @@ layered structure. Part Database sits at the root with no cycles back from depen
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 30 |
-| Design docs started | 1 |
+| Design docs started | 3 |
 | Design docs reviewed | 2 |
 | Design docs approved | 2 |
 | MVP systems designed | 0 / 22 |

@@ -107,11 +107,30 @@ items: []
 # Optional: expression (the actual formula), notes
 
 formulas:
+  - name: EDB-1
+    status: active
+    source: design/gdd/enemy-database.md
+    referenced_by:
+      - design/gdd/enemy-database.md
+    variables:
+      - structure (enemy HP pool)
+      - region_fraction (0.15-0.55, authored per region)
+      - BREAK_HP_MIN
+    output_range: [5, 330]
+    expression: "max(BREAK_HP_MIN, floor(structure * region_fraction + 0.0001))"
+    notes: "Break region HP, derived not free-authored. Epsilon nudge is LOAD-BEARING
+      (8 real cases at 2-decimal fractions, e.g. 180*0.35 = 62.99999999999999 —
+      verified 2026-07-09). Part-Break System consumes the resulting break_hp;
+      AC-ED-07(a) validates stored == derived."
+    added: 2026-07-09
+    revised: ""
+
   - name: DF-1
     status: active
     source: design/gdd/damage-formula.md
     referenced_by:
       - design/gdd/damage-formula.md
+      - design/gdd/enemy-database.md
     variables:
       - A (attacker power stat)
       - D (target defense stat)
@@ -157,6 +176,19 @@ formulas:
 # Required fields: name, status, source, referenced_by, value, unit, added
 
 constants:
+  - name: BREAK_HP_MIN
+    status: active
+    source: design/gdd/enemy-database.md
+    referenced_by:
+      - design/gdd/enemy-database.md
+    value: 5
+    unit: region break HP (integer damage pool floor)
+    notes: "Floor on EDB-1 derived break_hp. Defensive within MVP content ranges
+      (min derivable value is 9 at structure 60 x fraction 0.15); activates only
+      for out-of-band inputs. Safe range 3-10 per Tuning Knobs."
+    added: 2026-07-09
+    revised: ""
+
   - name: DAMAGE_FLOOR
     status: active
     source: design/gdd/damage-formula.md

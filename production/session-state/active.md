@@ -1,14 +1,23 @@
 # Active Session State
 
 ## Current Task
-Designing enemy-database GDD (/design-system, lean mode)
-- Sections complete: Overview, Player Fantasy, Detailed Design
+Enemy Database GDD — COMPLETE (Designed — Pending Review)
+- File: design/gdd/enemy-database.md — all 12 sections written
 - Key decisions: HYBRID stat model (hand-authored stats, 11 canonical Part DB stat
   names, anatomy-linked loot via break_event validation — single drop pipeline);
-  reserved tier field (always 1 in MVP); A/D-relevant stats hard-capped [0,110]
-  (DF-1 verified range); break regions {region_id, display_name, break_hp,
-  break_event}; loot_pool = Part DB ids; spawn_enabled mirrors drop_enabled
-- Current section: Formulas (next)
+  reserved tier field (always 1 in MVP); A/D stats hard-capped [0,110] (DF-1
+  verified range); EDB-1 break_hp DERIVED not authored (epsilon nudge LOAD-BEARING,
+  8 real cases, e.g. 180×0.35); boss TTK 12–18 turns / Structure 350–600
+  (specialist-adjusted from 10–20); WILD_POWER_CAP=40; AC-ED-09 gating multiplier
+  ≥1000 (guaranteed drop, not ≥500 boost)
+- Specialists consulted: systems-designer (formulas), qa-lead (ACs — found 2
+  blockers + 7 coverage gaps, all incorporated); CD-GDD-ALIGN skipped (lean)
+- Hard constraints declared on downstream GDDs: ED1 (Combat: enemy resource
+  symmetry), ED2 (Part-Break: region targeting), ED3 (Drop: dedup event set),
+  ED4 (Enemy AI: profile schema), ED5 (Encounter Zone: progression integrity)
+- Registry updated: EDB-1 formula + BREAK_HP_MIN constant added; DF-1 referenced_by
+  extended
+- Next: /design-review design/gdd/enemy-database.md in a FRESH session (/clear first)
 - File: design/gdd/enemy-database.md
 
 ## Previously This Session

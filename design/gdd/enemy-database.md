@@ -1,6 +1,7 @@
 # Enemy Database
 
-> **Status**: In Design
+> **Status**: Designed — Pending Review
+> **Review Notes**: Authored in lean mode — CD-GDD-ALIGN gate skipped; systems-designer consulted for Formulas, qa-lead for ACs
 > **Author**: Luan + Claude Code (game-designer)
 > **Last Updated**: 2026-07-09
 > **Implements Pillar**: Pillar 2 (Every Battle Has a Harvest Goal), Pillar 5 (The World Is a Workshop)
@@ -122,8 +123,10 @@ The Enemy Database is a static data schema — enemy definitions have no runtime
 ### Formula EDB-1 — Break Region HP (derived)
 
 ```
-break_hp = max( BREAK_HP_MIN, floor( structure × region_fraction ) )
+break_hp = max( BREAK_HP_MIN, floor( structure × region_fraction + 0.0001 ) )
 ```
+
+**Numeric precision note — the `+ 0.0001` nudge is LOAD-BEARING (verified by exhaustive IEEE 754 scan, 2026-07-09):** unlike the defensive nudges in Part DB Formulas 1–2, this one changes real results. With `region_fraction` authored at 2-decimal precision, 8 inputs in valid content ranges produce the wrong value without it — e.g., `180 × 0.35` evaluates to `62.99999999999999`; bare `floor()` returns 62, the mathematically correct result is 63. Same class of defect as Part DB Formula 2b. Implementations must apply the nudge or use integer-scaled arithmetic (e.g., `structure × fraction_hundredths / 100` in ints).
 
 `break_hp` is **derived, not free-authored**: rebalancing an enemy's `structure` automatically preserves each region's relative break timing. Authors set `region_fraction` per region; the schema stores the computed `break_hp`.
 
@@ -147,8 +150,8 @@ The 0.55 cap is the safety bound for EDB-3's break-cheaper-than-kill invariant. 
 **Output range:** 5 to floor(600 × 0.55) = 330. Practical: WILD 5–88, BOSS 52–330.
 
 **Worked example (discriminating — floor ≠ round ≠ ceil):** Rustcrawler, structure = 85, Left Arm at region_fraction = 0.35:
-- `break_hp = max(5, floor(85 × 0.35)) = max(5, floor(29.75)) = 29`
-- Verification: floor(29.75) = **29**; round = 30; ceil = 30 — an implementation using round() or ceil() returns 30 and fails.
+- `85 × 0.35 = 29.749999999999996` (IEEE 754); `+ 0.0001 → 29.7501`; `break_hp = max(5, floor(29.7501)) = 29`
+- Verification: floor = **29**; round = 30; ceil = 30 — an implementation using round() or ceil() returns 30 and fails. (The nudge does not change this case; see AC-ED-08(c) for a case where it does.)
 
 **Rebalancing behavior:** retuning Rustcrawler's structure 85 → 100 auto-updates break_hp to floor(100 × 0.35) = 35 — same relative fight timing, no manual audit.
 
@@ -305,16 +308,58 @@ All values live in external config, not code. Drop-rate knobs (`BASE_DROP_*`, br
 
 ## Visual/Audio Requirements
 
-[To be designed]
+N/A — pure-data Foundation system. Enemy visual identity (silhouettes, part readability, break VFX) is owned by the Art Bible and per-enemy asset specs; break/damage audio is owned by the Audio System GDD. This schema's only visual-adjacent obligation is that `break_regions[].display_name` supplies the Combat UI's break pip labels.
 
 ## UI Requirements
 
-[To be designed]
+N/A — pure-data Foundation system. The Combat UI GDD owns enemy information display (break pips, element indicator, Head/Sensor-gated part info per Part DB Rule 2); a future bestiary screen (Full Vision) would read this schema but is not an MVP requirement.
 
 ## Acceptance Criteria
 
-[To be designed]
+ACs marked **BLOCKING** gate story completion (Logic type — automated tests in `tests/unit/enemy-database/`). ACs marked **ADVISORY** emit authoring warnings via the content validation report (the "warning surface" for all warning assertions below is the validator's structured report output, not log lines).
+
+### Schema Validation
+
+**AC-ED-01** (BLOCKING): Every enemy entry has all required fields present and correctly typed. **Pass when**: zero entries where `id`, `display_name`, `enemy_class`, `tier`, `stats`, `skills`, `ai_profile`, `break_regions`, `loot_pool`, `spawn_enabled`, or `flavor_text` is missing, null, or wrong-typed. Scoping: (a) this AC is **type-and-presence only** — value rules live elsewhere: `tier` value → AC-ED-13; `flavor_text` length → AC-ED-13; `skills` count → AC-ED-03; (b) `core_element` is the one nullable field — when non-null it must be `VOLT`, `THERMAL`, or `KINETIC` (EC-ED-05); (c) `enemy_class` ∈ {`WILD`, `BOSS`}; (d) `ai_profile` is validated as a non-empty StringName **only** — referential resolution is **BLOCKED**; *unblocks when: Enemy AI GDD defines its profile schema and a `has_profile(id)` lookup*; (e) `display_name` and `flavor_text` are non-empty Strings. **Test type**: Content Validation.
+
+**AC-ED-02** (BLOCKING): Every enemy `id` is globally unique. **Pass when**: `set.size() == entries.size()` across all entries — no duplicates. **Test type**: Content Validation.
+
+**AC-ED-03** (partially BLOCKED): `skills` referential integrity and count. **Active now (not blocked)**: every entry has `skills.size() >= 1` — empty array fails (EC-ED-10); `skills.size() > 4` emits an ADVISORY warning (MVP design intent 2–4, not a schema error). **BLOCKED portion**: every `skills[]` entry resolves via `MoveDatabase.has_skill(id)` with zero dangling references; *unblocks when: Move Database GDD defines `MoveDatabase.has_skill(id)`*. The BLOCKED label exempts only the referential check — the count checks run from day one. **Test type**: Content Validation.
+
+**AC-ED-04** (BLOCKING): `loot_pool` referential integrity. **Pass when**: (a) every `loot_pool` entry satisfies `PartDatabase.get_part(id) != null` — zero dangling references (fail); (b) a pool where **all** parts have `drop_enabled == false` fails (EC-ED-03 escalation — zero obtainable drops); (c) a pool with **some** disabled parts passes with an ADVISORY warning per disabled entry in the validation report; (d) duplicate ids within one pool are deduplicated with an ADVISORY warning (EC-ED-08); (e) **happy path**: a pool of 3 valid, enabled, distinct part ids passes with zero warnings; (f) an **empty** `loot_pool` fails — an enemy with nothing to drop violates Pillar 2 (see also AC-ED-15). **Test type**: Content Validation.
+
+**AC-ED-05** (BLOCKING): Stat ranges. **Pass when**: (a) `stats["structure"]` present and ≥ 1 — 0 or missing fails (EC-ED-06); (b) `physical_power`, `energy_power`, `armor`, `resistance` each ∈ [0, 110] — outside fails (DF-1 verified input range; this is a schema-safety gate, distinct from the balance bands in AC-ED-14); (c) for every `WILD` entry: `physical_power <= 40` AND `energy_power <= 40` — above fails (`WILD_POWER_CAP`); (d) **positive case**: a WILD entry with `physical_power = 40` and `energy_power = 40` passes; (e) unknown stat keys emit an ADVISORY warning and are ignored (EC-ED-06). **Test type**: Content Validation.
+
+**AC-ED-06** (BLOCKING): Class/pool rarity rules. Rarity is resolved by querying `PartDatabase.get_part(id).rarity` for each pool entry. **Pass when**: (a) zero `WILD` entries whose pool contains a part with `rarity == BOSS_GRADE` (Part DB Rule 8); (b) every `BOSS` entry's pool contains 1 or 2 parts with `rarity == BOSS_GRADE` — 0 fails, 3+ fails (Rule 2); (c) **positive case**: a BOSS pool with exactly 1 Boss-grade and 3 Rare/Common parts passes; (d) **cross-enemy exclusivity**: zero part ids appearing in both a BOSS pool with `rarity == BOSS_GRADE` and any WILD pool — assertion (a) covers this by construction, stated here explicitly so the validator checks all pools, not per-enemy in isolation. **Test type**: Content Validation.
+
+### Break Region Validation
+
+**AC-ED-07** (BLOCKING): Break region validity (EDB-3 + EDB-1 consistency). For every region of every enemy: **Pass when**: (a) **stored-equals-derived**: `break_hp == max(BREAK_HP_MIN, floor(structure × region_fraction + 0.0001))` — integer equality; a hand-edited stale `break_hp` fails even if it satisfies (b); (b) **EDB-3 both clauses**: `break_hp < structure` AND the region's `break_event` appears as a condition key in `PartDatabase.get_part(id).drop_conditions` for at least one id in this enemy's `loot_pool` — the traversal is region → `break_event` → pool parts' `drop_conditions`; (c) `region_id` unique within the enemy — duplicate fails (EC-ED-08; e.g., two regions both named `"left_arm"` fail); each region's `display_name` is a non-empty String; (d) `region_fraction` within bounds **with float tolerance**: `0.15 − 1e-9 <= region_fraction <= 0.55 + 1e-9` (EC-ED-11) — tolerance required because 0.15 and 0.55 are not exactly representable in IEEE 754 and a strict `>=` fails correctly-authored content; (e) every enemy has `break_regions.size() >= 1` (EC-ED-01). **Test type**: Content Validation.
+
+**AC-ED-08** (BLOCKING): Formula EDB-1 unit test. **Pass when**: (a) **discriminating case**: `structure = 85, region_fraction = 0.35` returns exactly `29` — `85 × 0.35 = 29.749999999999996` in IEEE 754; floor = 29, round = ceil = 30; an implementation using round() or ceil() returns 30 and fails. This case also confirms `BREAK_HP_MIN` is inactive in normal ranges (29 > 5). (b) **BREAK_HP_MIN activation (out-of-band formula-behavior test)**: `structure = 20, region_fraction = 0.15` returns exactly `5` — `20 × 0.15 = 3.0` (verified exact in IEEE 754; no epsilon interaction), `max(5, 3) = 5`. Honesty note: within MVP content ranges (structure ≥ 60, fraction ≥ 0.15 → `60 × 0.15 = 9.0` exactly, floor 9 > 5) the guard never activates — it is defensive, like the Part DB F1/F2 epsilon. (c) **Epsilon regression case (LOAD-BEARING — verified 2026-07-09)**: `structure = 180, region_fraction = 0.35` returns exactly `63` — `180 × 0.35 = 62.99999999999999` in IEEE 754; without the `+ 0.0001` nudge, floor returns 62 (wrong). An implementation omitting the nudge fails this case. Exhaustive scan: 8 such inputs exist at 2-decimal fractions in valid content ranges. **Test type**: Unit.
+
+**AC-ED-09** (BLOCKING): Boss-grade break gating. For every `BOSS` entry, the check is a two-step lookup: (1) collect the set of this boss's `break_event` values; (2) for each pool part with `rarity == BOSS_GRADE`, assert it has at least one `drop_conditions` entry whose `condition` key is in that set AND whose `multiplier >= 1000`. **Pass when**: zero BOSS entries where any Boss-grade pool part lacks such a condition. Threshold rationale: at ×1000, `clamp(0.001 × 1000) = 1.0` — the drop is **guaranteed** when the break fires, satisfying Rule 2's "gates the drop" (a ×500 condition yields only 0.5 and satisfies Part DB AC-11 but NOT this AC — assert a part with only a ×500 condition fails). **Test type**: Content Validation.
+
+### Runtime Behavior
+
+**AC-ED-10** (BLOCKING): `EnemyDatabase.get_enemy(id)` lookup. **Pass when**: a valid id returns a non-null `EnemyData` whose `id` matches; unknown id, `""`, and `null` each return `null` with no exception. **Test type**: Unit.
+
+**AC-ED-11** (DEFERRED): `spawn_enabled = false` exclusion. **Pass when**: `EncounterZone.build_spawn_table(zone)` excludes the disabled enemy; `EnemyDatabase.get_enemy(id)` (per AC-ED-10) still returns the full entry; a spawn-disabled `BOSS` additionally emits the ADVISORY progression warning (EC-ED-09) in the validation report. *Unblocks when: Encounter Zone GDD defines its spawn table build interface.* **Test type**: Integration.
+
+**AC-ED-12** (DEFERRED): Break event set semantics. **System under test: the Drop System's event-collection step** (per constraint ED3 — not Part-Break's emission). **Pass when**: given an enemy with two regions both emitting `"arm_broken"`, after both break in one battle, the Drop System's collected event set contains `"arm_broken"` exactly once and Formula 3 applies its multiplier once (EC-ED-07). *Unblocks when: Drop System GDD defines its event-collection interface.* **Test type**: Integration.
+
+### Content Rules
+
+**AC-ED-13**: Reserved and bounded fields — two independently labeled assertions: (a) ADVISORY: `tier == 1` for all MVP entries — other values emit a warning, not a failure (EC-ED-12); (b) BLOCKING: `flavor_text.length() <= 100` — a 100-char string **passes**, a 101-char string **fails** (boundary explicit). *Sync note: Part DB does not yet enforce a flavor_text length AC; if Part DB ratifies a different value, this threshold must sync (Rule 1 alignment note).* **Test type**: Content Validation.
+
+**AC-ED-14** (ADVISORY): EDB-2 stat band validator. **Pass when** the validator is implemented and emits warnings (never failures) for: WILD entries outside `structure ∈ [60, 160]`, `physical_power/energy_power ∈ [18, 40]`, `armor/resistance ∈ [15, 35]`; BOSS entries outside `structure ∈ [350, 600]`, `physical_power/energy_power ∈ [35, 70]`, `armor/resistance ∈ [30, 55]`. The AC exists so the warning surface is real and tested — a "warning" with no implemented validator is a promise with no mechanism. **Test type**: Content Validation (ADVISORY).
+
+**AC-ED-15** (ADVISORY, except where noted): Content density counts. (a) `break_regions.size() > 3` warns (MVP intent 2–3; minimum 1 is BLOCKING via AC-ED-07(e)); (b) WILD `loot_pool.size()` outside [2, 4] warns; BOSS outside [4, 6] warns; empty pool is BLOCKING via AC-ED-04(f). **Test type**: Content Validation.
+
+**AC-ED-16** (DEFERRED): Null `core_element` integration path. **Pass when**: an enemy with `core_element = null` passed through Turn-Based Combat into `compute_damage()` produces no crash and applies `T = 1.0` (DF-1 EC-04 fallback) — e.g., Volt skill at A=53, D=30 vs. null-element enemy returns 33, not 50. *Unblocks when: Turn-Based Combat GDD defines its damage call contract.* **Test type**: Integration.
 
 ## Open Questions
 
-[To be designed]
+1. **Full Vision boss assembly migration (owner: game-designer, resolve: before Full Vision zone 2 content):** Rule 3 reserves the path to migrate `BOSS` entries from hand-authored stats to true part-assembly (stats derived via Part DB Formula 1). This requires deciding whether boss "equipped parts" become their literal loot pool. No MVP action; revisit when the Synergy System makes assembled bosses meaningful ("bosses use advanced synergies" — game concept).
+2. **Compound break events (owner: systems-designer, resolve: with Drop System GDD):** EC-ED-07's set semantics mean double-breaks can't be rewarded more than single breaks. If playtesting shows players want "break everything" incentives, a compound event vocabulary (`"all_regions_broken"`, `"both_arms_broken"`) must be added to the Part DB drop_conditions vocabulary — Drop System GDD should reserve the naming pattern.
+3. **Enemy resource economy symmetry (owner: game-designer, resolve: in Turn-Based Combat GDD — already a hard constraint, ED1):** Do enemies track Heat/Overheat and Energy identically to players? If Combat simplifies enemy resources (e.g., no enemy Overheat), the Cooling/Energy Capacity/Recharge keys in enemy stat blocks become dead data and Rule 3 must be amended.

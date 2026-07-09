@@ -127,6 +127,11 @@
             "type": "command",
             "command": "bash .claude/hooks/session-stop.sh",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/auto-commit.sh",
+            "timeout": 15
           }
         ]
       }
