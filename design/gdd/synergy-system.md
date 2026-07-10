@@ -1,6 +1,6 @@
 # Synergy System
 
-> **Status**: In Review (revised — re-review #3: 13 blocking items resolved 2026-07-10)
+> **Status**: In Review (revised — re-review #4: 6 blocking + 10 recommended items resolved 2026-07-10)
 > **Author**: Luan Martins da Silva + Claude Code Game Studios agents
 > **Last Updated**: 2026-07-10
 > **Implements Pillar**: Pillar 4 — Synergy Is the Endgame / Pillar 3 — Build Depth Over Content Breadth
@@ -16,10 +16,10 @@ Synergy is the reason every part slot matters. The player shouldn't just fill sl
 The synergy experience unfolds across five beats:
 
 1. **Recognition** — Two Ironclad parts in the build reveal a greyed-out "Ironclad: 2 of 3 — Armor +8 when complete" indicator. The bonus is within reach. *(Bonus values in these beats use the illustrative anchor set defined in the Acceptance Criteria preamble — Ironclad 3-piece = Armor +8. Real values are authored in Synergy Content data.)*
-2. **The Hunt** — The player starts evaluating every part drop by its tags, not just its stats. "Does this get me to Ironclad 3?"
-3. **The Click** — The third Ironclad part equips. The bonus activates. Audio and visual confirmation. The Symbot's defensive profile changes.
-4. **The Tradeoff** — A better WEAPON drops with a different manufacturer tag. Equipping it breaks the set. The player pauses: is the raw stat gain worth losing the activation?
-5. **Mastery** — The player learns to hold multiple partial synergies on a single Symbot simultaneously: maintaining ironclad ≥ 3 AND VOLT ≥ 3 to keep a combined synergy active while also pushing VOLT toward 5-piece, or running two manufacturer lines at partial thresholds for complementary bonuses. The system opens into a space of overlapping commitments and deliberate tradeoffs. *(Cross-Symbot team synergies — where Symbots sharing a tag unlock a shared bonus — are a Vertical Slice expansion. Rule 1 defines the per-Symbot scope for MVP.)*
+2. **The Hunt** — The player starts evaluating every part drop by its tags, not just its stats. "Does this get me to Ironclad 3?" *(This beat is delivered jointly: this system makes tags meaningful, but the hunt itself depends on loot-pool content volume — OQ-7 — and on Workshop UI tag visibility — DCO-3, DCO-5. Approving this GDD does not by itself guarantee Beat 2.)*
+3. **The Click** — The third Ironclad part equips. The bonus activates. Audio and visual confirmation. The Symbot's defensive profile changes. *(The activation presentation is a core emotional beat, not decorative polish — see the Beat 3 binding note under Visual/Audio Requirements.)*
+4. **The Tradeoff** — A better WEAPON drops with a different manufacturer tag. Equipping it breaks the set. The player pauses: is the raw stat gain worth losing the activation? *(This tension is strongest at threshold — exactly 3 or 5 matching parts. A player who over-concentrates (6–8 matching parts) has purchased safety above the ceiling and can absorb one off-tag part without losing the bonus; concentration buys robustness at the cost of drama. This is intended.)*
+5. **Mastery** — The player learns to hold multiple partial synergies on a single Symbot simultaneously: maintaining ironclad ≥ 3 AND VOLT ≥ 3 to keep a combined synergy active while also pushing VOLT toward 5-piece, or running two manufacturer lines at partial thresholds for complementary bonuses. The system opens into a space of overlapping commitments and deliberate tradeoffs. This mastery beat requires UI support for multi-threshold tracking (combined-tier indicators — see UI Req 1 and DCO-2) and sufficient content volume per tag (OQ-7); it is discoverable, not taught. *(Cross-Symbot team synergies — where Symbots sharing a tag unlock a shared bonus — are a Vertical Slice expansion. Rule 1 defines the per-Symbot scope for MVP.)*
 
 The reference feeling: Monster Hunter's armor set skills — where you're not hunting stats, you're hunting *pieces of a concept*. Symbots should create the same intentionality.
 
@@ -80,7 +80,7 @@ A passive effect is a `StringName` ID (e.g., `&"volt_shock_on_hit"`). This syste
 
 `evaluate(parts: Array[SympartData])` is called by the **Workshop System** after every part equip or unequip. It always emits `synergy_changed(active_synergies: Array[StringName], bonus_block: Dictionary)` — even if the resulting bonus block is identical to the prior call. Callers must not assume deduplication; if they want idempotent behavior (e.g., to avoid animation triggers on unchanged state), they must implement their own change detection before acting on the signal.
 
-**Change-detection contract for callers**: a caller that wants to detect a *genuine* synergy state change MUST diff on the `active_synergies` tier-ID set — NOT on `bonus_block` numeric equality alone. Two different active-tier sets can aggregate to a numerically identical `stat_delta` (e.g., a build loses a +4 tier while simultaneously gaining a different +4 tier). Diffing only the aggregated block would miss this real threshold crossing and suppress a warranted activation/deactivation animation. The `active_synergies` set is the authoritative signal of which tiers are active; compare it against the previously received set to detect crossings. (Debounce windows and animation-thrash handling on rapid part swaps are UI concerns — see Downstream Consumer Obligations.)
+**Change-detection contract for callers**: a caller that wants to detect a *genuine* synergy state change MUST diff on the `active_synergies` tier-ID set — NOT on `bonus_block` numeric equality alone. Two different active-tier sets can aggregate to a numerically identical `stat_delta` (e.g., a build loses a +4 tier while simultaneously gaining a different +4 tier). Diffing only the aggregated block would miss this real threshold crossing and suppress a warranted activation/deactivation animation. The `active_synergies` set is the authoritative signal of which tiers are active; compare it against the previously received set to detect crossings. (Debounce windows, subscriber-side state, and animation-thrash handling on rapid part swaps are UI concerns — see DCO-7.)
 
 `evaluate_silent(parts: Array[SympartData])` is called by **Turn-Based Combat** once at battle start to establish the baseline bonus block. It computes and caches the bonus block identically to `evaluate()` but does NOT emit `synergy_changed`. This prevents Workshop UI subscribers from receiving a spurious signal at battle start.
 
@@ -91,8 +91,10 @@ Signal parameters:
 **Rule 8: Frozen during battle.**
 Once a battle begins, `cached_bonus_block` is frozen. Part breaks during combat do not trigger re-evaluation. If the Part-Break System needs mid-battle synergy adjustment, that is deferred to the Part-Break GDD.
 
+The freeze is a **behavioral contract, not a system-enforced lock**: the Synergy System does not self-lock, and an `evaluate()` call mid-battle would overwrite the frozen block. The guarantee holds because no caller invokes `evaluate()` during battle — the Workshop System GDD must document that part equip/unequip is disabled while a battle is active (see DCO-8).
+
 **Rule 9: Read-only preview.**
-The Workshop UI may call `preview(candidate_part, target_slot, current_parts)` to compute the hypothetical `synergy_bonus_block` if a candidate part were placed in a slot. The hypothetical build is identical to `current_parts` except that `current_parts[target_slot]` is replaced by `candidate_part` (the current occupant is displaced — matching the SA-F2 displacement contract). If `target_slot` is out of range (< 0 or > 7), `preview()` logs a content error and returns an empty bonus block. This call:
+The Workshop UI may call `preview(candidate_part, target_slot, current_parts)` to compute the hypothetical `synergy_bonus_block` if a candidate part were placed in a slot. The hypothetical build is identical to `current_parts` except that `current_parts[target_slot]` is replaced by `candidate_part` (the current occupant is displaced — matching the SA-F2 displacement contract). If `target_slot` is out of range (< 0 or > 7), `preview()` logs a content error and returns an empty bonus block. Consumers should treat any empty return as "no synergy change" for display purposes and rely on the content error log to identify invalid slot-index calls during development — distinguishing error cases from valid no-synergy results via the return value is not required (see AC-SYN-20). This call:
 - Does NOT emit `synergy_changed`
 - Does NOT modify `cached_bonus_block`
 - Returns the hypothetical block for UI comparison only
@@ -103,7 +105,7 @@ The Workshop UI diffs hypothetical vs. current and surfaces any threshold crossi
 
 ### States and Transitions
 
-The Synergy System is a stateless pure computation. It holds one cached result, replaced on each `evaluate()` or `evaluate_silent()` call.
+The Synergy System holds exactly one piece of mutable state: `cached_bonus_block`, replaced on each `evaluate()` or `evaluate_silent()` call. All logic — tag counting, tier activation, aggregation — is a pure function of the input parts array; no other state is retained between calls.
 
 | Event | Action | Result |
 |-------|--------|--------|
@@ -131,6 +133,8 @@ Assembly does NOT call Synergy. Assembly `final_stat` does NOT incorporate syner
 
 The Synergy System's computations are entirely integer-based. No floating-point arithmetic is used, so no epsilon nudges are needed.
 
+**Integer enforcement (dual: load + runtime)**: the integer invariant is enforced at two points, independent of how the content data format (OQ-1) resolves. (1) Content validation tooling rejects any `stat_delta` value that is not an integer literal at load time — the authoring defense. (2) SYN-F3 casts each value via `int(...)` as it is read into the aggregation sum — the runtime defense; a float that slips past validation is truncated at the system boundary. Together these guarantee every `synergy_bonus_block.stat_delta` value is `int`, so strict-integer equality in consumers and ACs (e.g., `== 73`, never `== 73.0`) is safe.
+
 ---
 
 **SYN-F1: Tag Count**
@@ -139,12 +143,11 @@ The Synergy System's computations are entirely integer-based. No floating-point 
 tag_count[tag] = Σ (1 for each equipped part p where tag ∈ p.synergy_tags)
 ```
 
-Variables:
-- `tag` — a `StringName` (e.g., `&"ironclad"`, `&"VOLT"`)
-- `p.synergy_tags` — `Array[StringName]` on each non-null `SympartData`
-- Null slots contribute 0
-
-Output range: `[0, 8]` (at most 8 occupied slots)
+| Symbol | Type | Range | Description |
+|--------|------|-------|-------------|
+| `tag` | `StringName` | element or manufacturer tag IDs | e.g., `&"ironclad"`, `&"VOLT"` |
+| `p.synergy_tags` | `Array[StringName]` | 1–2 entries when content-valid (1 element + ≤1 manufacturer) | Tags on each non-null `SympartData`. Null slots contribute 0. A null or empty `synergy_tags` field is treated as `[]` — see EC-SYN-07. |
+| `tag_count[tag]` | `int` | `[0, 8]` under valid content | Output. Can exceed 8 only under EC-SYN-11 duplicate-tag content errors. |
 
 ---
 
@@ -157,10 +160,11 @@ tier_active(tier) = ∀ (tag, min_count) ∈ tier.requirements :
                       tag_count[tag] ≥ min_count
 ```
 
-Variables:
-- `tier.requirements` — list of `(tag, min_count)` pairs
-
-Output: boolean
+| Symbol | Type | Range | Description |
+|--------|------|-------|-------------|
+| `tier.requirements` | list of `(tag, min_count)` pairs | ≥ 1 pair (see validity invariant) | The tier's activation conditions, all of which must hold |
+| `min_count` | `int` | `[1, 8]` — MUST be ≥ 1 | Required tag count. A `min_count` of 0 is vacuously satisfied (tag counts are never negative) and is a content error — see EC-SYN-13. |
+| output | `bool` | — | `true` iff every requirement is satisfied |
 
 Examples:
 - Ironclad 3-piece: `[(ironclad, 3)]` → true when `tag_count[ironclad] ≥ 3`
@@ -171,14 +175,18 @@ Combined synergies use `SYNERGY_THRESHOLD_TIER1` (= 3) as the per-tag minimum fo
 
 **Safe count access**: `tag_count[tag]` denotes a safe lookup — a tag absent from the count map reads as `0`, never `null` or an error (implement with `Dictionary.get(tag, 0)`). This guarantees SYN-F2 evaluates correctly on the all-empty build (EC-SYN-01), where the count map is empty and every requirement lookup returns 0.
 
-**Non-empty requirements invariant**: `tier.requirements` MUST contain at least one `(tag, min_count)` pair. An empty requirements list makes the ∀-quantifier vacuously true — the tier would be permanently active on every build. An empty requirements list is a content error and must be handled per EC-SYN-12 (skip + log; validation tooling rejects it), never evaluated as always-active.
+**Requirements validity invariant**: `tier.requirements` MUST contain at least one `(tag, min_count)` pair, AND every `min_count` MUST be ≥ 1. Both violations produce the same failure mode — a permanently-active tier:
+- An **empty requirements list** makes the ∀-quantifier vacuously true. Content error; handled per EC-SYN-12 (skip + log; validation tooling rejects it).
+- A **`min_count` of 0** passes the non-empty check but is vacuously satisfied on every build, because `tag_count[tag] ≥ 0` always holds (SYN-F1 output is non-negative). Content error; handled per EC-SYN-13 (skip + log; validation tooling rejects it).
+
+Neither case may ever be evaluated as always-active.
 
 ---
 
 **SYN-F3: Bonus Block Aggregation**
 
 ```
-synergy_bonus_block.stat_delta[S] = Σ tier.stat_delta.get(S, 0)
+synergy_bonus_block.stat_delta[S] = Σ int(tier.stat_delta.get(S, 0))
                                       for all tiers where tier_active(tier) = true
 
 synergy_bonus_block.effects = deduplicate(
@@ -186,7 +194,12 @@ synergy_bonus_block.effects = deduplicate(
 )
 ```
 
-Output: `stat_delta` is a `Dictionary[String, int]`; `effects` is `Array[StringName]`
+| Symbol | Type | Range | Description |
+|--------|------|-------|-------------|
+| `tier.stat_delta` | `Dictionary[String, int]` | values non-negative in MVP content (EC-SYN-08 defends against negatives) | Per-tier flat stat additions; each value passes through `int(...)` at ingest per the integer-enforcement rule above |
+| `tier.effects` | `Array[StringName]` | 0+ effect IDs | Passive effect IDs granted by the tier |
+| `synergy_bonus_block.stat_delta` | `Dictionary[String, int]` | guaranteed `int` values | Summed across all active tiers |
+| `synergy_bonus_block.effects` | `Array[StringName]` | unique IDs only | Deduplicated union, keep-first in registration order |
 
 Active tiers are iterated in **registration order** (ascending alphabetical by tier ID — see Rule 3). `flatten` preserves tier iteration order and within-tier effect order. `deduplicate` is keep-first: the first occurrence of each effect ID is retained; later duplicates are discarded. Because registration order is alphabetical by tier ID (not content-file order), which tier "keeps" a shared effect ID is deterministic and stable against content-file reordering.
 
@@ -202,17 +215,19 @@ Consumers that need the effective stat (for damage calculation or display) apply
 effective_stat[S] = max(0, Assembly.final_stat[S] + synergy_bonus_block.stat_delta.get(S, 0))
 ```
 
-Variables:
-- `Assembly.final_stat[S]` — integer from SA-F1, already ≥ 0
-- `synergy_bonus_block.stat_delta.get(S, 0)` — integer synergy bonus; 0 if no active synergy affects stat `S`
-
-Output: integer ≥ 0. Stats are uncapped above (no `stat_max` ceiling — matching SA-F1 behavior).
+| Symbol | Type | Range | Description |
+|--------|------|-------|-------------|
+| `Assembly.final_stat[S]` | `int` | ≥ 0 (SA-F1 guarantees) | Base stat from the Assembly pipeline |
+| `synergy_bonus_block.stat_delta.get(S, 0)` | `int` | any (MVP content non-negative) | Synergy bonus; 0 if no active synergy affects stat `S` |
+| `effective_stat[S]` | `int` | ≥ 0 | Output. Uncapped above (no `stat_max` ceiling — matching SA-F1 behavior). |
 
 In MVP, all authored synergy stat_delta values are non-negative (no penalty synergies). The `max(0,…)` floor is a content-error defense only.
 
 ---
 
 **Worked Example**
+
+*(Fixture note: this example uses a different fixture from the Acceptance Criteria preamble — the same base stats (energy_power = 55) but a richer build with the combined tier active, so the SYN-F4 totals differ: 77 here vs. 73 in AC-SYN-06. The effect ID `&"volt_shock_on_hit"` is this example's illustrative ID; the ACs use `&"volt_test"`. Both sections are internally consistent — reconcile per-fixture, not across sections.)*
 
 Build (8 slots — 6 occupied, 2 empty):
 1. HEAD: ironclad, VOLT → tags `[ironclad, VOLT]`
@@ -256,44 +271,49 @@ effective_stat[energy_power] = max(0, 55 + 22) = 77
 ## Edge Cases
 
 **EC-SYN-01: All slots empty.**
-`evaluate()` receives 8 null entries. SYN-F1 counts are all zero. No synergy tier is active. `synergy_bonus_block = { stat_delta: {}, effects: [] }`. Signal emits with the empty block. No crash.
+`evaluate()` receives 8 null entries. SYN-F1 counts are all zero. No synergy tier is active. `synergy_bonus_block = { stat_delta: {}, effects: [] }`. Signal emits with the empty block. No crash. *Verified by AC-SYN-07.*
 
 **EC-SYN-02: Maximum tag concentration and simultaneous tier stacking.**
 Pure concentration: all 8 parts share the same manufacturer AND element (e.g., 8 Ironclad-VOLT parts). Both 3-piece and 5-piece activate for Ironclad, for VOLT, and for Ironclad-VOLT (6 tiers active). All bonuses stack cumulatively per SYN-F3.
 
-Maximum verified simultaneous tiers: a 5+3 distribution across two elements under one manufacturer (e.g., 5 ironclad-VOLT + 3 ironclad-KINETIC, giving ironclad=8, VOLT=5, KINETIC=3) yields ironclad 3-piece, ironclad 5-piece, VOLT 3-piece, VOLT 5-piece, KINETIC 3-piece, ironclad-VOLT 3-piece, ironclad-KINETIC 3-piece = **7 tiers** (verified maximum in MVP). Three manufacturers simultaneously at 3-piece is impossible — it would require 9 manufacturer-tagged slots across 8 total. There is no cap on the number of simultaneously active tiers. Content authors must budget stat_delta values assuming up to **7 tiers** could be simultaneously active.
+Maximum verified simultaneous tiers: a 5+3 distribution across two elements under one manufacturer (e.g., 5 ironclad-VOLT + 3 ironclad-KINETIC, giving ironclad=8, VOLT=5, KINETIC=3) yields ironclad 3-piece, ironclad 5-piece, VOLT 3-piece, VOLT 5-piece, KINETIC 3-piece, ironclad-VOLT 3-piece, ironclad-KINETIC 3-piece = **7 tiers** (verified maximum in MVP). Three manufacturers simultaneously at 3-piece is impossible — it would require 9 manufacturer-tagged slots across 8 total. There is no cap on the number of simultaneously active tiers. Content authors must budget stat_delta values assuming up to **7 tiers** could be simultaneously active — see the cumulative budget constraint in Tuning Knobs and OQ-2. *Cumulative stacking mechanics verified by AC-SYN-02, AC-SYN-03, AC-SYN-09; the 7-tier maximum fixture is content-authoring guidance, not a distinct code path.*
 
 **EC-SYN-03: Wild parts used across multiple synergy lines.**
 Wild parts (element tag only, no manufacturer tag) intentionally enable element-focus builds that combine with manufacturer synergies. Example: 4 wild VOLT parts (element-only) plus 4 non-wild Ironclad+VOLT parts gives `tag_count = { VOLT: 8, ironclad: 4 }` — VOLT 3-piece, VOLT 5-piece, Ironclad 3-piece, AND Ironclad-VOLT 3-piece all activate simultaneously.
 
-The tradeoff wild parts create is **specific to manufacturer counts, not to combined synergies**. Per SYN-F2, a combined synergy checks two *independent* counts (`tag_count[ironclad] ≥ 3 AND tag_count[VOLT] ≥ 3`); it does NOT require the two tags to co-locate on the same physical part. So wild parts do not block combined synergies — whenever both independent counts cross threshold, the combined tier fires regardless of which parts carry which tags. What wild parts cost is manufacturer-count throughput: every wild slot contributes zero manufacturer tags, so a wild-heavy build reaches manufacturer 3-piece/5-piece (and any combined tier that leans on a high manufacturer count) more slowly. The player trades manufacturer-set flexibility to concentrate a single element across otherwise-incompatible parts. That is the real, intended tension — not an inability to form combined synergies.
+The tradeoff wild parts create is **specific to manufacturer counts, not to combined synergies**. Per SYN-F2, a combined synergy checks two *independent* counts (`tag_count[ironclad] ≥ 3 AND tag_count[VOLT] ≥ 3`); it does NOT require the two tags to co-locate on the same physical part. So wild parts do not block combined synergies — whenever both independent counts cross threshold, the combined tier fires regardless of which parts carry which tags. What wild parts cost is manufacturer-count throughput: every wild slot contributes zero manufacturer tags, so a wild-heavy build reaches manufacturer 3-piece/5-piece (and any combined tier that leans on a high manufacturer count) more slowly. The player trades manufacturer-set flexibility to concentrate a single element across otherwise-incompatible parts. That is the real, intended tension — not an inability to form combined synergies. *Wild-part counting behavior verified by AC-SYN-04; independent-count combined activation verified by AC-SYN-03.*
 
 **EC-SYN-04: Same effect ID granted by multiple active tiers.**
-VOLT 3-piece and VOLT 5-piece both include `&"volt_shock_on_hit"`. After SYN-F3 deduplication (keep-first), the effect appears exactly once in `synergy_bonus_block.effects`. TBC triggers the effect at most once per applicable event. If the effect appears twice in the output, the AC for this case fails.
+VOLT 3-piece and VOLT 5-piece both include `&"volt_shock_on_hit"`. After SYN-F3 deduplication (keep-first), the effect appears exactly once in `synergy_bonus_block.effects`. TBC triggers the effect at most once per applicable event. If the effect appears twice in the output, the AC for this case fails. *Verified by AC-SYN-05 (dedup applied) and AC-SYN-16 (unique IDs not over-deduplicated).*
 
 **EC-SYN-05: Effect ID not registered in TBC.**
-A content author adds a new effect ID to a synergy tier before it is defined in the TBC GDD. The Synergy System emits the unknown ID in the effects array. TBC is responsible for logging a content error (unknown effect ID) and skipping it without crashing. This is a content error, not a system error.
+A content author adds a new effect ID to a synergy tier before it is defined in the TBC GDD. The Synergy System emits the unknown ID in the effects array. TBC is responsible for logging a content error (unknown effect ID) and skipping it without crashing. This is a content error, not a system error. *No Synergy System AC — the observable behavior is TBC's; its AC belongs in the TBC GDD (OQ-3).*
 
 **EC-SYN-06: stat_delta references a stat not in Assembly's 11-stat schema.**
-A content error produces `stat_delta = { "speed": 10 }`. SYN-F3 aggregates it into `synergy_bonus_block`. Consumers call `.get(S, 0)` for each of the 11 known stats and receive 0 for "speed". The unknown key is silently ignored. No crash. This is detectable only by content validation tooling.
+A content error produces `stat_delta = { "speed": 10 }`. SYN-F3 aggregates it into `synergy_bonus_block`. Consumers call `.get(S, 0)` for each of the 11 known stats and receive 0 for "speed". The unknown key is silently ignored. No crash. This is detectable only by content validation tooling. *Verified by AC-SYN-17.*
 
-**EC-SYN-07: Part with empty synergy_tags array.**
-A `SympartData` has `synergy_tags = []` (content error — Part DB requires at least an element tag). The system iterates an empty array and contributes no counts. No crash. The part acts as a synergy-inert slot. This is a Part DB validation failure; the Synergy System is not responsible for detecting it.
+**EC-SYN-07: Part with empty or null synergy_tags.**
+A `SympartData` has `synergy_tags = []` (content error — Part DB requires at least an element tag). The system iterates an empty array and contributes no counts. No crash. The part acts as a synergy-inert slot.
+
+The same outcome applies when `synergy_tags` is **null** rather than `[]` (e.g., the field was absent from the data file and the loader did not initialize it). Null and empty are distinct runtime states in GDScript — `for tag in null` is a runtime error, not an empty iteration — so the implementation MUST guard the iteration: a null `synergy_tags` is treated exactly as `[]` (no tags contributed, no crash) and never iterated directly. **Invariant ownership**: the Part DB is the invariant owner (every part must carry at least one element tag, and the loader must initialize the field); the Synergy System's null-guard is a defensive measure only, and it is not responsible for detecting or reporting the content error. *Verified by AC-SYN-19 (both the `[]` and `null` scenarios).*
 
 **EC-SYN-08: Negative stat_delta in content.**
-A content author accidentally authors a penalty synergy: `stat_delta = { armor: -5 }`. SYN-F3 aggregates `armor: -5` into `synergy_bonus_block`. SYN-F4 applies it: `effective_stat[armor] = max(0, Assembly.final_stat[armor] - 5)`. If the penalty exceeds the base stat, the result is clamped to 0, not negative. This is the intended defensive floor — the player's stat cannot be driven below zero by a content error.
+A content author accidentally authors a penalty synergy: `stat_delta = { armor: -5 }`. SYN-F3 aggregates `armor: -5` into `synergy_bonus_block`. SYN-F4 applies it: `effective_stat[armor] = max(0, Assembly.final_stat[armor] - 5)`. If the penalty exceeds the base stat, the result is clamped to 0, not negative. This is the intended defensive floor — the player's stat cannot be driven below zero by a content error. *Verified by AC-SYN-10 (consumer-owned — the clamp lives in SYN-F4, which consumers apply).*
 
 **EC-SYN-09: preview() candidate is the currently equipped part.**
-No change — hypothetical evaluation returns a block identical to `cached_bonus_block`. No threshold crossings. The Workshop UI shows "no change" for this slot.
+No change — hypothetical evaluation returns a block identical to `cached_bonus_block`. No threshold crossings. The Workshop UI shows "no change" for this slot. *Cache stability and read-only behavior verified by AC-SYN-08; the same-part identity fixture is not separately tested (the displacement logic is exercised with changing candidates by AC-SYN-08 and AC-SYN-13).*
 
 **EC-SYN-10: evaluate() receives wrong-length array.**
-If fewer than 8 entries are provided (programming error), missing indices are treated as null (no tags contributed). If more than 8 entries are provided, indices beyond 7 are ignored. The system logs a content/programming error in both cases but does not crash.
+If fewer than 8 entries are provided (programming error), missing indices are treated as null (no tags contributed). If more than 8 entries are provided, indices beyond 7 are ignored. The system logs a content/programming error in both cases but does not crash. *Verified by AC-SYN-18.*
 
 **EC-SYN-11: Part with duplicate tags in `synergy_tags`.**
-A `SympartData` has `synergy_tags = [&"ironclad", &"ironclad"]` (content error). SYN-F1 iterates the array and increments the count once per occurrence — this single part contributes **2** to `tag_count["ironclad"]`. The Synergy System does NOT deduplicate tags within a single part's array; it counts each occurrence. This can silently inflate a tag count and wrongly activate a higher tier (e.g., three such parts would read as `ironclad = 6`, activating the 5-piece tier with only 3 physical parts). Detection is the responsibility of Part DB validation tooling — a part must carry exactly one element tag and at most one manufacturer tag, with no duplicates. The Synergy System is not responsible for detecting it and does not crash. (Rationale for count-each-occurrence rather than per-part dedup: SYN-F1 stays a trivial O(n) sum with no per-part set construction; the invariant is enforced upstream at content-authoring time where it belongs.)
+A `SympartData` has `synergy_tags = [&"ironclad", &"ironclad"]` (content error). SYN-F1 iterates the array and increments the count once per occurrence — this single part contributes **2** to `tag_count["ironclad"]`. The Synergy System does NOT deduplicate tags within a single part's array; it counts each occurrence. This can silently inflate a tag count and wrongly activate a higher tier (e.g., three such parts would read as `ironclad = 6`, activating the 5-piece tier with only 3 physical parts). Detection is the responsibility of Part DB validation tooling — a part must carry exactly one element tag and at most one manufacturer tag, with no duplicates. The Synergy System is not responsible for detecting it and does not crash. (Rationale for count-each-occurrence rather than per-part dedup: SYN-F1 stays a trivial O(n) sum with no per-part set construction; the invariant is enforced upstream at content-authoring time where it belongs.) *Verified by AC-SYN-21.*
 
 **EC-SYN-12: Synergy tier with empty `requirements`.**
-A content author authors a tier with `requirements = []`. Per SYN-F2, a universally-quantified check over an empty set is vacuously true, which would make the tier permanently active on every build — including a completely empty build. This is a content error. The implementation MUST treat an empty requirements list as invalid: **skip the tier and log a content error** rather than evaluating it as always-active. Content validation tooling must reject any tier with empty requirements at load time. No crash. (See the "Non-empty requirements invariant" note under SYN-F2.)
+A content author authors a tier with `requirements = []`. Per SYN-F2, a universally-quantified check over an empty set is vacuously true, which would make the tier permanently active on every build — including a completely empty build. This is a content error. The implementation MUST treat an empty requirements list as invalid: **skip the tier and log a content error** rather than evaluating it as always-active. Content validation tooling must reject any tier with empty requirements at load time. No crash. (See the requirements validity invariant under SYN-F2.) *Verified by AC-SYN-22.*
+
+**EC-SYN-13: Synergy tier requirement with `min_count = 0`.**
+A content author authors `requirements = [(VOLT, 0)]`. The list is non-empty — it passes the EC-SYN-12 empty-list check — but `tag_count[VOLT] ≥ 0` is always true (SYN-F1 output is non-negative), so the tier would be permanently active on every build, including the all-empty build. This is the second vacuous-activation failure mode alongside EC-SYN-12, and it is a content error. The implementation MUST treat any requirement pair with `min_count < 1` as invalid: **skip the tier and log a content error** rather than evaluating it. Content validation tooling must reject any tier containing a `min_count < 1` at load time. No crash. (See the requirements validity invariant under SYN-F2.) *Verified by AC-SYN-23.*
 
 ## Dependencies
 
@@ -336,6 +356,8 @@ Bidirectional notes:
 
 All **bonus values** (stat_delta per tier, effect IDs per tier) are content data authored in the Synergy Content data file — not system constants. Changing a bonus value requires only a content edit; changing a threshold requires a design decision.
 
+**Cumulative budget constraint (content authoring)**: balancing must validate not only per-tier values but the **7-tier worst-case sum** (EC-SYN-02). For each stat, the sum of `stat_delta` across the 7 simultaneously-active tiers of a maximally concentrated build must be checked against the intended effective-stat ceiling — tuning tiers individually without testing the maximum-concentration build is a known failure mode. A per-tier per-stat cap will be defined alongside the MVP content values (OQ-2); until then, treat the worked-example magnitudes (+4 to +20 per tier) as the working band.
+
 Combined synergies use `SYNERGY_THRESHOLD_TIER1` as the per-tag minimum (≥ 3 for each constituent tag). This is not a separate knob in MVP — if combined synergies need different thresholds, that becomes a per-synergy-definition data field rather than a global constant.
 
 ## Visual/Audio Requirements
@@ -347,7 +369,9 @@ This system owns the `synergy_changed` signal. The Workshop UI GDD owns all visu
 | Synergy tier activates (threshold crossed up) | Indicator lights up; synergy bonus animates in | Activation chime matching build "click" fantasy | Workshop UI GDD |
 | Synergy tier deactivates (threshold crossed down) | Indicator dims; bonus animates out | Deactivation tone | Workshop UI GDD |
 | Synergy preview activates (via preview()) | Greyed-out "would activate" indicator | None (preview only) | Workshop UI GDD |
-| `synergy_changed` signal fires | Trigger for all of the above | Trigger for all of the above | Workshop UI (subscribes to signal; must implement own change detection before triggering animations to prevent thrashing on rapid part swaps) |
+| `synergy_changed` signal fires | Trigger for all of the above | Trigger for all of the above | Workshop UI (subscribes to signal; must implement stateful change detection per DCO-7 before triggering animations to prevent thrashing on rapid part swaps) |
+
+**Beat 3 binding**: "The Click" (Player Fantasy Beat 3) depends on the Workshop UI implementing a clearly perceptible activation animation and audio cue when a threshold is first crossed. A silent or low-fidelity response to `synergy_changed` reduces Beat 3 to a stat number changing — the activation presentation is a core emotional beat of this system, not decorative polish. Workshop UI GDD authors: treat the first-crossing presentation as a requirement inherited from this GDD's Player Fantasy, not an optional flourish.
 
 ## UI Requirements
 
@@ -365,16 +389,18 @@ Requirements this system places on downstream UI GDDs:
 
 ## Downstream Consumer Obligations
 
-The Synergy System defines its own output contract (signals, `cached_bonus_block`, `preview()`, SYN-F4). The following presentation and interaction decisions depend on that contract but are **owned by downstream GDDs** (Workshop UI, Combat UI), which do not exist yet. They are recorded here as explicit obligations so they are not lost — they are intentionally NOT resolved in this GDD (resolving UI layout before the UI GDD exists would be premature).
+The Synergy System defines its own output contract (signals, `cached_bonus_block`, `preview()`, SYN-F4). The following presentation and interaction decisions depend on that contract but are **owned by downstream GDDs** (Workshop UI, Combat UI, Workshop System), which do not exist yet. They are recorded here as explicit obligations so they are not lost — they are intentionally NOT resolved in this GDD (resolving UI layout before the UI GDD exists would be premature).
 
 | # | Obligation | Owner GDD | Why it is deferred (not resolved here) |
 |---|------------|-----------|----------------------------------------|
 | DCO-1 | **Indicator overflow behavior**: what happens when a build produces more build-relevant tiers than the panel can show (UI Req 1 caps display at 3–8, but a focused build can exceed this). Silent-drop is forbidden — it would hide a reachable synergy from the player (breaks Beat 1). Specify scroll, collapse/expand, or priority-sort with a defined cutoff. | Workshop UI GDD | Depends on the Workshop screen layout and available panel space, which the Workshop UI GDD owns. |
 | DCO-2 | **Indicator sort/display order**: the order indicators appear in the panel. This must NOT be inherited from the `active_synergies` emission order (that is alphabetical-by-ID, not a UX priority — see Rule 3). Define a UX priority rule (e.g., active-before-inactive; within a group, descending current tag count; combined listed after constituents). | Workshop UI GDD | Emission order is a system-determinism concern; display order is a UX attention concern. Decoupled deliberately. |
 | DCO-3 | **preview() invocation trigger on touch**: what player action initiates a swap preview on iOS (no hover exists on touch). UI Req 3 requires calling `preview()` but does not specify the gesture. | Workshop UI GDD | Touch-interaction design is Workshop UI territory; the system only provides the `preview()` call. |
-| DCO-4 | **Indicator tappability & touch ergonomics**: whether each indicator is an individually tappable target (required to surface per-tier effect names per UI Req 4). At 44×44pt minimum, up to 8 stacked indicators consume ~42% of an iPhone's height, forcing a scroll/collapse decision. The Synergy GDD's position: indicators **must be tappable** to satisfy UI Req 4; the layout that achieves this is the Workshop UI GDD's to design. | Workshop UI GDD | The tappability *requirement* is declared here; the layout solution belongs to the UI GDD. |
+| DCO-4 | **Indicator tappability & touch ergonomics**: whether each indicator is an individually tappable target (required to surface per-tier effect names per UI Req 4). At 44×44pt minimum, up to 8 stacked indicators consume ~42% of an iPhone's height, forcing a scroll/collapse decision. The Synergy GDD's position: indicators **must be tappable** to satisfy UI Req 4; the layout that achieves this is the Workshop UI GDD's to design. **Gesture-conflict warning**: DCO-3 and DCO-4 may compete for the same touch surface (tap-to-reveal-effects vs. gesture-to-trigger-preview); the Workshop UI GDD must resolve both gestures together, not independently. | Workshop UI GDD | The tappability *requirement* is declared here; the layout solution belongs to the UI GDD. |
 | DCO-5 | **"Next threshold in reach" definition** (indicator state 2): whether "in reach" means (A) any next tier is authored, (B) within N parts of the threshold, or (C) achievable within remaining empty slots. The UI Req 1 example ("Ironclad: 4/5 — 1 more…") implies (B). Confirm and define, so the progressing-state indicator does not advertise unachievable progress. | Workshop UI GDD | Depends on how the Workshop presents progress and empty-slot state, which the UI GDD models. |
 | DCO-6 | **`display_name` character limit and null fallback**: the maximum length UI can render, and what to show if a tier's `display_name` is null/empty in content data (fall back to the raw tier ID vs. "Unknown"). Also a localization note if names are user-facing. | Workshop UI GDD (constraint); Synergy Content data (value) | Length budget depends on the indicator layout the UI GDD defines. |
+| DCO-7 | **Stateful change detection + debounce**: Workshop UI must maintain a local `last_active_synergies` set (initialized empty). On each `synergy_changed` signal, diff the received `active_synergies` against the stored set *before* triggering any activation/deactivation animation, then update the stored set. Diffing `bonus_block` numeric equality alone is insufficient — see the Rule 7 change-detection contract for why. An optional debounce window (suggested starting value 100–200 ms) may suppress animation triggers on rapid sequential signals; the specific value is a Workshop UI tuning decision. | Workshop UI GDD | The system deliberately always-emits (Rule 7); the subscriber-side state and debounce tuning belong to the UI layer. The *requirement to be stateful* is declared here because it is part of this system's signal contract. |
+| DCO-8 | **Battle-time equip lockout**: Rule 8's freeze is a behavioral contract, not a system-enforced lock. Workshop System must disable part equip/unequip while a battle is active, ensuring `evaluate()` is never called against a frozen `cached_bonus_block`. If Workshop System fails to enforce this, the freeze breaks silently — the Synergy System does not self-lock. | Workshop System GDD | Equip availability is Workshop System's state machine; adding a self-lock here would duplicate state the Workshop System already owns. |
 
 These obligations must be copied into (or referenced from) the Workshop UI GDD and Combat UI GDD when those are authored. Until then, they are the known, tracked gaps between this system's contract and its presentation.
 
@@ -382,7 +408,7 @@ These obligations must be copied into (or referenced from) the Workshop UI GDD a
 
 *(Content stat values below are illustrative anchors used to make ACs discriminating — Ironclad 3-piece: armor +8; Ironclad 5-piece: armor +20; VOLT 3-piece: energy_power +6; VOLT 5-piece: energy_power +12, effect `&"volt_test"`; Ironclad-VOLT 3-piece: armor +5, energy_power +4. Real values are authored in Synergy Content data.)*
 
-**AC ownership note**: AC-SYN-06 and AC-SYN-10 validate the **SYN-F4 consumer contract** (`effective_stat = max(0, base + delta)`). `SynergySystem.gd` does NOT compute SYN-F4 — its consumers (Turn-Based Combat, Workshop UI) apply it. These two ACs are therefore **consumer-owned**: they must be implemented in the consumer's test suite (`tests/unit/tbc/` or `tests/unit/workshop_ui/`), not in the Synergy System's. They are stated here because this GDD defines the SYN-F4 formula, but passing them proves nothing about `SynergySystem.gd`. All other ACs (AC-SYN-01…05, 07…09, 11…18) test the Synergy System's own observable outputs.
+**AC ownership note**: AC-SYN-06 and AC-SYN-10 validate the **SYN-F4 consumer contract** (`effective_stat = max(0, base + delta)`). `SynergySystem.gd` does NOT compute SYN-F4 — its consumers (Turn-Based Combat, Workshop UI) apply it. These two ACs are therefore **consumer-owned**: they must be implemented in the consumer's test suite (`tests/unit/tbc/` or `tests/unit/workshop_ui/`), not in the Synergy System's. They are stated here because this GDD defines the SYN-F4 formula, but passing them proves nothing about `SynergySystem.gd`. All other ACs (AC-SYN-01…05, 07…09, 11…23) test the Synergy System's own observable outputs.
 
 **AC-SYN-01: Single-tag 3-piece activation**
 Fixture: 8-slot build. Slots 0–2: parts with `synergy_tags = [&"ironclad", &"KINETIC"]`. Slots 3–7: parts with `synergy_tags = [&"KINETIC"]`. ironclad=3 (activates Ironclad 3-piece); VOLT=0 (no VOLT threshold reached; no Ironclad-VOLT combined possible). Ironclad 3-piece content: `stat_delta: { armor: 8 }`, no effects.
@@ -476,11 +502,20 @@ Call `evaluate(parts)`.
 Pass: `active_synergies.size() == 2` AND received `active_synergies` contains both `"volt_3_piece"` and `"volt_5_piece"` (order-independent). The explicit `size() == 2` assertion is required — a `has()`-only check passes on a superset such as `["volt_3_piece", "volt_5_piece", "ironclad_3_piece"]`, so the size check is the assertion that actually enforces "no spurious IDs."
 FAIL: `size() != 2` (missing or spurious tier); either expected ID absent.
 
-**AC-SYN-13: preview() returns hypothetical when candidate activates a new synergy**
+**AC-SYN-13: preview() models both threshold directions**
+
+*Scenario A (candidate activates a new synergy):*
 Fixture: Active build with 2 VOLT-tagged parts in slots 0–1 (VOLT=2; below 3-piece threshold). `cached_bonus_block.stat_delta.is_empty() == true`. VOLT 3-piece content: `{ energy_power: 6 }`. Slot 2 currently holds a KINETIC-tagged part (synergy_tags = [&"KINETIC"] — non-VOLT, no other threshold reached).
 Call `preview(candidate_volt_part, 2, current_parts)` where `candidate_volt_part.synergy_tags = [&"VOLT"]`.
 Hypothetical: slots 0–2 VOLT-tagged → VOLT=3 → VOLT 3-piece activates.
 Pass: return value `stat_delta["energy_power"] == 6`; `cached_bonus_block.stat_delta.is_empty() == true` (actual cache unchanged); `synergy_changed` NOT emitted.
+
+*Scenario B (candidate deactivates a synergy):*
+Fixture: Active build with 3 VOLT-tagged parts in slots 0–2 (VOLT=3; VOLT 3-piece active). Call `evaluate(parts)`; assert `cached_bonus_block.stat_delta["energy_power"] == 6`. Subscribe to `synergy_changed`; record signal counter = N.
+Call `preview(candidate_kinetic_part, 0, current_parts)` where `candidate_kinetic_part.synergy_tags = [&"KINETIC"]` (not VOLT).
+Hypothetical: slot_0 = KINETIC, slots 1–2 = VOLT → VOLT=2 in hypothetical → below 3-piece threshold → no tiers active.
+Pass: return value `stat_delta.is_empty() == true` (VOLT 3-piece deactivated in hypothetical); `cached_bonus_block.stat_delta["energy_power"]` still == 6 (cache unmodified); signal counter still == N (no emission).
+FAIL: return value `stat_delta["energy_power"] == 6` — preview failed to model deactivation. This is the discriminating check against a delta-approach implementation that adds the candidate's tags to the cached state but never subtracts the displaced part's tags; such an implementation passes Scenario A and every other AC while being wrong.
 
 **AC-SYN-14: evaluate_silent() computes correctly and does not emit**
 Fixture: Slots 0–4: VOLT-tagged parts (VOLT=5). VOLT 3-piece: `{ energy_power: 6 }`. VOLT 5-piece: `{ energy_power: 12, effects: [&"volt_test"] }`. Subscribe to `synergy_changed`. Signal counter initialized to 0.
@@ -488,7 +523,7 @@ Call `evaluate_silent(parts)`.
 Pass: signal counter == 0 (no emission); `cached_bonus_block.stat_delta["energy_power"] == 18`; `cached_bonus_block.effects == [&"volt_test"]`.
 FAIL: counter > 0 (spurious `synergy_changed` emitted — would trigger Workshop UI subscribers at battle start); `energy_power != 18` (silent path computes differently from `evaluate()`); `cached_bonus_block` empty (silent path did not cache).
 
-Note: This fixture intentionally matches AC-SYN-02. If AC-SYN-02 passes and AC-SYN-14 produces different output, the divergence between the evaluate() and evaluate_silent() code paths is immediately identifiable.
+Note: This fixture intentionally matches AC-SYN-02. A divergence between `evaluate()` and `evaluate_silent()` on this specific VOLT-5 fixture is immediately visible by comparing the two ACs' outputs. This does not imply full path-equivalence testing — divergences on combined-synergy or mixed-tag fixtures are not covered by this pair of ACs and would require separate coverage if the two code paths do not share their computation core. (Implementation guidance: have both methods delegate to one private compute function so path divergence is impossible by construction.)
 
 **AC-SYN-15: Tier deactivation when count drops below threshold**
 Fixture: VOLT 3-piece: `{ energy_power: 6 }`. VOLT 5-piece: `{ energy_power: 12 }`. Subscribe to `synergy_changed`. Signal counter initialized to 0.
@@ -522,12 +557,56 @@ FAIL: index-out-of-bounds error thrown (missing indices not treated as null); en
 Pass: no crash; only indices 0–7 counted → VOLT=3 (not 5) → VOLT 3-piece active, VOLT 5-piece NOT active; `cached_bonus_block.stat_delta["energy_power"] == 6`; a content/programming error is logged.
 FAIL: `energy_power == 18` (indices 8–9 wrongly counted, tipping VOLT to 5); crash.
 
+**AC-SYN-19: Part with empty or null synergy_tags contributes no counts (EC-SYN-07)**
+
+*Scenario A (empty array):*
+Fixture: 8-slot build. Slots 0–2: parts with `synergy_tags = [&"ironclad", &"VOLT"]`. Slot 3: a non-null `SympartData` with `synergy_tags = []` (content-error part). Slots 4–7: null. Content: Ironclad 3-piece = `{ armor: 8 }`; no VOLT tier defined for this fixture. Subscribe to `synergy_changed`; counter = 0.
+Call `evaluate(parts)`. ironclad = 3 (slots 0–2 only — slot 3 must NOT contribute).
+Pass: no crash; signal counter == 1; `cached_bonus_block.stat_delta["armor"] == 8` AND `cached_bonus_block.stat_delta.size() == 1` (slot 3 did not inflate any count); `active_synergies.size() == 1` (only `ironclad_3_piece`).
+FAIL: `armor == 0` (slot 3 wrongly blocked counting); any additional tier present (slot 3 wrongly contributed a count — e.g., an implementation substituting a default tag for empty arrays); crash.
+
+*Scenario B (null field):*
+Same fixture, but slot 3's `SympartData` has `synergy_tags = null` (not `[]`).
+Pass: identical to Scenario A — no crash, `armor == 8`, `size() == 1`, `active_synergies.size() == 1`. The null field is treated exactly as `[]` per EC-SYN-07's null-guard requirement.
+FAIL: runtime error on iteration (`for tag in null` — null-guard missing); any count contributed by slot 3.
+
+**AC-SYN-20: preview() returns empty block on out-of-range target_slot (Rule 9)**
+Setup: the AC-SYN-02 fixture (5 VOLT-tagged parts). Call `evaluate(parts)` to establish a non-empty `cached_bonus_block` (`energy_power == 18`). Subscribe to `synergy_changed`; counter = N.
+
+*Scenario A (target_slot < 0):* Call `preview(candidate_part, -1, current_parts)`.
+Pass: no crash; return value `stat_delta.is_empty() == true` AND `effects.is_empty() == true`; signal counter still == N; `cached_bonus_block` unchanged (`energy_power` still == 18); a content error is logged.
+FAIL: crash (unchecked negative index — GDScript negative indices wrap, silently displacing the wrong slot); return value contains any bonus data; signal emitted.
+
+*Scenario B (target_slot > 7):* Call `preview(candidate_part, 8, current_parts)`.
+Pass: no crash; return value `stat_delta.is_empty() == true` AND `effects.is_empty() == true`; signal counter still == N; `cached_bonus_block` unchanged; a content error is logged.
+FAIL: crash (out-of-bounds access on `current_parts[8]`); return value contains any bonus data; signal emitted.
+
+**AC-SYN-21: Duplicate tags within a part inflate the count per SYN-F1 (EC-SYN-11)**
+Fixture: Slots 0–2: parts with `synergy_tags = [&"ironclad", &"ironclad", &"VOLT"]` (two ironclad tags per part — content error). Slots 3–7: null. Content: Ironclad 3-piece: `{ armor: 8 }`; Ironclad 5-piece: `{ armor: 20 }`.
+Per SYN-F1, each part contributes 2 ironclad counts → ironclad = 6 total.
+Call `evaluate(parts)`.
+Pass: no crash; `active_synergies` contains `ironclad_5_piece` (count 6 ≥ 5); `cached_bonus_block.stat_delta["armor"] == 28` (8 + 20, both tiers active from the inflated count).
+FAIL: crash; `armor == 8` (5-piece suppressed by a per-part dedup that the spec does not define); `armor == 0` (error handling wrongly zeroed the block).
+Note: this AC documents the INTENDED behavior per EC-SYN-11 and SYN-F1 — count each occurrence. It proves the system does NOT silently deduplicate within-part tags. Content validation prevents authoring such parts; the Synergy System follows its own spec under this input.
+
+**AC-SYN-22: Tier with empty requirements is skipped and logged (EC-SYN-12)**
+Fixture: Register a synergy tier `"bad_tier"` with `requirements = []`. Slots 0–7: null (the completely empty build — the strongest fixture, since the tier would fire on this build if the vacuous-truth bug is present). Subscribe to `synergy_changed`; counter = 0.
+Call `evaluate([null, null, null, null, null, null, null, null])`.
+Pass: no crash; signal counter == 1; `active_synergies.size() == 0` (`bad_tier` NOT activated); `cached_bonus_block.stat_delta.is_empty() == true`; a content error is logged naming `"bad_tier"`.
+FAIL: `active_synergies` contains `"bad_tier"` (vacuous-truth bug — permanently-active tier on an empty build); crash; no log emitted.
+
+**AC-SYN-23: Tier with min_count = 0 is skipped and logged (EC-SYN-13)**
+Fixture: Register a synergy tier `"zero_tier"` with `requirements = [(&"VOLT", 0)]` (non-empty list — passes the EC-SYN-12 check — but vacuously satisfiable). Slots 0–7: null (empty build). Subscribe to `synergy_changed`; counter = 0.
+Call `evaluate([null, null, null, null, null, null, null, null])`.
+Pass: no crash; signal counter == 1; `active_synergies.size() == 0` (`zero_tier` NOT activated despite `tag_count[VOLT] = 0 ≥ 0` being true); `cached_bonus_block.stat_delta.is_empty() == true`; a content error is logged naming `"zero_tier"`.
+FAIL: `active_synergies` contains `"zero_tier"` (the min_count=0 vacuous-activation bug — the non-empty-list guard alone does not catch this); crash; no log emitted.
+
 ## Open Questions
 
 | # | Question | Owner | Impact |
 |---|----------|-------|--------|
 | OQ-1 | What is the Synergy Content data format? A dedicated `SynergyDatabase.tres`? Part of `PartDatabase.tres`? Separate file loaded at startup? | Technical Director / Lead Programmer | Determines how synergy definitions are authored and loaded |
-| OQ-2 | What are the MVP stat bonus values for each synergy tier? | Economy Designer (balance tuning) | No impact on system design — pure content work done during prototype balancing |
+| OQ-2 | What are the MVP stat bonus values for each synergy tier, and what per-tier per-stat cap bounds the 7-tier worst-case sum (EC-SYN-02)? Balancing must validate the maximum-concentration build's cumulative delta against the intended effective-stat ceiling, not just tune tiers individually — see the cumulative budget constraint in Tuning Knobs. | Economy Designer (balance tuning) | No impact on system design — content work, but the cumulative-budget validation is mandatory before MVP content ships |
 | OQ-3 | Which passive effect IDs are feasible to implement for MVP, and what behavior does each define? | Turn-Based Combat GDD | Blocks authoring any effect-bearing synergy content until TBC GDD defines the registry |
 | OQ-4 | Does CORE's synergy contribution need to be mechanically distinct from other slots, or does its tag contribution alone fulfill the "CORE identity" deferred obligation from Assembly? | Game Designer | May require revisiting Assembly Deferred Obligation #5 when TBC is designed |
 | OQ-5 | What would the Vertical Slice team-wide synergy feature look like? (e.g., 2+ Symbots sharing a tag for a team-level bonus?) | Deferred to Vertical Slice design | No impact on MVP system |

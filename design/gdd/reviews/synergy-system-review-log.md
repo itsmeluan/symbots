@@ -1,5 +1,15 @@
 # Review Log: Synergy System
 
+## Review — 2026-07-10 (Re-review #4, Revision Pass) — Verdict: NEEDS REVISION
+Scope signal: S for the revision (M for implementation — producer to verify)
+Specialists: game-designer, systems-designer, ux-designer, qa-lead, creative-director
+Blocking items: 6 (all resolved in-session) | Recommended: 10 (all resolved in-session — full-scope pass chosen to avoid a review #6)
+Summary: All 13 prior blockers confirmed resolved; none regressed. Six blockers upheld by CD, nearly all severity-upgrades of previously-RECOMMENDED debt: (1) min_count=0 vacuous activation — the non-empty-list guard misses it (sys, upheld; SYN-F2 invariant→min_count≥1, EC-SYN-13, AC-SYN-23); (2) null synergy_tags crashes `for tag in null` — EC-SYN-07 covered [] only (sys; null-guard + Part DB named invariant owner, AC-SYN-19 Scenario B); (3) integer claim had no enforcement owner — CD REVERSED the prior blocked-on-OQ-1 deferral as a false dependency (sys; dual enforcement: load validation + int() cast in SYN-F3, user-approved); (4) EC-SYN-07 no AC, third consecutive flag (qa; AC-SYN-19); (5) AC-SYN-13 no deactivation scenario — delta-approach preview bug passes all 18 prior ACs (qa; Scenario B added); (6) preview() out-of-range unverified + empty-return ambiguous (qa+ux merged by CD; AC-SYN-20 + Rule 9 semantics sentence). CD adjudications: game-designer's APPROVED overruled (correct in-lane, blind to impl/coverage defects); upgrading prior-RECOMMENDED on pass 4 ruled legitimate debt-calling, not goalpost-moving; systemic EC↔AC flag ruled to STRENGTHEN the block. ux-designer's initial 7-blocker claim was stale agent memory predating the DCO section — reconciled to 1 (DCO-7 statefulness, demoted by CD, fixed anyway). Recommended batch applied: DCO-7 (stateful diff + debounce) + DCO-8 (battle equip lockout, Workshop System owner); dead Rule 7 xref fixed; Symbol/Type/Range tables for SYN-F1…F4 (Range on min_count = structural prevention for blocker-1 class); "stateless" wording; fixture-divergence note; AC-SYN-14 note rewrite + shared-compute-core hint; AC-SYN-21/22; 7-tier cumulative budget constraint in Tuning Knobs + OQ-2; Beat 2/3/4/5 dependency/intent notes; DCO-3/4 gesture-conflict warning; every EC now carries a Verified-by AC reference (coverage ~90% direct, 100% referenced — clears the 80% standard).
+Systemic process flag: NOW ACTIONABLE — CD directs the GDD-template amendment (every observable-outcome EC must reference a verifying AC + EC↔AC completeness check) be applied BEFORE the next GDD is authored. Three reviews vindicate it.
+Prior verdict resolved: Yes — 13 of 13 prior blockers resolved; 6 new/upgraded blockers found and resolved in same session. Next: fresh-session re-review #5 (CD: high confidence APPROVED).
+
+---
+
 ## Review — 2026-07-10 (Re-review #3, Revision Pass) — Verdict: NEEDS REVISION
 Scope signal: M (down from L — remaining work is localized EC/AC/text edits, no redesign)
 Specialists: game-designer, systems-designer, ux-designer, qa-lead, creative-director
