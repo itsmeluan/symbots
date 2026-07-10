@@ -173,9 +173,9 @@ formulas:
     output_range: "boolean"
     expression: "tier_active(tier) = ∀ (tag, min_count) ∈ tier.requirements : tag_count[tag] ≥ min_count"
     notes: "Combined synergies require ALL constituent conditions met simultaneously. Thresholds
-      defined by SYNERGY_THRESHOLD_TIER1 (2) and SYNERGY_THRESHOLD_TIER2 (4)."
+      defined by SYNERGY_THRESHOLD_TIER1 (3) and SYNERGY_THRESHOLD_TIER2 (5)."
     added: 2026-07-10
-    revised: ""
+    revised: "2026-07-10"  # updated threshold refs from 2/4 → 3/5
 
   - name: SYN-F3
     status: active
@@ -190,11 +190,11 @@ formulas:
     expression: |
       synergy_bonus_block.stat_delta[S] = Σ tier.stat_delta.get(S, 0) for all active tiers
       synergy_bonus_block.effects = deduplicate(flatten([tier.effects for all active tiers]))
-    notes: "Tiers are cumulative — 4-piece active means both 2-piece and 4-piece contribute.
+    notes: "Tiers are cumulative — 5-piece active means both 3-piece and 5-piece contribute.
       Combined synergy bonuses stack additively with constituent single-tag bonuses.
       Deduplication prevents the same effect ID from appearing twice in the output."
     added: 2026-07-10
-    revised: ""
+    revised: "2026-07-10"  # updated tier name refs from 2/4-piece → 3/5-piece
 
   - name: SYN-F4
     status: active
@@ -307,24 +307,24 @@ constants:
     source: design/gdd/synergy-system.md
     referenced_by:
       - design/gdd/synergy-system.md
-    value: 2
+    value: 3
     unit: equipped parts sharing a tag (minimum for small bonus)
-    notes: "Safe range 2–3. At 1, every build triggers every synergy (degenerate).
+    notes: "Safe range 3–4. At 2, any two matching parts trigger a bonus (insufficient intentionality).
       Combined synergies use this threshold for EACH constituent tag independently."
     added: 2026-07-10
-    revised: ""
+    revised: "2026-07-10"  # raised from 2 → 3 (design-review blocker A1: fantasy text described 3-piece; constant now matches)
 
   - name: SYNERGY_THRESHOLD_TIER2
     status: active
     source: design/gdd/synergy-system.md
     referenced_by:
       - design/gdd/synergy-system.md
-    value: 4
+    value: 5
     unit: equipped parts sharing a tag (minimum for large bonus)
-    notes: "Safe range 3–6. Must be > SYNERGY_THRESHOLD_TIER1. At 3, too easy to achieve
-      alongside other synergies. At 6, requires near-total slot concentration."
+    notes: "Safe range 4–7. Must be > SYNERGY_THRESHOLD_TIER1. At 4, too easy to achieve
+      alongside another synergy. At 7, near-impossible without abandoning all other synergy lines."
     added: 2026-07-10
-    revised: ""
+    revised: "2026-07-10"  # raised from 4 → 5 (paired with TIER1 raise; creative-director recommendation 5–6)
 
   - name: TEAM_ROSTER_CAP
     status: active
