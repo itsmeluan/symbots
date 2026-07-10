@@ -14,6 +14,10 @@ Every GDD must include all **8 required sections** in this order:
 7. Tuning Knobs — configurable values identified
 8. Acceptance Criteria — testable success conditions
 
+**EC↔AC cross-check:** Every edge case with an observable outcome must cite its
+verifying AC (or state why none exists). `/design-review` enforces this in its
+completeness pass — GDDs shipping ECs without ACs have failed review three times running.
+
 **File naming:** `[system-slug].md` (e.g. `movement-system.md`, `combat-system.md`)
 
 **Systems index:** `design/gdd/systems-index.md` — update when adding a new GDD.

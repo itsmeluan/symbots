@@ -43,6 +43,9 @@ Evaluate against the Design Document Standard checklist:
 - [ ] Has Dependencies section (other systems listed)
 - [ ] Has Tuning Knobs section (configurable values identified)
 - [ ] Has Acceptance Criteria section (testable success conditions)
+- [ ] EC↔AC cross-check: every Edge Case defining an observable outcome references a
+      verifying AC (or explicitly states why none exists). List any EC lacking both —
+      these are blocking findings, not advisory (CD directive, Synergy re-reviews #3–#4)
 
 ---
 

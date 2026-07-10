@@ -11,6 +11,12 @@ paths:
 - Dependencies must be bidirectional — if system A depends on B, B's doc must mention A
 - Tuning knobs must specify safe ranges and what gameplay aspect they affect
 - Acceptance criteria must be testable — a QA tester must be able to verify pass/fail
+- Every edge case that defines an observable outcome MUST reference the acceptance
+  criterion that verifies it (e.g., "*Verified by AC-XXX-NN*"), or explicitly state
+  why no AC exists. "No crash on bad input" is an observable outcome and requires an AC
+- Acceptance criteria fixtures must be discriminating: pass conditions must fail under
+  the plausible wrong implementations (worked examples should use inputs where
+  alternative implementations produce different outputs)
 - No hand-waving: "the system should feel good" is not a valid specification
 - Balance values must link to their source formula or rationale
 - Design documents MUST be written incrementally: create skeleton first, then fill
