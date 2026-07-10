@@ -331,7 +331,7 @@ formulas:
       2026-07-10: 10 cases wrong without it, e.g. 165*1.40 = 230.99999999999997 -> bare floor 230,
       correct 231; 90*0.70 = 62.99999999999999 -> 62 vs 63). Two specialist reviews mis-called it
       defensive/exact-integer analytically — both refuted by the scan. Re-run scan if any multiplier
-      retuned. SIGNATURE 1.40 + max-synergy = 3-turn boss kill (Heat-gated, ruled acceptable)."
+      retuned. SIGNATURE 1.40 + max-synergy = 3-turn boss kill (A=150 max-synergy gated, ruled acceptable — Heat gates repeated/sustained use, not this kill)."
     added: 2026-07-10
     revised: ""
 

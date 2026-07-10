@@ -1,10 +1,11 @@
 # Move Database
 
-> **Status**: Designed — pending `/design-review` (authored 2026-07-10, lean mode; systems-designer on Formulas, qa-lead on ACs)
+> **Status**: Approved — fix-confirmation re-review 2026-07-10 (4 blockers verified resolved; 1 registry note corrected) Authored 2026-07-10 lean mode; systems-designer on Formulas, qa-lead on ACs.
+> **Review revisions applied 2026-07-10**: (1) stale "errata unapplied" header + OQ-MDB-3 corrected to reflect errata already applied to TBC + registry; (2) SIGNATURE 3-turn-kill rationale corrected — gated by the A=150 max-synergy requirement, not by Heat (Heat gates *repeated* use); (3) UTILITY behavior class now defined by rule, not by member count; (4) AC-MDB-15 relabeled ADVISORY-DEFERRED (escalates to BLOCKING when the content pipeline ships).
 > **Author**: Luan + Claude Code Game Studios agents
 > **Last Updated**: 2026-07-10
 > **Implements**: ratifies MOVE-CONTRACT-1 (TBC Rule 9); resolves OQ-TBC-1/3/4
-> **Outbound errata (unapplied)**: TBC-F5 range + `hit_resolved` → [1,315]; registry MOVE-F1 + TBC-F5; TBC AC-TBC-39 note — run `/propagate-design-change`
+> **Outbound errata applied 2026-07-10** (to TBC + registry): TBC-F5 `final_damage` input + `hit_resolved` range widened to [1,315]; registry MOVE-F1 added + TBC-F5 range updated + `move-database.md` added to DF-1/TBC-F5 `referenced_by`; TBC AC-TBC-39 SCAN-reveal note added. DF-1's own range unchanged. Verified against TBC header + registry this session (`/design-review`, 2026-07-10).
 > **Implements Pillar**: Pillar 1 (Engineer, Don't Collect), Pillar 3 (Build Depth Over Content Breadth), Pillar 4 (Synergy Is the Endgame)
 
 ## Overview
@@ -47,7 +48,7 @@ The player *feels* this fantasy in Turn-Based Combat, which owns the moment-to-m
 - **`STATUS`** — applies `status_proc` guaranteed on hit; deals no damage (Rule 5).
 - **`REPAIR`** — restores the user's Structure via TBC-F6; `energy_cost > BASE_ENERGY_REGEN` (Rule 7).
 - **`SCAN`** — reveals enemy break-region/drop info; no damage, no status (Rule 6).
-- **`UTILITY`** — MVP: exactly one move, Vent (Rule 8).
+- **`UTILITY`** — a move that affects **only the user's own resource state** (Heat or Energy): it deals no damage, applies no status to the enemy, and reveals no information. This rule — not the member count — is what defines the class: anything that touches the enemy is `DAMAGE`/`STATUS`, anything that reveals is `SCAN`, anything that restores Structure is `REPAIR`. In MVP the class has exactly one member, Vent (Rule 8); the definition governs any future member.
 
 **Rule 3 — Power tiers (the coherence spine).** `power_tier` unifies a `DAMAGE` move's damage multiplier with its expected Energy cost and its part's Heat generation, so "heavier" always means "hits harder, costs more, runs hotter" — one coherent axis, not three loose numbers:
 
@@ -158,7 +159,11 @@ Inserting MOVE-F1 between DF-1 and TBC-F5 means TBC-F5's `final_damage` input is
 
 ### Balance note — SIGNATURE TTK (modifies TBC's ratified TTK envelope)
 
-A max-synergy build (A=150) firing a SIGNATURE move vs the BOSS reference (D=30, structure 594, T=1.5) deals **261/hit → 3-turn kill**, versus STANDARD's 4-turn (TBC's ratified baseline) and Basic's 5-turn. This compresses TBC's accepted 4-turn endgame ceiling to 3. **Ruling: acceptable, Heat-gated.** A SIGNATURE move generates 30–40 Heat/use (Part DB); three consecutive uses accrue 90–120 against a 100 cap, forcing Overheat at turn 2–3 unless the build is cooling-specialized. The 3-turn kill is therefore the intended Pillar-4 ceiling, achievable only by a max-synergy *and* cooling-heavy build — strictly harder to reach than the STANDARD 4-turn. No multiplier change needed; monitored in the Tuning Knobs section.
+A max-synergy build (A=150) firing a SIGNATURE move vs the BOSS reference (D=30, structure 594, T=1.5) deals **261/hit → 3-turn kill**, versus STANDARD's 4-turn (TBC's ratified baseline) and Basic's 5-turn. This compresses TBC's accepted 4-turn endgame ceiling to 3. **Ruling: acceptable — gated by the max-synergy A=150 requirement, not by Heat.**
+
+**Correction (mechanism verified 2026-07-10):** the 3-turn kill is *not* Heat-gated at the reference values. Scanning the Heat sequence at SIGNATURE `heat_generation` 30/35/40 (cooling 0, decay at turn start per TBC Rule 4): the boss dies on turn 3 in **all** cases (3 × 261 = 783 ≥ 594), and the killing third SIGNATURE resolves *before* any Overheat skip can fire — an Overheat triggered at step d of turn 3 only skips turn 4, which never occurs. At `heat_generation` 30 the build peaks at Heat 90 and never Overheats at all. So Heat does not prevent *this* kill. What actually gates it is the **A=150 ceiling** — reachable only with a maxed synergy stack (`SYNERGY_POWER_BUDGET` = 40 over the 110 base), which is strictly harder to assemble than the STANDARD 4-turn baseline.
+
+Heat remains a real constraint on **sustained/repeated** SIGNATURE use — a longer fight, a higher-Structure boss, or back-to-back encounters where cumulative Heat forces an Overheat skip once the fight extends past turn 3 (at `heat_generation` 35–40, Heat is already at 100 by the turn-3 action). The 3-turn burst is the intended Pillar-4 ceiling for a perfect build; Heat governs whether that build can *keep* doing it, not whether it can do it once. No multiplier change needed; the interaction is monitored in the Tuning Knobs section (`power_mult[SIGNATURE]` + `vent_amount`).
 
 ### Referenced formulas (owned elsewhere — not redefined here)
 
@@ -313,7 +318,7 @@ ACs marked **BLOCKING** are Logic-type — automated unit tests in `tests/unit/m
 
 **AC-MDB-14** (ADVISORY, DEFERRED): a `DAMAGE` move's `energy_cost` falls within its `power_tier` band (Rule 3); the validator warns naming the move `id` otherwise. *Unblocks when: Move DB content authoring pipeline and schema validation tooling exist.* *(Verifies EC-MDB-02.)*
 
-**AC-MDB-15** (BLOCKING, DEFERRED): a `REPAIR` move authors `energy_cost > BASE_ENERGY_REGEN` (≥ 11); the validator **fails (blocking)** naming the move `id` otherwise — a free REPAIR is a design-integrity bug, not a warning (Move DB side of TBC AC-TBC-38). *Unblocks when: Move DB content authoring pipeline and schema validation tooling exist.* *(Verifies EC-MDB-08.)*
+**AC-MDB-15** (ADVISORY-DEFERRED → escalates to BLOCKING): a `REPAIR` move authors `energy_cost > BASE_ENERGY_REGEN` (≥ 11); the validator flags the move `id` otherwise — a free REPAIR is a design-integrity bug (Move DB side of TBC AC-TBC-38), not a mere style warning. **Severity note:** the *intent* is blocking, but no content-validation tooling exists yet, so a BLOCKING label here would be a permanent false-red that can never run in CI. It is therefore ADVISORY-DEFERRED today and **escalates to a hard BLOCKING CI gate the moment the Move DB content-authoring pipeline ships** (same trigger as AC-MDB-14/16/17). *Unblocks/escalates when: Move DB content authoring pipeline and schema validation tooling exist.* *(Verifies EC-MDB-08.)*
 
 **AC-MDB-16** (ADVISORY, DEFERRED): a `STATUS` move's `status_id` matches its `element`; the validator errors otherwise. *Unblocks when: Move DB content authoring pipeline and schema validation tooling exist.* *(Verifies EC-MDB-03.)*
 
@@ -321,7 +326,7 @@ ACs marked **BLOCKING** are Logic-type — automated unit tests in `tests/unit/m
 
 ### Summary
 
-22 ACs: 18 BLOCKING unit (AC-MDB-01–13b, 18–21) + 1 BLOCKING-DEFERRED content (15) + 3 ADVISORY-DEFERRED content (14, 16, 17). EC↔AC cross-check: every EC-MDB-01…10 is verified (01→01, 02→14, 03→16, 04→07, 05→08, 06→10/20, 07→11, 08→15, 09→12, 10→17). **Cross-doc erratum flagged:** TBC AC-TBC-39 gains a note that SCAN now also produces a reveal payload (AC-MDB-10 authoritative for reveal content; AC-TBC-39 still valid for turn/cost).
+22 ACs: 18 BLOCKING unit (AC-MDB-01–13b, 18–21) + 4 ADVISORY-DEFERRED content (14, 15, 16, 17 — AC-MDB-15 escalates to BLOCKING once the content-validation pipeline exists). EC↔AC cross-check: every EC-MDB-01…10 is verified (01→01, 02→14, 03→16, 04→07, 05→08, 06→10/20, 07→11, 08→15, 09→12, 10→17). **Cross-doc erratum flagged:** TBC AC-TBC-39 gains a note that SCAN now also produces a reveal payload (AC-MDB-10 authoritative for reveal content; AC-TBC-39 still valid for turn/cost).
 
 ## Open Questions
 
@@ -329,7 +334,7 @@ ACs marked **BLOCKING** are Logic-type — automated unit tests in `tests/unit/m
 |---|----------|-------|--------|
 | OQ-MDB-1 | **Passive Database must author the DAMAGE-move status riders.** Rule 5 forbids innate riders on DAMAGE moves — they come only through TBC's Rule 13 passive registry. The Passive DB GDD must define those rider passives and register their effect IDs (e.g. `volt_shock_on_hit`). | Passive Database GDD | Blocks synergy/passive rider content; the TBC seed registry (Rule 13) already stubs three |
 | OQ-MDB-2 | **SCAN reveal payload data shape.** Rule 6 says SCAN reveals `break_regions` + drop hints; the exact fields (region label, drop id, drop-rate hint text vs. exact %) are owned jointly with Enemy DB ED6 and Combat UI. | Enemy DB (ED6) + Combat UI GDD | Blocks SCAN content authoring + the Combat UI reveal readout |
-| OQ-MDB-3 | **TBC errata propagation (this GDD's outbound obligation).** TBC-F5 input range + `hit_resolved` range → `[1,315]`; OQ-TBC-1/3/4 resolved; AC-TBC-39 reveal-payload note; registry MOVE-F1 + TBC-F5 updates. Must run `/propagate-design-change` before combat implementation. | This session / producer | Approved TBC + registry go stale until applied |
+| OQ-MDB-3 | **RESOLVED (2026-07-10).** TBC errata propagation completed this GDD's authoring session: TBC-F5 input range + `hit_resolved` range → `[1,315]`; OQ-TBC-1/3/4 marked resolved in TBC; AC-TBC-39 reveal-payload note added; registry MOVE-F1 + TBC-F5 + DF-1 `referenced_by` updates applied. Confirmed coherent across TBC header, TBC-F5 variable table, and registry at `/design-review` (2026-07-10). No `/propagate-design-change` outstanding. | This session / producer | ~~Approved TBC + registry go stale until applied~~ — discharged |
 | OQ-MDB-4 | **MVP move roster** — the actual count of moves per behavior/element/manufacturer is content authoring against this schema, not this GDD, and must be co-planned with the Part DB content plan (parts reference moves by `active_skill_id`). Hard constraint: every non-Common part needs a valid move. | Content plan / game-designer | Content-completeness gate; not a schema question |
 | OQ-MDB-5 | **UTILITY expansion (Vertical Slice+)** — buffs, energy transfer, and other UTILITY behaviors are enum headroom; MVP ships only Vent (Rule 8). | Vertical Slice design | None for MVP |
 | OQ-MDB-6 | **Ammo moves (Full Vision)** — `ammo_cost` stays 0 in MVP (Part DB rule; TBC AC-TBC-20); ammo-gated moves are a Full Vision expansion once Ammo Capacity is un-reserved. | Full Vision design | None for MVP |

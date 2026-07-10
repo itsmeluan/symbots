@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Created**: 2026-07-09
-> **Last Updated**: 2026-07-10 (Move Database designed — pending review)
+> **Last Updated**: 2026-07-10 (Move Database Approved — fix-confirmation re-review)
 > **Source Concept**: design/gdd/game-concept.md
 
 ---
@@ -26,7 +26,7 @@ designed first.
 | # | System Name | Category | Priority | Status | Design Doc | Depends On |
 |---|-------------|----------|----------|--------|------------|------------|
 | 1 | Part Database | Foundation | MVP | Approved | design/gdd/part-database.md | — |
-| 1a | Move Database | Foundation | MVP | Designed | design/gdd/move-database.md | Part Database |
+| 1a | Move Database | Foundation | MVP | Approved | design/gdd/move-database.md | Part Database |
 | 1b | Passive Database | Foundation | MVP | Not Started | — | Part Database |
 | 2 | Enemy Database | Foundation | MVP | Approved | design/gdd/enemy-database.md | Part Database |
 | 3 | Damage Formula System | Foundation | MVP | Approved | design/gdd/damage-formula.md | Part Database |

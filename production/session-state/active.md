@@ -1,8 +1,23 @@
 # Active Session State
 
 ## Current Task
-Session 14: **Move Database GDD authoring** (/design-system move-database, lean mode). Skeleton created at design/gdd/move-database.md; beginning Section A (Overview).
-**Key decision locked (this session):** Move DB will ADD a per-move power coefficient (renegotiating MOVE-CONTRACT-1's "stat-scaled only" constraint) so Light/Heavy/Signature moves differ in damage. Mechanism recommendation to settle at Formulas: POST-DF-1 multiply (mirrors ratified TBC-F5 Stagger; leaves DF-1 [1,225] + epsilon scans untouched) vs. inside-DF-1 (invalidates DF-1 range, needs TBC errata + re-scan). Central jobs: ratify/renegotiate MOVE-CONTRACT-1 (OQ-TBC-1), decide SCAN payload (OQ-TBC-3), UTILITY taxonomy (OQ-TBC-4).
+Session 15: **Move Database GDD `/design-review`** (full mode, 5 agents). Verdict **NEEDS REVISION — 4 blockers, all resolved same session**. Awaiting **fix-confirmation re-review in a FRESH session** (user chose this path).
+**Run next (after /clear):** `/design-review design/gdd/move-database.md` — fix-confirmation focus on the 4 fixed regions (below), not a full re-review (per CD).
+
+### Blockers resolved this session (all in design/gdd/move-database.md)
+1. Stale "errata unapplied" header (line 7) + OQ-MDB-3 → corrected to "applied 2026-07-10, verified vs TBC + registry"; OQ-MDB-3 marked RESOLVED. (TBC + registry were already correct; only this GDD lied.)
+2. False "Heat-gated" SIGNATURE 3-turn-kill rationale → rewritten. **Script-verified in-session:** at heat_gen 30/35/40 the boss dies turn 3 before any Overheat skip; at 30 it never Overheats. Kill is gated by the **A=150 max-synergy requirement**, not Heat. TTK numbers (3/4/5) were correct, unchanged.
+3. UTILITY defined by enumeration → now defined **by rule** (Rule 2): affects only user Heat/Energy, no damage/enemy-status/reveal.
+4. AC-MDB-15 BLOCKING-DEFERRED (phantom CI gate) → **ADVISORY-DEFERRED**, escalates to BLOCKING when content pipeline ships. AC summary count updated.
+
+### Recommended items NOT applied (deferred — user chose blockers-only)
+B-1 move-panel distinctness rule · AC-MDB-03 full-trap-list + overcorrection guard · AC-MDB-05 assert df1_output=187 intermediate · AC-MDB-19/20 unit-vs-integration boundary + AC-MDB-20 split · R-1 SCAN-vs-boss equilibrium · R-3 MVP status-rider-passive scoping. All logged in design/gdd/reviews/move-database-review-log.md.
+
+### Adjudicated disagreement (script-settled, CD concurred)
+qa-lead's AC-MDB-05 BLOCKING ("fixture gives 261 either way") REFUTED: correct=261, A-boost=275, prefloor=262 — fixture IS discriminating. Downgraded to RECOMMENDED.
+
+## Prior Task (Session 14 — CLOSED)
+Move Database GDD **authored** (/design-system move-database, lean mode) → status Designed. Key decisions: power_tier ENUM; MOVE-F1 POST-DF-1 multiply [1,315] (epsilon LOAD-BEARING, 10 cases); SCAN reveals break_regions (ED6); UTILITY=Vent; TBC errata applied to TBC + registry same session.
 
 ## Prior Task (Session 13 — CLOSED)
 Turn-Based Combat GDD: **APPROVED 2026-07-10** (fix-confirmation re-review, lean would-be — ran full fix-confirmation: systems-designer, qa-lead, game-designer, creative-director). All 7 round-1 blockers confirmed resolved; 0 new blockers. 3 non-gating follow-ups tracked in review log (AC-TBC-37 dual-path fixture; hit_resolved target→region-intent for Part-Break; ON_OVERHEAT dispatch watch). systems-index + review-log + GDD header updated.
@@ -80,8 +95,10 @@ Recommended also applied: AC-TBC-06 split (state vs. rendering — UI assertions
 2. /consistency-check to confirm the TBC-F5/[1,315] errata is coherent registry-wide
 3. Next MVP system in design order: #1b Passive Database (unblocks OQ-MDB-1 rider passives + TBC Rule 13 registry) OR #7 Encounter Zone
 
+<!-- CONSISTENCY-CHECK: 2026-07-10 | GDDs checked: 7 | Conflicts found: 1 (DF-1 range stale in damage-formula.md — resolved) | Log: docs/consistency-failures.md -->
+
 <!-- STATUS -->
 Epic: MVP Core GDDs
-Feature: Move Database GDD
-Task: COMPLETE (Designed, pending review) — TBC errata applied, registry updated
+Feature: Move Database GDD → APPROVED
+Task: /consistency-check PASS (1 conflict found + resolved: DF-1 range in damage-formula.md); next: /design-system Passive Database (#1b) or Encounter Zone (#7)
 <!-- /STATUS -->

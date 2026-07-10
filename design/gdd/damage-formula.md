@@ -1,8 +1,8 @@
 # Damage Formula System
 
-> **Status**: Approved (Round 2)
+> **Status**: Approved (Round 2) — errata applied 2026-07-10 (DF-1 input/output ranges updated per TBC re-derivation under SYNERGY_POWER_BUDGET=40)
 > **Author**: Luan + Claude Code (systems-designer)
-> **Last Updated**: 2026-07-09
+> **Last Updated**: 2026-07-10
 > **Implements Pillar**: Pillar 2 (Every Battle Has a Harvest Goal), Pillar 3 (Build Depth Over Content Breadth)
 
 ## Overview
@@ -133,20 +133,20 @@ The formula expression is identical for both paths — only the variable binding
 
 | Variable | Symbol | Type | Range | Description |
 |----------|--------|------|-------|-------------|
-| Attacker power | `A` | int | 0–110 | Resolved by routing rule: Physical Power (PHYSICAL) or Energy Power (ENERGY). Minimum realistic build value: ~20. |
-| Target defense | `D` | int | 0–110 | Resolved by routing rule: Armor (PHYSICAL) or Resistance (ENERGY). |
+| Attacker power | `A` | int | 0–150 | Resolved by routing rule: Physical Power (PHYSICAL) or Energy Power (ENERGY). Base max 110 (SA-F1); synergy-amplified to 150 (SYNERGY_POWER_BUDGET = 40). Minimum realistic build value: ~20. |
+| Target defense | `D` | int | 0–182 | Resolved by routing rule: Armor (PHYSICAL) or Resistance (ENERGY). Base max 132 (SA-F1); synergy-amplified to 182 (SYNERGY_DEFENSE_BUDGET = 50). |
 | Type effectiveness | `T` | float | {0.75, 1.0, 1.5} | Derived from skill element vs. target Core element via the type chart (Part Database Rule 6). Defaults to 1.0 if target Core element is null or unrecognized. |
 | Critical multiplier | `crit_mult` | float | 1.0 (MVP) | Always 1.0 in MVP — no crits fire. Full Vision will supply values > 1.0 when a crit triggers via the Targeting-derived Critical Rate stat. Multiplied before `floor()` — do not apply post-floor. |
 | Epsilon nudge | `EPSILON` | float | 0.0001 (fixed) | IEEE 754 guard applied inside `floor()` to correct floating-point underflow on mathematically-whole results. Not a tuning knob — fixed implementation constant. |
 | Damage floor | `DAMAGE_FLOOR` | int | 1 (default, tunable) | Minimum damage guaranteed regardless of defense or type effectiveness. Applied after `floor()` via `max()`. See Tuning Knobs. |
-| Intermediate value | `pre_floor` | float | 0.0–165.0 | Intermediate float before rounding. Not exposed outside the formula. |
-| Output | `final_damage` | int | 1–165 (realistic: 3–106) | Integer damage applied to target Structure. Always ≥ `DAMAGE_FLOOR`. |
+| Intermediate value | `pre_floor` | float | 0.0–225.0 | Intermediate float before rounding. Not exposed outside the formula. |
+| Output | `final_damage` | int | 1–225 (realistic: 3–164) | Integer damage applied to target Structure. Always ≥ `DAMAGE_FLOOR`. |
 
 **Output range:**
 - Absolute minimum: `DAMAGE_FLOOR` (1). Reached when `pre_floor` rounds to 0 — requires extremely low A against high D (e.g., A < 5 vs. D ≥ 60, ×0.75 type).
-- Absolute maximum: 165. Requires A=110, D=0, T=1.5 — theoretical only; no build zeros enemy defense.
+- Absolute maximum: 225. Requires A=150 (max synergy, SYNERGY_POWER_BUDGET=40), D=0, T=1.5 — theoretical only; no build zeros enemy defense.
 - Realistic minimum: 3. (A=20, D=60, T=0.75: `400/80 × 0.75 = 3.75 → floor = 3`)
-- Realistic maximum: 106. (A=80, D=10, T=1.5: `6400/90 × 1.5 = 106.67 → floor = 106`)
+- Realistic maximum: 164. (A=150, D=55, T=1.5: `22500/205 × 1.5 = 164.63 → floor = 164`) — TBC reference build, re-derived 2026-07-10 under SYNERGY_POWER_BUDGET=40.
 - No upper cap in MVP. If a damage ceiling is required, add it as a post-formula tuning knob in the Turn-Based Combat GDD.
 
 **Precision ordering (load-bearing):** Both `T` and `crit_mult` must be applied to the float `pre_floor` **before** the single `floor()` call. An implementation that floors `base_damage` first and then multiplies by `T` produces a different output and is incorrect.
