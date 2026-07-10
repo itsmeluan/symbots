@@ -55,3 +55,19 @@ All 5 blocking items resolved and all 8 recommended items addressed:
 Recommended: epsilon count 8→7; BOSS_GRADE_BREAK_GUARANTEE honest framing; EDB-2 BOSS Armor > 80 constraint note + S_max formula; OQ4 mobile 64–72% note; EDB-3 syntactic-only advisory; OQ7 minimum-meaningful multiplier; AC-ED-06(c) second positive fixture; AC-ED-04(f) BLOCKING ownership.
 
 **Next step**: `/clear` then `/design-review design/gdd/enemy-database.md` — fourth pass in fresh session to achieve APPROVED verdict.
+
+## Review — 2026-07-10 (Session 4) — Verdict: APPROVED
+Scope signal: L
+Specialists: game-designer, systems-designer, economy-designer, qa-lead; senior synthesis: creative-director
+Blocking items: 2 | Recommended: 18
+Summary: All 5 prior blocking items confirmed held. Two new true blockers: `region_fraction` field missing from Rule 5 break_regions schema (persistent gap across 3 prior reviews — EDB-1 requires it, AC-ED-07(a)/(d) and EC-ED-11 reference it; fixed by adding field to schema table, updating example record to `region_fraction: 0.48`, and clarifying EDB-1 prose to store both authored input and computed break_hp); floor loot rarity gap (un-gated pool parts had no rarity restriction, allowing Rare floor loot that silently undermines Pillar 2; fixed by adding content rule to Rule 6 requiring un-gated parts be Common rarity). Eighteen recommended AC improvements applied: EDB-2 TTK arithmetic corrected (Armor=90 TTK=13→12); OQ7 elevated from open question to dependency constraint; Combat UI added to Dependencies table; AC-ED-01 added ELITE class and wrong-type spawn_enabled fixtures; AC-ED-03 added size=4/5 boundary; AC-ED-04 added 1-disabled-of-2 boundary; AC-ED-06(d) added cross-enemy BOSS_GRADE fixture; AC-ED-07(b) added false-branch fixture; AC-ED-11 narrowed to integration scope only; AC-ED-12 added dedup-set semantics to unblock condition; AC-ED-14 added structure=89/90 classification boundary and dual-channel fixture; AC-ED-15(b) replaced [2,4] notation with explicit inequality language; four new ACs added (AC-ED-17 DB-side BOSS spawn warning, AC-ED-18 floor loot rarity, AC-ED-19 minimum break-gated parts, AC-ED-20 shared break_event positive case).
+Prior verdict resolved: Yes — all 5 prior blocking items confirmed resolved
+
+### Post-review revision (same session, 2026-07-10)
+All 2 blocking items and all 18 recommended items addressed:
+1. `region_fraction` added to Rule 5 break_regions schema as 5th field; example record updated; EDB-1 prose updated ("schema stores both region_fraction (authored input) and computed break_hp").
+2. Floor loot rarity rule added to Rule 6 (un-gated pool parts must be Common rarity to preserve Pillar 2's floor loot purpose).
+Recommended: EDB-2 TTK=12 correction; OQ7 dependency constraint elevation; Combat UI dependency added; AC-ED-01/03/04/06(d)/07(b)/11/12/14/15(b) all improved with additional fixtures and boundary clarity; AC-ED-17/18/19/20 added.
+Status updated: Pending Review → Approved. systems-index.md updated: In Review → Approved.
+
+**Next step**: `/design-system symbot-assembly` — #4 in design order (Core, MVP).
