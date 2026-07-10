@@ -1,8 +1,25 @@
 # Active Session State
 
 ## Current Task
-Session 15: **Move Database GDD `/design-review`** (full mode, 5 agents). Verdict **NEEDS REVISION — 4 blockers, all resolved same session**. Awaiting **fix-confirmation re-review in a FRESH session** (user chose this path).
-**Run next (after /clear):** `/design-review design/gdd/move-database.md` — fix-confirmation focus on the 4 fixed regions (below), not a full re-review (per CD).
+Session 16: **Passive Database GDD `/design-review`** (full mode: game-designer, systems-designer, qa-lead, creative-director). Verdict **NEEDS REVISION — 4 blocking gates, all resolved same session**. Awaiting **fix-confirmation re-review in a FRESH session** (user chose this path).
+**Run next (after /clear):** `/design-review design/gdd/passive-database.md` — fix-confirmation focus on the 4 fixed regions (below), not a full re-review.
+
+### Passive DB blockers resolved this session (all in design/gdd/passive-database.md)
+1. **Schema hole** — STAT_AURA/RESOURCE_EFFECT/STRUCTURAL_EFFECT had no data fields → added **Rule 3a `behavior_params`** typed sub-schema; added field to Rule 1 + Rule 5 table.
+2. **Axis decision (dissolved 2 blocks)** — ratified **`behavior_class` as sole resolution axis**; `passive_class` demoted to pure metadata; **Rule 4 stacking defaults re-keyed onto `behavior_class`**.
+3. **`scope`/`ON_WEAPON_HIT` + TBC vocab mismatch** — removed `ON_WEAPON_HIT`; collapsed to `ON_HIT` + `scope: WEAPON_ONLY` (matches TBC Rule 13 exactly, grounded by reading TBC line 101); added `ON_TURN_START` for parity; `PERSISTENT` = application mode. Added Rule 2a (ON_OVERHEAT fires BEFORE Overheat consequence).
+4. **AC-PDB-02 orphan fixture untestable** (guardrail for PassiveDB↔TBC divergence) — gave it `ON_BATTLE_START` trigger + observable + substring-ID assertion + FAIL. AC count corrected (was "9 BLOCKING" → 12 BLOCKING + 5 ADV-DEFERRED + 4 activates-on-first-content).
+5. **OQ-PDB-1 reclassified** as named critical-path dependency (blocks Part DB Rare+ Core entries + Pillars 3–4) with content charter (flat-riders-by-design; inherits AC-PDB-D1–D4; ~12-combo Core ceiling).
+Also added: Rule 3 trigger×behavior legality matrix; EC-PDB-08 + AC-PDB-15/16/17 (negative STRUCTURAL_EFFECT); tightened AC-04/05/06/08.
+
+### Deliberately deferred to OQ-PDB-1 content pass (CD ruling — NOT schema defects)
+Player Fantasy thinness (3 flat riders fire identically regardless of build depth — UNIQUE_PER_TRIGGER makes 6-part Volt stack == 1-part); actual Core identity passive roster. Both now owned/dated in the OQ-PDB-1 charter.
+Full detail: design/gdd/reviews/passive-database-review-log.md
+
+---
+
+## Prior Task (Session 15 — CLOSED)
+**Move Database GDD `/design-review`** — Verdict NEEDS REVISION, 4 blockers resolved same session. (Was awaiting fix-confirmation re-review; superseded — check move-database-review-log.md for status.)
 
 ### Blockers resolved this session (all in design/gdd/move-database.md)
 1. Stale "errata unapplied" header (line 7) + OQ-MDB-3 → corrected to "applied 2026-07-10, verified vs TBC + registry"; OQ-MDB-3 marked RESOLVED. (TBC + registry were already correct; only this GDD lied.)
@@ -99,6 +116,6 @@ Recommended also applied: AC-TBC-06 split (state vs. rendering — UI assertions
 
 <!-- STATUS -->
 Epic: MVP Core GDDs
-Feature: Move Database GDD → APPROVED
-Task: Passive Database GDD COMPLETE (all 8 sections + Visual/Audio, UI, Open Questions) — status Designed; awaiting /design-review in a fresh session
+Feature: Passive Database GDD → NEEDS REVISION (revised in-session)
+Task: 4 blocking gates fixed; awaiting fix-confirmation /design-review in a fresh session
 <!-- /STATUS -->

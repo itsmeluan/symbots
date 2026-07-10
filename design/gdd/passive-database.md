@@ -1,8 +1,9 @@
 # Passive Database
 
-> **Status**: In Design
+> **Status**: In Design — revised 2026-07-10 post-review (4 blocking gates addressed; awaiting fix-confirmation re-review)
 > **Author**: Luan + Claude Code Game Studios agents
 > **Last Updated**: 2026-07-10
+> **Review**: First /design-review 2026-07-10 (game-designer, systems-designer, qa-lead, creative-director) — verdict NEEDS REVISION. Revisions applied: (1) `behavior_params` sub-schema added (Rule 3a) so STAT_AURA/RESOURCE_EFFECT/STRUCTURAL_EFFECT are implementable; `behavior_class` ratified as the resolution axis, `passive_class` demoted to pure metadata; Rule 4 stacking defaults re-keyed onto `behavior_class`. (2) `ON_WEAPON_HIT` trigger removed — collapsed into `ON_HIT` + `scope: WEAPON_ONLY` to match TBC Rule 13 exactly; `ON_TURN_START` added for TBC-enum parity; `PERSISTENT` clarified as an application mode. (3) AC-PDB-02 orphan fixture given a concrete trigger + observable + FAIL; AC-PDB-06 positive case added; AC-PDB-08 ordering observable named; AC count corrected. (4) OQ-PDB-1 reclassified as named critical-path dependency with a content charter. Added Rule 2a (ON_OVERHEAT ordering), Rule 3 legality matrix, EC-PDB-08 + AC-PDB-15/16/17, deferred AC-PDB-D1–D4.
 > **Implements Pillar**: Pillar 3 (Build Depth Over Content Breadth), Pillar 4 (Synergy Is the Endgame)
 
 ## Overview
@@ -33,26 +34,31 @@ This system's fantasy is delivered entirely through Turn-Based Combat (where pas
 | `display_name` | String | Player-visible passive name in Workshop and battle log |
 | `short_description` | String | 1–2 sentence description of what the passive does, written for players |
 | `trigger_category` | Enum | When the passive fires (Rule 2) |
-| `scope` | Enum | `ANY_DAMAGE` / `WEAPON_ONLY` — relevant for ON_HIT triggers; `null` for others |
-| `behavior_class` | Enum | What the passive does (Rule 3) |
+| `scope` | Enum | `ANY_DAMAGE` / `WEAPON_ONLY` — the move-slot filter for `ON_HIT` triggers; `null` for all non-`ON_HIT` triggers |
+| `behavior_class` | Enum | What the passive does (Rule 3). **This is the authoritative resolution axis** — TBC's Rule 13 executor branches on `behavior_class`, not `passive_class`. |
+| `behavior_params` | Dictionary | Typed per-`behavior_class` payload holding the numeric/target data the effect needs (Rule 3a). The one field whose keys vary by `behavior_class`. |
 | `stacking_policy` | Enum | `UNIQUE`, `UNIQUE_PER_TRIGGER`, or `STACKABLE` (Rule 4) |
-| `passive_class` | Enum | `STATUS_RIDER` / `CORE_TRAIT` / `UPGRADE_PASSIVE` — authoring classification only; does not change resolution |
+| `passive_class` | Enum | `STATUS_RIDER` / `CORE_TRAIT` / `UPGRADE_PASSIVE` — **pure authoring/display metadata. It does not change resolution and does not derive stacking policy** (Rule 4 defaults key on `behavior_class`). Consumed only by content-validation tooling (AC-PDB-12) and Workshop UI display. |
 
 `heat_generation` and `energy_cost` are never on a passive — passives fire automatically and consume no player resources (they are not moves).
 
+**Note on the two class fields:** `behavior_class` and `passive_class` share the token `STATUS_RIDER` but are different axes. `behavior_class` answers *what the effect does* (drives runtime resolution and `behavior_params` shape); `passive_class` answers *what authoring role the passive plays* (drives validation and UI only). When they appear to conflict (e.g., a `CORE_TRAIT` passive with a `STATUS_RIDER` behavior), `behavior_class` wins at runtime — `passive_class` never gates execution (EC-PDB-07).
+
 ---
 
-**Rule 2 — Trigger Categories (MVP).** A passive fires when its trigger condition occurs on the combatant carrying it:
+**Rule 2 — Trigger Categories (MVP).** A passive fires when its trigger condition occurs on the combatant carrying it. **This enum mirrors TBC's Rule 13 trigger enum exactly** (`ON_HIT, ON_TURN_START, ON_OVERHEAT, ON_BATTLE_START`) — it is the shared vocabulary, not an independent spec. There is **no `ON_WEAPON_HIT` trigger**: weapon-slot narrowing is expressed by the `scope` field on an `ON_HIT` trigger, matching how TBC Rule 13 registers `thermal_burn_on_weapon` as "`ON_HIT` (WEAPON-slot moves)".
 
 | `trigger_category` | When it fires |
 |--------------------|--------------|
-| `ON_HIT` | The carrying Symbot's DAMAGE move lands a hit (`hit_resolved` emitted by TBC) |
-| `ON_WEAPON_HIT` | Same as `ON_HIT`, narrowed to WEAPON-slot moves only |
+| `ON_HIT` | The carrying Symbot's DAMAGE move lands a hit (`hit_resolved` emitted by TBC). The `scope` field narrows this: `ANY_DAMAGE` fires on any DAMAGE move; `WEAPON_ONLY` fires only on WEAPON-slot DAMAGE moves. |
+| `ON_TURN_START` | The start of the carrying Symbot's turn (TBC Rule 4 turn-start phase). No MVP content; listed for TBC-enum parity. |
 | `ON_BATTLE_START` | Once per battle, during TBC's BATTLE_INIT phase before the first turn |
-| `ON_OVERHEAT` | The carrying Symbot triggers Overheat (Heat reaches 100) |
-| `PERSISTENT` | Active for the entire battle; applies from BATTLE_INIT and never re-triggers |
+| `ON_OVERHEAT` | The carrying Symbot triggers Overheat — the Heat-reaches-100 transition (Part DB Formula 5). Fires **once on the transition**, not every turn spent in the OVERHEATED carry-in state. TBC fires the passive *before* applying the Overheat consequence (self-damage + skip); see Rule 2a. |
+| `PERSISTENT` | **Not an event trigger — an application mode.** The effect applies once at BATTLE_INIT and stays active for the whole battle without re-firing. TBC implements it as a one-shot application at BATTLE_INIT with no teardown. `stacking_policy` for a `PERSISTENT` passive resolves at application time (BATTLE_INIT), not per-event. |
 
-All triggers resolve through TBC's Rule 13 registry. The `trigger_category` in this catalog must match the TBC registry entry exactly — it is the shared vocabulary, not an independent spec.
+---
+
+**Rule 2a — `ON_OVERHEAT` firing order (TBC contract).** When Heat reaches 100, TBC fires all `ON_OVERHEAT` passives **before** resolving the Overheat consequence (the 10%-max-structure self-damage and turn-skip of TBC Rule 4). A `RESOURCE_EFFECT` `ON_OVERHEAT` passive that vents Heat therefore fires *after* the Overheat has already triggered — it cannot retroactively cancel the self-damage or the skip. This is by design: `ON_OVERHEAT` is a "when the bad thing happens" hook, not a "prevent the bad thing" hook. Any change to this ordering requires a simultaneous TBC Rule 13 / Rule 4 update.
 
 ---
 
@@ -60,12 +66,34 @@ All triggers resolve through TBC's Rule 13 registry. The `trigger_category` in t
 
 | `behavior_class` | What it does | Typical trigger |
 |-----------------|-------------|----------------|
-| `STATUS_RIDER` | Applies a status effect (Shock / Burn / Stagger) automatically | `ON_HIT` or `ON_WEAPON_HIT` |
+| `STATUS_RIDER` | Applies a status effect (Shock / Burn / Stagger) automatically | `ON_HIT` (with `scope`) |
 | `STAT_AURA` | Modifies a combat stat for the entire battle (runtime only — Part DB `final_stat` unchanged) | `PERSISTENT` |
 | `RESOURCE_EFFECT` | Modifies Heat or Energy immediately when triggered | `ON_BATTLE_START` or `ON_OVERHEAT` |
 | `STRUCTURAL_EFFECT` | Modifies current or max Structure immediately when triggered | `ON_BATTLE_START` |
 
 Additional behavior classes (`CONDITIONAL_BUFF`, `SPAWN_EFFECT`) are reserved for Vertical Slice+. A passive may not combine two behavior classes — one entry, one effect.
+
+**Allowed trigger × behavior combinations (MVP).** A content author must pick a legal pairing; content validation (AC-PDB-15) rejects the rest. Illegal pairings are semantically incoherent (e.g., a `STATUS_RIDER` firing at `ON_BATTLE_START` would apply a status before any hit lands):
+
+| `behavior_class` | Legal `trigger_category` values |
+|-----------------|--------------------------------|
+| `STATUS_RIDER` | `ON_HIT` only |
+| `STAT_AURA` | `PERSISTENT` only |
+| `RESOURCE_EFFECT` | `ON_BATTLE_START`, `ON_TURN_START`, `ON_OVERHEAT` |
+| `STRUCTURAL_EFFECT` | `ON_BATTLE_START`, `ON_TURN_START`, `ON_OVERHEAT` |
+
+---
+
+**Rule 3a — `behavior_params` schema (per behavior class).** The `behavior_class` determines which keys `behavior_params` carries. This is the storage the resolution needs; TBC reads these keys to execute the effect. A validator (AC-PDB-16) checks the payload matches the class.
+
+| `behavior_class` | `behavior_params` keys | Notes |
+|-----------------|------------------------|-------|
+| `STATUS_RIDER` | `{ status_id: Enum, duration: int }` | `status_id` ∈ {SHOCK, BURN, STAGGER}; `duration` in turns. Magnitude/potency is TBC's (TBC-F3/F4/F5) — this only names the status and its duration. |
+| `STAT_AURA` | `{ stat: StringName, delta: int }` | `stat` is a `final_stat` key; `delta` is a flat authored integer within the stat's safe range (see Formulas). Applied via SYN-F4 clamp. |
+| `RESOURCE_EFFECT` | `{ resource: Enum, amount: int }` | `resource` ∈ {HEAT, ENERGY}; `amount` is a signed authored integer, clamped by the resource cap (Heat 100 / Energy Capacity). |
+| `STRUCTURAL_EFFECT` | `{ target: Enum, amount: int }` | `target` ∈ {CURRENT_STRUCTURE, MAX_STRUCTURE}; `amount` is a signed authored integer, clamped by the Structure floor (0) and ceiling (`max_structure`). Negative `amount` is a content authoring error (EC-PDB-08). |
+
+The three MVP status riders (Rule 5) populate `behavior_params` as `{ status_id, duration }` — e.g., `volt_shock_on_hit` → `{ status_id: SHOCK, duration: 1 }`.
 
 ---
 
@@ -77,21 +105,25 @@ Additional behavior classes (`CONDITIONAL_BUFF`, `SPAWN_EFFECT`) are reserved fo
 | `UNIQUE_PER_TRIGGER` | Multiple sources may exist, but the effect fires at most **once per trigger event** (once per hit, once per battle start). The instances de-duplicate at fire time. Best for `STATUS_RIDER` passives — prevents multi-Shock on a single hit from two sources of the same rider. |
 | `STACKABLE` | Each source fires independently. Best for non-status `RESOURCE_EFFECT` passives where the intent is that deeper investment yields more payoff. |
 
-**Default policies by passive class:**
-- `STATUS_RIDER` → `UNIQUE_PER_TRIGGER`
-- `CORE_TRAIT` (any behavior class) → `UNIQUE` (reinforced by Part DB's one-Core-per-Symbot schema)
-- `UPGRADE_PASSIVE` that grants a status rider → inherits the rider's `UNIQUE_PER_TRIGGER`
-- `UPGRADE_PASSIVE` that grants a `RESOURCE_EFFECT` → `STACKABLE` (upgrade investment deepens the reward)
+**Default policies by `behavior_class`** (the resolution axis — not `passive_class`, which is metadata only):
+- `STATUS_RIDER` → `UNIQUE_PER_TRIGGER` (prevents multi-Shock on a single hit from two sources of the same rider)
+- `STAT_AURA` → `UNIQUE` (double-applying a persistent stat delta is unintended)
+- `STRUCTURAL_EFFECT` → `UNIQUE` (double-application would be unintentional)
+- `RESOURCE_EFFECT` → `STACKABLE` (deeper investment yields more payoff — the one class where multi-source stacking is the intent)
+
+`stacking_policy` is authored per entry; these are the defaults a content author starts from. `passive_class` (STATUS_RIDER / CORE_TRAIT / UPGRADE_PASSIVE) does **not** influence stacking — a `CORE_TRAIT`-authored `STAT_AURA` gets `UNIQUE` from its `behavior_class`, and its one-instance guarantee is *additionally* reinforced by Part DB's one-Core-per-Symbot schema, but the policy derives from the behavior, not the authoring class.
 
 ---
 
 **Rule 5 — Status Rider Passives (OQ-MDB-1 resolution, TBC Rule 13 ratification).** These three entries formally ratify the MVP status rider IDs seeded in TBC Rule 13. The Passive Database is the design-level source of truth; TBC Rule 13 is the runtime executor. Both documents must agree — any change to these entries requires updating TBC Rule 13 simultaneously.
 
-| `id` | `trigger_category` | `scope` | `behavior_class` | Effect | `stacking_policy` |
-|------|--------------------|---------|-----------------|--------|------------------|
-| `volt_shock_on_hit` | `ON_HIT` | `ANY_DAMAGE` | `STATUS_RIDER` | Applies Shock for **1 turn** (shorter than the STATUS-move's 2 — the passive rider is a weaker, automatic application) | `UNIQUE_PER_TRIGGER` |
-| `thermal_burn_on_weapon` | `ON_WEAPON_HIT` | `WEAPON_ONLY` | `STATUS_RIDER` | Applies Burn for **2 turns** (full duration — Weapon attacks are the primary damage source; the Weapon rider is full-strength) | `UNIQUE_PER_TRIGGER` |
-| `kinetic_stagger_on_hit` | `ON_HIT` | `ANY_DAMAGE` | `STATUS_RIDER` | Applies Stagger for **1 turn** | `UNIQUE_PER_TRIGGER` |
+| `id` | `trigger_category` | `scope` | `behavior_class` | `behavior_params` | Effect | `stacking_policy` |
+|------|--------------------|---------|-----------------|-------------------|--------|------------------|
+| `volt_shock_on_hit` | `ON_HIT` | `ANY_DAMAGE` | `STATUS_RIDER` | `{ SHOCK, 1 }` | Applies Shock for **1 turn** (shorter than the STATUS-move's 2 — the passive rider is a weaker, automatic application) | `UNIQUE_PER_TRIGGER` |
+| `thermal_burn_on_weapon` | `ON_HIT` | `WEAPON_ONLY` | `STATUS_RIDER` | `{ BURN, 2 }` | Applies Burn for **2 turns** (full duration — Weapon attacks are the primary damage source; the Weapon rider is full-strength). Weapon-slot narrowing is the `scope` field, matching TBC Rule 13's "`ON_HIT` (WEAPON-slot moves)". | `UNIQUE_PER_TRIGGER` |
+| `kinetic_stagger_on_hit` | `ON_HIT` | `ANY_DAMAGE` | `STATUS_RIDER` | `{ STAGGER, 1 }` | Applies Stagger for **1 turn** | `UNIQUE_PER_TRIGGER` |
+
+All three register in TBC Rule 13 as `ON_HIT` triggers — vocabulary now matches TBC exactly (no `ON_WEAPON_HIT` divergence).
 
 These IDs may be granted by: part `passive_id` fields (Weapon or Arms parts with a status-rider passive), Synergy tier `effects` arrays, or SKILL_ENHANCE upgrades (Move DB Rule 9). The stacking policy applies across all sources — even if a Synergy grants `volt_shock_on_hit` AND a part also has it as `passive_id`, Shock fires only once per hit.
 
@@ -113,7 +145,7 @@ These IDs may be granted by: part `passive_id` fields (Weapon or Arms parts with
 
 ---
 
-**Rule 7 — Upgrade-Granted Passives (SKILL_ENHANCE path).** Move DB Rule 9 defines `SKILL_ENHANCE` as a part upgrade effect that can "add a passive rider ID" at a specified tier. Any passive ID added via SKILL_ENHANCE must exist in this catalog before it can be authored in content. The Passive Database does not define *which parts* unlock which passives at which tiers (that is the part's `upgrade_effects` array, owned by Part DB / Move DB) — it defines what each passive ID means. A SKILL_ENHANCE that adds `volt_shock_on_hit` inherits that entry's trigger, scope, behavior class, and stacking policy without overriding them.
+**Rule 7 — Upgrade-Granted Passives (SKILL_ENHANCE path).** Move DB Rule 9 defines `SKILL_ENHANCE` as a part upgrade effect that can "add a passive rider ID" at a specified tier. Any passive ID added via SKILL_ENHANCE must exist in this catalog before it can be authored in content. The Passive Database does not define *which parts* unlock which passives at which tiers (that is the part's `upgrade_effects` array, owned by Part DB / Move DB) — it defines what each passive ID means. A SKILL_ENHANCE that adds `volt_shock_on_hit` inherits that entry's trigger, scope, behavior class, `behavior_params`, and stacking policy without overriding them.
 
 ### States and Transitions
 
@@ -136,7 +168,7 @@ The Passive Database owns no computational formulas. Passive entries are definit
 - **Status effect potency** (Burn damage, Shock mobility penalty, Stagger reduction) — owned by Turn-Based Combat (TBC-F3, TBC-F4, TBC-F5). The Passive Database's status rider entries specify which status and its duration; the scaling formula is TBC's.
 - **STAT_AURA numeric values** — the specific stat delta applied by a STAT_AURA passive is a per-entry authored value (an integer in the passive's catalog entry). There is no scaling formula; it is a flat authored number. **Content constraint:** STAT_AURA deltas must be integers and must be within the affected stat's safe range (per Part DB stat budget tables and the SA-F1 output ranges in the registry) — a runtime STAT_AURA that would push a stat above its practical ceiling is a content authoring error, not handled by a formula.
 - **RESOURCE_EFFECT numeric values** — Heat or Energy amounts modified by a `RESOURCE_EFFECT` passive are per-entry authored integers, not derived from a formula. They do not scale with any stat. **Content constraint:** Heat amounts must respect the Heat cap (100, Part DB Formula 5); Energy amounts must respect Energy Capacity (Part DB Formula 6). Authored values should be modest enough that `ON_BATTLE_START` resource effects don't trivialize the opening turns.
-- **STRUCTURAL_EFFECT numeric values** — same pattern: per-entry authored integers, clamped by TBC's Structure floor (0) and ceiling (current `max_structure` at the moment of trigger).
+- **STRUCTURAL_EFFECT numeric values** — same pattern: per-entry authored integers, clamped by TBC's Structure floor (0) and ceiling (current `max_structure` at the moment of trigger). **Content constraint:** a `STRUCTURAL_EFFECT` `amount` targeting `CURRENT_STRUCTURE` must be **non-negative** — unlike `STAT_AURA` (where a negative delta is a legitimate debuff), a negative structural amount means self-damage at trigger time, which no MVP passive should author. Content validation rejects negative `CURRENT_STRUCTURE` amounts (AC-PDB-16); at runtime the floor clamp prevents a crash but the effect is a design error (EC-PDB-08).
 
 **Interaction with registry constants:** The 3 status rider passives (Rule 5) produce effects governed by TBC-F3 (Burn), TBC-F4 (Shock), and TBC-F5 (Stagger). Their output ranges are unchanged by Passive DB — the Passive Database only specifies that the effect fires; the magnitude is determined by the applier's `snapshotted_processing` stat at fire time per TBC's snapshot contract (pre-synergy, per TBC Rule 10).
 
@@ -154,7 +186,9 @@ The Passive Database owns no computational formulas. Passive entries are definit
 
 **EC-PDB-06 — `STRUCTURAL_EFFECT` passive fires when the Symbot is at `max_structure`.** The passive restores Structure but the Symbot is at full health. Overheal above `max_structure` is discarded (TBC EC-TBC-10 principle applies here by analogy). The passive fires normally; excess is wasted. No crash. *Verified by AC-PDB-06.*
 
-**EC-PDB-07 — `CORE_TRAIT` passive authored with `trigger_category: ON_HIT`.** Violates the Core identity doctrine (Rule 6, constraint 2). Content validation flags it naming the passive ID. At runtime: the passive still fires per its trigger category (the `passive_class` field is authoring metadata only, not a runtime gate). *Verified by AC-PDB-07 (content validator).*
+**EC-PDB-07 — `CORE_TRAIT` passive authored with `trigger_category: ON_HIT`.** Violates the Core identity doctrine (Rule 6, constraint 2). Content validation flags it naming the passive ID. At runtime: the passive still fires per its `behavior_class`/`trigger_category` (the `passive_class` field is authoring metadata only, not a runtime gate — `behavior_class` is the resolution axis). *Verified at authoring by AC-PDB-12 (content validator); the runtime "fires anyway" behavior is verified by TBC's Rule 13 dispatch tests (TBC AC-TBC-40 family), not by a Passive DB unit test — Passive DB owns no runtime executor.*
+
+**EC-PDB-08 — `STRUCTURAL_EFFECT` passive authored with a negative `CURRENT_STRUCTURE` amount.** A content authoring error (e.g., `amount: -20` instead of `20`) that would damage the carrying Symbot when the passive triggers. Content validation rejects it at authoring time (naming the passive ID). At runtime, if it ships anyway: TBC applies it through the Structure floor clamp — `current_structure = max(0, current_structure + amount)` — so Structure cannot go below 0 and no crash occurs, but the Symbot takes unintended self-damage. This mirrors EC-PDB-05's treatment of negative `STAT_AURA`, except a negative structural amount is *never* legitimate (a negative stat aura can be an intentional debuff). *Verified by AC-PDB-16 (content validator) and AC-PDB-17 (runtime clamp).*
 
 ## Dependencies
 
@@ -222,23 +256,27 @@ ACs marked **BLOCKING** are Logic-type — automated unit tests in `tests/unit/p
 
 **AC-PDB-01** (BLOCKING): a lookup for a `passive_id` with no Passive DB catalog entry returns `null` and never throws. *Verifies EC-PDB-01.*
 
-**AC-PDB-02** (BLOCKING): a valid Passive DB catalog entry whose ID is absent from TBC's Rule 13 registry does not fire during battle — TBC skips it and logs exactly one content error naming the ID; no crash; other passives on the same Symbot unaffected. *Verifies EC-PDB-02.* GIVEN a Symbot has `passive_id = &"orphaned_test_passive"` (in Passive DB catalog, absent from TBC Rule 13), WHEN the trigger condition fires, THEN no effect resolves; exactly one content error logged; `volt_shock_on_hit` on the same Symbot fires normally.
+**AC-PDB-02** (BLOCKING): a valid Passive DB catalog entry whose ID is absent from TBC's Rule 13 registry does not fire during battle — TBC skips it and logs exactly one content error naming the ID; no crash; other passives on the same Symbot unaffected. *Verifies EC-PDB-02.*
+GIVEN the Passive DB catalog contains `orphaned_test_passive` with `trigger_category: ON_BATTLE_START`, `behavior_class: RESOURCE_EFFECT`, `behavior_params: { HEAT, -10 }`, and this ID is **absent from TBC's Rule 13 registry**, AND a Symbot carries both `passive_id = &"orphaned_test_passive"` and `volt_shock_on_hit` (the latter present in Rule 13),
+WHEN the battle starts (firing the `ON_BATTLE_START` phase) and the Symbot then lands a DAMAGE hit,
+THEN `orphaned_test_passive` resolves to no effect (Heat unchanged by it); exactly one content error is logged whose message contains the substring `"orphaned_test_passive"`; `volt_shock_on_hit` applies Shock normally on the hit.
+FAIL: zero errors logged (silent skip); two or more errors logged (per-trigger log spam); the log message omits the ID; a crash; or `volt_shock_on_hit` is suppressed. *Chose `ON_BATTLE_START` for the fixture because it needs no hit setup to fire the orphan's trigger.*
 
 **AC-PDB-03** (BLOCKING): a well-formed Passive DB entry carries all required fields (`id`, `display_name`, `short_description`, `trigger_category`, `behavior_class`, `stacking_policy`, `passive_class`) and does NOT carry `heat_generation` or `energy_cost`. *Rule 1.*
 
 ### Status Rider Passives (Rule 5 — OQ-MDB-1 resolution)
 
-**AC-PDB-04** (BLOCKING): `volt_shock_on_hit` fires on any DAMAGE move hit and applies Shock for **1 turn**. Fixture: Symbot with `passive_id = &"volt_shock_on_hit"`, STANDARD-tier DAMAGE move lands. THEN target has Shock status, `duration = 1`. FAIL: no Shock applied; duration = 2 (matching STATUS move — wrong). NEGATIVE case: REPAIR move does not trigger it.
+**AC-PDB-04** (BLOCKING): `volt_shock_on_hit` fires on any DAMAGE move hit and applies Shock for **1 turn**. GIVEN attacker Symbot A carries `passive_id = &"volt_shock_on_hit"` and target Symbot B has no Shock, WHEN A lands a STANDARD-tier DAMAGE move on B, THEN B has Shock status with `duration = 1`. FAIL: no Shock applied; `duration = 2` (matching STATUS move — wrong); `duration = 0` (registered but no-op). NEGATIVE case: A's REPAIR move does not apply Shock to any target.
 
-**AC-PDB-05** (BLOCKING): `thermal_burn_on_weapon` fires on WEAPON-slot DAMAGE move hits and applies Burn for **2 turns**. NEGATIVE case: ARM-slot DAMAGE move does not trigger it (`scope = WEAPON_ONLY`). FAIL: fires on Arms move; duration ≠ 2.
+**AC-PDB-05** (BLOCKING): `thermal_burn_on_weapon` fires on WEAPON-slot DAMAGE move hits and applies Burn for **2 turns**. GIVEN attacker A carries `passive_id = &"thermal_burn_on_weapon"` (`scope = WEAPON_ONLY`), WHEN A lands a WEAPON-slot DAMAGE move on target B, THEN B has Burn with `duration = 2`. NEGATIVE case: when A lands an ARMS-slot DAMAGE move on B, B has no Burn (scope excludes it). FAIL: fires on an ARMS-slot move; `duration = 1` (Shock duration copied); `duration ≠ 2`.
 
-**AC-PDB-06** (BLOCKING): `kinetic_stagger_on_hit` fires on any DAMAGE move hit and applies Stagger for **1 turn**. FAIL: fires on STATUS or REPAIR moves.
+**AC-PDB-06** (BLOCKING): `kinetic_stagger_on_hit` fires on any DAMAGE move hit and applies Stagger for **1 turn**. GIVEN attacker A carries `passive_id = &"kinetic_stagger_on_hit"`, WHEN A lands a DAMAGE move on target B, THEN B has Stagger with `duration = 1`. FAIL: no Stagger applied; `duration ≠ 1`. NEGATIVE case: A's STATUS move and A's REPAIR move do not apply Stagger.
 
 ### Stacking Policy
 
 **AC-PDB-07** (BLOCKING): `UNIQUE_PER_TRIGGER` — two sources of `volt_shock_on_hit` (one from part `passive_id`, one from synergy `effects`) produce exactly **one Shock application** on a single hit. FAIL: two Shocks applied; or second application overwrites with a duration reset (distinct bug from double-apply). *Verifies EC-PDB-04.*
 
-**AC-PDB-08** (BLOCKING): two passives with **different IDs** and the same `trigger_category` (`volt_shock_on_hit` + `kinetic_stagger_on_hit`) both fire on the same DAMAGE hit — both statuses applied, each exactly once, in alphabetical ID order. FAIL: only one fires; wrong order. *Verifies EC-PDB-03.*
+**AC-PDB-08** (BLOCKING): two passives with **different IDs** and the same `trigger_category` (`volt_shock_on_hit` + `kinetic_stagger_on_hit`) both fire on the same DAMAGE hit — both statuses applied, each exactly once, in alphabetical ID order. GIVEN attacker A carries both passives, WHEN A lands a DAMAGE hit on B, THEN B has both Shock (`duration = 1`) and Stagger (`duration = 1`); AND the **TBC passive proc log** records the two proc entries in alphabetical ID order — `kinetic_stagger_on_hit` before `volt_shock_on_hit` (k < v). FAIL: only one status applied; either status applied twice; proc log lists `volt_shock_on_hit` first (wrong order) or the ordering observable is a set with no defined order. *Verifies EC-PDB-03. Ordering observable is the proc log emission sequence, consistent with Synergy's determinism rule.*
 
 **AC-PDB-09** (BLOCKING): a `UNIQUE` passive granted twice (part `passive_id` + a second source) — only one instance active; the second source adds no additional effect. Runtime state holds exactly one entry for the ID. FAIL: two instances active.
 
@@ -248,6 +286,8 @@ ACs marked **BLOCKING** are Logic-type — automated unit tests in `tests/unit/p
 
 **AC-PDB-11** (BLOCKING): `STRUCTURAL_EFFECT` passive fires on a full-Structure Symbot — excess heal discarded, Structure stays at `max_structure`, no crash. FAIL: overheal persists; crash. *Verifies EC-PDB-06.*
 
+**AC-PDB-17** (BLOCKING): a `STRUCTURAL_EFFECT` passive with a negative `CURRENT_STRUCTURE` amount (a shipped authoring error) applied to a low-Structure Symbot — `current_structure = max(0, current_structure + amount)` clamps at 0; Structure never goes negative; no crash. FAIL: negative Structure; crash. *Verifies EC-PDB-08 (runtime path).*
+
 ### Content Validation (ADVISORY, DEFERRED)
 
 **AC-PDB-12** (ADVISORY-DEFERRED): a `CORE_TRAIT` passive authored with `trigger_category: ON_HIT` — content validator flags it naming the passive ID. *Unblocks when: Passive DB content-authoring pipeline and schema validation tooling exist. Verifies EC-PDB-07.*
@@ -256,14 +296,40 @@ ACs marked **BLOCKING** are Logic-type — automated unit tests in `tests/unit/p
 
 **AC-PDB-14** (ADVISORY-DEFERRED): every Boss-grade or Prototype Core passive in MVP content has a unique `trigger_category` + `behavior_class` combination — content validator flags duplicates naming both passive IDs. *Unblocks when: MVP Core passive content is authored (OQ-PDB-1) and content validation tooling exists.*
 
+**AC-PDB-15** (ADVISORY-DEFERRED): a passive entry with an illegal `trigger_category` × `behavior_class` pairing (per Rule 3's legality table — e.g., `STATUS_RIDER` + `ON_BATTLE_START`) — content validator rejects it naming the passive ID and the illegal pairing. *Unblocks when: schema validation tooling exists.*
+
+**AC-PDB-16** (ADVISORY-DEFERRED): a passive entry whose `behavior_params` does not match its `behavior_class` (missing a required key, wrong key set, or a negative `CURRENT_STRUCTURE` amount per EC-PDB-08) — content validator rejects it naming the passive ID and the offending field. *Unblocks when: schema validation tooling exists. Verifies EC-PDB-08 (authoring path).*
+
+### Deferred — Activates on First Content (OQ-PDB-1 entry criteria)
+
+These positive-path ACs cover behavior classes and triggers with **no MVP content yet** (all three shipped passives are `STATUS_RIDER` + `ON_HIT`). They are not blocking *this* GDD because nothing exercises these paths — but they become **BLOCKING entry criteria the moment OQ-PDB-1 authors the first passive using each path.** Recorded here so the content pass inherits them, not discovers them.
+
+**AC-PDB-D1** (DEFERRED→BLOCKING on first `ON_BATTLE_START` content): an `ON_BATTLE_START` passive fires exactly once during BATTLE_INIT, before turn 1. Mirrors TBC AC-TBC-40's dispatch coverage on the Passive DB side. FAIL: fires zero times; fires per turn.
+
+**AC-PDB-D2** (DEFERRED→BLOCKING on first `PERSISTENT`/`STAT_AURA` content): a `PERSISTENT` `STAT_AURA` applies its `delta` from BATTLE_INIT and the modified stat holds across all turns without re-firing. FAIL: applied on-hit instead of at battle start; delta lost after turn 1; delta applied every turn (stacking a PERSISTENT).
+
+**AC-PDB-D3** (DEFERRED→BLOCKING on first `STACKABLE` content): two sources of a `STACKABLE` `RESOURCE_EFFECT` both fire independently on one trigger — combined amount = 2× a single source (clamped by the resource cap). FAIL: deduplicated to one application (behaving as `UNIQUE_PER_TRIGGER`).
+
+**AC-PDB-D4** (DEFERRED→BLOCKING on first `RESOURCE_EFFECT` content): a `RESOURCE_EFFECT` passive changes the named resource by `amount` when triggered, clamped by the cap (Heat 100 / Energy Capacity). FAIL: resource unchanged; wrong resource modified; cap not respected.
+
 ### Summary
 
-11 ACs: 9 BLOCKING unit (AC-PDB-01–11) + 3 ADVISORY-DEFERRED content (12–14). EC↔AC cross-check: EC-PDB-01→AC-PDB-01, EC-PDB-02→AC-PDB-02, EC-PDB-03→AC-PDB-08, EC-PDB-04→AC-PDB-07, EC-PDB-05→AC-PDB-10, EC-PDB-06→AC-PDB-11, EC-PDB-07→AC-PDB-12.
+**14 ACs live + 4 deferred:** 12 BLOCKING unit (AC-PDB-01–11, 17) + 5 ADVISORY-DEFERRED content (AC-PDB-12–16) + 4 activates-on-first-content (AC-PDB-D1–D4, become BLOCKING when OQ-PDB-1 authors the matching path).
+
+EC↔AC cross-check (every EC with an observable outcome cites a verifying AC):
+- EC-PDB-01 → AC-PDB-01
+- EC-PDB-02 → AC-PDB-02
+- EC-PDB-03 → AC-PDB-08
+- EC-PDB-04 → AC-PDB-07
+- EC-PDB-05 → AC-PDB-10
+- EC-PDB-06 → AC-PDB-11
+- EC-PDB-07 → AC-PDB-12 (authoring, ADVISORY-DEFERRED) + TBC AC-TBC-40 family (runtime "fires anyway", owned by TBC — Passive DB has no runtime executor)
+- EC-PDB-08 → AC-PDB-16 (authoring) + AC-PDB-17 (runtime clamp, BLOCKING)
 
 ## Open Questions
 
 | # | Question | Owner | Impact |
 |---|----------|-------|--------|
-| OQ-PDB-1 | **MVP Core passive roster.** Specific passive IDs and behaviors for Rare+ Core identity passives (Rule 6) must be authored with the content plan. The schema (Rule 1) and doctrine (Rule 6) are defined; the actual entries await content design co-planning with the Part Database content authoring pass. | Content plan / game-designer | Blocks Boss-grade and Prototype Core content authoring; unblocks once the MVP part roster is planned |
+| OQ-PDB-1 | **MVP Core passive roster — CRITICAL PATH, not a routine backlog item.** Specific passive IDs and behaviors for Rare+ Core identity passives (Rule 6) must be authored with the content plan. The schema (Rule 1/3a) and doctrine (Rule 6) are defined; the actual entries await content design co-planning with the Part Database content authoring pass. **This is a named critical-path dependency**: Part Database (Approved) already *requires* Rare+ Cores to carry a non-null `passive_id` (Part DB Rule 8), and Pillars 3 (Build Depth) and 4 (Synergy Is the Endgame) are mechanically funded by Core passives being distinct. Until OQ-PDB-1 lands, those Part DB entries cannot be authored and the two highest pillars have no passive content behind them. **Charter for the content pass:** (a) the 3 MVP status riders are *deliberately flat* — they fire identically regardless of build depth; investment-scaling and multi-part-threshold passives (the mechanics that actually deliver the "my build does this on its own" fantasy) are the explicit design brief of this pass, not of the ratified riders; (b) OQ-PDB-1 inherits AC-PDB-D1–D4 (above) as entry criteria — the first Core passive using `ON_BATTLE_START` / `PERSISTENT` / `STAT_AURA` / `RESOURCE_EFFECT` / `STACKABLE` activates the matching deferred AC as BLOCKING; (c) mind the combinatorial ceiling (Rule 6 restricts Core passives to `ON_BATTLE_START`/`ON_OVERHEAT`/`PERSISTENT` × 4 behavior classes ≈ 12 unique combos — do not author more Boss-grade/Prototype Cores than the uniqueness constraint allows without expanding the enums). | Content plan / game-designer | **Blocks:** Boss-grade & Prototype Core content authoring, Part DB Rare+ Core entries, Pillar 3 & 4 delivery. Unblocks once the MVP part roster is planned. |
 | OQ-PDB-2 | **Synergy-only effect IDs.** Synergy tier `effects` arrays may reference IDs that never appear on any part's `passive_id` (pure synergy effects). These are NOT cataloged in Passive DB per the current design (Rule C Interactions). If synergy effects grow complex enough to need a display name or description here, this question reopens. | Synergy System / Passive DB | Low in MVP — TBC Rule 13 handles them without Passive DB entries |
 | OQ-PDB-3 | **SKILL_ENHANCE passive IDs beyond status riders.** Move DB Rule 9 allows `SKILL_ENHANCE` to add non-status-rider passives (e.g., a `RESOURCE_EFFECT` that grants Energy on hit at upgrade tier +5). These must be authored in this catalog before content uses them. The question is when to design those entries — alongside Move DB content or at content-authoring time. | Move Database content plan | Unblocks content authors who want upgrade-path passives beyond the 3 status riders |
