@@ -19,3 +19,21 @@ Also folded in (advisory): NULL_ELEMENT_MAX_WILD knob + AC-ED-15(d); in-spec out
 Deferred (Recommended, not blocking): asymmetric break_hp warning on shared break events; EDB-3 multiplier-meaningfulness check; qa-lead's 3 extra test cases (empty stats dict, reserved ELITE class, stale break_hp).
 
 **Next step**: full re-review in a fresh session (`/design-review design/gdd/enemy-database.md`) to verify blocker resolution before marking Approved.
+
+## Review — 2026-07-09 (Session 2) — Verdict: NEEDS REVISION
+Scope signal: L
+Specialists: game-designer, systems-designer, economy-designer, qa-lead; senior synthesis: creative-director
+Blocking items: 5 | Recommended: 9
+Summary: All six prior fixes confirmed held. New blockers found: AC-ED-14 degenerate blind spot (TTK=2 via Armor=0 passes silently — the same degenerate case WILD_POWER_CAP defends against, but the TTK band states "2" as a valid lower bound, so no warning fires); AC-ED-05 validator crash risk on missing `stats` keys (bracket access vs. safe `get()`); ×1000 boss-break multiplier requirement invisible from Part DB authoring context; AC-ED-15(c) missing 1-region minimum-case fixture; OQ5 framed as neutral deferral when pool-size ranges encode specific farming timelines (8–24 fights/Rare at diluted rates). Two design decisions resolved: BOSS_GRADE_BREAK_GUARANTEE lowered 1.0 → 0.5 (~50% per qualifying break, avg 2 attempts per exclusive; ×500 multiplier threshold now aligned with Part DB AC-11); OQ5 rewritten to state pool-size position and hard-block Drop System GDD on choosing a dilution model.
+Prior verdict resolved: Yes — 6 of 6 prior blocking items confirmed resolved
+
+### Post-review revision (same session, 2026-07-09)
+All 5 blocking items resolved:
+1. EDB-2 band table + AC-ED-14: added TTK lower-bound note (TTK=2 only via Armor=0, not a content target; WILD_POWER_CAP is the actual guard) and ADVISORY justification with Beta-upgrade note.
+2. AC-ED-05(a): replaced `stats["structure"]` with `stats.get("structure", 0)` + explicit `stats: {}` fixture.
+3. Rule 2 boss row + AC-ED-09: updated to 0.5 guarantee (×500 threshold, aligned with Part DB AC-11); cross-system boundary case rewritten (×500 now passes; ×499 fails both ACs).
+4. AC-ED-15(c): added 1-region boundary fixture.
+5. OQ5: rewritten with this schema's position on pool sizes and three-option hard-block for Drop System GDD.
+Design decisions: BOSS_GRADE_BREAK_GUARANTEE 1.0 → 0.5; OQ4 updated with pity-floor requirement.
+
+**Next step**: full re-review in a fresh session (`/design-review design/gdd/enemy-database.md`) after `/clear` — 9 recommended AC fixture/documentation improvements remain for the re-review to validate before Approved.

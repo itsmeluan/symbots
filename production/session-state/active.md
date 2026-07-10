@@ -1,83 +1,73 @@
 # Active Session State
 
 ## Current Task
-Enemy Database GDD — REVIEWED (NEEDS REVISION) + all 6 blockers REVISED same session
-- File: design/gdd/enemy-database.md — status "In Review" in systems-index
-- Review log: design/gdd/reviews/enemy-database-review-log.md (first entry, 2026-07-09)
-- Full /design-review: game-designer, systems-designer, economy-designer, qa-lead
-  + creative-director synthesis. Verdict NEEDS REVISION (6 blocking / 6 recommended),
-  scope L. CD: "structurally sound schema, bounded correctable defects."
-- **Next: /design-review design/gdd/enemy-database.md re-review in a FRESH session
-  (/clear first — user selected this)**. Re-review must verify the 6 blocker fixes
-  below and read the review log.
+Enemy Database GDD — Re-reviewed (Session 2). Verdict: NEEDS REVISION, 5 new blockers resolved same session.
 
-## Blocker Fixes Applied (user decisions in parentheses)
-1. AC-ED-14 → computed TTK check (chosen over static bands): dmg=floor(A_cal²/(A_cal+D)),
-   ttk=ceil(structure/dmg), per defense channel; jointly bounds structure×defense.
-   Bands: WILD-early TTK 2–4 / structure 60–88 (chosen over tighten-to-66);
-   WILD-mid 3–5 / 90–160; BOSS 12–18 / 364–594 at reference D=30.
-   Float-scanned: zero divergences — NO epsilon needed (division is correctly
-   rounded; unlike EDB-1 which keeps its LOAD-BEARING +0.0001).
-2. WILD_POWER_CAP 40 → 39 (chosen over Armor-floor invariant / prose-only):
-   kills the one-shot at player Armor=0, structure=60 (58 < 60).
-3. AC-ED-09 → product invariant: BASE_DROP_BOSS_GRADE × multiplier ≥
-   BOSS_GRADE_BREAK_GUARANTEE (new knob, 1.0). ×500 cross-system boundary test in AC.
-4. Seven qa-lead AC fixes (05 structure=1 positive; 06 count boundaries 1✓2✓3✗;
-   07b Part DB {condition, multiplier} citation; 08b GUARD-ONLY label; 13 split
-   a/b with FLAVOR_TEXT_MAX shared constant; 14 band-edge direction; 16 DF-1 citation).
-5. Harvest-decision rule: WILD loot_pool.size() > break_regions.size() — BLOCKING
-   AC-ED-15(c). Protects Pillar 2 from 1:1 region-part collapse.
-6. Open Questions 4–6 added: OQ4 Drop System owns Boss-grade acquisition policy +
-   bad-luck protection (must-address); OQ5 Drop System owns pool-dilution vs Part DB
-   "3–5 attempts" reconciliation (blocking for Drop System sign-off); OQ6 roster-level
-   coverage validation (Encounter Zone GDD or content-lint tool).
-Also folded in: NULL_ELEMENT_MAX_WILD knob (1) + AC-ED-15(d); in-spec ranges 9–326;
-knob-warning prose fixes; A=0/D=0 DF-1 note; Rustcrawler rebalance example 85→88.
+## Session 2 Blocker Fixes (2026-07-09)
+1. **EDB-2 + AC-ED-14**: Added TTK lower-bound note — TTK=2 for WILD-early only via Armor=0
+   (degenerate floor the WILD_POWER_CAP guards). Added ADVISORY justification + Beta upgrade note
+   to AC-ED-14. Cross-references EDB-2 and AC-ED-05c now linked.
+2. **AC-ED-05(a)**: Replaced `stats["structure"]` with `stats.get("structure", 0)` safe-access
+   pattern. Added `stats: {}` explicit fixture. Prevents validator crash on missing keys.
+3. **Rule 2 + AC-ED-09**: BOSS_GRADE_BREAK_GUARANTEE lowered 1.0 → **0.5** (design decision).
+   Design target: ~50% per qualifying break, avg 2 attempts per exclusive. Required multiplier
+   now ×500 — aligned with Part DB AC-11. Updated AC-ED-09 boundary: ×500 passes, ×499 fails.
+4. **AC-ED-15(c)**: Added 1-region boundary fixture: 1 region + 1 pool → fails; 1 region +
+   2 pool → passes.
+5. **OQ5**: Rewritten. Pool-size ranges locked as authored (WILD 2–4, BOSS 4–6). Farming
+   timelines stated: WILD min 8.33%/~12 fights, BOSS max 4.17%/~24 fights at pool-diluted rates.
+   Drop System GDD hard-blocked on 3 explicit model choices.
+   **OQ4**: Updated with design decision and Drop System pity-floor requirement.
 
-## Deferred From This Review (Recommended, not blocking — revisit at re-review or later)
-- Asymmetric break_hp warning when two regions share a break_event (farming trap)
-- EDB-3 multiplier-meaningfulness check (×1.01 passes connectivity but is filler)
-- qa-lead extra test cases: empty stats {}, reserved enemy_class ELITE fails,
-  stale break_hp after structure rebalance
-- game-designer venue-shifted items: boss-grade content depth (2–4 exclusives for
-  5h) → MVP scope review; enemy stats not reverse-engineerable → already OQ1
+## Design Decisions Made This Session
+- `BOSS_GRADE_BREAK_GUARANTEE` = 0.5 (was 1.0)
+- Pool-size position: current ranges locked; Drop System must choose dilution model
 
-## Previously This Session / Standing Context
-- Part Database — Approved (Round 8); Damage Formula — Approved (Round 2)
-- DF-1: max(DAMAGE_FLOOR, floor(A²/(A+D) × T × crit_mult + EPSILON))
+## Session 1 Blocker Fixes (still valid — confirmed by Session 2 review)
+1. AC-ED-14 computed TTK check (dmg=floor(A²/(A+D)), TTK=ceil(structure/dmg) per channel)
+2. WILD_POWER_CAP 40→39
+3. AC-ED-09 product invariant
+4. Seven QA AC fixes (AC-05/06/07b/08b/13/14/16)
+5. Harvest-decision rule AC-ED-15(c) BLOCKING
+6. Open Questions 4–6 (OQ4/OQ5/OQ6)
 
 ## Hard Constraints Inherited by Downstream GDDs
-- DB1 (Synergy): cross-tag manufacturer+element synergy thresholds required
-- DB2 (Drop System): Prototype pity counter required
-- DB3 (Part-Break): break probability + escalation mechanic required
-- DB4 (Synergy): cross-element incentives keeping all 3 elements relevant
-- DB5 (Drop System): scrap-sink; R7 recommends a quantitative floor (% of upgrade cost)
-- DF1 (Move Database): per-move damage-type/element overrides live there, not Part DB
-- DF2 (Combat UI): must read final_damage + type_mult from a single damage event
-- DF3 (Enemy Database): core_element field — FULFILLED by Enemy DB Rule 4
 - ED1 (Combat): enemy Heat/Energy resource symmetry decision
 - ED2 (Part-Break): region targeting + damage accrual + break_event emission
 - ED3 (Drop System): deduplicated event set collection
 - ED4 (Enemy AI): ai_profile schema definition
 - ED5 (Encounter Zone): spawn-disabled boss progression-integrity check
-- EC-16 (Drop System): Boss-grade pity floor; R8 recommends visible progress signal
-- NEW OQ4/OQ5 (Drop System): acquisition policy + pity; pool-dilution arithmetic
-- NEW OQ6 (Encounter Zone or tooling): roster coverage lint (slots/elements/part_family)
+- OQ4 (Drop System): Boss-grade pity floor MUST be defined (BOSS_GRADE_BREAK_GUARANTEE=0.5,
+  avg 2 attempts — worst-case tail must be bounded); Rare bad-luck protection position required
+- OQ5 (Drop System): pool-dilution model choice HARD-BLOCKS Drop System design; three options
+  given in OQ5; Part DB "3–5 attempts" framing must be reconciled
+- OQ6 (Encounter Zone or content-lint): roster coverage lint (reverse coverage, slots/elements,
+  part_family arcs)
 
-## Open Recommended Items (Part Database Round 8 log — not blocking)
-R4 (element distribution AC-24), R5 (unblock triggers AC-13/AC-15b), R6 (Core
-identity → Assembly GDD), R7, R8, R9 (content density AC-25), flavor_text max
-length (now: Enemy DB uses shared FLAVOR_TEXT_MAX=100 constant — Part DB should
-adopt same constant), Boss-grade multi-stat spread AC, Open Questions stale
-"[To be designed]".
+## Open Recommended Items (not blocking, carry forward to next re-review)
+9 QA AC fixture/documentation improvements:
+- AC-ED-07(a): stale break_hp fixture (stored=30/derived=29)
+- AC-ED-07(e): empty `break_regions: []` fixture
+- AC-ED-07(d): float tolerance mechanism (parsed vs. computed path)
+- AC-ED-03: output annotation requirement while skills BLOCKED
+- AC-ED-04(f)/AC-ED-15(b): empty-pool suppresses size-range warning
+- AC-ED-06(d): clarify "(a) runs against every WILD pool"
+- AC-ED-05(b): upper boundary stat=110 fixture
+- AC-ED-09: explicit multiplier fixture values + unblocking annotation
+- EDB-1 implementation notes: epsilon over-correction proof
+
+Also from Session 1 (still deferred):
+- Asymmetric break_hp warning on shared break_events
+- EDB-3 multiplier-meaningfulness check
 
 ## Next Steps
-1. **/design-review design/gdd/enemy-database.md — re-review in fresh session (/clear first)**
-2. If approved: /design-system symbot-assembly — #4 in design order (Core, MVP)
-3. Then Synergy System (#5), Turn-Based Combat (#6)
+1. **/clear** — context at ~65-70% after 5-agent review
+2. **/design-review design/gdd/enemy-database.md** — third pass (fresh session)
+3. If approved: /design-system symbot-assembly — #4 in design order (Core, MVP)
+4. Then Synergy System (#5), Turn-Based Combat (#6)
 
 <!-- STATUS -->
 Epic: MVP Foundation GDDs
 Feature: Design pipeline
-Task: Enemy Database re-review (fresh session)
+Task: Enemy Database re-review (fresh session — /clear first)
 <!-- /STATUS -->
