@@ -58,8 +58,10 @@ Recommended also applied: AC-TBC-06 split (state vs. rendering — UI assertions
 - Edge Cases ✓ — EC-MDB-01..10 (each cites an AC)
 - Dependencies ✓ — resolves TBC OQ-1/3/4; errata table
 - Tuning Knobs ✓ — power_mult tiers + vent_amount
-- Visual/Audio + UI ✓ — brief delegation notes (power_tier indicator + SCAN readout are the 2 Move-DB-specific UI adds)
-- IN PROGRESS: Acceptance Criteria — qa-lead validating draft (17 ACs: 13 BLOCKING + 4 ADVISORY content-val); then Open Questions
+- Visual/Audio + UI ✓ — brief delegation notes
+- Acceptance Criteria ✓ — 22 ACs (18 BLOCKING unit + 1 BLOCKING-DEFERRED + 3 ADVISORY-DEFERRED content-val). qa-lead structural fixes accepted; its load-bearing-epsilon arithmetic ERROR rejected per python3 scan (2nd specialist to mis-analyze this epsilon).
+- Open Questions ✓ — OQ-MDB-1..6
+- **GDD COMPLETE** — status "Designed — pending /design-review" (lean mode; CD-GDD-ALIGN skipped per lean).
 
 ## Move DB Design Decisions (locked this session)
 - power_tier ENUM (not free float), coherent w/ Part DB energy/heat tiers
@@ -67,12 +69,19 @@ Recommended also applied: AC-TBC-06 split (state vs. rendering — UI assertions
 - SCAN reveals enemy break_regions + drop hints → delivers Enemy DB ED6
 - UTILITY = exactly 1 move (Vent) in MVP
 
-## Move DB ERRATA it will create (carry to Phase 5 + propagate)
-- TBC-F5 `final_damage` input range [1,225] → widened for power_mult (SIGNATURE ×1.40); hit_resolved damage range widens. DF-1 own range UNCHANGED.
-- Registry: register power_tier multipliers; add MOVE-F1 formula entry; update TBC-F5 referenced_by/range note
+## Phase 5 DONE this session
+- Registry: added MOVE-F1 (formula, [1,315], LOAD-BEARING epsilon), POWER_TIER_MULTIPLIERS (constant); TBC-F5 range [1,225]→[1,315] + move-db referenced_by; DF-1 referenced_by +move-db (range unchanged).
+- **TBC errata APPLIED this session** (OQ-MDB-3 discharged, not deferred): TBC-F5 var table + output range→[1,315]; Rule 10 pipeline note (DF-1→MOVE-F1→TBC-F5); AC preamble range note; OQ-TBC-1/3/4 marked RESOLVED; AC-TBC-39 SCAN-reveal erratum; AC-TBC-34 post-power note; TBC status header errata line. TBC remains APPROVED (errata, not re-review).
+- systems-index: Move DB Not Started→Designed; tracker started 6→7, MVP designed 6/22→7/22.
+- Memory updated: project-float-epsilon-empirics += MOVE-F1 load-bearing.
+
+## Next Steps
+1. /design-review design/gdd/move-database.md in a FRESH session (never same-session as authoring)
+2. /consistency-check to confirm the TBC-F5/[1,315] errata is coherent registry-wide
+3. Next MVP system in design order: #1b Passive Database (unblocks OQ-MDB-1 rider passives + TBC Rule 13 registry) OR #7 Encounter Zone
 
 <!-- STATUS -->
 Epic: MVP Core GDDs
 Feature: Move Database GDD
-Task: Formulas section — systems-designer deriving MOVE-F1
+Task: COMPLETE (Designed, pending review) — TBC errata applied, registry updated
 <!-- /STATUS -->

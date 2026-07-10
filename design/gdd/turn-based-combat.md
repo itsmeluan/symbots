@@ -1,6 +1,7 @@
 # Turn-Based Combat System
 
 > **Status**: Approved — 2026-07-10 fix-confirmation re-review (all 7 round-1 blockers resolved; 3 non-gating follow-ups tracked in the review log)
+> **Move DB errata applied 2026-07-10**: MOVE-F1 (power-tier multiply) inserted between DF-1 and TBC-F5 → TBC-F5 `final_damage` input + `hit_resolved` range widened to [1,315] (DF-1 unchanged); OQ-TBC-1/3/4 resolved by Move DB; AC-TBC-39 gains a SCAN-reveal erratum note.
 > **Author**: Luan + Claude Code Game Studios agents (systems-designer: Formulas; qa-lead: ACs; art-director: Visual/Audio)
 > **Review Notes**: Authored in lean mode; full /design-review run 2026-07-10 (game-designer, systems-designer, qa-lead, creative-director) — verdict NEEDS REVISION; the skipped CD-GDD-ALIGN gate was performed manually by the creative-director (Player Fantasy passes on substance). All 7 blocking + 6 recommended items applied 2026-07-10: `snapshotted_processing` ratified PRE-synergy; Shock sign convention unified (positive `shock_magnitude`); REPAIR Energy-brake contract (Rule 9); Part-Break binding Pillar-2 obligation; ACs 34–40 added. All floor/ceil formulas python3 epsilon-scanned 2026-07-10 (all defensive, zero load-bearing; no coefficients changed at review — scans remain valid).
 > **Last Updated**: 2026-07-10
@@ -76,11 +77,11 @@ The intended emotional arc of a fight: **read** (scan the enemy — element, reg
 
 `heat_generation` and `ammo_cost` stay on the **part** (existing Part DB schema), not the move. The Basic Attack is a TBC-owned built-in: `behavior=DAMAGE`, `energy_cost=0`, `heat_generation=0`, `damage_type` = equipped WEAPON's `damage_type`, `element` = equipped WEAPON's `element`.
 
-**SCAN stub (MVP, ratified at review):** a move with `behavior = SCAN` resolves as a **turn-consuming no-op**: the Energy cost is paid, heat gain applies (Rule 5d), the action is consumed, and no damage or status is applied. The information payload (natural candidate: revealing `break_regions`/drop hints per Enemy DB ED6) remains OQ-TBC-3, owned by the Move DB GDD — the stub makes SCAN a defined-but-empty runtime path instead of undefined behavior. *Verified by AC-TBC-39.*
+**SCAN stub (MVP, ratified at review):** a move with `behavior = SCAN` resolves as a **turn-consuming no-op**: the Energy cost is paid, heat gain applies (Rule 5d), the action is consumed, and no damage or status is applied. The information payload (revealing `break_regions`/drop hints per Enemy DB ED6) is now defined by **Move DB Rule 6** (SCAN reveal, OQ-TBC-3 resolved 2026-07-10) — this stub covers the runtime turn/cost/no-damage path; the reveal content is Move DB's (AC-MDB-10). *Verified by AC-TBC-39.*
 
 **REPAIR Energy floor (anti-stall contract):** REPAIR-behavior moves MUST author `energy_cost > BASE_ENERGY_REGEN` (≥ 11 at the current 10). This guarantees the anti-stall Energy brake by contract rather than by content convention — see TBC-F6's anti-stall verification. Content validation enforces it (AC-TBC-38).
 
-**Rule 10 — Damage resolution.** For a DAMAGE move: effective attack stat = **SYN-F4** (`max(0, final_stat[S] + frozen_synergy_delta.get(S, 0))`) on the routing stat (`physical_power` or `energy_power`); defense side likewise for the defender (enemy = authored stats, no synergy). Call DF-1: `compute_damage(A, skill_damage_type, skill_element, D, target_core_element, crit_mult=1.0)`. The player-side core element = the equipped CORE part's `element`; enemy = `core_element` field (null → ×1.0 per DF EC-04). The returned integer reduces `current_structure`, floored at 0. **Status damage (Burn) bypasses DF-1 entirely** — it is fixed-magnitude, unaffected by Armor/Resistance/type (resolves DF OQ-2: DF-1 is the only path for *move* damage; status DoT is a separate, documented path). Region damage routing awaits the Part-Break GDD — TBC exposes a per-hit hook (`hit_resolved(move, damage, target)`) that Part-Break will subscribe to.
+**Rule 10 — Damage resolution.** For a DAMAGE move: effective attack stat = **SYN-F4** (`max(0, final_stat[S] + frozen_synergy_delta.get(S, 0))`) on the routing stat (`physical_power` or `energy_power`); defense side likewise for the defender (enemy = authored stats, no synergy). Call DF-1: `compute_damage(A, skill_damage_type, skill_element, D, target_core_element, crit_mult=1.0)`. The player-side core element = the equipped CORE part's `element`; enemy = `core_element` field (null → ×1.0 per DF EC-04). The returned integer is scaled by the move's power tier (Move DB **MOVE-F1**, post-DF-1 multiply) to yield `move_damage`, which — after any Stagger reduction (TBC-F5) — reduces `current_structure`, floored at 0. **Status damage (Burn) bypasses DF-1 entirely** — it is fixed-magnitude, unaffected by Armor/Resistance/type (resolves DF OQ-2: DF-1 is the only path for *move* damage; status DoT is a separate, documented path). Region damage routing awaits the Part-Break GDD — TBC exposes a per-hit hook (`hit_resolved(move, damage, target)`) that Part-Break will subscribe to.
 
 **Rule 11 — Statuses (MVP set: exactly three).** One per element; durations in the afflicted combatant's turns; **no stacking** — reapplying refreshes duration to full; different statuses coexist freely. Magnitudes are Section D formulas (potency scales with the applier's `processing` stat — this is what makes CHIPSET matter, resolving the Assembly obligation).
 
@@ -241,9 +242,9 @@ staggered_damage = max(DAMAGE_FLOOR, floor(final_damage × (1 − stagger_pct / 
 |----------|--------|------|-------|-------------|
 | Applier processing | `snapshotted_processing` | int | 0–110 | Snapshot at application |
 | Stagger percentage | `stagger_pct` | int | 0–27 | Integer % reduction |
-| Pre-Stagger damage | `final_damage` | int | 1–225 | DF-1 output (re-derived ceiling below) |
+| Pre-Stagger damage | `final_damage` | int | 1–315 | **MOVE-F1 output** — Move DB inserts MOVE-F1 (power-tier multiply) between DF-1 and this step (2026-07-10 Move DB errata; was "DF-1 output, 1–225") |
 | Damage floor | `DAMAGE_FLOOR` | int | 1 | Same constant as DF-1; Stagger cannot zero a hit |
-| Output | `staggered_damage` | int | 1–225 | Post-reduction damage |
+| Output | `staggered_damage` | int | 1–315 | Post-reduction damage (range widened by Move DB MOVE-F1 power tiers) |
 
 **Worked example (discriminating on both steps):** processing = 86 → `stagger_pct = floor(21.5001) = 21` (GDScript round-half-away gives 22 — wrong). Then final_damage = 50: `max(1, floor(50 × 0.79 + 0.0001)) = max(1, floor(39.5001)) = 39` — round/ceil give 40.
 
@@ -523,7 +524,7 @@ ACs marked **BLOCKING** are Logic-type: they gate story completion and require a
 
 **Consumer-ownership note (SYN-F4):** AC-SYN-06 and AC-SYN-10 in the Synergy GDD define the SYN-F4 contract and must be implemented in `tests/unit/tbc/` (as well as `tests/unit/workshop_ui/`). They are not re-stated here; the ACs below that apply SYN-F4 (AC-TBC-07, AC-TBC-22) test TBC's pipeline around it, not the formula in isolation.
 
-**DF-1 registered range:** per the Formulas re-derivation, DF-1's output range is **[1, 225]**. All TBC ACs using DF-1 operate within this range.
+**DF-1 registered range:** per the Formulas re-derivation, DF-1's output range is **[1, 225]**. All TBC ACs using DF-1 operate within this range. **Move damage after MOVE-F1 (Move DB power tiers, post-DF-1) extends to [1, 315]; `hit_resolved` carries the post-power, post-Stagger value (2026-07-10 Move DB errata). DF-1's own range is unchanged.**
 
 ---
 
@@ -655,7 +656,7 @@ FAIL: duration decrements but the status entry is never removed; a third tick fi
 GIVEN structure 98/100, ep 45 (repair 12), move cost 15 energy / 8 heat, energy 60, heat 20, WHEN used, THEN energy 45, structure `min(100, 110)` = **100** (overheal discarded), heat 28. *At exactly full:* repair is legal, wasteful, costs apply.
 FAIL: rejected at full; uncapped overheal; costs skipped on wasted repair. **Test type**: Unit.
 
-**AC-TBC-39** (BLOCKING): SCAN resolves as a turn-consuming no-op stub. *(Verifies EC-TBC-16)*
+**AC-TBC-39** (BLOCKING): SCAN resolves as a turn-consuming no-op stub. *(Verifies EC-TBC-16)* **Erratum 2026-07-10 (Move DB):** SCAN now also produces a break-region reveal payload — this AC remains authoritative for the turn/cost/no-damage/no-status runtime behavior; the reveal-content test is Move DB AC-MDB-10.
 GIVEN a move with `behavior = SCAN`, `energy_cost = 8`, owning part `heat_generation = 6`, user energy 50 / heat 10, WHEN used, THEN energy 42, heat 16, no damage dealt, no status applied, the action is consumed (the enemy acts next), no crash.
 FAIL: crash or rejection as an unknown behavior; costs not paid; treated as a free action. **Test type**: Unit.
 
@@ -673,7 +674,7 @@ FAIL: only ON_HIT dispatch is implemented (counters read 0); triggers fire at th
 
 ### Hook Contracts (Rule 10 / Rule 12 plumbing)
 
-**AC-TBC-34** (BLOCKING): `hit_resolved(move, damage, target)` emits exactly once per DAMAGE-move resolution, carrying the post-SYN-F4, post-Stagger final damage.
+**AC-TBC-34** (BLOCKING): `hit_resolved(move, damage, target)` emits exactly once per DAMAGE-move resolution, carrying the post-SYN-F4, post-power-tier (MOVE-F1), post-Stagger final damage. *(Fixture below uses a STANDARD-tier move, `power_mult = 1.00`, so the 77→60 numbers are unaffected by the power step.)*
 GIVEN a stub subscriber and the AC-TBC-22 fixture (pre-Stagger damage 77) with the attacker Staggered (pct 21), WHEN the move resolves, THEN `hit_resolved` fires exactly once with `damage = max(1, floor(77 × 0.79 + 0.0001)) = 60` (post-Stagger; round gives 61 — discriminating), the resolved move, and the target. Non-DAMAGE moves (REPAIR, STATUS, SCAN) do not emit it; Burn ticks do not emit it.
 FAIL: the hook never fires (every other AC still passes — this is the trap this AC exists to close); fires with the pre-Stagger 77; fires on Repair or Burn ticks. **Test type**: Unit.
 
@@ -725,10 +726,10 @@ FAIL: bracket-access runtime error; null propagates into a formula call. **Test 
 
 | # | Question | Owner | Impact |
 |---|----------|-------|--------|
-| OQ-TBC-1 | Move Database GDD must **ratify MOVE-CONTRACT-1** (Rule 9) — accept the schema or negotiate changes explicitly with this GDD; silent divergence is forbidden. | Move Database GDD | Blocks Move DB authoring; blocks final validation of Rules 5/9 |
+| OQ-TBC-1 | ✅ **RESOLVED 2026-07-10** — the Move Database GDD ratified MOVE-CONTRACT-1 in full, with one negotiated addition: the `power_tier` enum + MOVE-F1 power multiply (post-DF-1). See Move DB Rule 1 / §Formulas. | Move Database GDD | Closed |
 | OQ-TBC-2 | How does the type multiplier `T` reach the Combat UI from a damage event — `compute_damage()` returns a struct `{final_damage, type_mult}`, or TBC looks up T separately and forwards it? (Damage Formula OQ-1, restated — the decision is jointly owned by the TBC call contract and Combat UI GDD.) | Combat UI GDD + TBC implementation | Blocks Combat UI damage feedback spec (UI Req 3) |
-| OQ-TBC-3 | **What does a SCAN move actually do?** MOVE-CONTRACT-1 lists SCAN as a behavior (HEAD skills are "scan or utility" per Assembly Rule 4) but no system defines its effect. Natural candidate: reveal enemy break regions/drop hints — which would make SCAN the delivery mechanism for Enemy DB constraint ED6's "drop-hint mechanism." Needs a design decision before Move DB content authoring. | Game Designer (resolve with Move DB GDD; coordinate with ED6) | HEAD-slot moves are unauthorable until defined; ED6's information layer may depend on it |
-| OQ-TBC-4 | UTILITY behavior taxonomy — which non-damage, non-status, non-repair move behaviors exist in MVP (buffs? Heat venting? energy transfer?), if any? MVP could ship with zero UTILITY moves; the enum value exists for Move DB headroom. | Move Database GDD | Low — enum headroom; content decision |
+| OQ-TBC-3 | ✅ **RESOLVED 2026-07-10** — SCAN reveals the enemy's `break_regions` + drop hints (Move DB Rule 6), delivering Enemy DB ED6's drop-hint mechanism. The TBC no-op stub (Rule 9) still covers the runtime turn/cost path; reveal content is Move DB's (AC-MDB-10). | Move DB GDD (with ED6) | Closed |
+| OQ-TBC-4 | ✅ **RESOLVED 2026-07-10** — MVP UTILITY taxonomy = exactly one move, Vent (dump own Heat), per Move DB Rule 8. Enum retains headroom for Vertical Slice+ (buffs, energy transfer). | Move Database GDD | Closed |
 | OQ-TBC-5 | Multi-enemy battles (Vertical Slice): Rule 1 locks MVP to one enemy; the `battle_ended` payload carries `enemy_id` extensibly. When multi-enemy is designed, targeting UI, initiative with multiple enemies, and AoE move semantics all need design. | Vertical Slice design | None for MVP |
 | OQ-TBC-6 | Victory rewards beyond drops: MVP awards loot only (Drop System via `battle_ended`) — no XP (concept: no level grind), no currency (crafting/scrap deferred to Alpha blueprint system). Confirm the Drop System GDD is the sole reward channel or define scrap salvage there. | Drop System GDD / Economy Designer | Reward loop completeness at MVP |
 | OQ-TBC-7 | **Balance watch (named at review):** does the free forced switch (Rule 6) incentivize deliberately letting the active Symbot die instead of paying a switch turn (fresh incoming resources; DOWNED clears statuses)? For an already-doomed Symbot the "degenerate" line is usually the correct play — the real cost is losing 1 of 3 roster slots. Monitor in playtest; tuning lever: incoming-Symbot state on forced switch. | Playtest / game-designer | Balance only — no rule change for MVP |

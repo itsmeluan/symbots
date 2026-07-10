@@ -278,19 +278,22 @@ formulas:
     source: design/gdd/turn-based-combat.md
     referenced_by:
       - design/gdd/turn-based-combat.md
+      - design/gdd/move-database.md
     variables:
       - snapshotted_processing (applier's processing, 0-110)
       - STAGGER_COEFF (0.25)
-      - final_damage (DF-1 output, 1-225)
+      - final_damage (MOVE-F1 output, 1-315 — post-power-tier; was "DF-1 output, 1-225")
       - DAMAGE_FLOOR (1, shared with DF-1)
-    output_range: [1, 225]
+    output_range: [1, 315]
     expression: |
       step1: stagger_pct = floor(snapshotted_processing * STAGGER_COEFF + 0.0001)   # 0-27
       step2: staggered_damage = max(DAMAGE_FLOOR, floor(final_damage * (1 - stagger_pct / 100.0) + 0.0001))
     notes: "Stagger applies POST-DF-1 (linear, predictable — ratified over pre-A reduction).
-      Cannot zero a hit (DAMAGE_FLOOR). Epsilon defensive on both steps (scanned 2026-07-10)."
+      Cannot zero a hit (DAMAGE_FLOOR). Epsilon defensive on both steps (scanned 2026-07-10).
+      final_damage input is now MOVE-F1 output (Move DB power tiers, post-DF-1) — range widened
+      [1,225]→[1,315] by move-database.md; DF-1's own range is unchanged."
     added: 2026-07-10
-    revised: ""
+    revised: "2026-07-10"  # final_damage now MOVE-F1 output; range [1,225]→[1,315] per move-database.md errata
 
   - name: TBC-F6
     status: active
@@ -306,6 +309,29 @@ formulas:
     expression: "repair_amount = max(REPAIR_MIN, floor(user_energy_power * REPAIR_COEFF + REPAIR_BASE + 0.0001)); applied capped at max_structure"
     notes: "Anti-stall invariant: repair(150) = 30 < WILD-mid DPS 33 (margin 3).
       Epsilon defensive (scanned 2026-07-10). Overheal discarded; costs still paid."
+    added: 2026-07-10
+    revised: ""
+
+  - name: MOVE-F1
+    status: active
+    source: design/gdd/move-database.md
+    referenced_by:
+      - design/gdd/move-database.md
+      - design/gdd/turn-based-combat.md
+    variables:
+      - df1_output (DF-1 output, 1-225 — DF-1's own range unchanged)
+      - power_mult (from power_tier enum: BASIC 0.70, LIGHT 0.80, STANDARD 1.00, HEAVY 1.20, SIGNATURE 1.40)
+      - DAMAGE_FLOOR (1, shared with DF-1)
+      - EPSILON (0.0001)
+    output_range: [1, 315]
+    expression: "move_damage = max(DAMAGE_FLOOR, floor(df1_output * power_mult + 0.0001))"
+    notes: "Per-move power multiply, applied POST-DF-1 (leaves DF-1 [1,225] intact; mirrors TBC-F5
+      Stagger's post-multiply). Full attacker pipeline: DF-1 -> MOVE-F1 -> TBC-F5. Feeds TBC-F5 as
+      its final_damage input (range widened to [1,315]). Epsilon is LOAD-BEARING (python3-verified
+      2026-07-10: 10 cases wrong without it, e.g. 165*1.40 = 230.99999999999997 -> bare floor 230,
+      correct 231; 90*0.70 = 62.99999999999999 -> 62 vs 63). Two specialist reviews mis-called it
+      defensive/exact-integer analytically — both refuted by the scan. Re-run scan if any multiplier
+      retuned. SIGNATURE 1.40 + max-synergy = 3-turn boss kill (Heat-gated, ruled acceptable)."
     added: 2026-07-10
     revised: ""
 
@@ -334,6 +360,7 @@ formulas:
       - design/gdd/damage-formula.md
       - design/gdd/enemy-database.md
       - design/gdd/turn-based-combat.md
+      - design/gdd/move-database.md
     variables:
       - A (attacker power stat — effective via SYN-F4, max 150 under SYNERGY_POWER_BUDGET)
       - D (target defense stat — effective via SYN-F4, max 182 under SYNERGY_DEFENSE_BUDGET)
@@ -505,6 +532,22 @@ constants:
     unit: dimensionless float offset
     notes: "IEEE 754 nudge for floor() in Formula DF-1. Fixed — not a tuning knob."
     added: 2026-07-09
+    revised: ""
+
+  - name: POWER_TIER_MULTIPLIERS
+    status: active
+    source: design/gdd/move-database.md
+    referenced_by:
+      - design/gdd/move-database.md
+      - design/gdd/turn-based-combat.md
+    value: "{BASIC: 0.70, LIGHT: 0.80, STANDARD: 1.00, HEAVY: 1.20, SIGNATURE: 1.40}"
+    unit: per-move damage multiplier applied via MOVE-F1 (post-DF-1)
+    notes: "Consumed by MOVE-F1; TBC applies it in the damage pipeline. STANDARD (1.00) is the fixed
+      calibration anchor (do not tune). SIGNATURE (1.40) is cross-document + TTK-sensitive — changing
+      it invalidates MOVE-F1's [1,315] range, TBC-F5's range, and the SIGNATURE TTK ruling; re-run the
+      epsilon scan. Tiers must stay strictly ordered BASIC<LIGHT<STANDARD<HEAVY<SIGNATURE. Energy/heat
+      bands per tier are Part DB Formula 5/6 (Move DB Rule 3 binds them for coherence)."
+    added: 2026-07-10
     revised: ""
 
 # Example:

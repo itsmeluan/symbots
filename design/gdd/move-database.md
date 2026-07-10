@@ -1,8 +1,10 @@
 # Move Database
 
-> **Status**: In Design
+> **Status**: Designed — pending `/design-review` (authored 2026-07-10, lean mode; systems-designer on Formulas, qa-lead on ACs)
 > **Author**: Luan + Claude Code Game Studios agents
 > **Last Updated**: 2026-07-10
+> **Implements**: ratifies MOVE-CONTRACT-1 (TBC Rule 9); resolves OQ-TBC-1/3/4
+> **Outbound errata (unapplied)**: TBC-F5 range + `hit_resolved` → [1,315]; registry MOVE-F1 + TBC-F5; TBC AC-TBC-39 note — run `/propagate-design-change`
 > **Implements Pillar**: Pillar 1 (Engineer, Don't Collect), Pillar 3 (Build Depth Over Content Breadth), Pillar 4 (Synergy Is the Endgame)
 
 ## Overview
@@ -263,8 +265,71 @@ Most of this is already captured in TBC UI Requirements 1–10; restated here fo
 
 ## Acceptance Criteria
 
-[To be designed]
+ACs marked **BLOCKING** are Logic-type — automated unit tests in `tests/unit/move_db/` gating story completion. **ADVISORY** ACs gate content-authoring pipelines. **DEFERRED** ACs need a Not-Started system's tooling and state their unblock trigger. Discriminating fixtures below were python3-verified 2026-07-10.
+
+> **Formula-verification note (specialist disagreement resolved by scan):** the MOVE-F1 epsilon is **load-bearing** — confirmed by direct IEEE 754 evaluation. Two specialist reviews mis-analyzed it analytically in opposite directions (one "defensive," one "the products are exact integers"); both were wrong. `165 × 1.40` evaluates to `230.99999999999997` in double precision (`float(1.4) = 1.3999999…`), not `231.0`. The empirical scan is authoritative; do not "simplify" the epsilon away on analytical grounds.
+
+### Formula (MOVE-F1) and Pipeline
+
+**AC-MDB-02** (BLOCKING): MOVE-F1 discriminating floor. `df1=164, BASIC 0.70` → `floor(114.8001) = 114` (round/ceil give 115 — FAIL). Second: `df1=187, SIGNATURE 1.40` → `floor(261.8001) = 261` (round/ceil give 262 — FAIL). Sanity (non-discriminating): `df1=164, STANDARD 1.00` → 164.
+
+**AC-MDB-03** (BLOCKING): MOVE-F1 load-bearing epsilon + floor clamp. `df1=165, SIGNATURE 1.40`: IEEE 754 product = `230.99999999999997`, so a bare `floor()` returns **230** (FAIL); `floor(x + 0.0001)` returns **231** (correct). `df1=90, BASIC 0.70`: product `62.99999999999999`, bare 62 (FAIL), epsilon 63. Min clamp: `df1=1, BASIC 0.70` → `max(1, floor(0.7001)) = 1`. FAIL: epsilon omitted (returns 230/62); returns 0 at minimum.
+
+**AC-MDB-04** (BLOCKING): MOVE-F1 tier ceilings (range check). `HEAVY df1=225` → 270; `SIGNATURE df1=225` → 315 (absolute output ceiling). FAIL: exceeds 315 or mis-scales a tier.
+
+**AC-MDB-05** (BLOCKING): damage pipeline order DF-1 → MOVE-F1 → TBC-F5. Signature/no-Stagger vs BOSS (A=150, D=30, T=1.5): DF-1 187 → ×1.40 → **261**. Signature/max-Stagger realistic (A=150, D=55, T=1.5, proc 110): 164 → 229 → ×(1−0.27) → **167**, and `hit_resolved` carries 167. FAIL: power applied inside DF-1; Stagger before power; hit_resolved carries 229. *(Signal-emission guarantee owned by TBC AC-TBC-34 — referenced, not duplicated.)*
+
+### Schema and Behavior
+
+**AC-MDB-01** (BLOCKING): a lookup for an `active_skill_id` with no Move DB entry returns `null` and never throws. *(Verifies EC-MDB-01.)*
+
+**AC-MDB-06** (BLOCKING): Basic Attack template. (a) appears in the combatant's move list at battle start regardless of equipped active-skill parts; (b) callable at `current_energy = 0`; `behavior=DAMAGE`, `power_mult=0.70`, `energy_cost=0`; `damage_type`/`element` filled from the equipped WEAPON at instantiation. FAIL: absent, greyed, or wrong tier.
+
+**AC-MDB-07** (BLOCKING): a `DAMAGE` move with `null` `power_tier` resolves at `STANDARD` (1.00), never crashing. *(Verifies EC-MDB-04.)*
+
+**AC-MDB-08** (BLOCKING): a non-`DAMAGE` move with a stray `power_tier` (e.g. REPAIR at HEAVY) applies no multiplier — its Structure delta comes from TBC-F6 only. *(Verifies EC-MDB-05.)*
+
+**AC-MDB-09** (BLOCKING): a `STATUS` move applies its `status_proc` guaranteed on hit; a `DAMAGE` move with `status_proc=null` leaves the target's status list unchanged after `hit_resolved` (innate riders never fire; passive riders out of scope). `status_id` must equal the element-mapped status. *(R5.)*
+
+**AC-MDB-10** (BLOCKING): a `SCAN` move produces a reveal payload of the enemy's `break_regions` + drop hints; deals no damage, applies no status. Empty `break_regions` → empty reveal, no crash. *(Verifies EC-MDB-06; turn/cost owned by TBC AC-TBC-39 — referenced.)*
+
+**AC-MDB-11** (BLOCKING): a Vent move sets `current_heat = max(0, current_heat − vent_amount)`; at `current_heat = 0` it stays 0, Energy is still paid, the turn is consumed. *(Verifies EC-MDB-07; R8.)*
+
+**AC-MDB-12** (BLOCKING): a `SKILL_ENHANCE` `power_tier` bump on an already-SIGNATURE move clamps to SIGNATURE (no sixth tier). *(Verifies EC-MDB-09.)*
+
+**AC-MDB-13a** (BLOCKING): `SKILL_UNLOCK` on a non-Core part at tier +2 → the unlocked move appears in that part's contributed slot after upgrade (move list grows by 1, matches the unlock spec). *(R9.)*
+
+**AC-MDB-13b** (BLOCKING): `SKILL_ENHANCE` `energy_cost −3` on a cost-15 move → 12; `power_tier +1 step` on a STANDARD move → HEAVY. *(R9.)*
+
+**AC-MDB-18** (BLOCKING): a well-formed `DAMAGE` move record carries all required fields (`id, display_name, behavior, power_tier, damage_type, element, energy_cost, targeting`) and does **not** carry `heat_generation` or `ammo_cost` (those live on the Part). *(R1.)*
+
+**AC-MDB-19** (BLOCKING): non-`DAMAGE` moves do not emit `hit_resolved` — one STATUS, one REPAIR, one SCAN, one UTILITY move each fire `hit_resolved` zero times. *(R2.)*
+
+**AC-MDB-20** (BLOCKING): a SCAN reveal persists for the rest of the battle (a second SCAN on the same enemy reads persisted state) and is cleared at battle end. *(R6.)*
+
+**AC-MDB-21** (BLOCKING): REPAIR and Vent moves have `targeting = SELF`; a non-SELF REPAIR/UTILITY fails validation. *(R7, R8.)*
+
+### Content Validation (DEFERRED)
+
+**AC-MDB-14** (ADVISORY, DEFERRED): a `DAMAGE` move's `energy_cost` falls within its `power_tier` band (Rule 3); the validator warns naming the move `id` otherwise. *Unblocks when: Move DB content authoring pipeline and schema validation tooling exist.* *(Verifies EC-MDB-02.)*
+
+**AC-MDB-15** (BLOCKING, DEFERRED): a `REPAIR` move authors `energy_cost > BASE_ENERGY_REGEN` (≥ 11); the validator **fails (blocking)** naming the move `id` otherwise — a free REPAIR is a design-integrity bug, not a warning (Move DB side of TBC AC-TBC-38). *Unblocks when: Move DB content authoring pipeline and schema validation tooling exist.* *(Verifies EC-MDB-08.)*
+
+**AC-MDB-16** (ADVISORY, DEFERRED): a `STATUS` move's `status_id` matches its `element`; the validator errors otherwise. *Unblocks when: Move DB content authoring pipeline and schema validation tooling exist.* *(Verifies EC-MDB-03.)*
+
+**AC-MDB-17** (ADVISORY, DEFERRED): a Core part's `upgrade_effects` contains no `SKILL_UNLOCK` entry (Part DB Core exception); the validator errors otherwise. *Unblocks when: Move DB content authoring pipeline and schema validation tooling exist.* *(Verifies EC-MDB-10.)*
+
+### Summary
+
+22 ACs: 18 BLOCKING unit (AC-MDB-01–13b, 18–21) + 1 BLOCKING-DEFERRED content (15) + 3 ADVISORY-DEFERRED content (14, 16, 17). EC↔AC cross-check: every EC-MDB-01…10 is verified (01→01, 02→14, 03→16, 04→07, 05→08, 06→10/20, 07→11, 08→15, 09→12, 10→17). **Cross-doc erratum flagged:** TBC AC-TBC-39 gains a note that SCAN now also produces a reveal payload (AC-MDB-10 authoritative for reveal content; AC-TBC-39 still valid for turn/cost).
 
 ## Open Questions
 
-[To be designed]
+| # | Question | Owner | Impact |
+|---|----------|-------|--------|
+| OQ-MDB-1 | **Passive Database must author the DAMAGE-move status riders.** Rule 5 forbids innate riders on DAMAGE moves — they come only through TBC's Rule 13 passive registry. The Passive DB GDD must define those rider passives and register their effect IDs (e.g. `volt_shock_on_hit`). | Passive Database GDD | Blocks synergy/passive rider content; the TBC seed registry (Rule 13) already stubs three |
+| OQ-MDB-2 | **SCAN reveal payload data shape.** Rule 6 says SCAN reveals `break_regions` + drop hints; the exact fields (region label, drop id, drop-rate hint text vs. exact %) are owned jointly with Enemy DB ED6 and Combat UI. | Enemy DB (ED6) + Combat UI GDD | Blocks SCAN content authoring + the Combat UI reveal readout |
+| OQ-MDB-3 | **TBC errata propagation (this GDD's outbound obligation).** TBC-F5 input range + `hit_resolved` range → `[1,315]`; OQ-TBC-1/3/4 resolved; AC-TBC-39 reveal-payload note; registry MOVE-F1 + TBC-F5 updates. Must run `/propagate-design-change` before combat implementation. | This session / producer | Approved TBC + registry go stale until applied |
+| OQ-MDB-4 | **MVP move roster** — the actual count of moves per behavior/element/manufacturer is content authoring against this schema, not this GDD, and must be co-planned with the Part DB content plan (parts reference moves by `active_skill_id`). Hard constraint: every non-Common part needs a valid move. | Content plan / game-designer | Content-completeness gate; not a schema question |
+| OQ-MDB-5 | **UTILITY expansion (Vertical Slice+)** — buffs, energy transfer, and other UTILITY behaviors are enum headroom; MVP ships only Vent (Rule 8). | Vertical Slice design | None for MVP |
+| OQ-MDB-6 | **Ammo moves (Full Vision)** — `ammo_cost` stays 0 in MVP (Part DB rule; TBC AC-TBC-20); ammo-gated moves are a Full Vision expansion once Ammo Capacity is un-reserved. | Full Vision design | None for MVP |
