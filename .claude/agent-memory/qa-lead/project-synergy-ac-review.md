@@ -1,11 +1,11 @@
 ---
 name: project-synergy-ac-review
-description: Synergy System GDD AC review history — round 3 findings; 6 blocking, 6 recommended; key issues are white-box AC, consumer formula ownership, missing error-contract ACs
+description: Synergy System GDD AC review history — round 5 findings; 5 blocking, 3 recommended; key issues are wrong AC (AC-SYN-12 order-independence), 7-tier fixture gap, null-candidate preview gap
 metadata:
   type: project
 ---
 
-Synergy System GDD has undergone three AC review rounds as of 2026-07-10.
+Synergy System GDD has undergone five AC review rounds as of 2026-07-10.
 
 **Why:** Shift-left QA; Synergy System is a Core-layer system that all downstream Workshop, TBC, and Workshop UI systems depend on.
 
@@ -38,6 +38,19 @@ Synergy System GDD has undergone three AC review rounds as of 2026-07-10.
 - Coverage estimate: ~65–70% branch coverage with current 15 ACs — below the 80% coding-standards requirement.
 - preview() out-of-range slot (Rule 9): No AC tests that `target_slot < 0` or `> 7` returns empty block without crash.
 
+### Round 5 (2026-07-10) — adversarial re-review #5: 5 BLOCKING, 3 RECOMMENDED.
+
+1. **BLOCKING — 7-tier maximum fixture missing (EC-SYN-02):** GDD claims the 7-tier simultaneous build is "content-authoring guidance, not a distinct code path" — this is wrong for test purposes. Needs dedicated AC.
+2. **BLOCKING — AC-SYN-12 "order-independent" assertion CONTRADICTS Rule 3:** Rule 3 defines mandatory alphabetical-by-tier-ID emission order. AC-SYN-12 explicitly allows any order ("order-independent"). This is a WRONG assertion, not a missing test. Must change to ordered equality assertion.
+3. **BLOCKING — No AC for keep-first alphabetical effect dedup order:** AC-SYN-05 proves dedup count is 1; no AC proves the FIRST (alphabetically-earlier-tier) occurrence is kept, not the last. Proposed AC-SYN-05b.
+4. **BLOCKING — AC-SYN-14 named gap: evaluate_silent() on combined-synergy fixture never tested:** AC-SYN-14 note explicitly flags that combined-synergy path divergence is uncovered. Proposed AC-SYN-14b (ironclad=3, VOLT=3 combined fixture via evaluate_silent).
+5. **BLOCKING — null candidate_part in preview() untested and undefined in Rule 9:** Null candidate = "unequip this slot" is the natural Workshop UI call. Not specified in Rule 9, not tested. Proposed AC-SYN-24 + Rule 9 amendment.
+6. **RECOMMENDED — Rule 8 post-evaluate_silent evaluate() overwrite not tested:** evaluate() after evaluate_silent() should overwrite cache and emit. An impl that self-locks after silent call would silently break Workshop. Simple sequence test.
+7. **RECOMMENDED — EC-SYN-05 effect pass-through not isolated:** No AC exercises a KNOWN-UNKNOWN effect ID to prove no filtering occurs. AC-SYN-17 covers stat-key pass-through; similar coverage for effect array needed.
+8. **RECOMMENDED — AC-SYN-17 missing FAIL condition for drop-on-unknown-key bug:** "stat_delta does not contain 'speed'" should be explicit FAIL, not just an implicit assertion failure.
+
+Finding 2 (AC-SYN-12 wrong assertion) is the highest-risk: it actively prevents catching order violations. Rule 7 consumer diff-on-active-synergies gap is NOT a Synergy System gap — it belongs in Workshop UI GDD (not yet written).
+
 ### Recurring pattern (consistent with Part DB and Enemy DB reviews):
 
 - Error-contract paths (wrong input, unknown key, empty array) are specified in Edge Cases but never have ACs. This is now a third consecutive GDD with this pattern.
@@ -45,3 +58,5 @@ Synergy System GDD has undergone three AC review rounds as of 2026-07-10.
 - Consumer formula ownership gap: SYN-F4 is the equivalent of the Part DB's "formula owned by consumer" problem seen in AC-15a (tests Drop System, not Part Database).
 
 **How to apply:** For every Edge Case section in a GDD, check: does each EC have a corresponding AC? If the EC says "no crash," there must be an AC with a fixture that triggers that code path. For every formula in a GDD, confirm: is this formula computed by this system, or by a downstream consumer? Consumer formulas need a home in the consumer's GDD, not this one.
+
+**New pattern from round 5:** Watch for WRONG assertions, not just missing ones. An AC that contradicts the spec (e.g., "order-independent" when order is mandated) is more dangerous than a missing AC — it gives false confidence AND actively masks a real bug class. When a spec defines a deterministic order, the AC must assert that exact order.
