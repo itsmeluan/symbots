@@ -54,7 +54,12 @@ Recommended also applied: AC-TBC-06 split (state vs. rendering — UI assertions
 - Overview ✓ (Part DB read-only sibling; ratifies MOVE-CONTRACT-1 + power_tier addition)
 - Player Fantasy ✓ (borrowed/enabling — "the move panel is the build speaking")
 - Detailed Design ✓ — Rules 1-9: schema (MOVE-CONTRACT-1 + power_tier), behavior classes, power-tier coherence table {LIGHT .80/STANDARD 1.00/HEAVY 1.20/SIGNATURE 1.40, Basic 0.70}, Basic Attack template, status moves, SCAN=reveal break_regions (ED6), REPAIR (energy_cost>10), UTILITY=Vent (dump Heat), upgrade_effects semantics (SKILL_UNLOCK/SKILL_ENHANCE)
-- IN PROGRESS: Formulas — systems-designer deriving MOVE-F1 (post-DF-1 power multiply) + epsilon scan + TBC errata numbers
+- Formulas ✓ — MOVE-F1 `max(1,floor(df1_output×power_mult+0.0001))`, output [1,315]. **Epsilon LOAD-BEARING** (python3-verified in-session: 10 cases, e.g. 165×1.40=230.9999→231; SD wrongly called it defensive — memory updated). Pipeline DF-1→MOVE-F1→TBC-F5. Balance: SIGNATURE+max-synergy = 3-turn boss kill (vs TBC's 4), ruled acceptable (Heat-gated).
+- Edge Cases ✓ — EC-MDB-01..10 (each cites an AC)
+- Dependencies ✓ — resolves TBC OQ-1/3/4; errata table
+- Tuning Knobs ✓ — power_mult tiers + vent_amount
+- Visual/Audio + UI ✓ — brief delegation notes (power_tier indicator + SCAN readout are the 2 Move-DB-specific UI adds)
+- IN PROGRESS: Acceptance Criteria — qa-lead validating draft (17 ACs: 13 BLOCKING + 4 ADVISORY content-val); then Open Questions
 
 ## Move DB Design Decisions (locked this session)
 - power_tier ENUM (not free float), coherent w/ Part DB energy/heat tiers
