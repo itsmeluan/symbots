@@ -1,6 +1,6 @@
 # Synergy System
 
-> **Status**: In Review
+> **Status**: In Review (revised — 6 blocking items resolved 2026-07-10)
 > **Author**: Luan Martins da Silva + Claude Code Game Studios agents
 > **Last Updated**: 2026-07-10
 > **Implements Pillar**: Pillar 4 — Synergy Is the Endgame / Pillar 3 — Build Depth Over Content Breadth
@@ -19,7 +19,7 @@ The synergy experience unfolds across five beats:
 2. **The Hunt** — The player starts evaluating every part drop by its tags, not just its stats. "Does this get me to Ironclad 3?"
 3. **The Click** — The third Ironclad part equips. The bonus activates. Audio and visual confirmation. The Symbot's defensive profile changes.
 4. **The Tradeoff** — A better WEAPON drops with a different manufacturer tag. Equipping it breaks the set. The player pauses: is the raw stat gain worth losing the activation?
-5. **Mastery** — The player learns to hold partial synergies across multiple team members, or to stack element tags across manufacturer lines for a cross-synergy build. The system opens up beyond single-Symbot optimization.
+5. **Mastery** — The player learns to hold multiple partial synergies on a single Symbot simultaneously: maintaining ironclad ≥ 3 AND VOLT ≥ 3 to keep a combined synergy active while also pushing VOLT toward 5-piece, or running two manufacturer lines at partial thresholds for complementary bonuses. The system opens into a space of overlapping commitments and deliberate tradeoffs. *(Cross-Symbot team synergies — where Symbots sharing a tag unlock a shared bonus — are a Vertical Slice expansion. Rule 1 defines the per-Symbot scope for MVP.)*
 
 The reference feeling: Monster Hunter's armor set skills — where you're not hunting stats, you're hunting *pieces of a concept*. Symbots should create the same intentionality.
 
@@ -253,7 +253,7 @@ effective_stat[energy_power] = max(0, 55 + 22) = 77
 **EC-SYN-02: Maximum tag concentration and simultaneous tier stacking.**
 Pure concentration: all 8 parts share the same manufacturer AND element (e.g., 8 Ironclad-VOLT parts). Both 3-piece and 5-piece activate for Ironclad, for VOLT, and for Ironclad-VOLT (6 tiers active). All bonuses stack cumulatively per SYN-F3.
 
-Maximum theoretical simultaneous tiers: a 5+5 distribution between two elements under one manufacturer (e.g., 5 ironclad-VOLT + 3 ironclad-KINETIC, giving ironclad=8, VOLT=5, KINETIC=3) yields ironclad 3-piece, ironclad 5-piece, VOLT 3-piece, VOLT 5-piece, KINETIC 3-piece, ironclad-VOLT 3-piece, ironclad-KINETIC 3-piece = 7 tiers. With ironclad≥5 AND VOLT≥5: ironclad 3-piece, ironclad 5-piece, VOLT 3-piece, VOLT 5-piece, KINETIC 3-piece (if 3+ KINETIC), ironclad-VOLT 3-piece = up to 10 tiers. There is no cap on the number of simultaneously active tiers. Content authors must budget stat_delta values assuming up to 10 tiers could be simultaneously active.
+Maximum verified simultaneous tiers: a 5+3 distribution across two elements under one manufacturer (e.g., 5 ironclad-VOLT + 3 ironclad-KINETIC, giving ironclad=8, VOLT=5, KINETIC=3) yields ironclad 3-piece, ironclad 5-piece, VOLT 3-piece, VOLT 5-piece, KINETIC 3-piece, ironclad-VOLT 3-piece, ironclad-KINETIC 3-piece = **7 tiers** (verified maximum in MVP). Three manufacturers simultaneously at 3-piece is impossible — it would require 9 manufacturer-tagged slots across 8 total. There is no cap on the number of simultaneously active tiers. Content authors must budget stat_delta values assuming up to **7 tiers** could be simultaneously active.
 
 **EC-SYN-03: Wild parts used across multiple synergy lines.**
 Wild parts (element tag only, no manufacturer tag) intentionally enable element-focus builds that can be combined with manufacturer synergies. Example: 4 wild VOLT parts (element-only) reach VOLT 3-piece; the remaining 4 slots use non-wild Ironclad parts for Ironclad 3-piece. Both synergy lines activate simultaneously. This is intended design — the flexibility cost is that wild slots contribute no manufacturer counts, so the player cannot accumulate a combined synergy (which requires both element AND manufacturer counts meeting the threshold). A player using all 4 wild VOLT slots cannot reach Ironclad-VOLT 3-piece without additional Ironclad-tagged VOLT parts in their remaining slots.
@@ -337,7 +337,11 @@ This system owns the `synergy_changed` signal. The Workshop UI GDD owns all visu
 
 Requirements this system places on downstream UI GDDs:
 
-1. **Build-relevant synergy indicators**: Workshop UI must display each synergy tier relevant to the current build. A tier is build-relevant if the player has at least 1 part with a matching tag. For each build-relevant tier: active tiers show the tier name, icon, and bonus summary; inactive tiers show current vs. required count (e.g., "Ironclad: 2/3 — 1 more for bonus"). Tiers with no matching parts in the current build are hidden (3–8 visible indicators maximum, not all 30 theoretical tiers).
+1. **Build-relevant synergy indicators**: Workshop UI must display each synergy tier relevant to the current build. A tier is build-relevant if the player has at least 1 part with a matching tag. Tiers with no matching parts are hidden (3–8 visible indicators maximum, not all 21 theoretical tiers). Three indicator states are required:
+   - **Active tier (threshold met, no next tier)**: show tier name, icon, and active bonus (e.g., "Ironclad 5-piece: Armor +20 active").
+   - **Active tier (next threshold in reach)**: show active bonus AND progress toward next threshold AND next tier's pending bonus from content data (e.g., "Ironclad: 4/5 — +8 Armor active | 1 more for Armor +20").
+   - **Inactive tier (threshold not yet met)**: show current count, required count, and the pending bonus value from content data (e.g., "Ironclad: 2/3 — 1 more for Armor +8"). Players must always see what they are building toward, not just how far away they are.
+   Bonus values in all three states must be read from the Synergy Content data file — they are not computed by the UI.
 2. **Synergy stat delta display**: Workshop UI must apply SYN-F4 before displaying any stat value — players must never see a base-only stat in the Workshop. `effective_stat[S] = max(0, Assembly.final_stat[S] + synergy_bonus_block.stat_delta.get(S, 0))`.
 3. **Swap preview synergy delta**: When previewing a part swap, Workshop UI must call `preview()` and surface synergy threshold changes (new activation, lost activation) as a distinct visual element from the base-stat delta. A synergy activation or loss is not just a number change — it requires presentation that is visually distinguishable from a plain stat delta (e.g., a highlighted indicator change alongside the stat numbers).
 4. **Active effects list**: Workshop UI must display active passive effect IDs by name. The Synergy Content data file must include a `display_name` string for each tier (and its effects), so Workshop UI reads human-readable names from the content data rather than raw StringName IDs.
@@ -436,10 +440,25 @@ Call `evaluate(parts)`.
 Pass: received `active_synergies` contains exactly `["volt_3_piece", "volt_5_piece"]` (in any order — use set equality) — no missing tiers, no spurious IDs.
 
 **AC-SYN-13: preview() returns hypothetical when candidate activates a new synergy**
-Fixture: Active build with 2 VOLT-tagged parts in slots 0–1 (VOLT=2; below 3-piece threshold). `cached_bonus_block.stat_delta.is_empty() == true`. VOLT 3-piece content: `{ energy_power: 6 }`. Slot 2 currently holds a non-VOLT part (or is null).
+Fixture: Active build with 2 VOLT-tagged parts in slots 0–1 (VOLT=2; below 3-piece threshold). `cached_bonus_block.stat_delta.is_empty() == true`. VOLT 3-piece content: `{ energy_power: 6 }`. Slot 2 currently holds a KINETIC-tagged part (synergy_tags = [&"KINETIC"] — non-VOLT, no other threshold reached).
 Call `preview(candidate_volt_part, 2, current_parts)` where `candidate_volt_part.synergy_tags = [&"VOLT"]`.
 Hypothetical: slots 0–2 VOLT-tagged → VOLT=3 → VOLT 3-piece activates.
 Pass: return value `stat_delta["energy_power"] == 6`; `cached_bonus_block.stat_delta.is_empty() == true` (actual cache unchanged); `synergy_changed` NOT emitted.
+
+**AC-SYN-14: evaluate_silent() computes correctly and does not emit**
+Fixture: Slots 0–4: VOLT-tagged parts (VOLT=5). VOLT 3-piece: `{ energy_power: 6 }`. VOLT 5-piece: `{ energy_power: 12, effects: [&"volt_test"] }`. Subscribe to `synergy_changed`. Signal counter initialized to 0.
+Call `evaluate_silent(parts)`.
+Pass: signal counter == 0 (no emission); `cached_bonus_block.stat_delta["energy_power"] == 18`; `cached_bonus_block.effects == [&"volt_test"]`.
+FAIL: counter > 0 (spurious `synergy_changed` emitted — would trigger Workshop UI subscribers at battle start); `energy_power != 18` (silent path computes differently from `evaluate()`); `cached_bonus_block` empty (silent path did not cache).
+
+Note: This fixture intentionally matches AC-SYN-02. If AC-SYN-02 passes and AC-SYN-14 produces different output, the divergence between the evaluate() and evaluate_silent() code paths is immediately identifiable.
+
+**AC-SYN-15: Tier deactivation when count drops below threshold**
+Fixture: VOLT 3-piece: `{ energy_power: 6 }`. VOLT 5-piece: `{ energy_power: 12 }`. Subscribe to `synergy_changed`. Signal counter initialized to 0.
+Step 1 — Activate: Slots 0–4: VOLT-tagged (VOLT=5). Call `evaluate(parts)`. Assert `cached_bonus_block.stat_delta["energy_power"] == 18` (both VOLT tiers active). Counter == 1.
+Step 2 — Deactivate 5-piece: Replace slot_4 with a non-VOLT part (VOLT=4). Call `evaluate(parts)`.
+Pass: `cached_bonus_block.stat_delta["energy_power"] == 6` (5-piece deactivated; 3-piece still active at VOLT=4); signal counter == 2 (signal emitted on deactivation call).
+FAIL: `energy_power == 18` (5-piece not deactivated — stale cache bug); `energy_power == 0` (3-piece also wrongly deactivated); signal counter still == 1 (deactivation signal not emitted).
 
 ## Open Questions
 
@@ -450,4 +469,5 @@ Pass: return value `stat_delta["energy_power"] == 6`; `cached_bonus_block.stat_d
 | OQ-3 | Which passive effect IDs are feasible to implement for MVP, and what behavior does each define? | Turn-Based Combat GDD | Blocks authoring any effect-bearing synergy content until TBC GDD defines the registry |
 | OQ-4 | Does CORE's synergy contribution need to be mechanically distinct from other slots, or does its tag contribution alone fulfill the "CORE identity" deferred obligation from Assembly? | Game Designer | May require revisiting Assembly Deferred Obligation #5 when TBC is designed |
 | OQ-5 | What would the Vertical Slice team-wide synergy feature look like? (e.g., 2+ Symbots sharing a tag for a team-level bonus?) | Deferred to Vertical Slice design | No impact on MVP system |
-| OQ-6 | Does SA-F2 (Assembly swap delta) return an absolute hypothetical stat or a delta? This must be verified before Workshop UI GDD is authored, to determine whether the UI can safely combine SA-F2 and SYN preview() outputs for a combined effective-stat delta display. | Lead Programmer / Assembly GDD | Blocks Workshop UI GDD authoring if unresolved |
+| OQ-6 | **RESOLVED (2026-07-10)** — SA-F2 returns a signed delta (`delta[S] = hypothetical_final_stat[S] − current_final_stat[S]`), confirmed from Assembly GDD. Workshop UI combined effective-stat display formula: `effective_delta[S] = SA-F2.delta[S] + (preview().stat_delta.get(S, 0) − cached_bonus_block.stat_delta.get(S, 0))`. Precondition: Workshop System must call `evaluate()` after every equip before `preview()` is called, to avoid stale `cached_bonus_block`. Workshop UI GDD authoring is unblocked. | Resolved | None |
+| OQ-7 | What is the minimum number of parts per synergy tag (per slot type) required to make Beat 2 (The Hunt) feel like a real search vs. trivial threshold-hitting? With TIER1=3 and 8 slots, a tag needs at least 5–6 authored parts in circulation with meaningful slot competition to create genuine scarcity pressure. This is a content design constraint, not a system design constraint — resolve during Part Database content authoring. | Economy Designer / Part Database content scope | Affects whether Beat 2 works in practice at MVP content volume |

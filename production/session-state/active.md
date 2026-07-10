@@ -1,54 +1,57 @@
 # Active Session State
 
 ## Current Task
-Session 7: Synergy System GDD — /design-review complete (MAJOR REVISION NEEDED). Revisions applied 2026-07-10. Awaiting verdict on re-review vs. Approve.
+Session 8: Synergy System GDD — /design-review re-review complete (NEEDS REVISION). 6 blocking items found and resolved in-session 2026-07-10. Ready for final re-review (#2).
 
 ## Prior Completed
 - Enemy Database GDD: APPROVED 2026-07-10 (Session 4)
 - Part Database GDD: APPROVED (+ visual amendment 2026-07-10)
 - Damage Formula GDD: APPROVED
 - Symbot Assembly System GDD: APPROVED 2026-07-10 (Session 5)
-- Synergy System GDD: DESIGNED 2026-07-10 (Session 6) — status: In Review
+- Synergy System GDD: In Review (revised twice — awaiting re-review #2)
 
-## Key Design Decisions (Synergy — preserved for next reviewer)
+## Key Design Decisions (Synergy — current state after revision)
 - Bonus types: stat bonuses (flat integers) + passive combat effects (named StringName IDs)
-- Tiers: 2-piece (small bonus) and 4-piece (large bonus), CUMULATIVE (both apply when 4-piece hit)
-- Combined synergies: require constituent tag thresholds met simultaneously (ironclad ≥ 2 AND VOLT ≥ 2); bonuses STACK with individual synergies, do not replace them
+- Thresholds: TIER1=3 (small bonus), TIER2=5 (large bonus), CUMULATIVE (both apply at 5-piece)
+- Combined synergies: require constituent tag thresholds (ironclad ≥ 3 AND VOLT ≥ 3); stack with individual synergies
 - Wild parts: contribute element tag only; no manufacturer tag
 - evaluate() ALWAYS emits synergy_changed (even if result unchanged)
+- evaluate_silent(): same computation as evaluate() but does NOT emit signal (TBC battle-start only)
 - preview() is strictly read-only (no signal, no cache write)
-- Per-Symbot scope only (team-wide synergies deferred to Vertical Slice)
+- Per-Symbot scope only in MVP (team-wide synergies are Vertical Slice)
 - Frozen during battle (no re-evaluation on part breaks)
-- Scope conflict resolved: Synergy → MVP (game-concept.md updated 2026-07-10)
-- 13 ACs total — 6 WEAK ACs from draft rewritten after qa-lead review; 4 new ACs added
-- Section C amended: combined synergy stacking rule made explicit; always-emit invariant added
+- Maximum 7 simultaneous tiers (verified — 3 manufacturers can't all hit 3-piece in 8 slots)
+- 15 ACs total (AC-SYN-01 through AC-SYN-15)
+- OQ-6: RESOLVED — SA-F2 is delta; Workshop UI composition formula documented
 
-## Files Changed This Session
-- design/gdd/synergy-system.md (CREATED — all 8 required sections + Visual/Audio, UI, Open Questions)
-- design/gdd/systems-index.md (Synergy System status → Designed)
-- design/gdd/game-concept.md (removed stale "NOT in MVP" note; updated scope tier table)
-- design/registry/entities.yaml (added SYN-F1, SYN-F2, SYN-F3, SYN-F4 + SYNERGY_THRESHOLD_TIER1, SYNERGY_THRESHOLD_TIER2)
-- production/session-state/active.md (this file)
+## Revision History (Session 8 — 2026-07-10 — 6 blockers resolved)
+- B2 FIXED: Beat 5 (Mastery) rewritten to single-Symbot cross-synergy mastery; team synergy marked post-MVP
+- S1 FIXED: EC-SYN-02 "up to 10 tiers" → "7 tiers (verified maximum)" with proof
+- U4 FIXED: UI Req 1 rewritten with 3 indicator states; all states require pending bonus value from content data
+- U5 FIXED: "Active + progressing" state defined as third indicator state in UI Req 1
+- Q1 FIXED: AC-SYN-14 added (evaluate_silent() does not emit; computes and caches correctly)
+- Q2 FIXED: AC-SYN-15 added (tier deactivation when count drops below threshold)
+- OQ-6 CLOSED: SA-F2 confirmed as delta; Workshop UI composition formula: effective_delta[S] = SA-F2.delta[S] + (preview().stat_delta.get(S,0) − cached_bonus_block.stat_delta.get(S,0))
+- OQ-7 ADDED: Catalog size constraint for Beat 2 (The Hunt), deferred to Part Database content authoring
+- "30 theoretical tiers" corrected to "21" in UI Req 1
 
-## Revision Summary (applied 2026-07-10 in /design-review session)
-- A1 FIXED: TIER1 raised 2→3, TIER2 raised 4→5. Section B already correct for 3-piece. Tier names "3-piece"/"5-piece" throughout.
-- A2 FIXED: active_synergies typed as Array[StringName] in Rule 7 signal parameters.
-- A3 FIXED: preview() slot-displacement specified (candidate replaces current occupant); out-of-range returns empty block + logs error.
-- A4 FIXED: EC-SYN-03 reworded — wild parts double-dipping documented as intended design.
-- evaluate_silent() added to Rule 7 + States table for TBC battle-start (prevents spurious Workshop UI signal at battle start).
-- "Detailed Design" section renamed to "Detailed Rules".
-- EC-SYN-02 updated: max simultaneous tiers = 10 (not 6).
-- UI Req 1 scoped to build-relevant tiers (3–8 max on screen).
-- OQ-6 added: verify SA-F2 return type before Workshop UI GDD authoring.
-- All 13 ACs updated for new thresholds (3/5-piece); 5 weak ACs fixed; fixtures adjusted.
-- entities.yaml: SYNERGY_THRESHOLD_TIER1=3, SYNERGY_THRESHOLD_TIER2=5.
+## Files Changed Session 8
+- design/gdd/synergy-system.md (6 edits — Beat 5, EC-SYN-02, UI Req 1, AC-SYN-14, AC-SYN-15, OQ-6/OQ-7)
+- design/gdd/reviews/synergy-system-review-log.md (appended revision-pass entry)
 
 ## Next Steps
-1. Decide: re-review synergy-system.md in a new session, or accept revisions as Approved
-2. /design-system turn-based-combat — #6 in design order (depends on Damage Formula, Assembly, Enemy Database; Synergy must be at least Approved)
+1. /clear this session (context is near limit)
+2. /design-review design/gdd/synergy-system.md in fresh session — expected to APPROVE given all blockers resolved
+3. After approval: /design-system turn-based-combat — #6 in design order
+
+## Open RECOMMENDED Items (not blocking — flag in re-review)
+- Beat 4 tradeoff strength at 3-piece; tier evaluation order undefined; wild parts tradeoff rationale; stacking content-author cap
+- Cross-synergy effect deduplication AC missing; float validation in content loading
+- AC-SYN-04 tests internal tag_count (not public API); AC-SYN-06/10 misclassified; AC-SYN-12 missing size()
+- Combat UI Req 5 underdelegated; display_name length/null fallback unspecified
 
 <!-- STATUS -->
 Epic: MVP Core GDDs
 Feature: Synergy System GDD
-Task: Awaiting /design-review
+Task: Awaiting /design-review (re-review #2 — 6 blockers resolved)
 <!-- /STATUS -->
