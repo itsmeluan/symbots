@@ -1,124 +1,132 @@
 ---
 name: synergy-ux-open-issues
-description: UX problems in Synergy System GDD after re-review — 5 BLOCKING, 3 RECOMMENDED; decisions needed before Workshop UI GDD synergy section can be authored
+description: UX problems in Synergy System GDD after re-review #3 — 7 BLOCKING, 4 RECOMMENDED; 3 issues resolved (E, H, A); blocks Workshop UI GDD synergy section
 metadata:
   type: project
 ---
 
-Second adversarial review conducted 2026-07-10 against `design/gdd/synergy-system.md`.
-Prior verdict was MAJOR REVISION NEEDED; four blockers were reported fixed. This is the
-re-review result.
+Third adversarial review conducted 2026-07-10 against `design/gdd/synergy-system.md`.
+Prior verdict: 5 BLOCKING, 3 RECOMMENDED. This re-review found 3 resolved, 4 still open,
+and 5 new issues (3 BLOCKING, 2 RECOMMENDED) for a net of 7 BLOCKING, 4 RECOMMENDED.
 
-## Status of Prior Issues
+---
 
-Issue 1 (animation thrashing) — PARTIALLY FIXED. Change detection language added to
-Visual/Audio table. Debounce window and diff semantics still undefined (see Issue C).
+## RESOLVED (closed in re-review #3)
 
-Issue 2 (indicator count) — PARTIALLY FIXED. Build-relevant filter + 3-8 cap added.
-Overflow behavior for >8 build-relevant tiers still undefined (see Issue B).
+**Issue E — Beat 1 vs. UI Req 1 bonus value**: FIXED. UI Req 1 now requires pending
+bonus value in inactive indicator state, matching what Beat 1 always promised. Closed.
 
-Issue 3 (threshold/format contradiction) — NOT FIXED + escalated. "Active + progressing
-toward next tier" indicator state missing (see Issue H).
+**Issue H — "Active + progressing toward next tier" indicator state**: FIXED. UI Req 1
+now defines all three indicator states including the active+progressing case with example
+format. Closed.
 
-Issue 4 (two panels on a crowded screen) — NOT FIXED. Synergy delta vs. stat delta panel
-question unresolved. Still deferred.
-
-Issue 5 (stacking breakdown invisible) — NOT FIXED. No tier-breakdown display added.
-
-Issue 6 (effect display name owner) — PARTIALLY FIXED. Owner assigned to Synergy Content
-data. Length limit, null fallback, localization note still missing (see Issue G).
+**Issue A — "30 theoretical tiers" wrong count**: FIXED. Now reads "21 theoretical
+tiers" with correct MVP breakdown. Closed.
 
 ---
 
 ## BLOCKING Issues
 
-**Issue B — Overflow behavior for >8 build-relevant tiers undefined (BLOCKING)**
-UI Req 1 caps visible indicators at 8. EC-SYN-02 shows 10 simultaneous active tiers.
-A focused build can easily produce 8–10 build-relevant tiers. The GDD does not specify
-what happens to tier 9 and 10: silent hide, scroll, or priority-sort. Silent hiding
-breaks Beat 1 (Recognition) — the player never sees a tier they are working toward.
+**Issue B — Overflow behavior for >8 build-relevant tiers (BLOCKING)**
+UI Req 1 caps visible indicators at 8 with no overflow behavior defined. EC-SYN-02
+shows up to 7 simultaneously active tiers; a build with partial lines can produce 8–10
+build-relevant tiers (≥1 matching part). What happens to tier 9 and 10? Silent hide,
+scroll, or priority-sort? Silent hiding breaks Beat 1 (Recognition). Not fixed in
+re-review #3.
 
-Decision needed: Overflow behavior must be defined. Minimum: "overflow tiers must not
-be silently hidden without player awareness."
+Decision needed: Overflow behavior and player awareness when indicators are hidden.
 
-**Issue C — Change detection contract is undefined (BLOCKING)**
-Visual/Audio table adds "implement own change detection" but gives no debounce window
-and no diff semantics. "Rapid" is undefined. Workshop UI GDD author will pick an
-arbitrary debounce value. Diff by bonus_block equality can incorrectly suppress
-animations when active tier set changes but total bonus stays equal. The Synergy GDD
-defines the signal contract; it must also define the minimum diff semantics.
+**Issue C — Change detection contract undefined (BLOCKING)**
+Visual/Audio table says "implement own change detection" with no debounce window and no
+diff semantics. "Rapid" is still undefined. Diffing by bonus_block equality incorrectly
+suppresses animations when active tier set changes but total bonus stays equal. Not fixed
+in re-review #3.
 
-Decision needed: (a) Recommended debounce window (add to Tuning Knobs table, e.g. 250ms).
-(b) Explicit diff definition: "change detection must diff active_synergies by set equality."
+Decision needed: (a) Recommended debounce window (add to Tuning Knobs table). (b) Diff
+must be on active_synergies set equality, not bonus_block equality.
 
-**Issue D — preview() trigger interaction undesignable on iOS (BLOCKING)**
-UI Req 3 says "call preview() when previewing a part swap" with no trigger model.
-The Assembly GDD's hover-based preview was already flagged as unimplementable on iOS.
-No touch-compatible trigger (tap-to-preview-mode, long-press, drag-and-hold) is
-specified or delegated. Workshop UI GDD cannot design the "when" from the current text.
+**Issue D — preview() trigger model not implementable on iOS (BLOCKING)**
+UI Req 3 says "when previewing a part swap, call preview()" with no touch trigger model
+specified or explicitly delegated. Workshop UI GDD cannot design "when" from current text.
+Not fixed in re-review #3.
 
-Decision needed: Either specify the touch trigger model in UI Req 3, or add explicit
-delegation: "trigger model is Workshop UI GDD's design decision, constrained by
-platform-constraints — hover-based triggers are not permitted."
+Decision needed: Specify touch trigger (tap-to-preview-mode, long-press, drag-and-hold)
+or explicitly delegate: "trigger model is Workshop UI GDD's decision, hover-based triggers
+are not permitted."
 
-**Issue E — Recognition beat shows bonus value; UI Req 1 does not require it (BLOCKING)**
-Player Fantasy Beat 1: "Ironclad: 2 of 3 — Armor +15 when complete." UI Req 1 for
-inactive tiers: "2/3 — 1 more for bonus" — no bonus value shown. Direct contradiction.
-Showing the pending bonus value is critical to Beat 1 (Recognition) and Beat 2 (The
-Hunt). If it is required, the content data and/or UI compute contract must say so.
-If it is not required, Beat 1 must be rewritten.
+**NEW 1 — Indicator ordering unspecified (BLOCKING)**
+UI Req 1 defines 3 states but no sort order for up to 8 visible indicators. The
+`synergy_changed` signal delivers IDs in "synergy-definition registration order" — a
+content-authoring concern, not a UX concern. Rendering in signal order hands a UX
+decision to content authors. Active vs. inactive ordering, single-tag vs. combined
+ordering, and within-group ordering are all undefined.
 
-Decision needed: Does the inactive indicator show the pending bonus value? If yes, add
-to UI Req 1. If no, revise Player Fantasy Beat 1 to remove the "Armor +15" example.
+Decision needed: Priority rule — e.g., "active tiers before inactive; within each group,
+highest tag count first; combined synergies listed after their constituents."
 
-**Issue H — "Active + progressing toward next tier" indicator state unspecified (BLOCKING)**
-UI Req 1 defines indicators for: (a) active tiers and (b) inactive tiers with count.
-It does not define the state where a tier IS active but a next tier exists (e.g., 4
-Ironclad parts: 3-piece active, 1 part away from 5-piece). This is the most common
-mid-game player state for any primary synergy. No indicator format for this state
-means Workshop UI GDD author must invent it from scratch.
+**NEW 4 — Indicator panel touch ergonomics: zero constraints (BLOCKING)**
+UI Req 1 (indicators) and UI Req 4 (effect names) together imply indicators must be
+individually tappable to reveal effect lists. But no tap interaction is specified. If
+indicators require 44×44pt touch targets, 8 stacked indicators = 352pt — 42% of iPhone
+height — before the build grid, part list, and stat panel. No collapsed/expanded state
+for the panel is specified either.
 
-Decision needed: Add a third indicator format: "active tier + progress toward next tier"
-(e.g., "Ironclad 3 active | 4/5 toward large bonus").
+Decision needed: (a) Are indicators individually tappable? (b) If yes, how does the
+effect list surface (tap-to-expand row? modal overlay?). Without these constraints,
+Workshop UI GDD cannot design the panel layout correctly.
+
+**NEW 5 — "In reach" is undefined in indicator state 2 (BLOCKING)**
+UI Req 1's second indicator state: "Active tier (next threshold in reach)." "In reach" is
+never defined. Three plausible interpretations: (A) any next tier exists in content data;
+(B) player is within N parts of the threshold; (C) next tier achievable within remaining
+empty slots. Interpretations A, B, C produce different indicator text for the same build.
+The example ("1 more for Armor +20") implies B but does not define the boundary or N.
+
+Decision needed: Define "in reach" — either "a next tier exists in content data" (always
+show) or a specific slot-proximity rule (e.g., "within 2 empty slots of the threshold").
 
 ---
 
 ## RECOMMENDED Issues
 
-**Issue A — "30 theoretical tiers" should be 21 (RECOMMENDED)**
-UI Req 1 says "not all 30 theoretical tiers." Actual count: 3 mfr × 2 tiers = 6; 3
-element × 2 tiers = 6; 9 combined × 1 tier (MVP, 3-piece only per Detailed Rules) = 9.
-Total = 21. The GDD contradicts itself — Detailed Rules explicitly forbids combined
-5-piece tiers in MVP but the indicator count uses the number that assumes they exist.
-
-Fix: Change "30" to "21" with breakdown "(6+6+9 = 21 in MVP)."
-
 **Issue F — Combat UI requirement is one sentence with no consumable contract (RECOMMENDED)**
-UI Req 5: "Combat UI displays the frozen cached_bonus_block bonuses as part of effective
-stats." Three gaps: (1) no display location (HUD? stat menu? tap-to-reveal?); (2) no
-breakdown requirement (flat "Armor 53" vs. "Armor 40 + 13 synergy"); (3) no active tier
-list visibility during battle. The latter is especially important — players want to
-confirm their synergies are active before a decisive turn.
+UI Req 5 (two sentences) still has three gaps: no display location, no breakdown format
+("Armor 53" vs. "Armor 40 + 13 synergy"), and no spec on whether the active tier list is
+visible during battle. Two review cycles without resolution. If intentionally delegated,
+the delegation must be explicit so Combat UI GDD authors know they own it.
 
-Fix: Add three sentences covering location, attribution format, and tier list accessibility.
+Fix: Add three sentences covering location, attribution format, tier list accessibility.
 Or explicitly delegate all three to the Combat UI GDD.
 
 **Issue G — display_name content requirement incomplete (RECOMMENDED)**
-UI Req 4 adds display_name to Synergy Content data but omits: (a) maximum character
-length (indicators have finite width — suggest 20 chars), (b) null/missing fallback
-(suggest: show tier ID in brackets as content-error marker), (c) localization note
-(single-language string is an implicit decision — should be explicit).
+UI Req 4 adds display_name but omits: (a) max character length (suggest 20 chars for
+indicator width), (b) null/empty fallback (suggest: show tier ID in brackets as
+content-error marker), (c) localization note (single-language string is an implicit
+decision that should be explicit even if "English-only in MVP").
 
-Fix: Add length limit, null fallback, and "multi-language localization deferred" note.
+**NEW 2 — Lower bound of 3 indicators unjustified (RECOMMENDED)**
+UI Req 1 says "3–8 visible indicators maximum." Lower bound of 3 is unjustified — an
+all-wild-VOLT build produces exactly 2 build-relevant tiers (VOLT 3-piece + VOLT 5-piece).
+No game design guarantee exists that a build produces ≥3 build-relevant tiers. Lower
+bound should be 1 or the guarantee must be documented.
+
+**NEW 3 — "Visually distinguishable" in swap preview is exemplary not normative (RECOMMENDED)**
+UI Req 3: "visually distinguishable from a plain stat delta (e.g., a highlighted indicator
+change)." The e.g. is not a requirement. "Highlighted" is undefined. The requirement does
+not specify what information the preview must communicate (which synergy, what bonus, why).
+If delegation to Workshop UI GDD is intentional, state it explicitly. If not, add minimum
+constraints.
 
 ---
 
-**Why:** Found during second adversarial review. Issues B, C, D, E, H must be resolved
-before `design/ux/workshop.md` synergy section is authored. Issue F must be resolved
-before Combat UI GDD is authored.
+**Why:** Found during three rounds of adversarial review (rounds 1-3 all 2026-07-10).
+Issues B, C, D, New 1, New 4, New 5 must be resolved before `design/ux/workshop.md`
+synergy section is authored. Issues F, G must be resolved before Combat UI GDD is
+authored. Issues New 2, New 3 are precision gaps the GDD author can fix without design
+decisions.
 
-**How to apply:** Surface these issues to the game designer for decisions on B, C, D,
-E, H. A, F, G are GDD author fixes that do not require design decisions — they are
-specification precision gaps.
+**How to apply:** Surface BLOCKING issues to game designer for decisions. RECOMMENDED
+issues are GDD author fixes. Workshop UI GDD is blocked until all 7 BLOCKING issues
+are resolved.
 
 See also: [[workshop-ux-open-issues]], [[platform-constraints]], [[project-context]]
