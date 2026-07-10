@@ -1,5 +1,15 @@
 # Review Log: Synergy System
 
+## Review — 2026-07-10 (Re-review #3, Revision Pass) — Verdict: NEEDS REVISION
+Scope signal: M (down from L — remaining work is localized EC/AC/text edits, no redesign)
+Specialists: game-designer, systems-designer, ux-designer, qa-lead, creative-director
+Blocking items: 13 (all resolved in-session) | Recommended: ~10 (deferred to re-review #4)
+Summary: All 6 prior blockers confirmed resolved. 13 new/carried blocking items — none structural; CD assessed the doc as **converging, not churning**. Notably 7 of the 13 were RECOMMENDED items carried from review #2 that had survived unfixed. Top item (game-designer N1, lead-verified): EC-SYN-03's tradeoff rationale was mechanically false — it claimed wild parts prevent combined synergies, but SYN-F2 checks two INDEPENDENT tag counts with no co-location requirement. Author confirmed independent-counts is the intended design → resolved as documentation fix (rewrote EC-SYN-03), no MAJOR REVISION. Registration order (flagged by 3 agents independently) defined as ascending-alphabetical-by-tier-ID (author decision; chosen over file-order/explicit-field because content format OQ-1 is unresolved). Fixes: EC-SYN-03 rewrite; Beat 1 +15→+8 harmonized to AC anchor; registration-order definition in Rule 3 (+ Rule 7/SYN-F3 refs); EC-SYN-11 (duplicate tags) & EC-SYN-12 (empty requirements) added; Rule 7 change-detection contract (diff on active_synergies, not bonus_block equality); new "Downstream Consumer Obligations" section (DCO-1…6) explicitly delegating UI-scoped ux blockers to Workshop UI/Combat UI GDDs; AC-SYN-04 rewritten to observable outputs; AC-SYN-06/10 labeled consumer-owned; AC-SYN-12 size() assertion; AC-SYN-16 (unique combined effect preserved), AC-SYN-17 (unknown stat key no-crash), AC-SYN-18 (wrong-length array) added; SYN-F2 safe-access note. Deferred RECOMMENDED: Beat 4 tradeoff-at-floor (N4), stat_delta budget cap (N10), "stateless" wording + Rule 8 freeze enforcement (N11/F8), float-infiltration owner (blocked on OQ-1), OQ-6 re-open, coverage/precision items.
+Systemic process flag (qa-lead, endorsed by CD): Edge Cases defining "no crash on bad input" have shipped without corresponding ACs across ALL THREE Synergy reviews. This is a GDD-template gap, not a per-doc defect — recommend amending the GDD standard so every observable-outcome EC references a verifying AC, plus an EC↔AC check in the completeness pass.
+Prior verdict resolved: Yes — 6 of 6 prior blockers resolved; 13 new/carried blockers found and resolved in same session. Next: fresh-session re-review #4 (expected to converge to APPROVED).
+
+---
+
 ## Review — 2026-07-10 (Re-review, Revision Pass) — Verdict: NEEDS REVISION
 Scope signal: L
 Specialists: game-designer, systems-designer, ux-designer, qa-lead, creative-director
