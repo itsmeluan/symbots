@@ -28,8 +28,9 @@ Session 12: Synergy System GDD — /design-review re-review #6 COMPLETE. **Verdi
 3. **Retune the adversarial review prompt for mature documents** — stop raising "test could be stronger" as BLOCKING when the underlying spec is unambiguous. Apply when running /design-review on documents past ~3 review cycles.
 
 ## Next Steps
-1. /design-system turn-based-combat — #6 in design order. TBC GDD must: define passive effect ID registry (OQ-3); re-derive DF-1 ranges under synergy-amplified stats (SYN-F4 contract); document Synergy dependency
-2. Consider /consistency-check across the 5 approved GDDs before starting TBC
+1. **/clear, then /design-review design/gdd/turn-based-combat.md in a FRESH session** — first review of the TBC GDD (full adversarial appropriate; CD's mature-doc retuning applies from ~cycle 3)
+2. After TBC approval: next in design order is Encounter Zone System (#7, S effort) — but consider /design-system move-database first (1a, Foundation): TBC's MOVE-CONTRACT-1 needs ratification (OQ-TBC-1), SCAN behavior needs definition (OQ-TBC-3), and Part DB AC-13 is blocked on it
+3. Pending errata on Approved docs (created by TBC, listed in its Dependencies section): Enemy DB ED1-simplified + EDB-2 synergy-ceiling addendum; Synergy OQ-2 budget-closure note; Part DB ammo_cost=0 content rule
 
 ## Standing Obligations (carried forward)
 - TBC/Damage-Formula GDD: re-derive DF-1 registered output range under synergy-amplified inputs
@@ -46,8 +47,11 @@ GDD gate is cleared.
 
 ## TBC GDD Session (started 2026-07-10, Session 12)
 - File: design/gdd/turn-based-combat.md (skeleton created)
-- Sections done: A ✓, B ✓, C ✓, D (Formulas) ✓, E (Edge Cases) ✓
-- Current section: F (Dependencies)
+- Sections done: ALL 12 ✓ (A Overview, B Fantasy, C Detailed Design, D Formulas, E Edge Cases, F Dependencies, G Tuning Knobs, V/A Requirements, UI Requirements, H Acceptance Criteria [33 + 4 INT], Open Questions [OQ-TBC-1..6])
+- Status: Designed — awaiting /design-review in a FRESH session (never same-session)
+- Self-check: PASS (no placeholders; 697 lines)
+- Section H note: qa-lead's AC-TBC-22 type-chart error caught and fixed at write time (Kinetic is super-effective vs VOLT, not THERMAL)
+- Notable OQ: OQ-TBC-3 — SCAN move behavior undefined anywhere (ties to Enemy DB ED6 drop-hint mechanism); OQ-TBC-1 — Move DB must ratify MOVE-CONTRACT-1
 - Section D ratified: snapshot potency; processing-only Burn (0.08, min 2); Shock 0.3 (0–33); Stagger 0.25 post-DF-1 multiply (0–27%); REPAIR_COEFF 0.17 (5–30, anti-stall margin 3); SYNERGY_POWER_BUDGET=40 / SYNERGY_DEFENSE_BUDGET=50 (closes Synergy OQ-2 cap); DF-1 re-derived [1,225] (registry errata queued); TTK ruling: no enemy errata, max-synergy boss-melt 4–7 turns is intended Pillar 4 endgame (EDB-2 addendum queued as Enemy DB errata obligation)
 - Epsilon scans (python3, 2026-07-10): ALL TBC formulas + DF-1 extended range = defensive epsilon, ZERO load-bearing cases (95k+ inputs; specialist's load-bearing claims empirically refuted)
 - Section E: 15 ECs, all with Verified-by AC-TBC-XX forward refs — Section H must cover AC-TBC-03,06,09..19
