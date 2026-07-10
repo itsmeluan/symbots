@@ -37,7 +37,7 @@
 #   Each entry: name, status, source, referenced_by[], attributes{}, added, revised
 
 version: 1
-last_updated: "2026-07-09"
+last_updated: "2026-07-10"
 
 # ─── ENTITIES ────────────────────────────────────────────────────────────────
 # Named game-world objects: enemies, NPCs, characters, factions, bosses.
@@ -107,6 +107,61 @@ items: []
 # Optional: expression (the actual formula), notes
 
 formulas:
+  - name: SA-F1
+    status: active
+    source: design/gdd/symbot-assembly.md
+    referenced_by:
+      - design/gdd/symbot-assembly.md
+    variables:
+      - stat_bonuses (per-part flat integer, from SympartData)
+      - upgrade_tier (0–5, per-part)
+      - chassis_archetype_modifier (multiplier from Rule 3 table, per stat)
+      - stat_key (one of the 11 stat names)
+    output_range:
+      structure: [60, 594]
+      armor: [0, 132]
+      resistance: [0, 132]
+      physical_power: [0, 110]
+      energy_power: [0, 110]
+      mobility: [0, 96]
+      targeting: [0, 110]
+      processing: [0, 110]
+      cooling: [0, 110]
+      energy_capacity: [80, 120]
+      recharge: [0, 30]
+    expression: |
+      step1: part_stat = F2(stat_bonuses, upgrade_tier)   # positive bonus
+             part_stat = F2b(stat_bonuses, upgrade_tier)  # negative bonus
+      step2: raw = sum(part_stat for all 8 parts, per stat_key)
+      step3: modified = floor(raw * chassis_archetype_modifier[stat_key])
+      step4: final_stat[stat_key] = clamp(modified, 0, stat_max[stat_key])
+    notes: "Owns the 4-step stat derivation pipeline. Synergy bonus is added
+      AFTER this pipeline by the Synergy System — not included in final_stat.
+      Epsilon nudge in F2b is LOAD-BEARING (e.g. base=-15 tier+2:
+      -15*2/3 = -10.0000...002 in IEEE 754; ceil without -0.0001 returns -9 not -10)."
+    added: 2026-07-10
+    revised: ""
+
+  - name: SA-F2
+    status: active
+    source: design/gdd/symbot-assembly.md
+    referenced_by:
+      - design/gdd/symbot-assembly.md
+    variables:
+      - target_slot (the slot being previewed)
+      - candidate_part (SympartData not yet equipped)
+      - current_build (SymbotBuild, unmodified)
+    output_range: "delta per stat — negative = decrease, positive = increase; magnitude bounded by SA-F1 output ranges"
+    expression: |
+      hypothetical = run SA-F1 with candidate_part replacing current_build.parts[target_slot]
+      delta[stat_key] = hypothetical[stat_key] - current_build.final_stat[stat_key]
+      (Chassis swap note: changes all 11 stats via modifier table re-application,
+       even for stats with candidate.stat_bonuses[key]=0)
+    notes: "Read-only — no signals, no Inventory change, no slot write. Synergy
+      excluded: delta is base-stats only. Used by Workshop UI for live stat preview."
+    added: 2026-07-10
+    revised: ""
+
   - name: EDB-1
     status: active
     source: design/gdd/enemy-database.md
@@ -176,6 +231,31 @@ formulas:
 # Required fields: name, status, source, referenced_by, value, unit, added
 
 constants:
+  - name: TEAM_ROSTER_CAP
+    status: active
+    source: design/gdd/symbot-assembly.md
+    referenced_by:
+      - design/gdd/symbot-assembly.md
+    value: 3
+    unit: active Symbots in battle
+    notes: "Max Symbots fielded per battle. Workshop System enforces this cap.
+      Safe range 2–4 per Tuning Knobs. Unlimited storage for benched Symbots."
+    added: 2026-07-10
+    revised: ""
+
+  - name: ACTIVE_MOVE_SLOTS
+    status: active
+    source: design/gdd/symbot-assembly.md
+    referenced_by:
+      - design/gdd/symbot-assembly.md
+    value: 4
+    unit: move slots per Symbot in battle
+    notes: "Slot 0 = Basic Attack (universal). Slot 1 = WEAPON skill. Slot 2 = HEAD skill.
+      Slot 3 = ARMS skill (null if Common ARMS). Turn-Based Combat UI must accommodate
+      a null Move 4. Safe range 3–5 per Tuning Knobs."
+    added: 2026-07-10
+    revised: ""
+
   - name: BREAK_HP_MIN
     status: active
     source: design/gdd/enemy-database.md

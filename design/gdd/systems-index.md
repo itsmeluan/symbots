@@ -30,7 +30,7 @@ designed first.
 | 1b | Passive Database | Foundation | MVP | Not Started | — | Part Database |
 | 2 | Enemy Database | Foundation | MVP | Approved | design/gdd/enemy-database.md | Part Database |
 | 3 | Damage Formula System | Foundation | MVP | Approved | design/gdd/damage-formula.md | Part Database |
-| 4 | Symbot Assembly System | Gameplay | MVP | Not Started | — | Part Database |
+| 4 | Symbot Assembly System | Gameplay | MVP | Designed | design/gdd/symbot-assembly.md | Part Database |
 | 5 | Synergy System | Gameplay | MVP | Not Started | — | Part Database, Symbot Assembly |
 | 6 | Turn-Based Combat System | Gameplay | MVP | Not Started | — | Damage Formula, Symbot Assembly, Enemy Database |
 | 7 | Encounter Zone System | World | MVP | Not Started | — | Enemy Database |
@@ -198,10 +198,10 @@ layered structure. Part Database sits at the root with no cycles back from depen
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 30 |
-| Design docs started | 3 |
+| Design docs started | 4 |
 | Design docs reviewed | 3 |
 | Design docs approved | 3 |
-| MVP systems designed | 0 / 22 |
+| MVP systems designed | 1 / 22 |
 | Vertical Slice systems designed | 0 / 2 |
 | Alpha systems designed | 0 / 3 |
 | Full Vision systems designed | 0 / 1 |

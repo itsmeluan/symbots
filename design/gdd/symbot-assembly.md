@@ -302,7 +302,66 @@ Most tuning knobs for this system live in the Part Database (chassis archetype m
 
 ## Visual/Audio Requirements
 
-[To be designed]
+The primary visual output of the Assembly System is the **modular sprite composite** — the Symbot rendered as 8 layered sprites, one per slot type. This is the player-facing result of every part swap in both the Workshop and the battle scene.
+
+### Sprite Layers
+
+Each Symbot is composed from 8 Sprite2D layers stacked back-to-front:
+
+| Layer | Slot | Notes |
+|-------|------|-------|
+| 1 (back) | `LEGS` | Base stance sprite |
+| 2 | `CHASSIS` | Body frame; largest visual element |
+| 3 | `ENERGY_CELL` | Embedded in CHASSIS zone; visible as an indicator or power glow |
+| 4 | `CHIPSET` | Internal; shown as indicator lights in MVP or omitted |
+| 5 | `ARMS` | Arm sprites; may be mirrored left/right |
+| 6 | `WEAPON` | Weapon sprite attached to ARMS zone |
+| 7 | `HEAD` | Head / sensor array |
+| 8 (front) | `CORE` | Overlay glow or pulse on CHASSIS — communicates the Symbot's element |
+
+*Exact z-order, visual zone offsets, and sprite dimensions are defined by the Art Bible. This table is the starting reference.*
+
+### Swap Trigger
+
+When Assembly emits `part_equipped(slot_type, new_part_id)`, the visual layer for `slot_type` immediately swaps to the sprite referenced by `PartDatabase.get_part(new_part_id).sprite_id`. The composite redraws within the same frame as the equip. The `sprite_id` field in `SympartData` (Part Database Rule 1) is the sole source of truth for which art asset corresponds to a given part.
+
+### Workshop Visual Preview
+
+When the Workshop UI computes a SA-F2 stat delta for a candidate part on hover, it simultaneously previews that part's sprite in the Symbot composite — without committing the equip. The visual preview and the stat delta activate together and reset together when the hover ends. The Workshop System controls this preview state; Assembly provides only the `part_equipped` signal on actual commit.
+
+### In-Battle Rendering
+
+The battle scene reads the `SymbotBuild`'s equipped-parts list at combat start and composes the sprite. No visual updates occur during combat — Assembly is locked and emits no `part_equipped` signals while a battle is active.
+
+### Rarity Visual Effects
+
+Applied as overlays on top of the base slot sprite:
+
+| Rarity | Visual Effect |
+|--------|--------------|
+| Common | None — clean sprite, no overlay |
+| Rare | Soft ambient glow matching element color (Volt = cyan, Thermal = amber, Kinetic = white) |
+| Boss-grade | Steady radiant glow with a distinct shader edge |
+| Prototype | Flickering glow or instability shimmer — communicates the drawback tradeoff visually |
+
+### Readability Test
+
+From game-concept.md: *"Can a new player identify which part was swapped in a before/after comparison in 3 seconds?"* Each slot's visual zone must be silhouette-distinct at a glance. Final art validation belongs in the Art Bible review.
+
+### Audio Events
+
+Actual SFX assets and mix parameters are defined in the Audio System GDD. Assembly is responsible for emitting the signals; the Audio System subscribes:
+
+| Event | Signal / Trigger | Character |
+|-------|-----------------|-----------|
+| Part equipped | `part_equipped` signal | Metallic assembly click — weight varies by slot (CHASSIS = heavy clunk, CHIPSET = light electronic snap) |
+| Stats improved | `stats_changed` with any stat increase | Brief ascending tone — power-up feel |
+| Stats decreased | `stats_changed` with any stat decrease | Soft descending tone — informational, not alarming |
+| Workshop hover preview | SA-F2 hover event (Workshop UI) | Lighter hover chime — distinct from the commit sound |
+
+> **Asset Spec** — After the Art Bible is approved, run `/asset-spec system:symbot-assembly` to produce per-asset visual descriptions, dimensions, and generation prompts from this section.
+
+> **UX Flag** — This system has screen-level UI requirements. In Phase 4 (Pre-Production), run `/ux-design` for the Workshop screen and in-battle Symbot renderer before writing implementation epics. Stories referencing UI should cite `design/ux/workshop.md` and `design/ux/combat.md`, not this GDD directly.
 
 ## UI Requirements
 
@@ -310,7 +369,50 @@ Most tuning knobs for this system live in the Part Database (chassis archetype m
 
 ## Acceptance Criteria
 
-[To be designed]
+**AC-SA-01** — Slot type mismatch rejected.
+Equipping a part whose `slot_type ≠ target_slot` returns an error code and leaves the slot unchanged. **Pass when**: Equip `"spark_core"` (`slot_type=CORE`) into WEAPON slot → returns error; WEAPON slot still holds the prior occupant; Inventory unchanged. **Test type**: Unit.
+
+**AC-SA-02** — Formula pipeline (3 concrete sub-cases, non-degenerate).
+*(a) F2 floor discrimination*: Part A: `slot_type=LEGS, stat_bonuses["mobility"]=7, upgrade_tier=+1`. F2 yields `7 + floor(7 × 1/3) = 7 + 2 = 9`. With Light Frame chassis (×1.20 on mobility): SA-F1 step 3 yields `floor(9 × 1.20) = floor(10.8) = 10`; SA-F1 step 4 clamps to [0, 96]. `final_stat["mobility"] = 10`. Tester must verify the intermediate F2 output is `9` (integer), not `9.33`. *(b) F2b epsilon*: Use `base=-15, upgrade_tier=+2`. F2b = `−15 + ceil(−15 × 2/3 − 0.0001) = −15 + ceil(−10.0001) = −15 + (−10) = −25`. Without epsilon nudge, IEEE 754 may yield `ceil(−10.0000…002) = −9` → `−24` (wrong). **Pass when**: F2b with `base=-15, tier=+2` returns `−25`, not `−24`. *(c) F1 chassis floor*: Single CHASSIS part with `stat_bonuses["structure"]=10`; all other parts contribute 0 to structure; Balanced Frame (×1.00). SA-F1 step 3: `floor(10 × 1.00) = 10`. Clamp [0, 594]. **Pass when**: `final_stat["structure"] == 10`. **Test type**: Unit.
+
+**AC-SA-03a** — Common ARMS → Move 4 is null.
+**Pass when**: Build with `rarity=COMMON` ARMS part; `move_pool` length = 4; `move_pool[3] == null`. **Test type**: Unit.
+
+**AC-SA-03b** — Rare+ ARMS → Move 4 is non-null.
+**Pass when**: Build with Rare ARMS where `active_skill_id = "iron_claw"`; `move_pool[3] == "iron_claw"`. **Test type**: Unit.
+
+**AC-SA-04** — Equip displaces current occupant to Inventory.
+**Pass when**: WEAPON slot holds Part A at `tier=+2`; equip Part B; WEAPON slot now holds Part B; Inventory gains exactly one copy of Part A at `tier=+2`. No duplication or destruction. **Test type**: Unit.
+
+**AC-SA-05** — Chassis swap forces full 11-stat recompute (concrete fixture).
+Setup: CHASSIS = Light Frame (`stat_bonuses["structure"]=10`; ×0.85 structure, ×1.20 mobility). LEGS = `swift_legs` (`stat_bonuses["mobility"]=7`). All others contribute 0 to structure and mobility. Pre-swap: `final_stat["structure"]=8, final_stat["mobility"]=8`. Equip Heavy Frame CHASSIS (`stat_bonuses["structure"]=8`; ×1.25 structure, ×0.80 mobility). **Pass when**: `final_stat["structure"]==10, final_stat["mobility"]==5`. Mobility change (8→5) proves all-11-stat recompute — the chassis multiplier changed, not LEGS. **Test type**: Unit.
+
+**AC-SA-06** — Missing Move DB entry → null, not crash.
+**Pass when**: WEAPON part with `active_skill_id="nonexistent_skill"`; `move_pool[1] == null`; content error logged; no exception raised; build otherwise valid. **Test type**: Unit.
+
+**AC-SA-07** — `final_stat` is stable between equip events.
+**Pass when**: After one successful equip, read `final_stat` 10 times in sequence with no intervening equip calls — all 10 reads return bit-identical dictionaries. **Test type**: Unit.
+
+**AC-SA-08** — SA-F2 delta is correctly signed and emits no signals.
+Setup: CHASSIS = `balanced_frame` (`stat_bonuses["structure"]=10, stat_bonuses["mobility"]=5`); all others contribute 0. Candidate CHASSIS: `stat_bonuses["structure"]=12, stat_bonuses["mobility"]=2`. Call `compute_stat_delta(CHASSIS, candidate_part)`. **Pass when**: `delta["structure"]==+2`; `delta["mobility"]==-3`; no `part_equipped` or `stats_changed` signal emitted; CHASSIS slot still holds `balanced_frame` (verified by reading slot contents directly). **Test type**: Unit.
+
+**AC-SA-09** — Passive pool: CORE and LEGS appear first, in that order.
+Setup: CORE `passive_id="pulse_core"`, LEGS `passive_id="heavy_step"`, all others null. **Pass when**: `passive_pool == ["pulse_core", "heavy_step"]`. **Test type**: Unit.
+
+**AC-SA-10** — Re-equipping the already-equipped part is a no-op.
+**Pass when**: WEAPON slot holds Part A at `tier=+2`; call equip(WEAPON, Part A); call returns without error; WEAPON slot still holds Part A at `tier=+2`; Inventory unchanged; no `part_equipped` or `stats_changed` signals emitted. **Test type**: Unit.
+
+**AC-SA-11** — Unknown stat key in `stat_bonuses` is skipped without crash.
+**Pass when**: Part with `stat_bonuses={"structure":10, "unknown_key":5}`; `final_stat["structure"]` computed normally; `"unknown_key"` absent from `final_stat`; content warning logged; no exception raised. **Test type**: Unit.
+
+**AC-SA-12** — CORE / CHASSIS / CHIPSET / ENERGY_CELL never populate move slots.
+**Pass when**: Build where CORE, CHASSIS, CHIPSET, and ENERGY_CELL parts each have a non-null `active_skill_id` (malformed content); `move_pool` contains only entries from HEAD, ARMS, WEAPON, and Basic Attack — the four non-move-granting slots' `active_skill_id` values are silently ignored. **Test type**: Unit.
+
+**AC-SA-13** — Recharge sum exceeding 30 is reported, not clamped.
+Setup: 3 parts each with `stat_bonuses["recharge"]=15` (content violation of AC-18 in Part DB). **Pass when**: `final_stat["recharge"]==45`; content error logged noting sum exceeds the maximum of 30; no crash; no silent clamping to 30. **Test type**: Unit.
+
+**AC-SA-14** — Passive pool "others" ordering: CHASSIS → CHIPSET → ENERGY_CELL → HEAD → ARMS → WEAPON.
+Setup: CORE `passive_id="pulse_core"`, LEGS `passive_id="heavy_step"`, ARMS `passive_id="iron_grip"` (Boss-grade); all others null. **Pass when**: `passive_pool == ["pulse_core", "heavy_step", "iron_grip"]`. (CORE first, LEGS second, then ARMS in slot-type order — no phantom entries for null-passive slots.) **Test type**: Unit.
 
 ## Open Questions
 

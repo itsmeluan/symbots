@@ -1,8 +1,8 @@
 # Part Database
 
-> **Status**: Approved (Round 8)
+> **Status**: Approved (Round 8 + visual amendment 2026-07-10)
 > **Author**: Luan + Claude Code (game-designer)
-> **Last Updated**: 2026-07-09
+> **Last Updated**: 2026-07-10
 > **Implements Pillar**: Pillar 1 (Engineer, Don't Collect), Pillar 3 (Build Depth Over Content Breadth), Pillar 4 (Synergy Is the Endgame)
 
 ## Summary
@@ -55,6 +55,7 @@ Every Sympart in the game is defined by the following fields. The Part Database 
 | `heat_generation` | int | Heat generated per use of `active_skill`; 0 if no skill |
 | `ammo_cost` | int | Ammo consumed per skill use; 0 if not ammo-based |
 | `flavor_text` | String | One-line lore description shown in UI |
+| `sprite_id` | StringName | Art asset identifier for this part's visual representation on a Symbot. The Symbot renderer and Workshop UI look up this ID to swap the sprite for the affected visual zone when the part is equipped. Required for all parts — must be non-null and non-empty. |
 
 Fields reserved for later content (must be in schema now, `null` in MVP content): `motherboard_slot_type`, `ram_cost`, `weight_class`, `modification_slots`.
 
@@ -789,6 +790,8 @@ The stat budget table (Common / Rare / Boss-grade / Prototype per slot) is the p
 **AC-22**: Every part's `heat_generation` is within the design range [0, 40] (the Formula 5 Signature-tier ceiling), and parts with no active skill generate no heat. **Pass when**: (a) Validator loads all entries and confirms `0 <= heat_generation <= 40` for every part — zero violations. (b) For every part where `active_skill_id == null`, `heat_generation == 0` (per Rule 1: "0 if no skill") — zero violations. *(Authored in Round 7 — this validator was a Round 5 recommendation whose AC number was reserved but never filled, leaving a silent numbering gap.)* **Test type**: Content Validation.
 
 **AC-23**: Every Common part's primary stat respects its slot's Common primary CAP, and every Rare part's primary stat meets its slot's Rare primary FLOOR (Stat Budget Reference: slot primary-stat mapping + caps/floors tables). **Pass when**: For each slot type — splitting Arms and Weapon into PHYSICAL and ENERGY subgroups by each part's `damage_type`, and resolving `primary_stat` via the slot primary-stat mapping table: (a) `max(part.stat_bonuses[primary_stat] for Common parts in the group) <= common_primary_cap[slot]` — zero Common parts above the cap; (b) `min(part.stat_bonuses[primary_stat] for Rare parts in the group) >= rare_primary_floor[slot]` — zero Rare parts below the floor. An empty comparison group (no Common or no Rare parts in a slot/subgroup) passes vacuously and emits an authoring warning. Because `floor = floor(cap × 1.50) + 1`, passing (a)+(b) guarantees a Rare at +0 exceeds any legal Common at +3 in the primary stat. **Test type**: Content Validation.
+
+**AC-24**: Every part entry has a non-null, non-empty `sprite_id`. **Pass when**: Validator loads all entries and finds zero parts with `sprite_id == null` or `sprite_id == ""`. Applies to all rarities including starter parts shipped with Symbots. **Test type**: Content Validation.
 
 ## Open Questions
 
