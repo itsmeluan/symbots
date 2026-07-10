@@ -46,8 +46,11 @@ GDD gate is cleared.
 
 ## TBC GDD Session (started 2026-07-10, Session 12)
 - File: design/gdd/turn-based-combat.md (skeleton created)
-- Sections done: A (Overview) ✓, B (Player Fantasy) ✓, C (Detailed Design) ✓
-- Current section: D (Formulas) — systems-designer spawned (lean-mode HIGH-risk section)
+- Sections done: A ✓, B ✓, C ✓, D (Formulas) ✓, E (Edge Cases) ✓
+- Current section: F (Dependencies)
+- Section D ratified: snapshot potency; processing-only Burn (0.08, min 2); Shock 0.3 (0–33); Stagger 0.25 post-DF-1 multiply (0–27%); REPAIR_COEFF 0.17 (5–30, anti-stall margin 3); SYNERGY_POWER_BUDGET=40 / SYNERGY_DEFENSE_BUDGET=50 (closes Synergy OQ-2 cap); DF-1 re-derived [1,225] (registry errata queued); TTK ruling: no enemy errata, max-synergy boss-melt 4–7 turns is intended Pillar 4 endgame (EDB-2 addendum queued as Enemy DB errata obligation)
+- Epsilon scans (python3, 2026-07-10): ALL TBC formulas + DF-1 extended range = defensive epsilon, ZERO load-bearing cases (95k+ inputs; specialist's load-bearing claims empirically refuted)
+- Section E: 15 ECs, all with Verified-by AC-TBC-XX forward refs — Section H must cover AC-TBC-03,06,09..19
 - Section C locked decisions: Mobility initiative (desc, player wins ties, recomputed per round); 1 active + 2 bench, switch consumes turn, forced replacement free; ED1 ratified SIMPLIFIED (no enemy Heat/Energy — Enemy DB Rule 3 errata obligation); statuses = Shock/Burn/Stagger (2 turns, no stack, processing-scaled); full reset per battle; no drops on defeat; flee guaranteed WILD-only; 1 enemy per battle (MVP); ammo deferred to Full Vision (content must author ammo_cost=0); MOVE-CONTRACT-1 provisional schema for Move DB; TBC owns passive effect registry with 3 seed effects (volt_shock_on_hit, thermal_burn_on_weapon, kinetic_stagger_on_hit)
 - B provisional resolved in C: no drops on defeat (Rule 12) — Player Fantasy "keeps drops earned before defeat" line needs harmonizing when Section D is done (drops discarded on loss; inventory intact)
 - Section D pending: TBC-F1 initiative, F2 recharge, F3 Burn, F4 Shock, F5 Stagger, F6 repair, DF-1 range re-derivation + SYNERGY_POWER_BUDGET proposal (closes Synergy OQ-2 cap), TTK impact check. MUST python3-scan every new floor/ceil formula (memory: specialists miss these)

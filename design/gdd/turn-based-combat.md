@@ -127,19 +127,251 @@ Per-combatant flags: `NORMAL`, `OVERHEATED` (skips next action phase), `DOWNED` 
 
 ## Formulas
 
-[To be designed]
+**Epsilon status (scan-verified 2026-07-10):** every `+ 0.0001` nudge in TBC-F1…F6 and in DF-1's extended input range is **DEFENSIVE, not load-bearing** — an exhaustive python3 scan against exact rational arithmetic (95,000+ inputs: all processing ∈ [0,110], energy_power ∈ [0,150], stagger_pct × damage ∈ [0,27]×[1,225], and DF-1 A ∈ [1,150] × D ∈ [0,182] × T ∈ {0.75, 1.0, 1.5}) found zero bare-floor errors and zero epsilon overcorrections. The nudges are retained as project convention. *(An earlier analytical claim that `processing × 0.3` misrounds at multiples of 10 is empirically false — IEEE 754 rounds those products to exact integers. Do not treat these epsilons as load-bearing; if a coefficient is ever retuned, re-run the scan.)*
+
+**Status potency snapshot contract (ratified):** every status magnitude formula reads the **applier's `processing` at the moment the status lands** and stores it on the status instance. It is never re-read live. Every tick and modifier is fully predictable from the moment of application, consistent with the frozen-synergy battle model.
+
+---
+
+### TBC-F1 — Initiative Order
+
+```
+effective_mobility = max(0, final_stat["mobility"]
+                            + synergy_delta.get("mobility", 0)
+                            + shock_penalty)
+
+shock_penalty = −TBC-F4(snapshotted_processing)   [when Shock active; else 0]
+```
+
+Combatants sorted descending by `effective_mobility` at each round start (Rule 3). Player side wins ties. Enemy path: `stats["mobility"]`, synergy_delta always 0 (Rule 8).
+
+| Variable | Symbol | Type | Range | Description |
+|----------|--------|------|-------|-------------|
+| Base mobility | `final_stat["mobility"]` | int | 0–96 | SA-F1 output |
+| Synergy mobility delta | `synergy_delta.get("mobility",0)` | int | ≥ 0 (MVP content) | From the frozen `cached_bonus_block` |
+| Shock penalty | `shock_penalty` | int | −33–0 | From TBC-F4, negative modifier |
+| Output | `effective_mobility` | int | 0–unbounded | Initiative rank; floored at 0 |
+
+**Worked example (discriminating):** applier processing = 53, target base mobility = 64, no synergy: `shock_penalty = floor(53 × 0.3 + 0.0001) = floor(15.9001) = 15` (round/ceil give 16); `effective_mobility = max(0, 64 − 15) = 49` — a round()/ceil() implementation yields 48.
+
+---
+
+### TBC-F2 — Energy Recharge
+
+```
+new_energy = min(max_energy_capacity, current_energy + 10 + final_stat["recharge"])
+```
+
+Applied at turn start (Rule 4.1b), player Symbots only. **Pure integer arithmetic — no epsilon applies.**
+
+| Variable | Symbol | Type | Range | Description |
+|----------|--------|------|-------|-------------|
+| Current energy | `current_energy` | int | 0–max_energy_capacity | Pre-recharge |
+| Base recharge | `10` | int | fixed | Universal per-turn gain |
+| Recharge stat | `final_stat["recharge"]` | int | 0–30 | From ENERGY_CELL/CORE parts |
+| Capacity | `max_energy_capacity` | int | 80–120 | Battle-start snapshot |
+| Output | `new_energy` | int | 0–120 | Always ≤ capacity; at least 10 recovered when below cap−10 |
+
+**Worked example (paired — cap fires / cap doesn't):** `min(95, 73 + 10 + 22) = 95` (cap fires; no-min implementation returns 105); `min(95, 40 + 10 + 22) = 72` (cap silent). Both assertions required together.
+
+---
+
+### TBC-F3 — Burn Damage (DoT)
+
+```
+burn_damage = max(BURN_MIN, floor(snapshotted_processing × BURN_COEFF + 0.0001))
+```
+
+`BURN_COEFF = 0.08`, `BURN_MIN = 2`. Applied at the afflicted combatant's turn start (Rule 4.1c). **Bypasses DF-1** — reduces `current_structure` directly; Armor/Resistance/type effectiveness do not apply (the documented non-DF-1 damage path per Rule 10).
+
+**Model rationale (ratified):** processing-only scaling. Against WILD-early (structure 60) a max-investment Burn's 2-tick total (16) is 26.7% — a real tempo tool; against BOSS (594) it is 2.7% — deliberate light pressure. Burn never rivals attacking: at processing 110, one tick (8) is ~9% of the same build's Basic Attack output (86 at A=110, D=30, T=1.0). The boss-negligibility asymmetry is intentional; CHIPSET's promise is kept through wild-fight tempo, not boss DPS.
+
+| Variable | Symbol | Type | Range | Description |
+|----------|--------|------|-------|-------------|
+| Applier processing | `snapshotted_processing` | int | 0–110 | Snapshot at application |
+| Coefficient | `BURN_COEFF` | float | 0.08 | Tuning knob |
+| Minimum | `BURN_MIN` | int | 2 | Baseline tick for zero-CHIPSET builds |
+| Output | `burn_damage` | int | 2–8 per tick | 4–16 total over the 2-turn duration |
+
+**Worked example (discriminating):** processing = 72: `max(2, floor(72 × 0.08 + 0.0001)) = max(2, floor(5.7601)) = 5` — round/ceil give 6.
+
+---
+
+### TBC-F4 — Shock Mobility Reduction
+
+```
+shock_penalty = floor(snapshotted_processing × SHOCK_COEFF + 0.0001)
+```
+
+`SHOCK_COEFF = 0.3`. Feeds TBC-F1 as a negative modifier for the status duration.
+
+| Variable | Symbol | Type | Range | Description |
+|----------|--------|------|-------|-------------|
+| Applier processing | `snapshotted_processing` | int | 0–110 | Snapshot at application |
+| Coefficient | `SHOCK_COEFF` | float | 0.3 | Tuning knob |
+| Output | `shock_penalty` | int | 0–33 | Mobility reduction while Shocked |
+
+**Calibration:** a max Shock (33) flips initiative across mobility gaps ≤ 33 — meaningful pressure in the realistic 30–96 band without guaranteeing order-flips at large gaps. Zero-processing appliers produce a 0-penalty Shock (status lands, does nothing to initiative — legal, discourages status moves on no-CHIPSET builds).
+
+**Worked example (discriminating):** processing = 53: `floor(15.9001) = 15` — round/ceil give 16.
+
+---
+
+### TBC-F5 — Stagger Damage Reduction
+
+**Application point (ratified): post-DF-1 multiply.** A pre-A reduction would be amplified super-linearly by DF-1's `A²/(A+D)` curve and its felt percentage would drift with the A/D ratio; the post-multiply keeps "Stagger X%" meaning exactly X% at any stat matchup.
+
+Step 1 — percentage from the applier's snapshot (at application):
+```
+stagger_pct = floor(snapshotted_processing × STAGGER_COEFF + 0.0001)
+```
+`STAGGER_COEFF = 0.25` → `stagger_pct` ∈ [0, 27].
+
+Step 2 — applied to every DAMAGE move the Staggered combatant uses while the status is active:
+```
+staggered_damage = max(DAMAGE_FLOOR, floor(final_damage × (1 − stagger_pct / 100.0) + 0.0001))
+```
+
+| Variable | Symbol | Type | Range | Description |
+|----------|--------|------|-------|-------------|
+| Applier processing | `snapshotted_processing` | int | 0–110 | Snapshot at application |
+| Stagger percentage | `stagger_pct` | int | 0–27 | Integer % reduction |
+| Pre-Stagger damage | `final_damage` | int | 1–225 | DF-1 output (re-derived ceiling below) |
+| Damage floor | `DAMAGE_FLOOR` | int | 1 | Same constant as DF-1; Stagger cannot zero a hit |
+| Output | `staggered_damage` | int | 1–225 | Post-reduction damage |
+
+**Worked example (discriminating on both steps):** processing = 86 → `stagger_pct = floor(21.5001) = 21` (GDScript round-half-away gives 22 — wrong). Then final_damage = 50: `max(1, floor(50 × 0.79 + 0.0001)) = max(1, floor(39.5001)) = 39` — round/ceil give 40.
+
+---
+
+### TBC-F6 — Repair Amount
+
+```
+repair_amount = max(REPAIR_MIN, floor(user_energy_power × REPAIR_COEFF + REPAIR_BASE + 0.0001))
+current_structure = min(max_structure, current_structure + repair_amount)
+```
+
+`REPAIR_COEFF = 0.17` (ratified — lowered from the proposed 0.18 for anti-stall margin), `REPAIR_BASE = 5`, `REPAIR_MIN = 5`. Scaling stat is **effective `energy_power`** (SYN-F4) — the natural fit for energy-based repair, leaving `processing` to statuses.
+
+**Anti-stall verification:** WILD-mid reference DPS = 33/turn (DF-1 at A=53, D=30, T=1.0). repair(110) = 23; repair(150, max synergy) = **30 < 33** — margin 3. Energy costs (Light 8–14 vs. base recharge 10/turn) further break sustained-repair loops.
+
+| Variable | Symbol | Type | Range | Description |
+|----------|--------|------|-------|-------------|
+| User energy power | `user_energy_power` | int | 0–150 | Effective (SYN-F4) at time of use |
+| Coefficient | `REPAIR_COEFF` | float | 0.17 | Tuning knob |
+| Base / minimum | `REPAIR_BASE`, `REPAIR_MIN` | int | 5 / 5 | Flat floor for zero-investment builds |
+| Output | `repair_amount` | int | 5–30 | Applied capped at `max_structure` |
+
+**Worked example (discriminating):** energy_power = 45: `max(5, floor(45 × 0.17 + 5 + 0.0001)) = max(5, floor(12.6501)) = 12` — round/ceil give 13. Extremes: ep 110 → 23 (round 24); ep 150 → 30 (round 31) — both discriminating.
+
+---
+
+### DF-1 Range Re-Derivation (fulfills the Synergy SYN-F4 cross-system range contract)
+
+**New constants (close Synergy OQ-2's cap from the consumer side; content validation must enforce both):**
+
+| Constant | Value | Meaning |
+|----------|-------|---------|
+| `SYNERGY_POWER_BUDGET` | **40** | Max cumulative synergy `stat_delta` to `physical_power` or `energy_power` across all simultaneously active tiers |
+| `SYNERGY_DEFENSE_BUDGET` | **50** | Max cumulative synergy `stat_delta` to `armor` or `resistance` across all simultaneously active tiers |
+
+New DF-1 input ceilings: `A_max = 110 + 40 = 150`; `D_max = 132 + 50 = 182`.
+
+**Re-derived output range: [1, 225]** (registry errata — replaces the invalidated [1, 165]):
+- Absolute max (A=150, D=0, T=1.5): `floor(150 × 1.5 + 0.0001) = 225`
+- Realistic max vs. authored MVP enemies (A=150, D=55, T=1.5): `floor(22500/205 × 1.5 + 0.0001) = floor(164.6342…) = 164` (round/ceil give 165 — discriminating)
+- Minimum unchanged: `DAMAGE_FLOOR = 1`
+- Extended range scanned exhaustively (A ∈ [1,150], D ∈ [0,182], all T): zero float traps; DF-1's epsilon remains defensive.
+
+**TTK impact (ratified — no enemy errata):** a max-synergy build (A=150) vs. BOSS reference (D=30, structure 594) yields TTK 4 (T=1.5) / 5 (T=1.0) / 7 (T=0.75) turns, versus the base-calibration 12–18 band. Per Pillar 4, boss-melting at a perfect 7-tier build is the intended endgame reward. **Enemy DB errata obligation:** add the EDB-2 addendum — "EDB-2 calibrates for base-only player stats (A_cal ≤ 53); a max-synergy build (A ≤ 150 per SYNERGY_POWER_BUDGET) legitimately reduces BOSS TTK to 4–7 turns. If a synergy-calibrated boss tier is desired post-MVP, author it as a separate class with its own A_cal."
 
 ## Edge Cases
 
-[To be designed]
+**EC-TBC-01 — Initiative tie at any value (including 0 vs. 0).** Both combatants at equal `effective_mobility`: player side acts first (Rule 3 tiebreak). A Shocked, zero-mobility player Symbot against a zero-mobility enemy still acts first. *Verified by AC-TBC-03.*
+
+**EC-TBC-02 — No affordable moves.** Energy below every non-basic move's cost, or Move 4 null (Common ARMS): the Basic Attack is always available at 0 Energy / 0 Heat — no turn can soft-lock. The move panel shows unaffordable moves greyed with their costs. *Verified by AC-TBC-06.*
+
+**EC-TBC-03 — Overheated turn still ticks statuses.** An OVERHEATED combatant's turn runs the full turn-start phase (Heat decay does NOT run — carry-in 20 is set directly per Part DB Formula 5; Burn ticks normally; recharge applies), skips only the action phase, then runs turn-end (status durations decrement). Overheat costs the action, not the turn's bookkeeping. *Verified by AC-TBC-09.*
+
+**EC-TBC-04 — Burn downs a combatant at its own turn start.** The combatant is DOWNED before its action phase: player Symbot → free forced switch (Rule 6), then the round continues from the next initiative slot (the incoming Symbot does not act this round — it arrives mid-round); enemy → victory immediately. *Verified by AC-TBC-10.*
+
+**EC-TBC-05 — Kill and self-down in the same resolution.** A move kills the enemy, then its heat gain triggers Overheat self-damage that downs the user (possible only when Overheat's 10%-max-structure exceeds remaining Structure). **End-condition order: victory is checked immediately when enemy Structure hits 0, before heat gain resolves** — the battle ends in VICTORY and the self-damage never applies. Resolution order within Rule 5 is authoritative: (c) resolve → end-check → (d) heat gain. *Verified by AC-TBC-11.*
+
+**EC-TBC-06 — Switch with no living bench.** The switch action is absent from the action set when no benched Symbot lives. A direct API call to switch to a DOWNED or out-of-range Symbot is rejected with an error; no state changes. *Verified by AC-TBC-12.*
+
+**EC-TBC-07 — Status reapplication re-snapshots.** Reapplying an active status refreshes its duration to full AND replaces the snapshotted potency with the new applier's current processing (the newest application wins entirely — no max(), no averaging). *Verified by AC-TBC-13.*
+
+**EC-TBC-08 — Unknown effect ID in the passive registry.** An effect ID from Synergy's `effects` array or Assembly's passive pool with no registry entry: log a content error naming the ID, skip it, never crash. This is the TBC-side obligation from Synergy EC-SYN-05. *Verified by AC-TBC-14.*
+
+**EC-TBC-09 — Zero-potency statuses are legal no-ops.** A processing-0 applier lands Shock (penalty 0) or Stagger (0%): the status applies, displays, and expires normally but modifies nothing. Not an error — the natural floor of the scaling design (Burn is the exception: `BURN_MIN = 2` always ticks). *Verified by AC-TBC-15.*
+
+**EC-TBC-10 — Repair at or near full Structure.** `current_structure + repair_amount` caps at `max_structure` (TBC-F6); the overheal is discarded, the Energy cost and heat gain still apply. Repairing at exactly full is legal and wasteful, not rejected. *Verified by AC-TBC-16.*
+
+**EC-TBC-11 — Move slot references a missing Move DB entry.** Assembly already exposes such slots as `null` (EC-SA-04). TBC treats null move slots as unavailable ("—") — same rendering as a Common-ARMS Move 4. No TBC-side crash path exists because the null is resolved upstream. *Verified by AC-TBC-06 (shared fixture).*
+
+**EC-TBC-12 — Flee in a BOSS battle.** The flee action is absent from the action set (Rule 7). A direct API flee call during a BOSS battle is rejected with an error; battle state unchanged. *Verified by AC-TBC-17.*
+
+**EC-TBC-13 — Statuses on a benched Symbot are frozen.** Statuses tick and decrement only on the afflicted combatant's own turns; benched Symbots have no turns, so their statuses (and remaining durations) freeze with the rest of their state (Rule 6) and resume on return. Switching to dodge Burn ticks is a legal tactic — it costs the turn, which is the price. *Verified by AC-TBC-18.*
+
+**EC-TBC-14 — DOWNED clears statuses.** When a combatant is DOWNED, all its statuses are removed. A later revival mechanic (none in MVP) would start clean. *Verified by AC-TBC-18 (Scenario B).*
+
+**EC-TBC-15 — Enemy stat keys absent.** Enemy stat lookups use `.get(key, 0)` (Enemy DB EC-ED-06 semantics): a missing `mobility` reads 0 (acts last), missing `processing` reads 0 (its statuses have zero potency, Burn still ticks at BURN_MIN). No crash. *Verified by AC-TBC-19.*
 
 ## Dependencies
 
-[To be designed]
+### Upstream (this system reads from these)
+
+| System | What TBC reads | Status | Hard/Soft |
+|--------|---------------|--------|-----------|
+| **Symbot Assembly** | `final_stat`, move pool, passive pool, `max_structure`, `max_energy_capacity`, `heat_max` — snapshot at battle start | Approved | Hard |
+| **Synergy System** | `evaluate_silent(parts)` at battle start; frozen `cached_bonus_block` per Symbot; SYN-F4 applied per Rule 10 | Approved | Hard |
+| **Damage Formula** | `compute_damage(A, damage_type, element, D, target_core_element, crit_mult)` per DAMAGE move — the DF call contract is hereby ratified | Approved | Hard |
+| **Enemy Database** | `stats`, `skills`, `core_element`, `break_regions` at battle start | Approved | Hard |
+| **Part Database** | Formulas 4/5 (Heat), Energy cost tiers, `heat_generation`/`element` per part, damage_type routing enums | Approved | Hard |
+| **Move Database** | MOVE-CONTRACT-1 (Rule 9) — **provisional**; every move resolution depends on it | **Not Started** | Hard (provisional) |
+| **Passive Database** | Passive IDs from Assembly's pool resolve through the Rule 13 registry | **Not Started** | Soft (null-tolerant per EC-SA-04 / EC-TBC-08) |
+
+### Downstream (these systems read from this one)
+
+| System | What it reads | Status | Obligation on that GDD |
+|--------|---------------|--------|------------------------|
+| **Part-Break System** | `hit_resolved(move, damage, target)` hook; battle-start region pools; contributes break events to the Rule 12 set | Not Started | Must define region targeting/damage accrual (Part DB DB3, Enemy DB ED2) against the hook this GDD provides; if mid-battle synergy adjustment is ever needed, coordinate with Synergy Rule 8's deferred dependency |
+| **Enemy AI System** | Move-choice request at enemy `ACTION_PENDING`; visible battle state | Not Started | Must define behavior profiles (Enemy DB ED4) returning exactly one legal action; must respect that enemies have no Heat/Energy gating (Rule 8) |
+| **Drop System** | `battle_ended(outcome, enemy_id, fired_break_events: Set)` | Not Started | Must consume events as a deduplicated set (Enemy DB ED3); VICTORY-only payout (Rule 12) |
+| **Combat UI** | Turn/damage/status/Overheat/break signals; move panel state incl. greyed costs and null slots; type-effectiveness metadata (DF constraint DF2) | Not Started | Must resolve DF OQ-1 (how `T`/type_mult reaches the UI from a damage event) |
+| **Audio System** | Combat event signals (hits, breaks, Overheat, victory/defeat) | Not Started | Subscribes to the same signal inventory as Combat UI |
+
+### Errata obligations this GDD creates on Approved documents
+
+| Target | Change | Source decision |
+|--------|--------|-----------------|
+| **Enemy Database** (Rule 3 / EDB-2) | ED1 ratified as simplified: `cooling`/`energy_capacity`/`recharge` in enemy stat blocks are dead data in MVP (validation SHOULD warn on non-zero); add the EDB-2 addendum on synergy-ceiling TTK (4–7 turn boss kills at A=150 are intended) | Rule 8; Formulas TTK ruling |
+| **Synergy System** (OQ-2) | `SYNERGY_POWER_BUDGET = 40` / `SYNERGY_DEFENSE_BUDGET = 50` close the per-stat cumulative cap; content validation must enforce | Formulas re-derivation |
+| **Damage Formula / registry** | DF-1 registered output range [1,165] → **[1,225]** (realistic MVP ceiling 164) | Formulas re-derivation |
+| **Part Database** (content rule) | MVP moves must author `ammo_cost = 0` (ammo deferred to Full Vision); validation SHOULD warn otherwise | Rule 5 |
+
+### Bidirectionality
+
+Damage Formula, Enemy Database, Symbot Assembly, and Synergy System all already list Turn-Based Combat as a downstream dependent (verified in their Dependencies sections). Move Database, Passive Database, Part-Break, Enemy AI, Drop System, Combat UI, and Audio System must list TBC when authored — Move DB additionally must ratify MOVE-CONTRACT-1 explicitly rather than silently diverging.
 
 ## Tuning Knobs
 
-[To be designed]
+| Knob | Value | Safe Range | What Changing It Does |
+|------|-------|------------|----------------------|
+| `BASE_ENERGY_REGEN` | 10 | 8–15 | Universal per-turn Energy. Below 8, Standard skills (15–22) take 2+ turns to afford on zero-recharge builds — combat drags; above 15, ENERGY_CELL investment stops mattering (kills the slot's meaning, an Assembly obligation). |
+| `STATUS_DURATION` | 2 turns | 1–3 | All three statuses. At 1, statuses barely outlive their application turn; at 3, Burn totals (up to 24) start rivaling move damage and Stagger blankets whole fights. |
+| `BURN_COEFF` | 0.08 | 0.05–0.12 | Burn tick per processing point. At 0.12 max tick = 13 (26/duration — too close to WILD move damage); at 0.05 max tick = 5 (CHIPSET investment imperceptible). **Re-run the epsilon scan if changed.** |
+| `BURN_MIN` | 2 | 1–3 | Zero-CHIPSET baseline tick. At 0, Burn from no-investment builds does nothing (dead rider); above 3, no-investment Burn rivals invested Burn. |
+| `SHOCK_COEFF` | 0.3 | 0.2–0.4 | Mobility penalty per processing point (max 33 at 0.3). Calibrated against the realistic 30–96 mobility band: at 0.2 (max 22), Shock rarely flips initiative; at 0.4 (max 44), it flips almost any gap. **Re-run the epsilon scan if changed.** |
+| `STAGGER_COEFF` | 0.25 | 0.15–0.35 | Damage reduction % per processing point (max 27% at 0.25). Bounds the design target 15–35%. **Re-run the epsilon scan if changed.** |
+| `REPAIR_COEFF` | 0.17 | 0.10–0.17 | Repair per energy_power point. **Hard ceiling 0.17**: at 0.18+, max-synergy repair (32+) approaches WILD-mid DPS (33) and stall loops open. Coupled to `BASE_ENERGY_REGEN` — raising both compounds stall risk. **Re-run the epsilon scan if changed.** |
+| `REPAIR_BASE` / `REPAIR_MIN` | 5 / 5 | 3–8 | Flat floor. Above 8, zero-investment repair spam becomes efficient on high-structure builds. |
+| `SYNERGY_POWER_BUDGET` | 40 | 30–50 | Endgame power ceiling (A_max = 110 + budget). **Changing it invalidates the DF-1 registered range and the TTK impact table — re-run the Formulas re-derivation and update the registry.** At 30, boss TTK floor ~5–8 turns; at 50, ~3–4. |
+| `SYNERGY_DEFENSE_BUDGET` | 50 | 40–60 | Defense ceiling (D_max = 132 + budget). Lower risk than the power budget (diminishing returns in DF-1's denominator), but the registered D range moves with it. |
+
+**Owned elsewhere — referenced, not duplicated**: `DAMAGE_FLOOR` (Damage Formula); Heat cap 100, Overheat carry-in 20, Overheat damage 10%, Energy cost tiers (Part Database Formulas 4/5); `TEAM_ROSTER_CAP`, `ACTIVE_MOVE_SLOTS` (Assembly); type effectiveness multipliers (Damage Formula/Part DB).
+
+**Knob interaction warnings**: (1) `REPAIR_COEFF` + `BASE_ENERGY_REGEN` + Energy cost tiers jointly control stall viability — never tune one without checking the anti-stall inequality `repair(150) < WILD-mid DPS`. (2) `SYNERGY_POWER_BUDGET` is coupled to the DF-1 registry range, the TTK ruling, and Synergy OQ-2's content validation — it is a cross-document constant; treat changes as design decisions, not tuning passes. (3) Any coefficient change to BURN/SHOCK/STAGGER/REPAIR requires re-running the python3 epsilon scan (the current all-defensive verdict is input-range-specific).
 
 ## Visual/Audio Requirements
 
