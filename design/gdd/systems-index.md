@@ -31,7 +31,7 @@ designed first.
 | 2 | Enemy Database | Foundation | MVP | Approved | design/gdd/enemy-database.md | Part Database |
 | 3 | Damage Formula System | Foundation | MVP | Approved | design/gdd/damage-formula.md | Part Database |
 | 4 | Symbot Assembly System | Gameplay | MVP | Approved | design/gdd/symbot-assembly.md | Part Database |
-| 5 | Synergy System | Gameplay | MVP | Not Started | — | Part Database, Symbot Assembly |
+| 5 | Synergy System | Gameplay | MVP | Designed | design/gdd/synergy-system.md | Part Database, Symbot Assembly |
 | 6 | Turn-Based Combat System | Gameplay | MVP | Not Started | — | Damage Formula, Symbot Assembly, Enemy Database |
 | 7 | Encounter Zone System | World | MVP | Not Started | — | Enemy Database |
 | 8 | Drop System | Economy | MVP | Not Started | — | Part Database, Enemy Database |

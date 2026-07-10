@@ -147,6 +147,72 @@ formulas:
     added: 2026-07-10
     revised: "2026-07-10"  # corrected step3 (removed erroneous floor), step4 (removed stat_max ref), epsilon example, and range notes
 
+  - name: SYN-F1
+    status: active
+    source: design/gdd/synergy-system.md
+    referenced_by:
+      - design/gdd/synergy-system.md
+    variables:
+      - tag (StringName — e.g. &"ironclad", &"VOLT")
+      - synergy_tags (Array[StringName] per SympartData — null slots contribute 0)
+    output_range:
+      tag_count: [0, 8]
+    expression: "tag_count[tag] = Σ (1 for each equipped part p where tag ∈ p.synergy_tags)"
+    notes: "Bounded by the 8-slot maximum. Null slots contribute nothing. All-null build → all counts = 0."
+    added: 2026-07-10
+    revised: ""
+
+  - name: SYN-F2
+    status: active
+    source: design/gdd/synergy-system.md
+    referenced_by:
+      - design/gdd/synergy-system.md
+    variables:
+      - tier.requirements (list of (tag, min_count) pairs — one pair for single-tag, two+ for combined)
+      - tag_count (from SYN-F1)
+    output_range: "boolean"
+    expression: "tier_active(tier) = ∀ (tag, min_count) ∈ tier.requirements : tag_count[tag] ≥ min_count"
+    notes: "Combined synergies require ALL constituent conditions met simultaneously. Thresholds
+      defined by SYNERGY_THRESHOLD_TIER1 (2) and SYNERGY_THRESHOLD_TIER2 (4)."
+    added: 2026-07-10
+    revised: ""
+
+  - name: SYN-F3
+    status: active
+    source: design/gdd/synergy-system.md
+    referenced_by:
+      - design/gdd/synergy-system.md
+    variables:
+      - active_tiers (from SYN-F2)
+      - tier.stat_delta (Dictionary[String, int] per tier)
+      - tier.effects (Array[StringName] per tier)
+    output_range: "stat_delta: Dictionary[String, int]; effects: Array[StringName] (deduplicated)"
+    expression: |
+      synergy_bonus_block.stat_delta[S] = Σ tier.stat_delta.get(S, 0) for all active tiers
+      synergy_bonus_block.effects = deduplicate(flatten([tier.effects for all active tiers]))
+    notes: "Tiers are cumulative — 4-piece active means both 2-piece and 4-piece contribute.
+      Combined synergy bonuses stack additively with constituent single-tag bonuses.
+      Deduplication prevents the same effect ID from appearing twice in the output."
+    added: 2026-07-10
+    revised: ""
+
+  - name: SYN-F4
+    status: active
+    source: design/gdd/synergy-system.md
+    referenced_by:
+      - design/gdd/synergy-system.md
+    variables:
+      - Assembly.final_stat[S] (integer from SA-F1, already ≥ 0)
+      - synergy_bonus_block.stat_delta.get(S, 0) (integer from SYN-F3; 0 if no active synergy)
+    output_range: "[0, ∞) — uncapped above, floored at 0"
+    expression: "effective_stat[S] = max(0, Assembly.final_stat[S] + synergy_bonus_block.stat_delta.get(S, 0))"
+    notes: "Used by TBC and Workshop UI when computing effective stats for display or damage resolution.
+      Pure integer arithmetic — no epsilon needed. max(0) floor is a content-error defense only;
+      MVP synergy content should not produce negative stat_delta values.
+      Stats are uncapped above, matching SA-F1 behavior."
+    added: 2026-07-10
+    revised: ""
+
   - name: SA-F2
     status: active
     source: design/gdd/symbot-assembly.md
@@ -236,6 +302,30 @@ formulas:
 # Required fields: name, status, source, referenced_by, value, unit, added
 
 constants:
+  - name: SYNERGY_THRESHOLD_TIER1
+    status: active
+    source: design/gdd/synergy-system.md
+    referenced_by:
+      - design/gdd/synergy-system.md
+    value: 2
+    unit: equipped parts sharing a tag (minimum for small bonus)
+    notes: "Safe range 2–3. At 1, every build triggers every synergy (degenerate).
+      Combined synergies use this threshold for EACH constituent tag independently."
+    added: 2026-07-10
+    revised: ""
+
+  - name: SYNERGY_THRESHOLD_TIER2
+    status: active
+    source: design/gdd/synergy-system.md
+    referenced_by:
+      - design/gdd/synergy-system.md
+    value: 4
+    unit: equipped parts sharing a tag (minimum for large bonus)
+    notes: "Safe range 3–6. Must be > SYNERGY_THRESHOLD_TIER1. At 3, too easy to achieve
+      alongside other synergies. At 6, requires near-total slot concentration."
+    added: 2026-07-10
+    revised: ""
+
   - name: TEAM_ROSTER_CAP
     status: active
     source: design/gdd/symbot-assembly.md

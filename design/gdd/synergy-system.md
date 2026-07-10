@@ -1,6 +1,6 @@
 # Synergy System
 
-> **Status**: In Design
+> **Status**: In Review
 > **Author**: Luan Martins da Silva + Claude Code Game Studios agents
 > **Last Updated**: 2026-07-10
 > **Implements Pillar**: Pillar 4 — Synergy Is the Endgame / Pillar 3 — Build Depth Over Content Breadth
@@ -47,7 +47,7 @@ For each registered synergy definition, the system checks its required tag count
 
 Tiers are **cumulative**: at 4-piece, both the 2-piece AND the 4-piece bonus apply. The player receives all bonuses from every tier they have crossed.
 
-Combined synergies (e.g., Ironclad-VOLT) require ALL constituent conditions met simultaneously: `ironclad ≥ 2` AND `VOLT ≥ 2`. Combined bonuses stack additively with their constituent single-tag bonuses.
+Combined synergies (e.g., Ironclad-VOLT) require ALL constituent conditions met simultaneously: `ironclad ≥ 2` AND `VOLT ≥ 2`. Combined synergy bonus blocks **stack additively** with the bonus blocks from their constituent single-tag synergies — they do not replace them. When `ironclad ≥ 2` AND `VOLT ≥ 2`, three synergy tiers are simultaneously active: Ironclad 2-piece, VOLT 2-piece, and Ironclad-VOLT 2-piece. All three contribute to SYN-F3 aggregation.
 
 **Rule 4: Bonus block structure.**
 Each active synergy tier produces a bonus block:
@@ -76,6 +76,8 @@ A passive effect is a `StringName` ID (e.g., `&"volt_shock_on_hit"`). This syste
 - **Workshop System**: after every part equip or unequip
 - **Turn-Based Combat**: once at battle start to establish the baseline bonus block
 - Never called by Assembly (one-way dependency is inviolable)
+
+`evaluate()` **always** emits `synergy_changed` on every call, even if the resulting bonus block is identical to the prior call. Callers must not assume deduplication — if they want idempotent behavior, they must implement their own change detection.
 
 **Rule 8: Frozen during battle.**
 Once a battle begins, `cached_bonus_block` is frozen. Part breaks during combat do not trigger re-evaluation. If the Part-Break System needs mid-battle synergy adjustment, that is deferred to the Part-Break GDD.
@@ -311,16 +313,129 @@ Combined synergies use `SYNERGY_THRESHOLD_TIER1` as the per-tag minimum (≥ 2 f
 
 ## Visual/Audio Requirements
 
-[To be designed]
+This system owns the `synergy_changed` signal. The Workshop UI GDD owns all visual and audio presentation decisions. The table below specifies the event contract this system provides.
+
+| Event | Visual Need | Audio Need | Owner |
+|-------|-------------|------------|-------|
+| Synergy tier activates (threshold crossed up) | Indicator lights up; synergy bonus animates in | Activation chime matching build "click" fantasy | Workshop UI GDD |
+| Synergy tier deactivates (threshold crossed down) | Indicator dims; bonus animates out | Deactivation tone | Workshop UI GDD |
+| Synergy preview activates (via preview()) | Greyed-out "would activate" indicator | None (preview only) | Workshop UI GDD |
+| `synergy_changed` signal fires | Trigger for all of the above | Trigger for all of the above | Workshop UI (subscribes to signal) |
 
 ## UI Requirements
 
-[To be designed]
+Requirements this system places on downstream UI GDDs:
+
+1. **Active synergy indicator**: Workshop UI must display each active synergy tier in `active_synergies` with name and icon. Inactive tiers must show current vs. required count (e.g., "Ironclad: 3/4").
+2. **Synergy stat delta display**: Workshop UI must apply SYN-F4 before displaying any stat value — players must never see a base-only stat in the Workshop. `effective_stat[S] = max(0, Assembly.final_stat[S] + synergy_bonus_block.stat_delta.get(S, 0))`.
+3. **Swap preview synergy delta**: When previewing a part swap, Workshop UI must call `preview()` and surface synergy threshold changes (new activation, lost activation) separately from the base-stat delta. A synergy activation is not just a number change — it requires distinct presentation.
+4. **Active effects list**: Workshop UI must display active passive effect IDs by name. Full effect descriptions are a Workshop UI GDD decision.
+5. **Combat UI**: During battle, Combat UI displays the frozen `cached_bonus_block` bonuses as part of effective stats. No synergy animation occurs during battle (block is frozen at battle start).
 
 ## Acceptance Criteria
 
-[To be designed]
+*(Content stat values below are illustrative anchors used to make ACs discriminating — Ironclad 2-piece: armor +8; Ironclad 4-piece: armor +20; VOLT 2-piece: energy_power +6; VOLT 4-piece: energy_power +12, effect `&"volt_test"`; Ironclad-VOLT 2-piece: armor +5, energy_power +4. Real values are authored in Synergy Content data.)*
+
+**AC-SYN-01: Single-tag 2-piece activation**
+Fixture: 8-slot build. Slots 0–1: parts with `synergy_tags = [&"ironclad", &"VOLT"]`. Slots 2–7: parts with `synergy_tags = [&"KINETIC"]` (no ironclad or VOLT). Ironclad 2-piece content: `stat_delta: { armor: 8 }`, no effects. No other synergy definitions reference ironclad or VOLT.
+Call `evaluate(parts)`.
+Pass: `cached_bonus_block.stat_delta["armor"] == 8` AND `synergy_changed` signal emitted.
+
+**AC-SYN-02: Cumulative tier stacking (model AC)**
+Fixture: Slots 0–3: parts with `synergy_tags = [&"VOLT"]`. Slots 4–7: parts with `synergy_tags = [&"KINETIC"]`. VOLT 2-piece: `{ energy_power: 6 }`. VOLT 4-piece: `{ energy_power: 12, effects: [&"volt_test"] }`.
+Call `evaluate(parts)`.
+Pass: `cached_bonus_block.stat_delta["energy_power"] == 18` AND `cached_bonus_block.effects == [&"volt_test"]`.
+FAIL: `energy_power == 12` (highest-tier-only, non-cumulative bug).
+
+**AC-SYN-03: Combined synergy — stacks with constituent bonuses**
+Content: Ironclad 2-piece = `{ armor: 8 }`. VOLT 2-piece = `{ energy_power: 6 }`. Ironclad-VOLT 2-piece = `{ armor: 5, energy_power: 4 }`. All other synergies undefined or inapplicable.
+
+*Scenario A (both conditions met):*
+Fixture: Slots 0–1: parts with `synergy_tags = [&"ironclad", &"VOLT"]`. Slots 2–7: parts with `synergy_tags = [&"KINETIC"]`.
+Tag counts: ironclad=2, VOLT=2.
+Call `evaluate(parts)`.
+Pass: `stat_delta["armor"] == 13` (8 from Ironclad 2-piece + 5 from combined) AND `stat_delta["energy_power"] == 10` (6 from VOLT 2-piece + 4 from combined).
+FAIL: `armor == 5` (combined replaced constituent); `armor == 8` (combined missing); `armor == 18` (combined double-counted).
+
+*Scenario B (ironclad ≥ 2 but VOLT not met):*
+Fixture: Slots 0–2: parts with `synergy_tags = [&"ironclad", &"KINETIC"]`. Slots 3–7: parts with `synergy_tags = [&"KINETIC"]`. Tag counts: ironclad=3, KINETIC=8, VOLT=0.
+Call `evaluate(parts)`.
+Pass: `stat_delta["armor"] == 8` (Ironclad 2-piece only; combined NOT active because VOLT=0 < 2).
+FAIL: `armor == 13` (combined wrongly activated despite VOLT=0).
+
+**AC-SYN-04: Wild parts contribute to element tag only (engine behavior)**
+Fixture: Slots 0–3: parts with `synergy_tags = [&"THERMAL"]` only — no manufacturer tag present. Slots 4–7: null.
+Call `evaluate(parts)`.
+Assert: `tag_count["THERMAL"] == 4`; `tag_count["ironclad"] == 0`; `tag_count["boltwell"] == 0`; `tag_count["scrapjaw"] == 0`. No manufacturer tag appears in the count map.
+Pass: THERMAL 4-piece bonus activates; no manufacturer synergy activates. This tests the counting loop — manufacturer tags are absent from `synergy_tags`, so the engine cannot count them.
+
+**AC-SYN-05: Effect ID deduplication**
+Fixture: Slots 0–3: VOLT-tagged parts. VOLT 2-piece: `{ effects: [&"volt_test"] }`. VOLT 4-piece: `{ effects: [&"volt_test"] }` (same ID in both tiers).
+Call `evaluate(parts)`.
+Pass: `cached_bonus_block.effects.size() == 1` AND `cached_bonus_block.effects[0] == &"volt_test"`.
+FAIL: `effects.size() == 2` (deduplication not applied; double-trigger risk in TBC).
+
+**AC-SYN-06: SYN-F4 effective stat computation (self-contained)**
+Fixture (consumer stub — no evaluate() call required):
+- `Assembly.final_stat["energy_power"] = 55`
+- `synergy_bonus_block.stat_delta = { "energy_power": 18 }` (as if VOLT 2-piece + 4-piece both active)
+Apply SYN-F4: `effective_stat["energy_power"] = max(0, 55 + 18)`.
+Pass: `effective_stat["energy_power"] == 73`.
+FAIL: `55` (bonus not applied); `67` (4-piece only, 55+12); `61` (2-piece only, 55+6).
+
+**AC-SYN-07: Empty build emits signal with empty block**
+Fixture: Subscribe to `synergy_changed`. Signal counter initialized to 0.
+Call `evaluate([null, null, null, null, null, null, null, null])`.
+Pass: signal counter == 1 (emitted per Rule 7 always-emit); received `bonus_block.stat_delta.is_empty() == true`; received `bonus_block.effects.is_empty() == true`.
+
+**AC-SYN-08: preview() is strictly read-only**
+Fixture: Slots 0–1: parts with `synergy_tags = [&"ironclad", &"VOLT"]`; slots 2–7: `synergy_tags = [&"KINETIC"]`. After `evaluate()`, `cached_bonus_block.stat_delta["armor"] == 8`. Subscribe to `synergy_changed`.
+Call `preview(candidate, 0, current_parts)` where `candidate.synergy_tags = [&"KINETIC"]` (no ironclad, no VOLT).
+Hypothetical: slot_0 = KINETIC, slot_1 = ironclad+VOLT, slots 2–7 = KINETIC. ironclad=1 (slot_1 only); VOLT=1. Neither reaches 2-piece threshold.
+Pass: `synergy_changed` NOT emitted; `cached_bonus_block.stat_delta["armor"]` still == 8; `preview()` return value `stat_delta.is_empty() == true` AND `effects.is_empty() == true`.
+FAIL: cache modified; signal emitted; return value contains ironclad bonus.
+
+**AC-SYN-09: Threshold boundary — exact at N, cumulative at N**
+Fixture: VOLT 2-piece: `{ energy_power: 6 }`. VOLT 4-piece: `{ energy_power: 12 }`. Subscribe to `synergy_changed`.
+
+Step 1 (3 VOLT parts): Slots 0–2: VOLT-tagged. Slots 3–7: non-VOLT. Call `evaluate(parts)`.
+Pass: `cached_bonus_block.stat_delta["energy_power"] == 6` (VOLT 2-piece active; VOLT 4-piece NOT active).
+FAIL: `energy_power == 0` (2-piece missed); `energy_power == 18` (4-piece wrongly active at 3 parts — off-by-one bug).
+
+Step 2 (add 4th VOLT part): Replace slot_3 with VOLT-tagged part. Call `evaluate(parts)`.
+Pass: `cached_bonus_block.stat_delta["energy_power"] == 18` (cumulative: 6 + 12).
+FAIL: `energy_power == 12` (non-cumulative); `energy_power == 6` (4-piece not triggered).
+
+**AC-SYN-10: SYN-F4 clamps effective stat to zero**
+Fixture (self-contained consumer stub):
+- `Assembly.final_stat["armor"] = 40`
+- `synergy_bonus_block.stat_delta = { "armor": -100 }` (content-error penalty)
+Apply SYN-F4: `effective_stat["armor"] = max(0, 40 + (-100))`.
+Pass: `effective_stat["armor"] == 0`.
+FAIL: `-60` (unclamped negative).
+
+**AC-SYN-11: evaluate() always emits synergy_changed**
+Fixture: 2 VOLT-tagged parts in slots 0–1 (VOLT 2-piece active). Subscribe to `synergy_changed`. Signal counter initialized to 0.
+Call `evaluate(same_parts)` twice with identical input.
+Pass: signal counter == 2 (emitted on both calls per Rule 7 always-emit invariant). `cached_bonus_block` unchanged between calls.
+
+**AC-SYN-12: synergy_changed active_synergies list is exact**
+Fixture: Slots 0–3: VOLT-tagged parts. VOLT 2-piece (ID: `"volt_2_piece"`) and VOLT 4-piece (ID: `"volt_4_piece"`) defined. Subscribe to `synergy_changed`.
+Call `evaluate(parts)`.
+Pass: received `active_synergies` contains exactly `["volt_2_piece", "volt_4_piece"]` — no missing tiers, no spurious IDs.
+
+**AC-SYN-13: preview() returns hypothetical when candidate activates a new synergy**
+Fixture: Active build with 1 VOLT-tagged part in slot_0 only (VOLT count = 1; below 2-piece threshold). `cached_bonus_block.stat_delta.is_empty() == true`. VOLT 2-piece content: `{ energy_power: 6 }`.
+Call `preview(candidate_volt_part, 1, current_parts)` where `candidate_volt_part.synergy_tags = [&"VOLT"]`.
+Hypothetical: slots 0 and 1 are VOLT-tagged → VOLT count = 2 → VOLT 2-piece activates.
+Pass: return value `stat_delta["energy_power"] == 6`; `cached_bonus_block.stat_delta.is_empty() == true` (actual cache unchanged); `synergy_changed` NOT emitted.
 
 ## Open Questions
 
-[To be designed]
+| # | Question | Owner | Impact |
+|---|----------|-------|--------|
+| OQ-1 | What is the Synergy Content data format? A dedicated `SynergyDatabase.tres`? Part of `PartDatabase.tres`? Separate file loaded at startup? | Technical Director / Lead Programmer | Determines how synergy definitions are authored and loaded |
+| OQ-2 | What are the MVP stat bonus values for each synergy tier? | Economy Designer (balance tuning) | No impact on system design — pure content work done during prototype balancing |
+| OQ-3 | Which passive effect IDs are feasible to implement for MVP, and what behavior does each define? | Turn-Based Combat GDD | Blocks authoring any effect-bearing synergy content until TBC GDD defines the registry |
+| OQ-4 | Does CORE's synergy contribution need to be mechanically distinct from other slots, or does its tag contribution alone fulfill the "CORE identity" deferred obligation from Assembly? | Game Designer | May require revisiting Assembly Deferred Obligation #5 when TBC is designed |
+| OQ-5 | What would the Vertical Slice team-wide synergy feature look like? (e.g., 2+ Symbots sharing a tag for a team-level bonus?) | Deferred to Vertical Slice design | No impact on MVP system |

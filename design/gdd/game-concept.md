@@ -307,17 +307,18 @@ The world looks like nature, but built from gears, circuits, and alloys. Wild Sy
 **Explicitly NOT in MVP** (defer to later):
 - Story, dialogue, or narrative content
 - More than 1 zone or 2 bosses
-- Synergy/set bonus system (validate base loop first)
 - Blueprint crafting (direct part drops are enough for MVP)
 - Online features of any kind
 - iOS release (test export pipeline early, but don't optimize for it until after MVP validation)
+
+> *Scope revision 2026-07-10: Synergy System moved from Vertical Slice → MVP. Rationale: Part DB hard constraint DB1 requires synergy defined before TBC is designable, and Pillar 4 ("Synergy Is the Endgame") is untestable without some synergy in the first playable.*
 
 ### Scope Tiers
 
 | Tier | Content | Features | Timeline |
 | ---- | ---- | ---- | ---- |
-| **MVP** | 1 zone, ~20 parts, 2 bosses | Core build loop, part hunting, basic workshop | 3–6 months (solo) |
-| **Vertical Slice** | 1 full zone + 1 partial zone | Synergy system, blueprint crafting, rival NPC | 6–9 months (solo) |
+| **MVP** | 1 zone, ~20 parts, 2 bosses | Core build loop, part hunting, synergy system, basic workshop | 3–6 months (solo) |
+| **Vertical Slice** | 1 full zone + 1 partial zone | Blueprint crafting, rival NPC | 6–9 months (solo) |
 | **Alpha** | 3 zones, ~80 parts, 5 bosses | All core systems, rough content | 9–15 months (solo) |
 | **Full Vision** | 6–8 zones, 200+ parts, 10+ bosses | All systems polished, iOS release | 1–3 years (solo with AI) |
 
