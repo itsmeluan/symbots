@@ -1,5 +1,14 @@
 # Review Log: Synergy System
 
+## Review — 2026-07-10 (Re-review #5, Revision Pass) — Verdict: NEEDS REVISION
+Scope signal: S for the revision (M for implementation — producer to verify)
+Specialists: game-designer, systems-designer, ux-designer, qa-lead, creative-director
+Blocking items: 4 (all resolved in-session) | Recommended: ~10 (all resolved in-session — full-scope pass, same as #4)
+Summary: The #4 fix set held (CD confirmed all 6 landed; zero regressions) but the predicted APPROVED did not materialize — the adversarial layer found 4 new defects, 3 of them false-confidence AC/contract-hygiene class: (1) AC-SYN-12's "(order-independent)" pass condition directly contradicted Rule 3/7's normative alphabetical ordering (qa, CD-verified against source — a wrong test, not a missing one; fixed to strict ordered equality); (2) keep-first dedup determinism was untested — AC-SYN-05's same-prefix fixture can't discriminate content-file-order iteration (sys≡qa independent discovery; AC-SYN-05b added with cross-prefix reverse-file-order fixture); (3) uncapped SYN-F4 invalidates DF-1's registered [1,165] output range — CD ruled uncapped is intended, fix is a contract note + tracked TBC obligation, registry edit is downstream errata (sys); (4) null candidate_part in preview() crashes on null.synergy_tags — the unequip-preview case, undefined in Rule 9 (ux≡qa independent discovery; Rule 9 sentence + EC-SYN-14 + AC-SYN-24). CD adjudications: all 3 game-designer design-gap blockers (Beat 2 content volume, element/manufacturer asymmetry, combined-synergy reachability) DISCHARGED as tracked obligations per the GDD's own DCO/OQ deferral philosophy — routed into upgraded OQ-7 (hard constraint on Part DB + Drop System) and OQ-2 (three calibration mandates); min_count>8 dead tier demoted (silent-safe, unlike the #4 min_count=0 false-activation). Recommended batch applied: effects never-null type guarantee; validator cross-tier effect-uniqueness + dev-log-on-discard; DCO-9 (Beat 3 testable criterion → Workshop UI GDD); DCO-2 combined-indicator constraint; UI Req 1 display_name/pending-bonus validation; Player Fantasy beat-ordering note; AC-SYN-14 Scenario B (combined through silent path); AC-SYN-17 FAIL line; AC-SYN-25 (no self-lock after evaluate_silent), AC-SYN-26 (effect pass-through), AC-SYN-27 (7-tier max-stress); EC-SYN-02/05 verified-by updates. CD guardrail: APPROVE expected on #6; new *structural* blockers at #6 would trigger a scope/process intervention.
+Prior verdict resolved: Yes — 6 of 6 prior blockers held; 4 new blockers found and resolved in same session. Next: fresh-session re-review #6.
+
+---
+
 ## Review — 2026-07-10 (Re-review #4, Revision Pass) — Verdict: NEEDS REVISION
 Scope signal: S for the revision (M for implementation — producer to verify)
 Specialists: game-designer, systems-designer, ux-designer, qa-lead, creative-director

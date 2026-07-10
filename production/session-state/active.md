@@ -1,57 +1,57 @@
 # Active Session State
 
 ## Current Task
-Session 10: Synergy System GDD — /design-review re-review #4 complete (NEEDS REVISION → full-scope revision applied in-session). 6 blockers + 10 recommended items ALL resolved 2026-07-10. Ready for fresh-session re-review #5 (creative-director: high confidence APPROVED).
+Session 11: Synergy System GDD — /design-review re-review #5 complete (NEEDS REVISION → full-scope revision applied in-session). 4 blockers + recommended batch ALL resolved 2026-07-10. Ready for fresh-session re-review #6 (creative-director: APPROVE expected; guardrail — new STRUCTURAL blockers at #6 trigger scope/process intervention).
 
 ## Prior Completed
 - Enemy Database GDD: APPROVED 2026-07-10 (Session 4)
 - Part Database GDD: APPROVED (+ visual amendment 2026-07-10)
 - Damage Formula GDD: APPROVED
 - Symbot Assembly System GDD: APPROVED 2026-07-10 (Session 5)
-- Synergy System GDD: In Review (revised four times — awaiting re-review #5)
+- Synergy System GDD: In Review (revised five times — awaiting re-review #6)
 
-## Key Design Decisions (Synergy — current state after re-review #4 revision)
+## Key Design Decisions (Synergy — current state after re-review #5 revision)
 - Bonus types: stat bonuses (flat integers) + passive combat effects (named StringName IDs)
 - Thresholds: TIER1=3, TIER2=5, CUMULATIVE; combined synergies = independent counts, no co-location
-- Registration order: ascending alphabetical by tier ID (governs dedup + emission order)
-- **NEW: Requirements validity invariant** — requirements non-empty AND every min_count ≥ 1 (min_count=0 is vacuous-activation content error → skip + log; EC-SYN-13, AC-SYN-23)
-- **NEW: null synergy_tags treated exactly as []** — null-guard mandatory (GDScript `for tag in null` errors); Part DB is invariant owner, Synergy guard is defensive only (EC-SYN-07 extended, AC-SYN-19)
-- **NEW: Dual integer enforcement (user-approved)** — content validation rejects non-int stat_delta literals at load + SYN-F3 casts int() at aggregation ingest; independent of OQ-1 format choice
-- **NEW: Rule 9 empty-return semantics** — consumers treat empty preview() return as "no change"; errors detected via log, never via return shape
-- **NEW: DCO-7** — Workshop UI must hold stateful last_active_synergies set, diff before animating; debounce 100–200ms suggested (UI tuning). Rule 7 xref fixed to point here.
-- **NEW: DCO-8** — Rule 8 freeze is a behavioral contract; Workshop System GDD must disable equip during battle (Synergy does not self-lock)
-- **NEW: Cumulative budget constraint** — OQ-2 scope now includes 7-tier worst-case sum validation + future per-tier per-stat cap
-- All 4 formulas now use Symbol/Type/Range variable tables (Range column on min_count = structural prevention)
-- evaluate() always emits; evaluate_silent() for TBC battle-start; preview() strictly read-only
-- 23 ACs (AC-SYN-01…23); 13 ECs (EC-SYN-01…13); every EC carries a "Verified by" AC reference (coverage ~90% direct, clears 80% standard)
-- DCO-1…8 delegate UI/Workshop-System-scoped items downstream
+- Registration order: ascending alphabetical by tier ID (governs dedup + emission order); AC-SYN-12 now asserts strict ORDERED equality (order-independent check was a wrong test); AC-SYN-05b proves dedup determinism with a cross-prefix reverse-file-order fixture
+- Requirements validity invariant: non-empty AND min_count ≥ 1; min_count > 8 = silent-safe dead tier (validation warning, not a skip)
+- **NEW: SYN-F4 cross-system range contract** — effective_stat deliberately uncapped; DF-1's registered [1,165] output range is invalidated; TBC GDD must re-derive DF-1 ranges under synergy-amplified inputs (tracked in Dependencies table)
+- **NEW: Rule 9 null candidate** — preview(null, slot, parts) = unequip preview, valid input, slot treated as empty; null-guard mandatory (EC-SYN-14, AC-SYN-24)
+- **NEW: effects type guarantee** — synergy_bonus_block.effects always Array[StringName], never null (mirrors stat_delta int guarantee)
+- **NEW: DCO-9** — Workshop UI GDD must define a testable AC for the Beat 3 first-crossing presentation
+- DCO-2 constraint added: combined-tier indicator must never imply constituents deactivated (3 tiers simultaneously active)
+- OQ-7 upgraded to HARD CONSTRAINT on Part DB content plan + Drop System GDD (Beat 2 delivery gate)
+- OQ-2 now carries 3 calibration mandates: (i) manufacturer bonuses must compensate wild-part element-padding asymmetry; (ii) combined synergies must be reachable — dual-tag parts required in MVP pool; (iii) viability target vs pure-stat builds
+- evaluate() always emits; evaluate_silent() for TBC battle-start (AC-SYN-14 now has combined-path Scenario B); no self-lock after silent (AC-SYN-25); effect IDs pass through unfiltered (AC-SYN-26); 7-tier max-stress fixture (AC-SYN-27)
+- 28 ACs (AC-SYN-01…05, 05b, 06…27); 14 ECs (EC-SYN-01…14); every EC carries a Verified-by AC reference
+- DCO-1…9 delegate UI/Workshop-System-scoped items downstream
 
-## Revision History (Session 10 — 2026-07-10 — 6 blockers + 10 recommended resolved)
-Blockers: (1) min_count≥1 invariant + EC-SYN-13 + AC-SYN-23; (2) null synergy_tags guard + AC-SYN-19-B; (3) dual int enforcement in Formulas + SYN-F3 int() cast; (4) AC-SYN-19 (EC-SYN-07 empty-tags, 3rd consecutive flag); (5) AC-SYN-13 Scenario B (preview deactivation — catches delta-approach bug); (6) AC-SYN-20 + Rule 9 empty-return sentence.
-Recommended: DCO-7/DCO-8 added; dead Rule 7 xref fixed; formula variable tables; "stateless" wording corrected; worked-example fixture-divergence note; AC-SYN-14 note rewrite + shared-compute-core hint; AC-SYN-21 (dup tags), AC-SYN-22 (empty requirements); budget constraint in Tuning Knobs + OQ-2; Beat 2/3/4/5 dependency/intent annotations; Beat 3 binding in Visual/Audio; DCO-3/4 gesture-conflict warning; Verified-by refs on all ECs.
+## CD Adjudications of Record (re-review #5)
+- All 3 game-designer design-gap blockers DISCHARGED as tracked obligations (per the GDD's own DCO/OQ deferral philosophy; raising fresh design bars on pass 5 = goalpost-moving) → routed to OQ-7 hard constraint + OQ-2 mandates
+- SD's DF-1 range finding: defect real, but registry edit is downstream errata on the Damage Formula/TBC GDD; only the contract note blocks this doc
+- qa-lead's AC-SYN-12 finding beats the main reviewer's structural pass: structural completeness (has pass/fail) ≠ assertion correctness — "this is exactly why the adversarial layer exists"
+- min_count>8 demoted vs. the #4 min_count=0 blocker: dead tier never wrongly activates (silent-safe); false-activation was the blocking hazard
 
-## CD Adjudications of Record (re-review #4)
-- game-designer's APPROVED overruled (verdict must clear every domain)
-- Upgrading prior-RECOMMENDED items on pass 4 = legitimate debt-calling, NOT goalpost-moving (guardrail: genuine correctness/standards defect deferred for scheduling)
-- Prior blocked-on-OQ-1 deferral of float enforcement REVERSED — false dependency; enforcement point specifiable independent of format
-- Systemic EC↔AC flag STRENGTHENS blocking case (known, endorsed, twice-deferred, cheap-to-fix)
-- ux-designer's initial "7 open blockers" was stale agent memory predating the DCO section — reconciled to 1, demoted, fixed anyway
-
-## Files Changed Session 10
-- design/gdd/synergy-system.md (~30 edits: status, Beats 2–5, Rules 7/8/9, States wording, Formulas intro + all 4 variable tables + SYN-F2 invariant + SYN-F3 cast + worked-example note, EC-SYN-07 extension, EC-SYN-13 new, Verified-by refs on all ECs, Tuning Knobs budget constraint, Beat 3 binding, DCO intro + DCO-4 warning + DCO-7/8, AC preamble range, AC-SYN-13 Scenario B, AC-SYN-14 note, AC-SYN-19…23 new, OQ-2 scope)
-- design/gdd/reviews/synergy-system-review-log.md (appended re-review #4 entry)
+## Files Changed Session 11
+- design/gdd/synergy-system.md (~20 edits: status; Player Fantasy beat-ordering note; Rule 9 null-candidate sentence; SYN-F2 min_count>8 note; SYN-F3 validator/dev-log + effects type guarantee; SYN-F4 DF-1 contract note; EC-SYN-02/05 verified-by updates; EC-SYN-14 new; Dependencies TBC row; UI Req 1 display_name validation; DCO-2 constraint + DCO-9 new; AC ownership range; AC-SYN-05b new; AC-SYN-12 strict ordering; AC-SYN-14 Scenario B; AC-SYN-17 FAIL line; AC-SYN-24/25/26/27 new; OQ-2 mandates; OQ-7 hard constraint)
+- design/gdd/reviews/synergy-system-review-log.md (appended re-review #5 entry)
 
 ## Next Steps
 1. /clear this session
-2. /design-review design/gdd/synergy-system.md in fresh session — re-review #5 (CD: high confidence APPROVED; verify the 6 blocker fixes + spot-check the recommended batch)
-3. After approval: /design-system turn-based-combat — #6 in design order
-4. **BEFORE authoring turn-based-combat GDD**: action the GDD-template amendment (see systemic flag below) — CD directed this happen before the next GDD
+2. /design-review design/gdd/synergy-system.md in fresh session — re-review #6 (CD: APPROVE expected; verify the 4 blocker fixes + spot-check recommended batch)
+3. After approval: /design-system turn-based-combat — #6 in design order. TBC GDD must: define passive effect ID registry (OQ-3); re-derive DF-1 ranges under synergy-amplified stats (SYN-F4 contract); document Synergy dependency
+4. **BEFORE authoring turn-based-combat GDD**: action the GDD-template amendment (see systemic flag below) — CD directive from re-review #4, still pending
 
-## SYSTEMIC PROCESS FLAG — NOW ACTIONABLE (CD directive, re-review #4)
-Amend the GDD standard (.claude/rules/design-docs.md + design/CLAUDE.md): every observable-outcome EC must reference a verifying AC (or state why none exists), and the /design-review completeness pass must run an EC↔AC cross-check. Three consecutive Synergy reviews vindicated this. Apply BEFORE authoring the Turn-Based Combat GDD.
+## Standing Obligations Created Session 11
+- TBC/Damage-Formula GDD: re-derive DF-1 registered output range under synergy-amplified inputs
+- Part Database content plan + Drop System GDD: validate Beat 2 against OQ-7's 5–6 parts-per-tag minimum (HARD CONSTRAINT)
+- Economy Designer: OQ-2's three calibration mandates mandatory before MVP content ships
+
+## SYSTEMIC PROCESS FLAG — STILL ACTIONABLE (CD directive, re-review #4)
+Amend the GDD standard (.claude/rules/design-docs.md + design/CLAUDE.md): every observable-outcome EC must reference a verifying AC (or state why none exists), and the /design-review completeness pass must run an EC↔AC cross-check. Apply BEFORE authoring the Turn-Based Combat GDD.
 
 <!-- STATUS -->
 Epic: MVP Core GDDs
 Feature: Synergy System GDD
-Task: Awaiting /design-review (re-review #5 — 6 blockers + 10 recommended resolved; CD expects APPROVED)
+Task: Awaiting /design-review (re-review #6 — 4 blockers + recommended batch resolved; CD expects APPROVED)
 <!-- /STATUS -->
