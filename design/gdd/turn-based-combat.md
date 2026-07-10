@@ -1,8 +1,8 @@
 # Turn-Based Combat System
 
-> **Status**: Designed — awaiting /design-review
+> **Status**: Designed — review round 1 (NEEDS REVISION) revisions applied, awaiting re-review
 > **Author**: Luan + Claude Code Game Studios agents (systems-designer: Formulas; qa-lead: ACs; art-director: Visual/Audio)
-> **Review Notes**: Authored in lean mode — CD-GDD-ALIGN gate skipped per review-mode; specialists consulted for Formulas, ACs, and Visual/Audio. All floor/ceil formulas python3 epsilon-scanned 2026-07-10 (all defensive, zero load-bearing).
+> **Review Notes**: Authored in lean mode; full /design-review run 2026-07-10 (game-designer, systems-designer, qa-lead, creative-director) — verdict NEEDS REVISION; the skipped CD-GDD-ALIGN gate was performed manually by the creative-director (Player Fantasy passes on substance). All 7 blocking + 6 recommended items applied 2026-07-10: `snapshotted_processing` ratified PRE-synergy; Shock sign convention unified (positive `shock_magnitude`); REPAIR Energy-brake contract (Rule 9); Part-Break binding Pillar-2 obligation; ACs 34–40 added. All floor/ceil formulas python3 epsilon-scanned 2026-07-10 (all defensive, zero load-bearing; no coefficients changed at review — scans remain valid).
 > **Last Updated**: 2026-07-10
 > **Implements Pillar**: Pillar 2 (Every Battle Has a Harvest Goal), Pillar 4 (Synergy Is the Endgame)
 
@@ -27,7 +27,7 @@ The intended emotional arc of a fight: **read** (scan the enemy — element, reg
 
 *Joint-delivery note: the harvest dilemma requires the Part-Break System (region damage mechanics — Not Started) and Combat UI (break pips, drop-hint legibility — Enemy DB constraint ED6) to land. This GDD builds the stage: turn structure that makes targeting a per-turn choice, and the event plumbing that makes breaks pay out. A silent break with no payoff readout reduces the dilemma to bookkeeping — the same class of binding as Synergy's Beat 3.*
 
-*(Lean mode note: creative-director not consulted for this section — review manually before production.)*
+*(Lean mode note resolved: the creative-director performed the manual gate at the 2026-07-10 design review — the section passes on substance. The mechanical guarantee of the harvest dilemma is not TBC's to deliver alone; it is recorded as a BINDING Part-Break obligation in Dependencies, not left as prose.)*
 
 ## Detailed Design
 
@@ -75,6 +75,10 @@ The intended emotional arc of a fight: **read** (scan the enemy — element, reg
 | `targeting` | Enum | `ENEMY`, `SELF` — region sub-targeting within `ENEMY` is the Part-Break System's layer |
 
 `heat_generation` and `ammo_cost` stay on the **part** (existing Part DB schema), not the move. The Basic Attack is a TBC-owned built-in: `behavior=DAMAGE`, `energy_cost=0`, `heat_generation=0`, `damage_type` = equipped WEAPON's `damage_type`, `element` = equipped WEAPON's `element`.
+
+**SCAN stub (MVP, ratified at review):** a move with `behavior = SCAN` resolves as a **turn-consuming no-op**: the Energy cost is paid, heat gain applies (Rule 5d), the action is consumed, and no damage or status is applied. The information payload (natural candidate: revealing `break_regions`/drop hints per Enemy DB ED6) remains OQ-TBC-3, owned by the Move DB GDD — the stub makes SCAN a defined-but-empty runtime path instead of undefined behavior. *Verified by AC-TBC-39.*
+
+**REPAIR Energy floor (anti-stall contract):** REPAIR-behavior moves MUST author `energy_cost > BASE_ENERGY_REGEN` (≥ 11 at the current 10). This guarantees the anti-stall Energy brake by contract rather than by content convention — see TBC-F6's anti-stall verification. Content validation enforces it (AC-TBC-38).
 
 **Rule 10 — Damage resolution.** For a DAMAGE move: effective attack stat = **SYN-F4** (`max(0, final_stat[S] + frozen_synergy_delta.get(S, 0))`) on the routing stat (`physical_power` or `energy_power`); defense side likewise for the defender (enemy = authored stats, no synergy). Call DF-1: `compute_damage(A, skill_damage_type, skill_element, D, target_core_element, crit_mult=1.0)`. The player-side core element = the equipped CORE part's `element`; enemy = `core_element` field (null → ×1.0 per DF EC-04). The returned integer reduces `current_structure`, floored at 0. **Status damage (Burn) bypasses DF-1 entirely** — it is fixed-magnitude, unaffected by Armor/Resistance/type (resolves DF OQ-2: DF-1 is the only path for *move* damage; status DoT is a separate, documented path). Region damage routing awaits the Part-Break GDD — TBC exposes a per-hit hook (`hit_resolved(move, damage, target)`) that Part-Break will subscribe to.
 
@@ -130,7 +134,7 @@ Per-combatant flags: `NORMAL`, `OVERHEATED` (skips next action phase), `DOWNED` 
 
 **Epsilon status (scan-verified 2026-07-10):** every `+ 0.0001` nudge in TBC-F1…F6 and in DF-1's extended input range is **DEFENSIVE, not load-bearing** — an exhaustive python3 scan against exact rational arithmetic (95,000+ inputs: all processing ∈ [0,110], energy_power ∈ [0,150], stagger_pct × damage ∈ [0,27]×[1,225], and DF-1 A ∈ [1,150] × D ∈ [0,182] × T ∈ {0.75, 1.0, 1.5}) found zero bare-floor errors and zero epsilon overcorrections. The nudges are retained as project convention. *(An earlier analytical claim that `processing × 0.3` misrounds at multiples of 10 is empirically false — IEEE 754 rounds those products to exact integers. Do not treat these epsilons as load-bearing; if a coefficient is ever retuned, re-run the scan.)*
 
-**Status potency snapshot contract (ratified):** every status magnitude formula reads the **applier's `processing` at the moment the status lands** and stores it on the status instance. It is never re-read live. Every tick and modifier is fully predictable from the moment of application, consistent with the frozen-synergy battle model.
+**Status potency snapshot contract (ratified):** every status magnitude formula reads the **applier's `processing` at the moment the status lands** and stores it on the status instance. It is never re-read live. Every tick and modifier is fully predictable from the moment of application, consistent with the frozen-synergy battle model. **Ratified at review (2026-07-10): the snapshot is PRE-synergy — `snapshotted_processing = final_stat["processing"]`, never SYN-F4.** Synergy deltas to `processing` (none exist in MVP content) do not affect status potency; CHIPSET investment is the sole status-potency lever, and the 0–110 ranges in TBC-F3/F4/F5 are exact, not approximations.
 
 ---
 
@@ -139,9 +143,9 @@ Per-combatant flags: `NORMAL`, `OVERHEATED` (skips next action phase), `DOWNED` 
 ```
 effective_mobility = max(0, final_stat["mobility"]
                             + synergy_delta.get("mobility", 0)
-                            + shock_penalty)
+                            − shock_magnitude)
 
-shock_penalty = −TBC-F4(snapshotted_processing)   [when Shock active; else 0]
+shock_magnitude = TBC-F4(snapshotted_processing)   [when Shock active; else 0]
 ```
 
 Combatants sorted descending by `effective_mobility` at each round start (Rule 3). Player side wins ties. Enemy path: `stats["mobility"]`, synergy_delta always 0 (Rule 8).
@@ -150,10 +154,10 @@ Combatants sorted descending by `effective_mobility` at each round start (Rule 3
 |----------|--------|------|-------|-------------|
 | Base mobility | `final_stat["mobility"]` | int | 0–96 | SA-F1 output |
 | Synergy mobility delta | `synergy_delta.get("mobility",0)` | int | ≥ 0 (MVP content) | From the frozen `cached_bonus_block` |
-| Shock penalty | `shock_penalty` | int | −33–0 | From TBC-F4, negative modifier |
+| Shock magnitude | `shock_magnitude` | int | 0–33 | TBC-F4 output (positive); subtracted in this formula |
 | Output | `effective_mobility` | int | 0–unbounded | Initiative rank; floored at 0 |
 
-**Worked example (discriminating):** applier processing = 53, target base mobility = 64, no synergy: `shock_penalty = floor(53 × 0.3 + 0.0001) = floor(15.9001) = 15` (round/ceil give 16); `effective_mobility = max(0, 64 − 15) = 49` — a round()/ceil() implementation yields 48.
+**Worked example (discriminating):** applier processing = 53, target base mobility = 64, no synergy: `shock_magnitude = floor(53 × 0.3 + 0.0001) = floor(15.9001) = 15` (round/ceil give 16); `effective_mobility = max(0, 64 − 15) = 49` — a round()/ceil() implementation yields 48.
 
 ---
 
@@ -183,7 +187,7 @@ Applied at turn start (Rule 4.1b), player Symbots only. **Pure integer arithmeti
 burn_damage = max(BURN_MIN, floor(snapshotted_processing × BURN_COEFF + 0.0001))
 ```
 
-`BURN_COEFF = 0.08`, `BURN_MIN = 2`. Applied at the afflicted combatant's turn start (Rule 4.1c). **Bypasses DF-1** — reduces `current_structure` directly; Armor/Resistance/type effectiveness do not apply (the documented non-DF-1 damage path per Rule 10).
+`BURN_COEFF = 0.08`, `BURN_MIN = 2`. Applied at the afflicted combatant's turn start (Rule 4.1c). **Bypasses DF-1** — reduces `current_structure` directly; Armor/Resistance/type effectiveness do not apply (the documented non-DF-1 damage path per Rule 10). Burn ticks are also **not reduced by Stagger** on the applier — Stagger governs its outgoing DAMAGE moves only (TBC-F5); DoT is not a move.
 
 **Model rationale (ratified):** processing-only scaling. Against WILD-early (structure 60) a max-investment Burn's 2-tick total (16) is 26.7% — a real tempo tool; against BOSS (594) it is 2.7% — deliberate light pressure. Burn never rivals attacking: at processing 110, one tick (8) is ~9% of the same build's Basic Attack output (86 at A=110, D=30, T=1.0). The boss-negligibility asymmetry is intentional; CHIPSET's promise is kept through wild-fight tempo, not boss DPS.
 
@@ -201,16 +205,16 @@ burn_damage = max(BURN_MIN, floor(snapshotted_processing × BURN_COEFF + 0.0001)
 ### TBC-F4 — Shock Mobility Reduction
 
 ```
-shock_penalty = floor(snapshotted_processing × SHOCK_COEFF + 0.0001)
+shock_magnitude = floor(snapshotted_processing × SHOCK_COEFF + 0.0001)
 ```
 
-`SHOCK_COEFF = 0.3`. Feeds TBC-F1 as a negative modifier for the status duration.
+`SHOCK_COEFF = 0.3`. **Sign convention (ratified at review): TBC-F4 outputs — and the status instance stores — a positive magnitude (0–33); TBC-F1 subtracts it.** Never store or pass a pre-negated value; a double negation makes Shock raise mobility.
 
 | Variable | Symbol | Type | Range | Description |
 |----------|--------|------|-------|-------------|
 | Applier processing | `snapshotted_processing` | int | 0–110 | Snapshot at application |
 | Coefficient | `SHOCK_COEFF` | float | 0.3 | Tuning knob |
-| Output | `shock_penalty` | int | 0–33 | Mobility reduction while Shocked |
+| Output | `shock_magnitude` | int | 0–33 | Mobility reduction while Shocked (stored positive on the status instance) |
 
 **Calibration:** a max Shock (33) flips initiative across mobility gaps ≤ 33 — meaningful pressure in the realistic 30–96 band without guaranteeing order-flips at large gaps. Zero-processing appliers produce a 0-penalty Shock (status lands, does nothing to initiative — legal, discourages status moves on no-CHIPSET builds).
 
@@ -252,13 +256,13 @@ repair_amount = max(REPAIR_MIN, floor(user_energy_power × REPAIR_COEFF + REPAIR
 current_structure = min(max_structure, current_structure + repair_amount)
 ```
 
-`REPAIR_COEFF = 0.17` (ratified — lowered from the proposed 0.18 for anti-stall margin), `REPAIR_BASE = 5`, `REPAIR_MIN = 5`. Scaling stat is **effective `energy_power`** (SYN-F4) — the natural fit for energy-based repair, leaving `processing` to statuses.
+`REPAIR_COEFF = 0.17` (ratified — lowered from the proposed 0.18 for anti-stall margin), `REPAIR_BASE = 5`, `REPAIR_MIN = 5`. Scaling stat is **effective `energy_power`** (SYN-F4) — the natural fit for energy-based repair, leaving `processing` to statuses. Repair moves pay Energy and generate heat like any move — costs are governed by Rule 5 / Part DB Formula 5, not by this formula.
 
-**Anti-stall verification:** WILD-mid reference DPS = 33/turn (DF-1 at A=53, D=30, T=1.0). repair(110) = 23; repair(150, max synergy) = **30 < 33** — margin 3. Energy costs (Light 8–14 vs. base recharge 10/turn) further break sustained-repair loops.
+**Anti-stall verification:** WILD-mid reference DPS = 33/turn (DF-1 at A=53, D=30, T=1.0). repair(110) = 23; repair(150, max synergy) = **30 < 33** — margin 3. **The Energy brake is contract-guaranteed, not hoped for:** REPAIR-behavior moves MUST author `energy_cost > BASE_ENERGY_REGEN` (Rule 9; validated by AC-TBC-38). Without that rule, a Light-cost Repair on a max-Recharge build (10 + 30 = 40 Energy/turn) would be indefinitely energy-sustainable, leaving only the 3-HP damage margin — slow loss, not stall, vs. WILD-mid, but potentially a true stall vs. lower-DPS enemies where flee is unavailable (BOSS).
 
 | Variable | Symbol | Type | Range | Description |
 |----------|--------|------|-------|-------------|
-| User energy power | `user_energy_power` | int | 0–150 | Effective (SYN-F4) at time of use |
+| User energy power | `user_energy_power` | int | 0–150 | Effective (SYN-F4) at time of use; base ceiling 110 = SA-F1 output cap, + 40 = SYNERGY_POWER_BUDGET |
 | Coefficient | `REPAIR_COEFF` | float | 0.17 | Tuning knob |
 | Base / minimum | `REPAIR_BASE`, `REPAIR_MIN` | int | 5 / 5 | Flat floor for zero-investment builds |
 | Output | `repair_amount` | int | 5–30 | Applied capped at `max_structure` |
@@ -318,13 +322,15 @@ New DF-1 input ceilings: `A_max = 110 + 40 = 150`; `D_max = 132 + 50 = 182`.
 
 **EC-TBC-15 — Enemy stat keys absent.** Enemy stat lookups use `.get(key, 0)` (Enemy DB EC-ED-06 semantics): a missing `mobility` reads 0 (acts last), missing `processing` reads 0 (its statuses have zero potency, Burn still ticks at BURN_MIN). No crash. *Verified by AC-TBC-19.*
 
+**EC-TBC-16 — SCAN move used before its payload is designed.** A move with `behavior = SCAN` resolves as a turn-consuming no-op (Rule 9 stub): Energy cost paid, heat gained, action consumed, no damage or status applied, no crash. The information payload is OQ-TBC-3's decision (Move DB + Enemy DB ED6), not a TBC runtime concern. *Verified by AC-TBC-39.*
+
 ## Dependencies
 
 ### Upstream (this system reads from these)
 
 | System | What TBC reads | Status | Hard/Soft |
 |--------|---------------|--------|-----------|
-| **Symbot Assembly** | `final_stat`, move pool, passive pool, `max_structure`, `max_energy_capacity`, `heat_max` — snapshot at battle start | Approved | Hard |
+| **Symbot Assembly** | `final_stat`, move pool, passive pool, `max_structure`, `max_energy_capacity` — snapshot at battle start. (`heat_max` is NOT read: the Heat cap is the constant 100 owned by Part DB Formula 5, never a per-Symbot stat.) | Approved | Hard |
 | **Synergy System** | `evaluate_silent(parts)` at battle start; frozen `cached_bonus_block` per Symbot; SYN-F4 applied per Rule 10 | Approved | Hard |
 | **Damage Formula** | `compute_damage(A, damage_type, element, D, target_core_element, crit_mult)` per DAMAGE move — the DF call contract is hereby ratified | Approved | Hard |
 | **Enemy Database** | `stats`, `skills`, `core_element`, `break_regions` at battle start | Approved | Hard |
@@ -336,7 +342,7 @@ New DF-1 input ceilings: `A_max = 110 + 40 = 150`; `D_max = 132 + 50 = 182`.
 
 | System | What it reads | Status | Obligation on that GDD |
 |--------|---------------|--------|------------------------|
-| **Part-Break System** | `hit_resolved(move, damage, target)` hook; battle-start region pools; contributes break events to the Rule 12 set | Not Started | Must define region targeting/damage accrual (Part DB DB3, Enemy DB ED2) against the hook this GDD provides; if mid-battle synergy adjustment is ever needed, coordinate with Synergy Rule 8's deferred dependency |
+| **Part-Break System** | `hit_resolved(move, damage, target)` hook; battle-start region pools; contributes break events to the Rule 12 set | Not Started | Must define region targeting/damage accrual (Part DB DB3, Enemy DB ED2) against the hook this GDD provides; if mid-battle synergy adjustment is ever needed, coordinate with Synergy Rule 8's deferred dependency. **BINDING (Pillar 2 anchor): part-targeting MUST impose a real cost relative to fastest-kill routing (sub-optimal damage routing, extra turns, or risk) — if breaking a region is free while killing optimally, the harvest dilemma this GDD's Player Fantasy promises does not exist. The Part-Break GDD must carry its own AC for this obligation.** |
 | **Enemy AI System** | Move-choice request at enemy `ACTION_PENDING`; visible battle state | Not Started | Must define behavior profiles (Enemy DB ED4) returning exactly one legal action; must respect that enemies have no Heat/Energy gating (Rule 8) |
 | **Drop System** | `battle_ended(outcome, enemy_id, fired_break_events: Set)` | Not Started | Must consume events as a deduplicated set (Enemy DB ED3); VICTORY-only payout (Rule 12) |
 | **Combat UI** | Turn/damage/status/Overheat/break signals; move panel state incl. greyed costs and null slots; type-effectiveness metadata (DF constraint DF2) | Not Started | Must resolve DF OQ-1 (how `T`/type_mult reaches the UI from a damage event) |
@@ -359,7 +365,7 @@ Damage Formula, Enemy Database, Symbot Assembly, and Synergy System all already 
 
 | Knob | Value | Safe Range | What Changing It Does |
 |------|-------|------------|----------------------|
-| `BASE_ENERGY_REGEN` | 10 | 8–15 | Universal per-turn Energy. Below 8, Standard skills (15–22) take 2+ turns to afford on zero-recharge builds — combat drags; above 15, ENERGY_CELL investment stops mattering (kills the slot's meaning, an Assembly obligation). |
+| `BASE_ENERGY_REGEN` | 10 | 8–15 | Universal per-turn Energy. Below 8, Standard skills (15–22) take 2+ turns to afford on zero-recharge builds — combat drags; above 15, ENERGY_CELL investment stops mattering (kills the slot's meaning, an Assembly obligation). **8 is a hard floor, never 0** — TBC-F2's minimum-recovery guarantee and the REPAIR Energy-brake contract (`energy_cost > BASE_ENERGY_REGEN`, Rule 9) both move with this constant. |
 | `STATUS_DURATION` | 2 turns | 1–3 | All three statuses. At 1, statuses barely outlive their application turn; at 3, Burn totals (up to 24) start rivaling move damage and Stagger blankets whole fights. |
 | `BURN_COEFF` | 0.08 | 0.05–0.12 | Burn tick per processing point. At 0.12 max tick = 13 (26/duration — too close to WILD move damage); at 0.05 max tick = 5 (CHIPSET investment imperceptible). **Re-run the epsilon scan if changed.** |
 | `BURN_MIN` | 2 | 1–3 | Zero-CHIPSET baseline tick. At 0, Burn from no-investment builds does nothing (dead rider); above 3, no-investment Burn rivals invested Burn. |
@@ -542,15 +548,15 @@ GIVEN Round 1: Symbot mobility 30, enemy mobility 50 (enemy first). Player appli
 FAIL: initiative computed once at battle start; Round 2 order ignores the Shock penalty; flip case does not flip. **Test type**: Unit.
 
 **AC-TBC-05** (BLOCKING): TBC-F1/F4 Shock penalty floor discrimination.
-GIVEN `snapshotted_processing = 53`, WHEN `shock_penalty = floor(53 × 0.3 + 0.0001)`, THEN penalty = **15**; on a mobility-64 target, `effective_mobility = 49`.
+GIVEN `snapshotted_processing = 53`, WHEN `shock_magnitude = floor(53 × 0.3 + 0.0001)`, THEN penalty = **15**; on a mobility-64 target, `effective_mobility = 49`.
 FAIL: penalty = 16 (round()/ceil() — 15.9 rounds up); effective = 48. *Edge:* processing 0 → penalty 0, no crash. **Test type**: Unit.
 
 ### Turn Phase Order (Rule 4)
 
 **AC-TBC-06** (BLOCKING): No-affordable-moves and null move slot — Basic Attack always available; no soft-lock. *(Verifies EC-TBC-02 + EC-TBC-11)*
-*Fixture A:* GIVEN `current_energy = 5` and Moves 1–3 cost 15/22/30, THEN Basic Attack available (cost 0); Moves 1–3 greyed with costs shown; no soft-lock.
-*Fixture B:* GIVEN Move 4 = null (EC-SA-04 upstream), THEN slot renders "—", no crash, other moves unaffected.
-FAIL: Basic Attack greyed; turn skipped without input; null slot crashes or renders as available. Both fixtures required. **Test type**: Unit.
+*Fixture A:* GIVEN `current_energy = 5` and Moves 1–3 cost 15/22/30, THEN the exposed move-panel state has Basic Attack in the available set (cost 0); Moves 1–3 in the unavailable set with their costs readable from the state object; an action is always selectable (no soft-lock).
+*Fixture B:* GIVEN Move 4 = null (EC-SA-04 upstream), THEN the slot is exposed as a distinct null entry — not an available move — and querying the move panel state does not throw; other moves unaffected.
+FAIL: Basic Attack in the unavailable set; turn skipped without input; null slot throws or is exposed as available. Both fixtures required. *Rendering (greyed costs, the "—" glyph) is the Combat UI GDD's AC — this AC asserts the exposed state only.* **Test type**: Unit.
 
 **AC-TBC-07** (BLOCKING): Turn-start phase order: Heat decay → Energy recharge → Burn tick, players only.
 GIVEN heat 30 / cooling 10; energy 40 / cap 95 / recharge 22; Burn active (processing 72); structure 50, WHEN the turn starts (not Overheated), THEN in order: heat = max(0, 30−10) = **20**; energy = min(95, 40+10+22) = **72**; burn = max(2, floor(5.7601)) = **5** → structure **45**.
@@ -583,13 +589,17 @@ FAIL: switch offered with dead bench; forced switch consumes a turn; incoming re
 
 **AC-TBC-17** (BLOCKING): Flee rejected in BOSS; succeeds in WILD. *(Verifies EC-TBC-12)*
 *Scenario A (BOSS):* flee absent from action set; direct `flee()` rejected with logged error; no outcome emitted; state unchanged.
-*Scenario B (WILD):* flee emits `battle_ended(FLED, enemy_id, {})`, consumes the action, discards all state, no drops.
-FAIL: FLED emitted in a BOSS fight; flee fails vs. WILD; drops awarded on FLED. **Test type**: Unit.
+*Scenario B (WILD):* GIVEN the fleeing Symbot has Burn active (tick 5) and heat 20 / cooling 10, WHEN flee is chosen, THEN turn-start bookkeeping has already run before `battle_ended(FLED, enemy_id, {})` emits (heat = 10; Burn ticked) — flee resolves in the action phase and consumes the action; all state discarded; no drops; flee is present in the WILD action set.
+FAIL: FLED emitted in a BOSS fight; flee fails vs. WILD; flee absent from the WILD action set; FLED emitted before turn-start bookkeeping (heat/Burn unchanged); drops awarded on FLED. **Test type**: Unit.
 
 **AC-TBC-18** (BLOCKING): Bench freezes statuses; DOWNED clears them. *(Verifies EC-TBC-13 + EC-TBC-14)*
 *Scenario A (bench freeze):* GIVEN Symbot A active with Burn (2 turns left), player switches to B, WHEN B takes turns, THEN A's Burn stays at 2 turns (no ticks, no decrement while benched); on switching back, it ticks and decrements normally from A's next turn start.
 *Scenario B (DOWNED clears):* GIVEN A has Burn (1) and Shock (2) active and is downed by an enemy hit, THEN all statuses on A are removed immediately at DOWNED.
 FAIL: benched durations decrement; ticks apply while benched; statuses linger on a DOWNED record. **Test type**: Unit.
+
+**AC-TBC-37** (BLOCKING): Voluntary switch consumes the turn.
+GIVEN it is the active Symbot's turn and a living benched Symbot exists, WHEN the player chooses a voluntary switch, THEN the action phase is consumed — the enemy acts next in the same round — and the incoming Symbot first acts at the next round's initiative order. *Contrast fixture:* forced switch (AC-TBC-12 Scenario B) consumes no turn — the two paths must behave differently.
+FAIL: incoming Symbot acts in the same round after a voluntary switch; the enemy loses its turn; voluntary and forced switch behave identically. **Test type**: Unit.
 
 ### Enemy Asymmetry (Rule 8)
 
@@ -602,6 +612,7 @@ FAIL: skills filtered by energy; enemy Overheats; energy initialized at battle s
 **AC-TBC-22** (BLOCKING): SYN-F4 applies to both sides before DF-1; the fixture discriminates synergy-amplified vs. base-only.
 GIVEN active Symbot `physical_power = 90` with frozen synergy delta `{ physical_power: 25 }` → effective A = 115; enemy `armor = 55`, no synergy → D = 55; PHYSICAL KINETIC move; enemy `core_element = KINETIC` → T = 1.0, WHEN the move resolves, THEN `compute_damage(115, PHYSICAL, KINETIC, 55, KINETIC, 1.0)` is called (argument-capture stub) and damage = `floor(13225/170 + 0.0001)` = **77**; enemy structure −77.
 FAIL: `compute_damage(90, …)` called (SYN-F4 skipped — damage 55); synergy applied to enemy defense.
+*Note: the primary fixture's T = 1.0 is the neutral fallback and does not discriminate the type lookup — SYN-F4 routing is the system under test here; the type chart is validated by the sub-fixture below.*
 *Type-effectiveness integration:* same fixture but enemy `core_element = VOLT` → T = 1.5 (Kinetic is super-effective vs. Volt per the DF-1 type chart), THEN damage = `floor(77.7941… × 1.5 + 0.0001)` = **116**. FAIL: T = 1.0 (lookup failed) or T = 0.75 (inverted chart). **Test type**: Unit.
 
 **AC-TBC-23** (BLOCKING): Burn bypasses DF-1 — Armor/Resistance/type never reduce it.
@@ -623,8 +634,12 @@ GIVEN applier processing 0: Shock penalty = 0 (target mobility unchanged, status
 FAIL: zero-potency status rejected or crashes; mobility/damage wrongly reduced; Burn ticks 0. **Test type**: Unit.
 
 **AC-TBC-24** (BLOCKING): All three statuses coexist; reapplication targets same-type only.
-GIVEN Shock (proc 53), Burn (proc 72), Stagger (proc 86) all applied to one target, THEN all three present with independent snapshots/durations (penalty 15, tick 5, pct 21). WHEN Burn reapplied (proc 30), THEN only Burn's record changes; Shock and Stagger untouched.
+GIVEN Shock (proc 53), Burn (proc 72), Stagger (proc 86) all applied to one target via three direct `apply_status()` calls with per-call snapshots (stub appliers — not the move pipeline), THEN all three present with independent snapshots/durations (penalty 15, tick 5, pct 21). WHEN Burn reapplied (proc 30), THEN only Burn's record changes; Shock and Stagger untouched.
 FAIL: statuses overwrite each other; any status rejected because another type is present. **Test type**: Unit.
+
+**AC-TBC-36** (BLOCKING): Status decrement-and-expire lifecycle — statuses lift at duration 0.
+GIVEN Burn (duration 2, processing 72) applied to a combatant, WHEN that combatant completes 2 of its own turns, THEN Burn ticked exactly twice (turn starts 1 and 2), duration decremented at each turn end, and the status entry is ABSENT from the status list after turn 2's end; no tick fires on turn 3. Same lifecycle assertion for Shock and Stagger: their modifiers stop applying at expiry.
+FAIL: duration decrements but the status entry is never removed; a third tick fires; Shock/Stagger modifiers persist after expiry. **Test type**: Unit.
 
 ### Formula Discriminators (Section D fixtures)
 
@@ -640,13 +655,31 @@ FAIL: statuses overwrite each other; any status rejected because another type is
 GIVEN structure 98/100, ep 45 (repair 12), move cost 15 energy / 8 heat, energy 60, heat 20, WHEN used, THEN energy 45, structure `min(100, 110)` = **100** (overheal discarded), heat 28. *At exactly full:* repair is legal, wasteful, costs apply.
 FAIL: rejected at full; uncapped overheal; costs skipped on wasted repair. **Test type**: Unit.
 
+**AC-TBC-39** (BLOCKING): SCAN resolves as a turn-consuming no-op stub. *(Verifies EC-TBC-16)*
+GIVEN a move with `behavior = SCAN`, `energy_cost = 8`, owning part `heat_generation = 6`, user energy 50 / heat 10, WHEN used, THEN energy 42, heat 16, no damage dealt, no status applied, the action is consumed (the enemy acts next), no crash.
+FAIL: crash or rejection as an unknown behavior; costs not paid; treated as a free action. **Test type**: Unit.
+
 ### Passive Effect Registry (Rule 13)
 
-**AC-TBC-29** (BLOCKING): `&"volt_shock_on_hit"` fires on any DAMAGE move; applies Shock with **duration 1** (not 2); snapshot = user's effective processing at the hit. *Negative case:* REPAIR moves do not trigger it.
+**AC-TBC-29** (BLOCKING): `&"volt_shock_on_hit"` fires on any DAMAGE move; applies Shock with **duration 1** (not 2); snapshot = user's `final_stat["processing"]` at the hit (pre-synergy, per the snapshot contract). *Negative case:* REPAIR moves do not trigger it.
 FAIL: not applied; duration 2; snapshot unset. **Test type**: Unit.
 
 **AC-TBC-30** (BLOCKING): `&"thermal_burn_on_weapon"` fires on WEAPON-slot DAMAGE moves only. WEAPON move → Burn (2 turns) applied; HEAD-slot DAMAGE move → NOT applied.
 FAIL: slot filter ignored; duration ≠ 2. **Test type**: Unit.
+
+**AC-TBC-40** (BLOCKING): Registry dispatch handles ON_TURN_START and ON_BATTLE_START trigger types — not only ON_HIT.
+GIVEN synthetic test registry entries `{ &"test_battle_start", ON_BATTLE_START, increment counter }` and `{ &"test_turn_start", ON_TURN_START, increment counter }` on a Symbot's effect list, WHEN a battle starts and that Symbot takes 2 turns, THEN the battle-start counter reads 1 and the turn-start counter reads 2, each fired at the correct phase.
+FAIL: only ON_HIT dispatch is implemented (counters read 0); triggers fire at the wrong phase. *(ON_OVERHEAT dispatch is deferred until content needs it.)* **Test type**: Unit.
+
+### Hook Contracts (Rule 10 / Rule 12 plumbing)
+
+**AC-TBC-34** (BLOCKING): `hit_resolved(move, damage, target)` emits exactly once per DAMAGE-move resolution, carrying the post-SYN-F4, post-Stagger final damage.
+GIVEN a stub subscriber and the AC-TBC-22 fixture (pre-Stagger damage 77) with the attacker Staggered (pct 21), WHEN the move resolves, THEN `hit_resolved` fires exactly once with `damage = max(1, floor(77 × 0.79 + 0.0001)) = 60` (post-Stagger; round gives 61 — discriminating), the resolved move, and the target. Non-DAMAGE moves (REPAIR, STATUS, SCAN) do not emit it; Burn ticks do not emit it.
+FAIL: the hook never fires (every other AC still passes — this is the trap this AC exists to close); fires with the pre-Stagger 77; fires on Repair or Burn ticks. **Test type**: Unit.
+
+**AC-TBC-35** (BLOCKING): `is_battle_active()` predicate exposed for the Workshop lockout contract.
+GIVEN no battle, THEN `is_battle_active() == false`; WHEN `BATTLE_INIT` begins, THEN it is true and remains true through every state until `battle_ended` emits, after which it is false. This is TBC's side of Synergy DCO-8 — AC-TBC-INT-04 tests the Workshop side when that GDD exists.
+FAIL: predicate absent; true before init or after battle end; flips false mid-battle. **Test type**: Unit.
 
 ### Battle End (Rule 12)
 
@@ -672,6 +705,8 @@ FAIL: bracket-access runtime error; null propagates into a formula call. **Test 
 
 **AC-TBC-33** (ADVISORY): `SYNERGY_POWER_BUDGET` (40) and `SYNERGY_DEFENSE_BUDGET` (50) enforced by the Synergy content validator — cumulative stat_delta across simultaneously active tiers, not per-tier. GIVEN content summing energy_power deltas to 41 across the 7-tier worst case, THEN a BLOCKING validation failure names the exceeded budget. FAIL: over-budget content passes; check is per-tier instead of cumulative. *Implementation lives in the Synergy content validator; stated here because TBC derived the constants.* **Test type**: Content Validation.
 
+**AC-TBC-38** (ADVISORY, DEFERRED): REPAIR-behavior moves author `energy_cost > BASE_ENERGY_REGEN` (≥ 11 at the current 10); the validator fails naming the move ID otherwise (the anti-stall Energy-brake contract — Rule 9 / TBC-F6). *Unblocks when: Move Database GDD + content validation tooling exist.* **Test type**: Content Validation.
+
 ### Integration ACs (DEFERRED)
 
 **AC-TBC-INT-01** (BLOCKING, DEFERRED): `hit_resolved(move, damage, target)` hook — Part-Break receives post-SYN-F4/post-Stagger final damage per hit; break events flow into the Rule 12 set. *Unblocks when: Part-Break GDD defines its subscription and accrual interface.* **Test type**: Integration.
@@ -684,7 +719,7 @@ FAIL: bracket-access runtime error; null propagates into a formula call. **Test 
 
 ### Summary
 
-33 numbered ACs (29 BLOCKING unit, 2 ADVISORY content-validation, plus 4 DEFERRED integration). EC↔AC cross-check: every EC-TBC-01…15 observable outcome is verified by its named AC (see the Verified-by references in Edge Cases).
+40 numbered ACs (37 BLOCKING unit, 3 ADVISORY content-validation — the prior "29 BLOCKING" undercounted; corrected at review) plus 4 DEFERRED integration ACs. ACs 34–40 added at the 2026-07-10 design review (hook contracts, status lifecycle, voluntary switch, trigger dispatch, SCAN stub, REPAIR validation). EC↔AC cross-check: every EC-TBC-01…16 observable outcome is verified by its named AC (see the Verified-by references in Edge Cases).
 
 ## Open Questions
 
@@ -696,3 +731,4 @@ FAIL: bracket-access runtime error; null propagates into a formula call. **Test 
 | OQ-TBC-4 | UTILITY behavior taxonomy — which non-damage, non-status, non-repair move behaviors exist in MVP (buffs? Heat venting? energy transfer?), if any? MVP could ship with zero UTILITY moves; the enum value exists for Move DB headroom. | Move Database GDD | Low — enum headroom; content decision |
 | OQ-TBC-5 | Multi-enemy battles (Vertical Slice): Rule 1 locks MVP to one enemy; the `battle_ended` payload carries `enemy_id` extensibly. When multi-enemy is designed, targeting UI, initiative with multiple enemies, and AoE move semantics all need design. | Vertical Slice design | None for MVP |
 | OQ-TBC-6 | Victory rewards beyond drops: MVP awards loot only (Drop System via `battle_ended`) — no XP (concept: no level grind), no currency (crafting/scrap deferred to Alpha blueprint system). Confirm the Drop System GDD is the sole reward channel or define scrap salvage there. | Drop System GDD / Economy Designer | Reward loop completeness at MVP |
+| OQ-TBC-7 | **Balance watch (named at review):** does the free forced switch (Rule 6) incentivize deliberately letting the active Symbot die instead of paying a switch turn (fresh incoming resources; DOWNED clears statuses)? For an already-doomed Symbot the "degenerate" line is usually the correct play — the real cost is losing 1 of 3 roster slots. Monitor in playtest; tuning lever: incoming-Symbot state on forced switch. | Playtest / game-designer | Balance only — no rule change for MVP |

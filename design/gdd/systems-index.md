@@ -32,7 +32,7 @@ designed first.
 | 3 | Damage Formula System | Foundation | MVP | Approved | design/gdd/damage-formula.md | Part Database |
 | 4 | Symbot Assembly System | Gameplay | MVP | Approved | design/gdd/symbot-assembly.md | Part Database |
 | 5 | Synergy System | Gameplay | MVP | Approved | design/gdd/synergy-system.md | Part Database, Symbot Assembly |
-| 6 | Turn-Based Combat System | Gameplay | MVP | Designed | design/gdd/turn-based-combat.md | Damage Formula, Symbot Assembly, Enemy Database, Synergy, Part Database |
+| 6 | Turn-Based Combat System | Gameplay | MVP | In Review | design/gdd/turn-based-combat.md | Damage Formula, Symbot Assembly, Enemy Database, Synergy, Part Database |
 | 7 | Encounter Zone System | World | MVP | Not Started | — | Enemy Database |
 | 8 | Drop System | Economy | MVP | Not Started | — | Part Database, Enemy Database |
 | 9 | Part-Break System | Gameplay | MVP | Not Started | — | Turn-Based Combat, Drop System |
