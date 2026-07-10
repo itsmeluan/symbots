@@ -159,19 +159,146 @@ The Workshop System (not Assembly) manages the distinction between "player is in
 
 ## Formulas
 
-[To be designed]
+Assembly does not define new formulas — the underlying math belongs to the Part Database. This section specifies the **execution pipeline** Assembly runs, references the owning formulas, and documents the stat delta derivation.
+
+---
+
+### SA-F1 — Stat Derivation Pipeline (execution specification)
+
+Assembly is the sole executor of the Part Database Formula 1 / 2 / 2b pipeline. The pipeline runs synchronously after every equip event.
+
+**Step 1 — Per-part, per-stat upgrade scaling**
+
+For each of the 8 equipped parts, for each stat key `S` present in `stat_bonuses`:
+- If `base_stat[S] > 0`: compute `upgraded_value[S]` via **Part DB Formula 2**: `floor(base_stat[S] × upgrade_multiplier[tier] + 0.0001)`
+- If `base_stat[S] < 0` (Prototype drawback): compute `upgraded_value[S]` via **Part DB Formula 2b**: `−ceil(abs(base_stat[S]) × max(0, 1.0 − tier × (1.0/3.0)) − 0.0001)`
+- If `base_stat[S] = 0`: `upgraded_value[S] = 0`
+- If `S` is not in the canonical 11-stat list: log a content warning and skip (see EC-SA-05)
+
+**Step 2 — Sum across all 8 parts**
+
+For each stat key `S`: `sum[S] = ∑ upgraded_value[S]` across all 8 equipped parts. Stats not present in any part's `stat_bonuses` sum to 0.
+
+**Step 3 — Apply chassis archetype modifier**
+
+Read `chassis_archetype` from the equipped `CHASSIS` part. For each stat `S`:
+```
+modified[S] = sum[S] × chassis_modifier.get(S, 1.0)
+```
+where `chassis_modifier` is the lookup table from Part DB Rule 3. Stats not listed in that table use `×1.0` exactly — this is the designed behavior, not a fallback for missing data. Every archetype that does not modify a stat leaves it at its raw summed value.
+
+**Step 4 — Floor, clamp, and store (Part DB Formula 1)**
+
+For each stat `S`:
+```
+final_stat[S] = max(0, floor(modified[S] + 0.0001))
+```
+
+Store the full `final_stat` dictionary and emit `stats_changed(final_stat)`.
+
+**Output ranges** (inherited from Part DB Formula 1):
+
+| Stat | Practical MVP range | Notes |
+|------|-------------------|-------|
+| `structure` | 60–594 | Low: all-Common Light Frame; high: all-Boss-grade Heavy Frame at +5 |
+| `physical_power` / `energy_power` | 0–110 per contributing slot | Weapon/Arms max at +5; zero if no parts contribute |
+| `armor` / `resistance` | 0–132 | Boss-grade Chassis at +5 with ×1.20 modifier |
+| `mobility` | 0–96 | Light Frame ×1.20 upper bound |
+| `energy_capacity` | 80–120 | Design target range (Part DB Rule 4) |
+| `recharge` | 0–30 | At most 2 contributing parts × 15 each (Part DB Rule 4) |
+
+---
+
+### SA-F2 — Stat Delta (Workshop UI)
+
+When the Workshop UI previews a proposed part swap, Assembly computes a hypothetical `final_stat` with the candidate part installed and the current slot occupant displaced. The stat delta is:
+
+```
+delta[S] = hypothetical_final_stat[S] − current_final_stat[S]
+```
+
+for all 11 stat keys `S`.
+
+**Critical: this is a full hypothetical recompute, not a partial diff.** The candidate part is installed into its slot; the current occupant is removed; all 8 parts run through the full SA-F1 pipeline. This matters especially for **Chassis swaps**: changing the `chassis_archetype` re-applies the modifier table across all 11 stats simultaneously, so the delta can be non-zero for stats the new Chassis part contributes nothing to.
+
+The hypothetical build is computed in memory only — no equip event fires, no signal emits, and Inventory is not modified until the player confirms the swap.
+
+**Synergy exclusion**: `hypothetical_final_stat` uses Assembly base stats only (Rule 8). Synergy bonuses are not included. Workshop UI must not read a Synergy-inclusive total when computing delta — the delta would be incorrect when a swap crosses a synergy threshold.
 
 ## Edge Cases
 
-[To be designed]
+### EC-SA-01 — Equipping a part to an incorrect slot type
+**If** `P.slot_type ≠ target_slot_type` when `equip_part()` is called: **reject** the call and return an error. No state changes. No displacement occurs. The Workshop UI prevents this at the UI layer; this is a defensive guard for direct API calls.
+
+### EC-SA-02 — Equipping the same part instance already in the slot
+**If** the player attempts to equip a part whose `part_id` is identical to the currently equipped part in the target slot: **no-op**. No displacement, no recompute, no signal emission.
+
+### EC-SA-03 — All-Common build with empty Move 4
+**If** the `ARMS` slot is occupied by a Common part (`active_skill_id == null`): Move 4 is `null`. Assembly exposes `null` for Move 4 in the active move pool. Turn-Based Combat displays Move 4 as unavailable ("—"). The Basic Attack (Move 1) remains available. This is a valid build state.
+
+### EC-SA-04 — Missing Move Database entry
+**If** a part's `active_skill_id` is non-null but the referenced Move Database entry does not exist at runtime (content authoring error): log a content error, expose `null` for that move slot. Turn-Based Combat handles `null` as unavailable. Assembly does not crash. The same rule applies to `passive_id` referencing a missing Passive Database entry.
+
+### EC-SA-05 — Unknown stat key in `stat_bonuses`
+**If** a part's `stat_bonuses` dictionary contains a key not in the canonical 11-stat list: log a content warning and skip that key. All other stats compute normally. Assembly does not crash. This is Part DB EC-08 applied at the Assembly execution layer.
+
+### EC-SA-06 — Recharge sum exceeds 30
+**If** the assembled `sum["recharge"]` exceeds 30 after SA-F1 Step 2 (only possible if Part DB authoring rules are violated — more than 2 parts contribute non-zero `recharge`): log a content error. The formula does not clamp at this step; F1's floor and max(0,...) still apply. The resulting `final_stat["recharge"]` may be above 30. Must be caught by content validation (Part DB AC-18).
+
+### EC-SA-07 — All-Prototype build with large drawbacks producing zero-floor stats
+**If** the `sum[S]` for a given stat is negative after SA-F1 Step 2 (extreme Prototype drawback stacking): F1's `max(0, ...)` clamps the result to 0. The Workshop UI displays 0 (not a negative number). No crash, no special handling required.
+
+### EC-SA-08 — New SymbotBuild creation with starter parts
+**If** a new `SymbotBuild` is created: all 8 slots initialize with their respective starter Common parts and `final_stat` is computed immediately. The build is valid and functional from the first frame. Starter parts have `drop_enabled = false` in the Part Database — this does not affect their usability.
+
+### EC-SA-09 — Chassis swap stat delta
+**If** the player previews swapping the `CHASSIS` part: the stat delta (SA-F2) may be non-zero for all 11 stats because the chassis archetype modifier is re-applied across the full pipeline. The Workshop UI must display all 11 stat changes, not just stats the new Chassis part contributes to via `stat_bonuses`.
+
+### EC-SA-10 — No available replacement when displacing a slot
+**If** the player attempts to displace a part with no replacement: this cannot happen under the proposed atomic equip mechanic (Rule 3 — the player must provide the incoming part). An implementation that exposes a separate "unequip-only" API must block it if no replacement is provided, preserving the no-empty-slot invariant.
 
 ## Dependencies
 
-[To be designed]
+### Upstream Dependencies (what Assembly requires)
+
+| System | What Assembly Reads | Status |
+|--------|-------------------|--------|
+| **Part Database** | `SympartData` definitions via `PartDatabase.get_part(id)` — slot types, `stat_bonuses`, `chassis_archetype`, `active_skill_id`, `passive_id`, upgrade tier multiplier table, `heat_generation`, `ammo_cost` | Approved ✓ |
+| **Inventory System** | Provides parts available for equipping; receives displaced parts on swap | Not Started |
+| **Move Database** | `active_skill_id` references must resolve to valid entries at runtime | Not Started (referenced in Part DB Rule 1; not yet in systems index as a standalone system) |
+| **Passive Database** | `passive_id` references must resolve to valid entries at runtime | Not Started |
+
+*Note: Move Database and Passive Database are referenced in Part DB Rule 1 but are not listed in systems-index.md as standalone systems. Assembly's EC-SA-04 handles missing entries gracefully, but both must be authored before Assembly can be fully validated (Part DB AC-13 is BLOCKED on these).*
+
+---
+
+### Downstream Dependents (what depends on Assembly)
+
+| System | What It Reads from Assembly | Constraint |
+|--------|---------------------------|------------|
+| **Synergy System** | Equipped-parts list (all 8 `SympartData`) for synergy tag evaluation | Assembly must expose the full equipped-parts list, not just `final_stat`. Synergy reads tags, not computed stats. |
+| **Turn-Based Combat** | `final_stat` (all 11 stats), active move pool (skill IDs for moves 2–4), passive pool, `max_structure`, `max_energy_capacity`, `heat_max` | Stat snapshot taken at battle start; locked for the duration. Assembly must not change during combat. |
+| **Workshop System** | Triggers `equip_part()` and replacement swaps; reads `final_stat` for display | Workshop is the only system that calls `equip_part()`. All other systems are read-only consumers. |
+| **Workshop UI** | `final_stat` for live display; SA-F2 stat delta for part comparison previews | Must not include Synergy bonuses in delta computation (Rule 8). |
+
+---
+
+### Bidirectionality Note
+
+Part Database lists Assembly as a downstream dependent in its Dependencies section (confirmed). When Inventory, Move Database, Passive Database, Synergy, Turn-Based Combat, Workshop System, and Workshop UI GDDs are authored, each must list Assembly in their upstream dependencies.
 
 ## Tuning Knobs
 
-[To be designed]
+Most tuning knobs for this system live in the Part Database (chassis archetype modifiers, upgrade tier multipliers, stat budgets). Assembly inherits and executes them; they are not redefined here.
+
+| Knob | Current Value | Safe Range | What Changing It Does |
+|------|--------------|------------|----------------------|
+| `TEAM_ROSTER_CAP` | 3 | 2–4 | Number of Symbots in the active battle roster. Below 2 removes team strategy depth; above 4 overwhelms balance with ~20 MVP parts and dilutes per-Symbot build investment. Increasing past 3 is a post-MVP expansion. |
+| `ACTIVE_MOVE_SLOTS` | 4 | 3–5 | Number of moves per Symbot in battle: Basic Attack + WEAPON + HEAD + ARMS. Reducing to 3 removes a slot; increasing to 5 requires a new contributing slot (e.g., CHIPSET active skill, post-MVP). |
+| Upgrade tier multiplier table | Owned by Part Database | See Part DB Tuning Knobs | Not redefined here. |
+| Chassis archetype modifiers | Owned by Part Database | See Part DB Tuning Knobs | Not redefined here. |
+
+**All-Prototype zero-floor display note:** Builds with heavy Prototype drawbacks stacking on the same stat can produce `final_stat[S] = 0` via F1's clamp, even without a penalizing chassis modifier. Correct formula behavior — but counterintuitive. Workshop UI should indicate when a stat is clamped to 0 by drawback accumulation (not a tuning knob — carry into Workshop UI GDD).
 
 ## Visual/Audio Requirements
 
