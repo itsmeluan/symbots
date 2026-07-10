@@ -1,132 +1,133 @@
 ---
 name: synergy-ux-open-issues
-description: UX problems in Synergy System GDD after re-review #3 — 7 BLOCKING, 4 RECOMMENDED; 3 issues resolved (E, H, A); blocks Workshop UI GDD synergy section
+description: UX problems in Synergy System GDD after re-review #4 — 7 BLOCKING, 5 RECOMMENDED; 3 resolved (E/H/A); 0 resolved in re-review #4; Workshop UI GDD blocked
 metadata:
   type: project
 ---
 
-Third adversarial review conducted 2026-07-10 against `design/gdd/synergy-system.md`.
-Prior verdict: 5 BLOCKING, 3 RECOMMENDED. This re-review found 3 resolved, 4 still open,
-and 5 new issues (3 BLOCKING, 2 RECOMMENDED) for a net of 7 BLOCKING, 4 RECOMMENDED.
+Re-review #4 conducted 2026-07-10 against `design/gdd/synergy-system.md`.
+Prior verdict (re-review #3): 7 BLOCKING, 4 RECOMMENDED.
+Re-review #4 verdict: 0 resolved, 1 new BLOCKING (New 6), 1 new RECOMMENDED (New 7).
+Net: **7 BLOCKING, 5 RECOMMENDED**.
 
 ---
 
 ## RESOLVED (closed in re-review #3)
 
-**Issue E — Beat 1 vs. UI Req 1 bonus value**: FIXED. UI Req 1 now requires pending
-bonus value in inactive indicator state, matching what Beat 1 always promised. Closed.
-
-**Issue H — "Active + progressing toward next tier" indicator state**: FIXED. UI Req 1
-now defines all three indicator states including the active+progressing case with example
-format. Closed.
-
-**Issue A — "30 theoretical tiers" wrong count**: FIXED. Now reads "21 theoretical
-tiers" with correct MVP breakdown. Closed.
+**Issue E — Beat 1 vs. UI Req 1 bonus value**: FIXED. Closed.
+**Issue H — "Active + progressing" indicator state**: FIXED. Closed.
+**Issue A — "30 theoretical tiers" wrong count**: FIXED. Closed.
 
 ---
 
 ## BLOCKING Issues
 
 **Issue B — Overflow behavior for >8 build-relevant tiers (BLOCKING)**
-UI Req 1 caps visible indicators at 8 with no overflow behavior defined. EC-SYN-02
-shows up to 7 simultaneously active tiers; a build with partial lines can produce 8–10
-build-relevant tiers (≥1 matching part). What happens to tier 9 and 10? Silent hide,
-scroll, or priority-sort? Silent hiding breaks Beat 1 (Recognition). Not fixed in
-re-review #3.
-
-Decision needed: Overflow behavior and player awareness when indicators are hidden.
+UI Req 1 caps visible indicators at 8 with no overflow behavior defined. A build with
+partial synergy lines can produce 8–10 build-relevant tiers. What happens to tier 9+?
+Silent hide, scroll, or priority-sort? Silent hiding breaks Beat 1 (Recognition).
+Decision needed: overflow behavior and player awareness when indicators are hidden.
 
 **Issue C — Change detection contract undefined (BLOCKING)**
 Visual/Audio table says "implement own change detection" with no debounce window and no
-diff semantics. "Rapid" is still undefined. Diffing by bonus_block equality incorrectly
-suppresses animations when active tier set changes but total bonus stays equal. Not fixed
-in re-review #3.
-
-Decision needed: (a) Recommended debounce window (add to Tuning Knobs table). (b) Diff
-must be on active_synergies set equality, not bonus_block equality.
+diff semantics. "Rapid" is undefined. Diffing bonus_block equality incorrectly suppresses
+animations when active tier set changes but total bonus stays equal.
+Decision needed: (a) Recommended debounce window in Tuning Knobs. (b) Diff must be on
+active_synergies set equality, not bonus_block equality.
 
 **Issue D — preview() trigger model not implementable on iOS (BLOCKING)**
-UI Req 3 says "when previewing a part swap, call preview()" with no touch trigger model
-specified or explicitly delegated. Workshop UI GDD cannot design "when" from current text.
-Not fixed in re-review #3.
+UI Req 3 says "call preview()" with no touch trigger model specified or delegated.
+Workshop UI GDD cannot design "when" from current text.
+Decision needed: Specify touch trigger or explicitly delegate to Workshop UI GDD with
+prohibition on hover-based triggers.
 
-Decision needed: Specify touch trigger (tap-to-preview-mode, long-press, drag-and-hold)
-or explicitly delegate: "trigger model is Workshop UI GDD's decision, hover-based triggers
-are not permitted."
+**New 1 — Indicator ordering unspecified (BLOCKING)**
+UI Req 1 defines 3 states but no sort order. Signal delivers IDs in alphabetical-by-ID
+order — a content concern, not a UX concern. Active vs. inactive ordering, single-tag vs.
+combined ordering, and within-group ordering are undefined.
+Decision needed: Priority rule (e.g., active before inactive; within group, highest tag
+count first; combined listed after constituents).
 
-**NEW 1 — Indicator ordering unspecified (BLOCKING)**
-UI Req 1 defines 3 states but no sort order for up to 8 visible indicators. The
-`synergy_changed` signal delivers IDs in "synergy-definition registration order" — a
-content-authoring concern, not a UX concern. Rendering in signal order hands a UX
-decision to content authors. Active vs. inactive ordering, single-tag vs. combined
-ordering, and within-group ordering are all undefined.
+**New 4 — Indicator panel touch ergonomics: zero constraints (BLOCKING) + DCO-3/DCO-4 conflict**
+UI Req 1 (indicators) and UI Req 4 (effect names) imply indicators must be tappable. But
+no tap interaction is specified. 8 × 44pt = 352pt = 42% of iPhone height before build
+grid, part list, and stat panel. No collapsed/expanded panel state specified.
+NEW sub-issue (re-review #4): DCO-3 (preview trigger) and DCO-4 (indicator tappability)
+compete for the same gesture on the same surface. Tapping an indicator could mean "reveal
+effect list" (DCO-4) or "begin swap preview for this tag" (DCO-3). Workshop UI GDD cannot
+arbitrate two competing obligations from this GDD. The Synergy GDD must declare which
+action the indicator tap performs, or explicitly grant Workshop UI GDD authority to choose.
+Decision needed: (a) Are indicators tappable? (b) Tap action: reveal effect list, preview
+trigger, or sequenced flow? (c) DCO-3/DCO-4 gesture conflict must be resolved here.
 
-Decision needed: Priority rule — e.g., "active tiers before inactive; within each group,
-highest tag count first; combined synergies listed after their constituents."
+**New 5 — "In reach" undefined in indicator state 2 (BLOCKING)**
+UI Req 1's second state: "Active tier (next threshold in reach)." Three plausible
+interpretations: (A) any next tier exists in content; (B) within N parts of threshold;
+(C) achievable within remaining empty slots. Example implies B but does not define N.
+Decision needed: Define "in reach" — "any next tier exists" or a specific slot-proximity
+rule.
 
-**NEW 4 — Indicator panel touch ergonomics: zero constraints (BLOCKING)**
-UI Req 1 (indicators) and UI Req 4 (effect names) together imply indicators must be
-individually tappable to reveal effect lists. But no tap interaction is specified. If
-indicators require 44×44pt touch targets, 8 stacked indicators = 352pt — 42% of iPhone
-height — before the build grid, part list, and stat panel. No collapsed/expanded state
-for the panel is specified either.
-
-Decision needed: (a) Are indicators individually tappable? (b) If yes, how does the
-effect list surface (tap-to-expand row? modal overlay?). Without these constraints,
-Workshop UI GDD cannot design the panel layout correctly.
-
-**NEW 5 — "In reach" is undefined in indicator state 2 (BLOCKING)**
-UI Req 1's second indicator state: "Active tier (next threshold in reach)." "In reach" is
-never defined. Three plausible interpretations: (A) any next tier exists in content data;
-(B) player is within N parts of the threshold; (C) next tier achievable within remaining
-empty slots. Interpretations A, B, C produce different indicator text for the same build.
-The example ("1 more for Armor +20") implies B but does not define the boundary or N.
-
-Decision needed: Define "in reach" — either "a next tier exists in content data" (always
-show) or a specific slot-proximity rule (e.g., "within 2 empty slots of the threshold").
+**New 6 — Change-detection statefulness requirement buried and incomplete (BLOCKING)**
+Re-review #4. Rule 7 contains correct guidance: diff on active_synergies set, not
+bonus_block equality. But: (a) it is in the rules section, not the UI Requirements or DCO
+table, so a Workshop UI GDD author reading only UI-facing sections will miss it; (b) the
+statefulness requirement — that Workshop UI must *store* the last-received active_synergies
+and compare sets on each signal receipt — is never stated. A stateless subscriber design
+will cause animation thrashing on every rapid swap.
+Decision needed: Move change-detection contract to UI Requirements or add as DCO. Add
+explicit statefulness requirement: "Workshop UI must maintain the last-received
+active_synergies set as local state."
 
 ---
 
 ## RECOMMENDED Issues
 
 **Issue F — Combat UI requirement is one sentence with no consumable contract (RECOMMENDED)**
-UI Req 5 (two sentences) still has three gaps: no display location, no breakdown format
-("Armor 53" vs. "Armor 40 + 13 synergy"), and no spec on whether the active tier list is
-visible during battle. Two review cycles without resolution. If intentionally delegated,
-the delegation must be explicit so Combat UI GDD authors know they own it.
-
-Fix: Add three sentences covering location, attribution format, tier list accessibility.
-Or explicitly delegate all three to the Combat UI GDD.
+UI Req 5 still has three gaps: (1) data acquisition path (how Combat UI obtains
+cached_bonus_block — from TBC or direct?), (2) attribution format ("Armor 53" vs.
+"Armor 40 + 13 synergy"), (3) tier list visibility during battle. None of these are in
+the DCO table. Three review cycles without resolution.
+Fix: Add delegation sentences covering location, acquisition path, attribution format,
+tier list accessibility — or add DCO-7/DCO-8/DCO-9.
 
 **Issue G — display_name content requirement incomplete (RECOMMENDED)**
-UI Req 4 adds display_name but omits: (a) max character length (suggest 20 chars for
-indicator width), (b) null/empty fallback (suggest: show tier ID in brackets as
-content-error marker), (c) localization note (single-language string is an implicit
-decision that should be explicit even if "English-only in MVP").
+UI Req 4 omits: (a) max character length, (b) null/empty fallback behavior, (c)
+localization note (English-only is an implicit decision that should be explicit).
 
-**NEW 2 — Lower bound of 3 indicators unjustified (RECOMMENDED)**
-UI Req 1 says "3–8 visible indicators maximum." Lower bound of 3 is unjustified — an
-all-wild-VOLT build produces exactly 2 build-relevant tiers (VOLT 3-piece + VOLT 5-piece).
-No game design guarantee exists that a build produces ≥3 build-relevant tiers. Lower
-bound should be 1 or the guarantee must be documented.
+**New 2 — Lower bound of 3 indicators is factually wrong (RECOMMENDED)**
+"3–8 visible indicators maximum." A 1-element all-wild build produces exactly 2
+build-relevant tiers (VOLT 3-piece + VOLT 5-piece). A single-part build produces 1.
+No game design guarantee exists that any build produces ≥3 build-relevant tiers. The
+lower bound of 3 contradicts the GDD's own rules.
+Fix: Change "3–8" to "1–8." If a UX minimum of 3 is intended (always show 3 indicators
+for panel density), state it as an explicit design rule with the rationale.
 
-**NEW 3 — "Visually distinguishable" in swap preview is exemplary not normative (RECOMMENDED)**
-UI Req 3: "visually distinguishable from a plain stat delta (e.g., a highlighted indicator
-change)." The e.g. is not a requirement. "Highlighted" is undefined. The requirement does
-not specify what information the preview must communicate (which synergy, what bonus, why).
-If delegation to Workshop UI GDD is intentional, state it explicitly. If not, add minimum
-constraints.
+**New 3 — "Visually distinguishable" is a quality judgment, not a specification (RECOMMENDED)**
+UI Req 3: "visually distinguishable from a plain stat delta (e.g., highlighted indicator
+change)." The "e.g." removes binding force. "Distinguishable" is a quality judgment with
+no minimum. The requirement does not state what content the preview must communicate
+(which tier, activation or deactivation, bonus gained/lost). Cannot pass accessibility
+checklist without a defined non-color fallback.
+Fix: State minimum content requirements and add "must not rely on color alone." Or
+explicitly delegate: "specific presentation is a Workshop UI GDD decision."
+
+**New 7 — preview() empty return ambiguous: content error vs. no synergy (RECOMMENDED)**
+Re-review #4. Rule 9: out-of-range slot returns an empty bonus block. A valid preview
+call on a part with no matching synergy also returns an empty bonus block. Workshop UI
+cannot distinguish "no synergy" from "invalid call" — both display as "no change."
+Fix: Either differentiate return values (null for error, empty block for valid no-synergy)
+or state explicitly that Workshop UI is not expected to distinguish these cases and should
+display "no change" for both.
 
 ---
 
-**Why:** Found during three rounds of adversarial review (rounds 1-3 all 2026-07-10).
-Issues B, C, D, New 1, New 4, New 5 must be resolved before `design/ux/workshop.md`
-synergy section is authored. Issues F, G must be resolved before Combat UI GDD is
-authored. Issues New 2, New 3 are precision gaps the GDD author can fix without design
-decisions.
+**Why:** Found across four rounds of adversarial review (all 2026-07-10).
+Issues B, C, D, New 1, New 4, New 5, New 6 must be resolved before
+`design/ux/workshop.md` synergy section is authored. Issues F, G must be resolved
+before Combat UI GDD is authored. Issues New 2, New 3, New 7 are precision gaps.
 
-**How to apply:** Surface BLOCKING issues to game designer for decisions. RECOMMENDED
-issues are GDD author fixes. Workshop UI GDD is blocked until all 7 BLOCKING issues
-are resolved.
+**How to apply:** Surface all BLOCKING issues to game designer. RECOMMENDED issues are
+GDD author fixes (no design decision required). Workshop UI GDD is blocked until all
+7 BLOCKING issues are resolved.
 
 See also: [[workshop-ux-open-issues]], [[platform-constraints]], [[project-context]]
