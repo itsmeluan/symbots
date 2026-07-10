@@ -1,7 +1,11 @@
 # Active Session State
 
 ## Current Task
-Session 13: Turn-Based Combat GDD — /design-review round 1 COMPLETE (full mode: game-designer, systems-designer, qa-lead, creative-director). **Verdict: NEEDS REVISION** — 7 genuine blockers (of 11 raised; CD triage), 6 recommended. **ALL blocking + recommended revisions APPLIED in-session 2026-07-10.** GDD status: awaiting re-review (user choosing next step: re-review in fresh session vs. accept-as-approved).
+Session 14: **Move Database GDD authoring** (/design-system move-database, lean mode). Skeleton created at design/gdd/move-database.md; beginning Section A (Overview).
+**Key decision locked (this session):** Move DB will ADD a per-move power coefficient (renegotiating MOVE-CONTRACT-1's "stat-scaled only" constraint) so Light/Heavy/Signature moves differ in damage. Mechanism recommendation to settle at Formulas: POST-DF-1 multiply (mirrors ratified TBC-F5 Stagger; leaves DF-1 [1,225] + epsilon scans untouched) vs. inside-DF-1 (invalidates DF-1 range, needs TBC errata + re-scan). Central jobs: ratify/renegotiate MOVE-CONTRACT-1 (OQ-TBC-1), decide SCAN payload (OQ-TBC-3), UTILITY taxonomy (OQ-TBC-4).
+
+## Prior Task (Session 13 — CLOSED)
+Turn-Based Combat GDD: **APPROVED 2026-07-10** (fix-confirmation re-review, lean would-be — ran full fix-confirmation: systems-designer, qa-lead, game-designer, creative-director). All 7 round-1 blockers confirmed resolved; 0 new blockers. 3 non-gating follow-ups tracked in review log (AC-TBC-37 dual-path fixture; hit_resolved target→region-intent for Part-Break; ON_OVERHEAT dispatch watch). systems-index + review-log + GDD header updated.
 
 ## Prior Completed
 - Enemy Database GDD: APPROVED 2026-07-10 (Session 4)
@@ -46,8 +50,24 @@ Recommended also applied: AC-TBC-06 split (state vs. rendering — UI assertions
 ## CD PROCESS DIRECTIVES (binding, carried from Session 12)
 - Retune adversarial review prompts for mature documents (~3+ cycles): "test could be stronger" is not BLOCKING when the spec is unambiguous. TBC is at cycle 1 — full adversarial was appropriate; re-review should be fix-confirmation focused.
 
+## Move DB Sections Written (design/gdd/move-database.md)
+- Overview ✓ (Part DB read-only sibling; ratifies MOVE-CONTRACT-1 + power_tier addition)
+- Player Fantasy ✓ (borrowed/enabling — "the move panel is the build speaking")
+- Detailed Design ✓ — Rules 1-9: schema (MOVE-CONTRACT-1 + power_tier), behavior classes, power-tier coherence table {LIGHT .80/STANDARD 1.00/HEAVY 1.20/SIGNATURE 1.40, Basic 0.70}, Basic Attack template, status moves, SCAN=reveal break_regions (ED6), REPAIR (energy_cost>10), UTILITY=Vent (dump Heat), upgrade_effects semantics (SKILL_UNLOCK/SKILL_ENHANCE)
+- IN PROGRESS: Formulas — systems-designer deriving MOVE-F1 (post-DF-1 power multiply) + epsilon scan + TBC errata numbers
+
+## Move DB Design Decisions (locked this session)
+- power_tier ENUM (not free float), coherent w/ Part DB energy/heat tiers
+- power_mult applied POST-DF-1 (mirrors TBC-F5 Stagger) → DF-1 [1,225] stays untouched
+- SCAN reveals enemy break_regions + drop hints → delivers Enemy DB ED6
+- UTILITY = exactly 1 move (Vent) in MVP
+
+## Move DB ERRATA it will create (carry to Phase 5 + propagate)
+- TBC-F5 `final_damage` input range [1,225] → widened for power_mult (SIGNATURE ×1.40); hit_resolved damage range widens. DF-1 own range UNCHANGED.
+- Registry: register power_tier multipliers; add MOVE-F1 formula entry; update TBC-F5 referenced_by/range note
+
 <!-- STATUS -->
 Epic: MVP Core GDDs
-Feature: Turn-Based Combat GDD
-Task: Review round 1 revisions applied — awaiting re-review decision
+Feature: Move Database GDD
+Task: Formulas section — systems-designer deriving MOVE-F1
 <!-- /STATUS -->

@@ -1,6 +1,6 @@
 # Turn-Based Combat System
 
-> **Status**: Designed — review round 1 (NEEDS REVISION) revisions applied, awaiting re-review
+> **Status**: Approved — 2026-07-10 fix-confirmation re-review (all 7 round-1 blockers resolved; 3 non-gating follow-ups tracked in the review log)
 > **Author**: Luan + Claude Code Game Studios agents (systems-designer: Formulas; qa-lead: ACs; art-director: Visual/Audio)
 > **Review Notes**: Authored in lean mode; full /design-review run 2026-07-10 (game-designer, systems-designer, qa-lead, creative-director) — verdict NEEDS REVISION; the skipped CD-GDD-ALIGN gate was performed manually by the creative-director (Player Fantasy passes on substance). All 7 blocking + 6 recommended items applied 2026-07-10: `snapshotted_processing` ratified PRE-synergy; Shock sign convention unified (positive `shock_magnitude`); REPAIR Energy-brake contract (Rule 9); Part-Break binding Pillar-2 obligation; ACs 34–40 added. All floor/ceil formulas python3 epsilon-scanned 2026-07-10 (all defensive, zero load-bearing; no coefficients changed at review — scans remain valid).
 > **Last Updated**: 2026-07-10
