@@ -1,5 +1,14 @@
 # Review Log: Synergy System
 
+## Review — 2026-07-10 (Re-review #6, Final) — Verdict: APPROVED
+Scope signal: M (implementation — producer to verify); S for errata (applied in-session)
+Specialists: game-designer, systems-designer, ux-designer, qa-lead, creative-director
+Blocking items: 0 structural (18 claimed by specialists; 7 upheld as errata, all applied in-session) | Recommended: ~11 demoted/discharged
+Summary: The CD's #5 prediction held — the design is structurally sound and APPROVED. The adversarial layer claimed 18 blockers; CD adjudicated 7 as genuine errata (all localized, none touching a Rule's semantics, formula, or interface): (1) EC-SYN-02 arithmetic error — pure 8-part concentration is 5 tiers, not 6 (the only factual correctness error found in the document); (2) GDScript StringName sort is not lexicographic — implementation note added to Rule 3 requiring String conversion before sort, plus AC-SYN-05b no-combined-tier fixture guard + active_synergies.size()==2 assertion; (3) cached_bonus_block initial state defined as empty block at construction (pre-evaluate reads safe — TBC-before-Workshop crash class); (4) active_synergies never-null guarantee added to Rule 7 + AC-SYN-07 assertion/FAIL line (null emission would crash DCO-7 consumers); (5) AC-SYN-06/10 consumer test ownership "or"→"AND" (both TBC and Workshop UI must implement independently); (6) UI Req 1 combined-tier dual-track progress state added (single "X/Y" misrepresents two independent thresholds; build-relevance requires ≥1 part per constituent tag); (7) UI Req 3 no-color-alone accessibility constraint (mandatory project standard, not deferrable). The other 11 claims: ux batch routed to Workshop UI GDD per the DCO framework; game-designer content-geometry/Beat-4-calibration discharged into existing OQ-2/OQ-7 hard constraints (fourth re-raise); qa batch demoted as test-hardening on unambiguous specs. CD PROCESS RULING (the #5 guardrail intervention, on the process axis): (i) this is the LAST full adversarial re-review — no re-review #7; (ii) future verification is fix-confirmation only on the 7 changed regions; (iii) retune the adversarial review prompt for mature documents (stop raising "test could be stronger" as BLOCKING). Status flipped to Approved in systems-index.
+Prior verdict resolved: Yes — the #5 fix set held; 7 errata found and applied in same session; document Approved.
+
+---
+
 ## Review — 2026-07-10 (Re-review #5, Revision Pass) — Verdict: NEEDS REVISION
 Scope signal: S for the revision (M for implementation — producer to verify)
 Specialists: game-designer, systems-designer, ux-designer, qa-lead, creative-director

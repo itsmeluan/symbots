@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Created**: 2026-07-09
-> **Last Updated**: 2026-07-09
+> **Last Updated**: 2026-07-10
 > **Source Concept**: design/gdd/game-concept.md
 
 ---
@@ -31,7 +31,7 @@ designed first.
 | 2 | Enemy Database | Foundation | MVP | Approved | design/gdd/enemy-database.md | Part Database |
 | 3 | Damage Formula System | Foundation | MVP | Approved | design/gdd/damage-formula.md | Part Database |
 | 4 | Symbot Assembly System | Gameplay | MVP | Approved | design/gdd/symbot-assembly.md | Part Database |
-| 5 | Synergy System | Gameplay | MVP | In Review | design/gdd/synergy-system.md | Part Database, Symbot Assembly |
+| 5 | Synergy System | Gameplay | MVP | Approved | design/gdd/synergy-system.md | Part Database, Symbot Assembly |
 | 6 | Turn-Based Combat System | Gameplay | MVP | Not Started | — | Damage Formula, Symbot Assembly, Enemy Database |
 | 7 | Encounter Zone System | World | MVP | Not Started | — | Enemy Database |
 | 8 | Drop System | Economy | MVP | Not Started | — | Part Database, Enemy Database |
@@ -199,8 +199,8 @@ layered structure. Part Database sits at the root with no cycles back from depen
 |--------|-------|
 | Total systems identified | 30 |
 | Design docs started | 4 |
-| Design docs reviewed | 3 |
-| Design docs approved | 3 |
+| Design docs reviewed | 4 |
+| Design docs approved | 4 |
 | MVP systems designed | 1 / 22 |
 | Vertical Slice systems designed | 0 / 2 |
 | Alpha systems designed | 0 / 3 |
