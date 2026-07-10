@@ -37,3 +37,21 @@ All 5 blocking items resolved:
 Design decisions: BOSS_GRADE_BREAK_GUARANTEE 1.0 → 0.5; OQ4 updated with pity-floor requirement.
 
 **Next step**: full re-review in a fresh session (`/design-review design/gdd/enemy-database.md`) after `/clear` — 9 recommended AC fixture/documentation improvements remain for the re-review to validate before Approved.
+
+## Review — 2026-07-10 (Session 3) — Verdict: NEEDS REVISION (pending re-review)
+Scope signal: L
+Specialists: game-designer, systems-designer, economy-designer, qa-lead; senior synthesis: creative-director
+Blocking items: 5 | Recommended: 8
+Summary: All 11 prior fixes confirmed held. New blockers: AC-ED-14 pseudocode used GDScript bracket access (`stats["armor"]`/`stats["resistance"]`/`stats["structure"]`) which throws in strict mode — replaced with `.get(key, 0)`; Part DB Tuning Knobs stated ×1000 as "current value" for boss-break multiplier while Enemy DB requires ×500 minimum for 50% tension — cross-doc contradiction fixed in Part DB (Formula 3 table, Tuning Knobs row, AC-09(b) boundary note); AC-ED-07(a) had only a passing fixture, no counter-example — added structure=85 × 0.35 = 28 (fail) fixture; AC-ED-05(b) missing upper boundary fixtures — added armor=110 passes / armor=111 fails with `<= 110` clarification; Rule 6 / AC-ED-15(c) harvest-decision rule lacked floor-loot framing — un-gated parts now documented as floor loot. Recommended fixes also applied: epsilon count corrected 8→7 (python3 exhaustive scan); BOSS_GRADE_BREAK_GUARANTEE knob description de-dishonested (2-boss MVP roster cannot guarantee single-session exclusion); EDB-2 BOSS Armor > 80 authoring constraint documented with S_max formula; OQ4 mobile session note added (64–72% zero-Rare at 5 fights); EDB-3 syntactic-only note added; OQ7 added (minimum-meaningful break multiplier — owner: Drop System/Part DB); AC-ED-06(c) second positive fixture; EDB-3 at-fight-start clarification; AC-ED-04(f) BLOCKING ownership disambiguated.
+Prior verdict resolved: Yes — all 5 prior blocking items confirmed resolved
+
+### Post-review revision (same session, 2026-07-10)
+All 5 blocking items resolved and all 8 recommended items addressed:
+1. AC-ED-14: `stats["armor"]`/`stats["resistance"]`/`stats["structure"]` → `.get()` safe access; D=0 edge case note added.
+2. Part DB ×1000→×500: Formula 3 table, Tuning Knobs row (current value 1000→500, safe range 500-9999→500-999), AC-09(b) boundary note.
+3. AC-ED-07(a): Counter-example fixture added (stored=28 fails, stored=29 passes at structure=85×0.35).
+4. AC-ED-05(b): Boundary fixtures added (110 passes, 111 fails; `<= 110` not `< 110`).
+5. Rule 6 floor-loot framing: "un-gated part(s) are floor loot" clarification added with Pillar 2 floor minimum.
+Recommended: epsilon count 8→7; BOSS_GRADE_BREAK_GUARANTEE honest framing; EDB-2 BOSS Armor > 80 constraint note + S_max formula; OQ4 mobile 64–72% note; EDB-3 syntactic-only advisory; OQ7 minimum-meaningful multiplier; AC-ED-06(c) second positive fixture; AC-ED-04(f) BLOCKING ownership.
+
+**Next step**: `/clear` then `/design-review design/gdd/enemy-database.md` — fourth pass in fresh session to achieve APPROVED verdict.
