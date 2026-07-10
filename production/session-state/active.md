@@ -23,10 +23,12 @@ Session 5 complete. Symbot Assembly System GDD reviewed and APPROVED.
 - design/registry/entities.yaml (SA-F1 formula and notes corrected)
 
 ## Next Steps
-1. /design-system synergy-system — #5 in design order (depends on Part DB + Assembly, both Approved)
+1. /design-system synergy-system — IN PROGRESS (skeleton created 2026-07-10)
+   - Scope conflict resolved: Synergy → MVP (game-concept.md "NOT in MVP" note is stale)
+   - Current section: Section A — Overview
 
 <!-- STATUS -->
 Epic: MVP Core GDDs
-Feature: Design pipeline
-Task: Synergy System — next in design order
+Feature: Synergy System GDD
+Task: Section H — Acceptance Criteria
 <!-- /STATUS -->
