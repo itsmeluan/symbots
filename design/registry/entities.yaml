@@ -33,11 +33,11 @@
 #   Deprecated entries:      Grep pattern="status: deprecated"
 #
 # FORMAT: YAML. Consistent indentation is critical for grep reliability.
-#   Sections: entities | items | formulas | constants
+#   Sections: entities | passives | items | formulas | constants
 #   Each entry: name, status, source, referenced_by[], attributes{}, added, revised
 
 version: 1
-last_updated: "2026-07-10"
+last_updated: "2026-07-10"  # added passives section (3 ratified status riders from passive-database.md)
 
 # ─── ENTITIES ────────────────────────────────────────────────────────────────
 # Named game-world objects: enemies, NPCs, characters, factions, bosses.
@@ -67,6 +67,75 @@ entities: []
 #         drop_rate: 0.8          # 0.0–1.0
 #     added: 2026-03-26
 #     revised: ""
+
+
+# ─── PASSIVES ────────────────────────────────────────────────────────────────
+# Named passive effect IDs from the Passive Database catalog that cross system
+# boundaries. Register a passive when its ID and behavior contract are shared
+# between the Passive DB (design-level owner) and TBC Rule 13 (runtime executor),
+# or referenced by Synergy/Move DB content. Durations here are the PASSIVE-RIDER
+# durations (distinct from move-applied STATUS_DURATION=2); they MUST stay synced
+# between passive-database.md Rule 5 and turn-based-combat.md Rule 13.
+#
+# Required fields: name, status, source, referenced_by, added
+# Attribute fields: trigger_category, scope, behavior_class, behavior_params,
+#   stacking_policy
+
+passives:
+  - name: volt_shock_on_hit
+    status: active
+    source: design/gdd/passive-database.md
+    referenced_by:
+      - design/gdd/passive-database.md      # Rule 5 (owner/author)
+      - design/gdd/turn-based-combat.md     # Rule 13 registry + AC-TBC-29 (executor)
+      - design/gdd/synergy-system.md         # VOLT 5-piece tier effects grant this ID
+      - design/gdd/move-database.md          # OQ-MDB-1 names it as the rider Passive DB must author
+    trigger_category: ON_HIT
+    scope: ANY_DAMAGE
+    behavior_class: STATUS_RIDER
+    behavior_params: "{ status_id: SHOCK, duration: 1 }"
+    stacking_policy: UNIQUE_PER_TRIGGER
+    notes: "Shock 1 turn — deliberately shorter than the move-applied 2 (passive rider is the
+      weaker, automatic application). TBC Rule 13 annotates '1 turn — shorter than the move-applied 2'.
+      Potency (mobility penalty) is TBC-F4's, snapshot pre-synergy. Changing duration requires
+      simultaneous passive-database.md Rule 5 + turn-based-combat.md Rule 13 + AC-TBC-29 update."
+    added: 2026-07-10
+    revised: ""
+
+  - name: thermal_burn_on_weapon
+    status: active
+    source: design/gdd/passive-database.md
+    referenced_by:
+      - design/gdd/passive-database.md      # Rule 5 (owner/author)
+      - design/gdd/turn-based-combat.md     # Rule 13 registry + AC-TBC-30 (executor)
+    trigger_category: ON_HIT
+    scope: WEAPON_ONLY
+    behavior_class: STATUS_RIDER
+    behavior_params: "{ status_id: BURN, duration: 2 }"
+    stacking_policy: UNIQUE_PER_TRIGGER
+    notes: "Burn 2 turns — full duration (Weapon attacks are the primary damage source; the Weapon
+      rider is full-strength). WEAPON-slot narrowing is the `scope` field, not a separate trigger
+      (ON_WEAPON_HIT was removed 2026-07-10 — collapsed to ON_HIT + scope: WEAPON_ONLY to match
+      TBC Rule 13 exactly). Potency is TBC-F3's. AC-TBC-30 asserts WEAPON-slot-only firing."
+    added: 2026-07-10
+    revised: ""
+
+  - name: kinetic_stagger_on_hit
+    status: active
+    source: design/gdd/passive-database.md
+    referenced_by:
+      - design/gdd/passive-database.md      # Rule 5 (owner/author)
+      - design/gdd/turn-based-combat.md     # Rule 13 registry (executor)
+    trigger_category: ON_HIT
+    scope: ANY_DAMAGE
+    behavior_class: STATUS_RIDER
+    behavior_params: "{ status_id: STAGGER, duration: 1 }"
+    stacking_policy: UNIQUE_PER_TRIGGER
+    notes: "Stagger 1 turn — same 'automatic, weaker' logic as the Shock rider. Potency (outgoing
+      damage reduction) is TBC-F5's, applied post-MOVE-F1. Changing duration requires simultaneous
+      passive-database.md Rule 5 + turn-based-combat.md Rule 13 update."
+    added: 2026-07-10
+    revised: ""
 
 
 # ─── ITEMS ───────────────────────────────────────────────────────────────────
@@ -475,6 +544,8 @@ constants:
     source: design/gdd/damage-formula.md
     referenced_by:
       - design/gdd/damage-formula.md
+      - design/gdd/turn-based-combat.md      # TBC-F5 Stagger floors at DAMAGE_FLOOR
+      - design/gdd/move-database.md           # MOVE-F1 floors the power-tier multiply at DAMAGE_FLOOR
     value: 1
     unit: Structure points (integer damage)
     added: 2026-07-09
@@ -515,6 +586,7 @@ constants:
     referenced_by:
       - design/gdd/turn-based-combat.md
       - design/gdd/part-database.md
+      - design/gdd/move-database.md           # Rule 7 REPAIR energy-brake: energy_cost > BASE_ENERGY_REGEN
     value: 10
     unit: Energy regenerated per turn start (before recharge stat bonus)
     notes: "Part DB Rule 4 already references 'the fixed base regen of 10' —

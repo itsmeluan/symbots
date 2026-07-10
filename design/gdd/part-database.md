@@ -652,11 +652,12 @@ None. Part Database is the root Foundation system — it defines the data contra
 
 ### Downstream Dependents (what depends on Part Database)
 
-The following 9 systems read directly from the Part Database. Each entry specifies exactly what data it consumes.
+The following 10 systems read directly from the Part Database. Each entry specifies exactly what data it consumes.
 
 | System | What It Reads from Part Database |
 |--------|----------------------------------|
 | **Enemy Database** | `slot_type`, `rarity`, `drop_conditions` — defines which parts appear in enemy drop tables; Enemy Database references Part Database IDs for its loot entries |
+| **Move Database** | `active_skill_id`, `slot_type`, `heat_generation`, `ammo_cost`, `upgrade_effects` — Move DB (Approved 2026-07-10) defines what each active skill and upgrade effect does at runtime; Part DB stores the references, Move DB owns their behavior |
 | **Damage Formula System** | `damage_type` (PHYSICAL / ENERGY), `element`, `stat_bonuses` (via Assembly output) — damage math requires knowing a part's element and damage type to apply type effectiveness multipliers |
 | **Symbot Assembly System** | Full schema — reads `slot_type` to enforce slot rules, `stat_bonuses` to compute `final_stat`, `chassis_modifier` table for archetype application, `active_skill_id`, `passive_id`, `heat_generation`, `ammo_cost`, `max_upgrade_tier` |
 | **Synergy System** | `synergy_tags`, `element`, `manufacturer` — detects active element sets and manufacturer bonuses from equipped parts. **Hard constraint (DB1):** The Synergy System GDD must define synergies triggered by combined manufacturer + element tags (e.g., 4-piece Ironclad-Volt). The Player Fantasy example is contingent on this. The Synergy System GDD cannot be approved without specifying cross-tag synergy thresholds. **Hard constraint (DB4):** With 1 zone and 2 bosses in MVP, type coverage is solvable in 1–2 hours using 2 elements, making ~33% of the part catalog optimization-irrelevant. The Synergy System GDD must provide cross-element incentives that keep all three elements relevant in MVP. |
@@ -765,7 +766,7 @@ The stat budget table (Common / Rare / Boss-grade / Prototype per slot) is the p
 
 **AC-12**: Every part's total positive stat spend falls within the budget range for its slot and rarity. **Pass when**: Validator computes `sum(max(0, v) for v in stat_bonuses.values())` for every entry and checks against the Stat Budget Reference section in this document. Zero entries outside the bounds for their slot/rarity combination. **Test type**: Content Validation.
 
-**AC-13**: Every non-null `active_skill_id` and `passive_id` references an existing entry in its respective database. **Pass when**: Referential integrity validator checks all non-null skill and passive IDs via `MoveDatabase.has_skill(id)` and `PassiveDatabase.has_passive(id)`. Zero dangling references found. **Test type**: Content Validation. **Status: BLOCKED** — Move Database and Passive Database GDDs do not yet exist. Exclude from Definition of Done until those system interfaces are defined.
+**AC-13**: Every non-null `active_skill_id` and `passive_id` references an existing entry in its respective database. **Pass when**: Referential integrity validator checks all non-null skill and passive IDs via `MoveDatabase.has_skill(id)` and `PassiveDatabase.has_passive(id)`. Zero dangling references found. **Test type**: Content Validation. **Status: ACTIVE** (unblocked 2026-07-10 — Move Database and Passive Database GDDs are both Approved; `MoveDatabase.has_skill(id)` and `PassiveDatabase.has_passive(id)` interfaces are now defined). In Definition of Done.
 
 ### Runtime Behavior
 

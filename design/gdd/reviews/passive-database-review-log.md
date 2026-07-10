@@ -27,3 +27,22 @@ AC-PDB-06 positive case; AC-PDB-08 named ordering observable (proc log); attacke
 
 ### Re-review target
 Fix-confirmation re-review only the 4 gates + folded edits above — not a full redesign. Run `/design-review design/gdd/passive-database.md` in a fresh session.
+
+## Review — 2026-07-10 (round 2, fresh session) — Verdict: APPROVED
+Scope signal: S–M (5 prose-only fixes, no schema change, no new deps, no ADR)
+Specialists: game-designer, systems-designer, qa-lead, creative-director (senior synthesis)
+Blocking items: 5 (all resolved in-session) | Recommended: 5 (left open) | Nice-to-have: 4
+Prior verdict resolved: Yes — all 4 round-1 gates confirmed CLOSED by all three specialists.
+Summary: Round-1 gates verified closed. Re-review surfaced 5 new blockers, all surgical:
+(1) Rule 3a ↔ Formulas contradiction on negative STRUCTURAL_EFFECT amounts — resolved by
+**banning negative amounts for both targets** (user decision); persistent structure debuffs
+routed to negative STAT_AURA on `structure`; mid-battle max-Structure decay noted as a deferred
+non-breaking future extension. (2) AC count "14 live" → "21 total (17 live + 4 deferred)".
+(3) OQ-PDB-1 combinatorial ceiling "≈12" → **5** (STATUS_RIDER Core-ineligible; ON_TURN_START
+excluded by Rule 6 whitelist). (4) AC-PDB-02 given starting Heat = 50 to make the orphan-skip
+fixture discriminating. (5) AC-PDB-09 given a delta-based observable (UNIQUE STAT_AURA shifts
+stat by exactly 1× delta). CD adjudicated two specialist "blockers" DOWN: STATUS_RIDER
+investment-scaling (respects round-1 CD charter → OQ-PDB-1's brief) and PERSISTENT "type defect"
+(documented application mode; dispatcher contract is TBC's). 5 Recommended items left open as
+non-blocking (AC-PDB-03 behavior_params field; AC-PDB-08 unit/integration split; STAT_AURA
+invalid-key EC; Rule 6 combat-static consequence note; Rule 5 shorthand notation).

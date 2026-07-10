@@ -81,7 +81,7 @@ The intended emotional arc of a fight: **read** (scan the enemy — element, reg
 
 **REPAIR Energy floor (anti-stall contract):** REPAIR-behavior moves MUST author `energy_cost > BASE_ENERGY_REGEN` (≥ 11 at the current 10). This guarantees the anti-stall Energy brake by contract rather than by content convention — see TBC-F6's anti-stall verification. Content validation enforces it (AC-TBC-38).
 
-**Rule 10 — Damage resolution.** For a DAMAGE move: effective attack stat = **SYN-F4** (`max(0, final_stat[S] + frozen_synergy_delta.get(S, 0))`) on the routing stat (`physical_power` or `energy_power`); defense side likewise for the defender (enemy = authored stats, no synergy). Call DF-1: `compute_damage(A, skill_damage_type, skill_element, D, target_core_element, crit_mult=1.0)`. The player-side core element = the equipped CORE part's `element`; enemy = `core_element` field (null → ×1.0 per DF EC-04). The returned integer is scaled by the move's power tier (Move DB **MOVE-F1**, post-DF-1 multiply) to yield `move_damage`, which — after any Stagger reduction (TBC-F5) — reduces `current_structure`, floored at 0. **Status damage (Burn) bypasses DF-1 entirely** — it is fixed-magnitude, unaffected by Armor/Resistance/type (resolves DF OQ-2: DF-1 is the only path for *move* damage; status DoT is a separate, documented path). Region damage routing awaits the Part-Break GDD — TBC exposes a per-hit hook (`hit_resolved(move, damage, target)`) that Part-Break will subscribe to.
+**Rule 10 — Damage resolution.** For a DAMAGE move: effective attack stat = **SYN-F4** (`max(0, final_stat[S] + frozen_synergy_delta.get(S, 0) + frozen_passive_aura.get(S, 0))`) on the routing stat (`physical_power` or `energy_power`); defense side likewise for the defender (enemy = authored stats, no synergy, no passive aura). **Passive STAT_AURA path (B-2 errata 2026-07-10 — Passive DB Rule 3 / EC-PDB-05 / AC-PDB-D2):** a PERSISTENT `STAT_AURA` part passive contributes its flat `delta` through this *same* clamp. Its deltas are captured once at `BATTLE_INIT` into a `frozen_passive_aura` block — parallel to `frozen_synergy_delta`, summed per stat across all `UNIQUE`-deduplicated PERSISTENT auras — and held for the whole battle (no re-fire, no teardown). No MVP content authors a STAT_AURA (all three seed riders are STATUS_RIDER/ON_HIT), so `frozen_passive_aura` is empty in MVP; this documents the wiring for OQ-PDB-1's first STAT_AURA Core passive so the aura actually reaches the damage pipeline. Call DF-1: `compute_damage(A, skill_damage_type, skill_element, D, target_core_element, crit_mult=1.0)`. The player-side core element = the equipped CORE part's `element`; enemy = `core_element` field (null → ×1.0 per DF EC-04). The returned integer is scaled by the move's power tier (Move DB **MOVE-F1**, post-DF-1 multiply) to yield `move_damage`, which — after any Stagger reduction (TBC-F5) — reduces `current_structure`, floored at 0. **Status damage (Burn) bypasses DF-1 entirely** — it is fixed-magnitude, unaffected by Armor/Resistance/type (resolves DF OQ-2: DF-1 is the only path for *move* damage; status DoT is a separate, documented path). Region damage routing awaits the Part-Break GDD — TBC exposes a per-hit hook (`hit_resolved(move, damage, target)`) that Part-Break will subscribe to.
 
 **Rule 11 — Statuses (MVP set: exactly three).** One per element; durations in the afflicted combatant's turns; **no stacking** — reapplying refreshes duration to full; different statuses coexist freely. Magnitudes are Section D formulas (potency scales with the applier's `processing` stat — this is what makes CHIPSET matter, resolving the Assembly obligation).
 
@@ -100,6 +100,15 @@ The intended emotional arc of a fight: **read** (scan the enemy — element, reg
 | `&"volt_shock_on_hit"` | ON_HIT (any DAMAGE move) | Applies Shock (1 turn — shorter than the move-applied 2) |
 | `&"thermal_burn_on_weapon"` | ON_HIT (WEAPON-slot moves) | Applies Burn (2 turns) |
 | `&"kinetic_stagger_on_hit"` | ON_HIT (any DAMAGE move) | Applies Stagger (1 turn) |
+
+**Trigger dispatch & firing order (B-1 errata 2026-07-10 — the runtime contract for Passive DB Rule 2 / Rule 2a).** TBC routes each registry entry by its `trigger`:
+- `ON_HIT` — fires on `hit_resolved`; the passive's `scope` (ANY_DAMAGE / WEAPON_ONLY) narrows which DAMAGE moves qualify.
+- `ON_BATTLE_START` — fires once during `BATTLE_INIT`, before turn 1.
+- `PERSISTENT` — **not an event**; an application mode. Applied once at `BATTLE_INIT` and held for the whole battle with no event listener and no teardown (STAT_AURA auras enter `frozen_passive_aura`, Rule 10). The dispatcher MUST sieve PERSISTENT entries out of event-listener registration.
+- `ON_TURN_START` — fires at the carrying combatant's turn-start phase (Rule 4.1). No MVP content.
+- `ON_OVERHEAT` — fires when the carrier's Heat reaches 100, **before** TBC resolves the Overheat consequence (the self-damage + turn-skip of Rule 4/Rule 5). Per Passive DB Rule 2a this is a "when the bad thing happens" hook, not a "prevent it" hook — a Heat-vent `RESOURCE_EFFECT` here cannot retroactively cancel the self-damage or the skip. No MVP content.
+
+When multiple passives fire on the same event, TBC resolves them in **ascending alphabetical order of effect ID** (consistent with Synergy's determinism rule); the passive proc log emits in that order (Passive DB AC-PDB-08). Stacking at fire time follows the passive's `stacking_policy`: `UNIQUE_PER_TRIGGER` IDs de-duplicate across sources and fire once per event; `UNIQUE` applies once at application time; `STACKABLE` fires per source. Any change to the `ON_OVERHEAT` ordering requires a simultaneous Passive DB Rule 2a update.
 
 ### States and Transitions
 
@@ -336,8 +345,8 @@ New DF-1 input ceilings: `A_max = 110 + 40 = 150`; `D_max = 132 + 50 = 182`.
 | **Damage Formula** | `compute_damage(A, damage_type, element, D, target_core_element, crit_mult)` per DAMAGE move — the DF call contract is hereby ratified | Approved | Hard |
 | **Enemy Database** | `stats`, `skills`, `core_element`, `break_regions` at battle start | Approved | Hard |
 | **Part Database** | Formulas 4/5 (Heat), Energy cost tiers, `heat_generation`/`element` per part, damage_type routing enums | Approved | Hard |
-| **Move Database** | MOVE-CONTRACT-1 (Rule 9) — **provisional**; every move resolution depends on it | **Not Started** | Hard (provisional) |
-| **Passive Database** | Passive IDs from Assembly's pool resolve through the Rule 13 registry | **Not Started** | Soft (null-tolerant per EC-SA-04 / EC-TBC-08) |
+| **Move Database** | MOVE-CONTRACT-1 (Rule 9) — ratified by Move DB (adds MOVE-F1 power-tier multiply, post-DF-1); every move resolution depends on it | **Approved** | Hard |
+| **Passive Database** | Passive IDs from Assembly's pool resolve through the Rule 13 registry | **Approved** | Soft (null-tolerant per EC-SA-04 / EC-TBC-08) |
 
 ### Downstream (these systems read from this one)
 
@@ -367,7 +376,7 @@ Damage Formula, Enemy Database, Symbot Assembly, and Synergy System all already 
 | Knob | Value | Safe Range | What Changing It Does |
 |------|-------|------------|----------------------|
 | `BASE_ENERGY_REGEN` | 10 | 8–15 | Universal per-turn Energy. Below 8, Standard skills (15–22) take 2+ turns to afford on zero-recharge builds — combat drags; above 15, ENERGY_CELL investment stops mattering (kills the slot's meaning, an Assembly obligation). **8 is a hard floor, never 0** — TBC-F2's minimum-recovery guarantee and the REPAIR Energy-brake contract (`energy_cost > BASE_ENERGY_REGEN`, Rule 9) both move with this constant. |
-| `STATUS_DURATION` | 2 turns | 1–3 | All three statuses. At 1, statuses barely outlive their application turn; at 3, Burn totals (up to 24) start rivaling move damage and Stagger blankets whole fights. |
+| `STATUS_DURATION` | 2 turns | 1–3 | **Move-applied statuses only** (a STATUS move's status_proc). Passive-rider durations are authored independently per entry in Passive DB Rule 5 (Shock/Stagger riders 1T, Burn weapon rider 2T) and are NOT governed by this knob — changing this does not shorten a passive rider. At 1, statuses barely outlive their application turn; at 3, Burn totals (up to 24) start rivaling move damage and Stagger blankets whole fights. |
 | `BURN_COEFF` | 0.08 | 0.05–0.12 | Burn tick per processing point. At 0.12 max tick = 13 (26/duration — too close to WILD move damage); at 0.05 max tick = 5 (CHIPSET investment imperceptible). **Re-run the epsilon scan if changed.** |
 | `BURN_MIN` | 2 | 1–3 | Zero-CHIPSET baseline tick. At 0, Burn from no-investment builds does nothing (dead rider); above 3, no-investment Burn rivals invested Burn. |
 | `SHOCK_COEFF` | 0.3 | 0.2–0.4 | Mobility penalty per processing point (max 33 at 0.3). Calibrated against the realistic 30–96 mobility band: at 0.2 (max 22), Shock rarely flips initiative; at 0.4 (max 44), it flips almost any gap. **Re-run the epsilon scan if changed.** |

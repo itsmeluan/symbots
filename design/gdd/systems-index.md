@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Created**: 2026-07-09
-> **Last Updated**: 2026-07-10 (Passive Database GDD authored — Designed, pending review)
+> **Last Updated**: 2026-07-10 (Passive Database GDD Approved — re-review round 2 passed)
 > **Source Concept**: design/gdd/game-concept.md
 
 ---
@@ -27,7 +27,7 @@ designed first.
 |---|-------------|----------|----------|--------|------------|------------|
 | 1 | Part Database | Foundation | MVP | Approved | design/gdd/part-database.md | — |
 | 1a | Move Database | Foundation | MVP | Approved | design/gdd/move-database.md | Part Database |
-| 1b | Passive Database | Foundation | MVP | Designed | design/gdd/passive-database.md | Part Database |
+| 1b | Passive Database | Foundation | MVP | Approved | design/gdd/passive-database.md | Part Database |
 | 2 | Enemy Database | Foundation | MVP | Approved | design/gdd/enemy-database.md | Part Database |
 | 3 | Damage Formula System | Foundation | MVP | Approved | design/gdd/damage-formula.md | Part Database |
 | 4 | Symbot Assembly System | Gameplay | MVP | Approved | design/gdd/symbot-assembly.md | Part Database |
@@ -199,8 +199,8 @@ layered structure. Part Database sits at the root with no cycles back from depen
 |--------|-------|
 | Total systems identified | 30 |
 | Design docs started | 8 |
-| Design docs reviewed | 6 |
-| Design docs approved | 6 |
+| Design docs reviewed | 7 |
+| Design docs approved | 7 |
 | MVP systems designed | 8 / 22 |
 | Vertical Slice systems designed | 0 / 2 |
 | Alpha systems designed | 0 / 3 |
