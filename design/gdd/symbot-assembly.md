@@ -1,6 +1,6 @@
 # Symbot Assembly System
 
-> **Status**: In Design
+> **Status**: Approved (2026-07-10)
 > **Author**: Luan + Claude Code (game-designer, systems-designer)
 > **Last Updated**: 2026-07-10
 > **Implements Pillar**: Pillar 1 (Engineer, Don't Collect), Pillar 3 (Build Depth Over Content Breadth), Pillar 4 (Synergy Is the Endgame)
@@ -327,7 +327,9 @@ When Assembly emits `part_equipped(slot_type, new_part_id)`, the visual layer fo
 
 ### Workshop Visual Preview
 
-When the Workshop UI computes a SA-F2 stat delta for a candidate part on hover, it simultaneously previews that part's sprite in the Symbot composite — without committing the equip. The visual preview and the stat delta activate together and reset together when the hover ends. The Workshop System controls this preview state; Assembly provides only the `part_equipped` signal on actual commit.
+When the Workshop UI activates part preview for a candidate part (via a platform-native interaction defined in the Workshop UI GDD), it simultaneously computes an SA-F2 stat delta and previews that part's sprite in the Symbot composite — without committing the equip. The visual preview and the stat delta activate together and dismiss together when the preview is cancelled. The Workshop System controls this preview state; Assembly provides only the `part_equipped` signal on actual commit.
+
+*Platform note: iOS touch has no hover state. The specific interaction that triggers part preview (e.g., tap-to-preview, long-press, dedicated preview panel) is a Workshop UI GDD responsibility. Assembly exposes `compute_stat_delta()` as a read-only call; the trigger mechanism is irrelevant to Assembly.*
 
 ### In-Battle Rendering
 
@@ -357,7 +359,7 @@ Actual SFX assets and mix parameters are defined in the Audio System GDD. Assemb
 | Part equipped | `part_equipped` signal | Metallic assembly click — weight varies by slot (CHASSIS = heavy clunk, CHIPSET = light electronic snap) |
 | Stats improved | `stats_changed` with any stat increase | Brief ascending tone — power-up feel |
 | Stats decreased | `stats_changed` with any stat decrease | Soft descending tone — informational, not alarming |
-| Workshop hover preview | SA-F2 hover event (Workshop UI) | Lighter hover chime — distinct from the commit sound |
+| Workshop part preview | SA-F2 preview event (Workshop UI) | Lighter preview chime — distinct from the commit sound |
 
 > **Asset Spec** — After the Art Bible is approved, run `/asset-spec system:symbot-assembly` to produce per-asset visual descriptions, dimensions, and generation prompts from this section.
 
@@ -373,7 +375,7 @@ Actual SFX assets and mix parameters are defined in the Audio System GDD. Assemb
 Equipping a part whose `slot_type ≠ target_slot` returns an error code and leaves the slot unchanged. **Pass when**: Equip `"spark_core"` (`slot_type=CORE`) into WEAPON slot → returns error; WEAPON slot still holds the prior occupant; Inventory unchanged. **Test type**: Unit.
 
 **AC-SA-02** — Formula pipeline (3 concrete sub-cases, non-degenerate).
-*(a) F2 floor discrimination*: Part A: `slot_type=LEGS, stat_bonuses["mobility"]=7, upgrade_tier=+1`. F2 yields `7 + floor(7 × 1/3) = 7 + 2 = 9`. With Light Frame chassis (×1.20 on mobility): SA-F1 step 3 yields `floor(9 × 1.20) = floor(10.8) = 10`; SA-F1 step 4 clamps to [0, 96]. `final_stat["mobility"] = 10`. Tester must verify the intermediate F2 output is `9` (integer), not `9.33`. *(b) F2b epsilon*: Use `base=-15, upgrade_tier=+2`. F2b = `−15 + ceil(−15 × 2/3 − 0.0001) = −15 + ceil(−10.0001) = −15 + (−10) = −25`. Without epsilon nudge, IEEE 754 may yield `ceil(−10.0000…002) = −9` → `−24` (wrong). **Pass when**: F2b with `base=-15, tier=+2` returns `−25`, not `−24`. *(c) F1 chassis floor*: Single CHASSIS part with `stat_bonuses["structure"]=10`; all other parts contribute 0 to structure; Balanced Frame (×1.00). SA-F1 step 3: `floor(10 × 1.00) = 10`. Clamp [0, 594]. **Pass when**: `final_stat["structure"] == 10`. **Test type**: Unit.
+*(a) F2 floor discrimination*: Part A: `slot_type=LEGS, stat_bonuses["mobility"]=7, upgrade_tier=+1`. Formula 2 (Part DB Rule 10, tier +1 = ×1.15): `floor(7 × 1.15 + 0.0001) = floor(8.0501) = 8`. With Light Frame chassis (×1.20 on mobility): SA-F1 step 3 yields `8 × 1.20 = 9.6`; SA-F1 step 4: `floor(9.6 + 0.0001) = 9`. **Pass when**: `final_stat["mobility"] == 9`, not `10` (which would result from using `round()` instead of `floor()` at step 4). To verify the intermediate F2 output is `8` (integer, not `8.05`), the implementation must expose a `compute_upgraded_stat(part, stat_key)` method or equivalent for unit test introspection. *(b) F2b epsilon*: Use `base=-15, upgrade_tier=+2`. Canonical formula: `−ceil(abs(−15) × max(0, 1.0 − 2 × (1/3)) − 0.0001)`. IEEE 754 at tier=+2: `2 × (1.0/3.0) ≈ 0.6666666666666666`; `1.0 − 0.6666... = 0.3333333333333334`; `15 × 0.3333... = 5.000000000000001`. Without epsilon nudge: `ceil(5.000000000000001) = 6` → result `−6` (wrong). With epsilon: `ceil(5.000000000000001 − 0.0001) = ceil(4.9999...) = 5` → result `−5` (correct). **Pass when**: F2b with `base=-15, tier=+2` returns `−5`, not `−6`. *(c) F1 chassis floor*: Single CHASSIS part with `stat_bonuses["structure"]=10`; all other parts contribute 0 to structure; Balanced Frame (×1.00). SA-F1 step 3: `10 × 1.00 = 10.0`; step 4: `floor(10.0 + 0.0001) = 10`. **Pass when**: `final_stat["structure"] == 10`. **Test type**: Unit.
 
 **AC-SA-03a** — Common ARMS → Move 4 is null.
 **Pass when**: Build with `rarity=COMMON` ARMS part; `move_pool` length = 4; `move_pool[3] == null`. **Test type**: Unit.
@@ -385,16 +387,16 @@ Equipping a part whose `slot_type ≠ target_slot` returns an error code and lea
 **Pass when**: WEAPON slot holds Part A at `tier=+2`; equip Part B; WEAPON slot now holds Part B; Inventory gains exactly one copy of Part A at `tier=+2`. No duplication or destruction. **Test type**: Unit.
 
 **AC-SA-05** — Chassis swap forces full 11-stat recompute (concrete fixture).
-Setup: CHASSIS = Light Frame (`stat_bonuses["structure"]=10`; ×0.85 structure, ×1.20 mobility). LEGS = `swift_legs` (`stat_bonuses["mobility"]=7`). All others contribute 0 to structure and mobility. Pre-swap: `final_stat["structure"]=8, final_stat["mobility"]=8`. Equip Heavy Frame CHASSIS (`stat_bonuses["structure"]=8`; ×1.25 structure, ×0.80 mobility). **Pass when**: `final_stat["structure"]==10, final_stat["mobility"]==5`. Mobility change (8→5) proves all-11-stat recompute — the chassis multiplier changed, not LEGS. **Test type**: Unit.
+Setup: CHASSIS = Light Frame (`stat_bonuses["structure"]=10`; ×0.85 structure, ×1.20 mobility). LEGS = `swift_legs` (`stat_bonuses["mobility"]=7`). All other parts contribute 0 to all stats. Pre-swap: `final_stat["structure"]=8, final_stat["mobility"]=8`. Equip Heavy Frame CHASSIS (`stat_bonuses["structure"]=8`; ×1.25 structure, ×0.80 mobility). **Pass when**: `final_stat["structure"]==10`; `final_stat["mobility"]==5`; `final_stat["targeting"]==0`. Mobility change (8→5) proves chassis multiplier re-application on non-CHASSIS parts. The `targeting==0` assertion confirms all 11 stat keys are present in `final_stat` after the swap — an implementation that only recomputes stats directly modified by the chassis `stat_bonuses` would omit uncontributed stats from the result. **Test type**: Unit.
 
 **AC-SA-06** — Missing Move DB entry → null, not crash.
 **Pass when**: WEAPON part with `active_skill_id="nonexistent_skill"`; `move_pool[1] == null`; content error logged; no exception raised; build otherwise valid. **Test type**: Unit.
 
 **AC-SA-07** — `final_stat` is stable between equip events.
-**Pass when**: After one successful equip, read `final_stat` 10 times in sequence with no intervening equip calls — all 10 reads return bit-identical dictionaries. **Test type**: Unit.
+Use the AC-SA-05 fixture (post-swap Heavy Frame state). **Pass when**: (a) `final_stat["structure"]==10` and `final_stat["mobility"]==5` — confirms the stored values are correct, not merely stable; (b) a second read of `final_stat` with no intervening equip call returns an identical dictionary to the first read; (c) no `stats_changed` signal emits during the second read (confirms the read is passive, not a re-trigger of the pipeline). **Test type**: Unit.
 
 **AC-SA-08** — SA-F2 delta is correctly signed and emits no signals.
-Setup: CHASSIS = `balanced_frame` (`stat_bonuses["structure"]=10, stat_bonuses["mobility"]=5`); all others contribute 0. Candidate CHASSIS: `stat_bonuses["structure"]=12, stat_bonuses["mobility"]=2`. Call `compute_stat_delta(CHASSIS, candidate_part)`. **Pass when**: `delta["structure"]==+2`; `delta["mobility"]==-3`; no `part_equipped` or `stats_changed` signal emitted; CHASSIS slot still holds `balanced_frame` (verified by reading slot contents directly). **Test type**: Unit.
+Setup: CHASSIS = `balanced_frame` (`chassis_archetype=BALANCED_FRAME`; ×1.0 on all stats; `stat_bonuses["structure"]=10, stat_bonuses["mobility"]=5`); all other parts contribute 0 to all stats. `current_final_stat["structure"]=10, current_final_stat["mobility"]=5`. Candidate CHASSIS: `chassis_archetype=BALANCED_FRAME`; `stat_bonuses["structure"]=12, stat_bonuses["mobility"]=2`. Call `compute_stat_delta(CHASSIS, candidate_part)`. **Pass when**: `delta["structure"]==+2`; `delta["mobility"]==-3`; `delta["targeting"]==0` (verifies full 11-stat hypothetical recompute, not a partial diff on only the changed keys); no `part_equipped` or `stats_changed` signal emitted; CHASSIS slot still holds `balanced_frame`; `current_final_stat["structure"]` unchanged at 10 (confirms hypothetical does not write to live build); Inventory count unchanged (confirms no displacement occurred). **Test type**: Unit.
 
 **AC-SA-09** — Passive pool: CORE and LEGS appear first, in that order.
 Setup: CORE `passive_id="pulse_core"`, LEGS `passive_id="heavy_step"`, all others null. **Pass when**: `passive_pool == ["pulse_core", "heavy_step"]`. **Test type**: Unit.
@@ -406,13 +408,27 @@ Setup: CORE `passive_id="pulse_core"`, LEGS `passive_id="heavy_step"`, all other
 **Pass when**: Part with `stat_bonuses={"structure":10, "unknown_key":5}`; `final_stat["structure"]` computed normally; `"unknown_key"` absent from `final_stat`; content warning logged; no exception raised. **Test type**: Unit.
 
 **AC-SA-12** — CORE / CHASSIS / CHIPSET / ENERGY_CELL never populate move slots.
-**Pass when**: Build where CORE, CHASSIS, CHIPSET, and ENERGY_CELL parts each have a non-null `active_skill_id` (malformed content); `move_pool` contains only entries from HEAD, ARMS, WEAPON, and Basic Attack — the four non-move-granting slots' `active_skill_id` values are silently ignored. **Test type**: Unit.
+Setup: Build where CORE, CHASSIS, CHIPSET, and ENERGY_CELL parts each have `active_skill_id="bad_skill"` (malformed content); WEAPON has `active_skill_id="cannon_shot"`; HEAD has `active_skill_id="scan_pulse"`; ARMS is Common (`active_skill_id=null`). **Pass when**: `move_pool == ["basic_attack", "cannon_shot", "scan_pulse", null]`. No entry in `move_pool` is `"bad_skill"`. Length == 4. The four prohibited-slot `active_skill_id` values must not appear at any index. **Test type**: Unit.
 
 **AC-SA-13** — Recharge sum exceeding 30 is reported, not clamped.
-Setup: 3 parts each with `stat_bonuses["recharge"]=15` (content violation of AC-18 in Part DB). **Pass when**: `final_stat["recharge"]==45`; content error logged noting sum exceeds the maximum of 30; no crash; no silent clamping to 30. **Test type**: Unit.
+Setup: ENERGY_CELL part with `stat_bonuses["recharge"]=15`; CORE part with `stat_bonuses["recharge"]=15`; WEAPON part with `stat_bonuses["recharge"]=15` (content violation — only ENERGY_CELL and CORE should contribute recharge per Part DB AC-18; the WEAPON entry is an additional authoring error). All other stats zero. **Pass when**: After SA-F1 Step 2, `sum["recharge"]=45` — a content error is logged at this step noting the sum exceeds the design maximum of 30 (the log fires on the pre-chassis-multiply sum, not the final value); `final_stat["recharge"]==45` (formula applies `max(0, floor(45 × 1.0 + 0.0001)) = 45`); no crash; no silent clamping to 30. The AC-18 schema violation (WEAPON contributing recharge) may additionally trigger a separate schema warning — the content error from this AC is specifically the sum-exceeds-30 check. **Test type**: Unit.
 
 **AC-SA-14** — Passive pool "others" ordering: CHASSIS → CHIPSET → ENERGY_CELL → HEAD → ARMS → WEAPON.
 Setup: CORE `passive_id="pulse_core"`, LEGS `passive_id="heavy_step"`, ARMS `passive_id="iron_grip"` (Boss-grade); all others null. **Pass when**: `passive_pool == ["pulse_core", "heavy_step", "iron_grip"]`. (CORE first, LEGS second, then ARMS in slot-type order — no phantom entries for null-passive slots.) **Test type**: Unit.
+
+## Deferred Design Obligations
+
+These are known gaps in the current design that cannot be resolved in this GDD because they depend on downstream systems that are Not Started. Each is recorded here so the relevant downstream GDD author inherits it as a required design decision.
+
+| Obligation | Owned by | Description |
+|-----------|----------|-------------|
+| ENERGY_CELL slot meaningfulness | Turn-Based Combat GDD | ENERGY_CELL contributes only `energy_capacity` and `recharge` — two stats with a narrow design range. Whether a ENERGY_CELL swap feels like a meaningful hypothesis in the workshop depends entirely on how consequential energy economy is in combat. TBC GDD must design Energy costs and recharge mechanics to make ENERGY_CELL choices feel decisive. |
+| CHIPSET slot meaningfulness | Synergy GDD, Turn-Based Combat GDD | CHIPSET contributes only `processing` — a stat whose gameplay meaning (status effect strength, scan reliability) depends on Synergy and TBC mechanics that are Not Started. TBC and Synergy GDDs must make processing a player-perceptible combat variable. |
+| Recharge stat combat mechanic | Turn-Based Combat GDD | `final_stat["recharge"]` (range 0–30) is passed to TBC at battle start. TBC GDD must define what recharge means in turn-based terms (e.g., Energy regained per turn, per action, or on specific triggers). Without this definition, recharge is a number with no player-perceptible effect. |
+| `current_structure` between battles | Turn-Based Combat GDD | Assembly locks stats at combat start and does not track runtime values. TBC GDD must define whether `current_structure` resets to `max_structure` at every battle start or persists from the previous battle's end state. Assembly's `max_structure` must be read at battle start, not cached from a previous session. |
+| CORE "identity" mechanical enforcement | Synergy GDD, Turn-Based Combat GDD | The CORE is described as the Symbot's "identity slot" (its element and manufacturer affiliation). This identity claim requires mechanical support. Synergy GDD must make element and manufacturer tags player-perceptible through synergy bonuses. TBC GDD must make element matter in combat through type effectiveness or similar. Without these, the CORE slot delivers statistical identity only, not felt identity. |
+| Synergy delta accuracy at threshold crossings | Synergy GDD, Workshop UI GDD | SA-F2 computes base-stat deltas only (Rule 8). When a part swap crosses a synergy threshold, the displayed delta does not include the synergy bonus gained or lost. Workshop UI GDD must surface synergy-impact changes separately so the player understands the full effect of a threshold-crossing swap. This is the most important single moment in the workshop fantasy. |
+| Workshop touch recovery UX | Workshop UI GDD | Rule 3 equip is atomic: displaced parts go to Inventory and are recoverable by re-equipping. The Workshop UI GDD must make recently-displaced parts easy to find (e.g., a "last displaced" shortcut or part-picker filter) to ensure misfires on iOS touch are low-friction to correct. |
 
 ## Open Questions
 

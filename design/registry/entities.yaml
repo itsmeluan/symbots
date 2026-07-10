@@ -133,14 +133,19 @@ formulas:
       step1: part_stat = F2(stat_bonuses, upgrade_tier)   # positive bonus
              part_stat = F2b(stat_bonuses, upgrade_tier)  # negative bonus
       step2: raw = sum(part_stat for all 8 parts, per stat_key)
-      step3: modified = floor(raw * chassis_archetype_modifier[stat_key])
-      step4: final_stat[stat_key] = clamp(modified, 0, stat_max[stat_key])
+      step3: modified = raw * chassis_archetype_modifier.get(stat_key, 1.0)
+      step4: final_stat[stat_key] = max(0, floor(modified + 0.0001))
     notes: "Owns the 4-step stat derivation pipeline. Synergy bonus is added
       AFTER this pipeline by the Synergy System — not included in final_stat.
+      Stats are uncapped above — output_range values are content-authoring targets,
+      not formula-enforced limits (EC-SA-06 explicitly allows recharge > 30).
       Epsilon nudge in F2b is LOAD-BEARING (e.g. base=-15 tier+2:
-      -15*2/3 = -10.0000...002 in IEEE 754; ceil without -0.0001 returns -9 not -10)."
+      15 * (2/3) = 5.000000000000001 in IEEE 754; ceil without -0.0001 returns
+      6 → result -6 (wrong); with epsilon: ceil(4.9999...) = 5 → result -5 (correct)).
+      output_range[recharge] max is 30 as authoring target only; values above 30
+      are possible via content error and are logged but not clamped (EC-SA-06)."
     added: 2026-07-10
-    revised: ""
+    revised: "2026-07-10"  # corrected step3 (removed erroneous floor), step4 (removed stat_max ref), epsilon example, and range notes
 
   - name: SA-F2
     status: active
