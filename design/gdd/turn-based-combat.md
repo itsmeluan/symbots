@@ -1,7 +1,8 @@
 # Turn-Based Combat System
 
-> **Status**: In Design
-> **Author**: Luan + Claude Code Game Studios agents
+> **Status**: Designed — awaiting /design-review
+> **Author**: Luan + Claude Code Game Studios agents (systems-designer: Formulas; qa-lead: ACs; art-director: Visual/Audio)
+> **Review Notes**: Authored in lean mode — CD-GDD-ALIGN gate skipped per review-mode; specialists consulted for Formulas, ACs, and Visual/Audio. All floor/ceil formulas python3 epsilon-scanned 2026-07-10 (all defensive, zero load-bearing).
 > **Last Updated**: 2026-07-10
 > **Implements Pillar**: Pillar 2 (Every Battle Has a Harvest Goal), Pillar 4 (Synergy Is the Endgame)
 
@@ -375,16 +376,323 @@ Damage Formula, Enemy Database, Symbot Assembly, and Synergy System all already 
 
 ## Visual/Audio Requirements
 
-[To be designed]
+> **Asset Spec flag**: No asset specifications exist yet. The Art Bible (`/art-bible` not yet run) is the prerequisite for per-asset dimensions, formats, palette locks, and animation frame budgets. Everything below is **intent and constraint**, not specification. After the Art Bible is approved, run `/asset-spec system:turn-based-combat` to produce the full asset list.
+
+> **Art Bible Ratification Required**: All element colors, visual timing budgets, and accessibility decisions below must be ratified by the Art Bible before production. The Assembly GDD's rarity glow table (cyan / amber / white per element) is the current canonical reference and the source used here.
+
+### V1 — Visual Identity Principles Active in Combat
+
+**V1-1 — Element-from-flash-alone test (binding).** A player must be able to identify the element of any attack from the screen flash alone, without reading text. This is a hard readability gate, not an aspiration. Every hit VFX must pass this test at the Art Bible review.
+
+**V1-2 — Element color contract (binding until Art Bible changes it).** Sourced from the Assembly GDD rarity glow table: Volt = cyan; Thermal = amber; Kinetic = white / silver-white. All hit VFX, status indicators, damage number tints, gauge highlights, and audio cue emotional registers use these as their primary identity signal. The Art Bible may extend but must not contradict these assignments.
+
+**V1-3 — Accessibility: never color alone.** Element and effectiveness information must always carry a second non-color channel (shape, icon, animation profile, or text label). Color is the fast read; the second channel ensures players with color vision deficiencies reach the same information. Project accessibility standard, not a preference.
+
+**V1-4 — Vibrant and readable, not grimdark.** Combat is exciting, not oppressive. Even the worst combat states (Overheat, Defeat) read as dramatic, not punishing. Saturation stays high; shadow work stays purposeful.
+
+### V2 — Animation and Timing Constraints (Mobile Pacing Budget)
+
+| Constraint | Budget | Notes |
+|---|---|---|
+| Full turn resolution (move → damage → status apply) | **≤ 2.0 s** | Sum of all VFX, number pop, and feedback animations on a single turn |
+| Individual VFX read window | **≤ 300 ms** | Element and behavior legible within 300 ms of onset — then it may persist |
+| Damage number display | **≤ 1.5 s** on screen | Float up and fade; must not block the next animation beat |
+| Status application feedback | **≤ 0.5 s** | The apply flash; the persistent indicator may remain |
+| Status tick (Burn DoT) | **≤ 0.3 s** | Brief pulse on the afflicted combatant at their turn start |
+| Forced switch (DOWNED) | **≤ 0.8 s** | Emergency replacement must feel fast — it is free and reactive |
+| Victory / Defeat screen | Skippable after **1.0 s** | A beat to read the outcome, then a tap skips to results |
+| Overheat state entry | **0.6–1.0 s** | Intentionally slower — a dramatic beat, not a status tick |
+
+**Skip / fast-forward requirement**: all non-interactive animations must support player interruption via tap after their minimum read window. Applies to move resolution, status ticks, initiative reorder displays, victory/defeat fanfares. Interaction design deferred to Combat UI GDD; the animation system must not structurally block it.
+
+**Initiative order display constraint**: when Shock causes a mid-round initiative reorder, the order change must be shown as a brief update to the turn-order indicator (< 0.5 s) before the affected combatant acts. The change must be perceivable — a readability requirement for a real mechanic, not decoration.
+
+### V3 — VFX Requirements per Combat Event
+
+**V3-1 — Battle Start.** Both combatants presented; the player's 8-layer modular composite renders identically to its Workshop appearance (no visual discontinuity). Enemy visual identity (element glow, silhouette archetype) readable before the first turn. Entry animation settles fully before `ROUND_START`; rarity glow renders from the first settle frame.
+
+**V3-2 — Turn Indicator / Initiative Order.** The active combatant is visually unambiguous during `TURN_ACTIVE`. A persistent turn-order display is required. Shock-caused order changes animate in the display (element-colored flash on the affected entry) before the displaced combatant acts — a player riding Heat 90 must be able to see that a Volt rider may push the enemy ahead of them.
+
+**V3-3 — Move Use: Hit VFX.** Volt: cyan arc flash + screen-space electric crackle (< 300 ms settle). Thermal: amber burst with radiant bloom, orange-to-amber fade trail. Kinetic: white/silver impact burst with a sharp directional streak, no lingering glow — reads as mechanical impact, not energy. Shape profiles (arc / bloom / streak) distinguish elements without color, per V1-3. PHYSICAL hits carry heavier weight (mass on chassis, sparks); ENERGY hits are lighter and more diffuse. Type is the secondary read under element — the flash-alone test applies to element.
+
+**V3-4 — Damage Numbers.** Pop over the struck combatant on `hit_resolved`; value is DF-1's integer (or TBC-F3 for Burn ticks, visually distinct per V3-6). Effectiveness tinting (fulfills DF constraint DF2 — never color alone):
+
+| Effectiveness | Color signal | Non-color signal |
+|---|---|---|
+| Super-effective (×1.5) | Bright yellow-white | +30% font size AND an upward exclamation accent |
+| Neutral (×1.0) | White | Standard size, no accent |
+| Resisted (×0.75) | Muted grey-blue | −20% font size AND a downward suppression accent |
+
+**V3-5 — Status Application.** Shock: cyan arc wraps the chassis ~0.4 s; lightning-bolt icon in the status bar. Burn: amber flame-burst ~0.4 s; flame icon. Stagger: white impact ripple ~0.4 s; concentric-ring icon ("shaken" without color). Application flashes must (a) land as a secondary beat ~0.2 s after the hit VFX (cause and effect, not one blur), (b) be legible at minimum iOS rendered sizes.
+
+**V3-6 — Status Active Indication and Ticks.** Persistent icons for the full duration — ambient readability, not animated noise. Burn tick: brief amber pulse (~0.25 s) + amber-tinted damage number (distinguishes Burn ticks from move damage). Expiry: icon desaturates and fades ~0.3 s at turn end. Zero-potency statuses (EC-TBC-09) render and expire normally; no zero-damage number for Stagger; Burn at BURN_MIN reads as 2.
+
+**V3-7 — Heat Gauge.** Three zones: **0–69 (safe)** — neutral cool fill (not an element color); **70–89 (riding the edge)** — amber-orange with a subtle pulse that reads as exciting, not alarming (this range is intentional play); **90–100 (brinkmanship)** — deeper orange-red, faster pulse; must read "on the edge, which is the point," never "about to lose."
+
+**V3-8 — Overheat.** A blown gasket, not a punishment screen: screen-wide steam/pressure-release flash (white→grey ~0.5 s); brief overloaded-chassis overlay (screen shake, if used, reserved for Overheat and DOWNED only, < 0.3 s); gauge slams to 0 then visibly rises to the 20 carry-in (two-step teaching visual); self-damage number in the heat register (not an element color); the skipped turn shown by graying/bypassing in the turn-order display. Total 0.6–1.0 s. Brinkmanship or miscalculation — both readings correct, neither shameful.
+
+**V3-9 — Energy.** Bar decreases immediately on move use, before the move VFX (cost telegraphed, then reward). Recharge: brief fill animation ~0.2 s at turn start — bar climbs, no pop event. Bar color distinct from Heat and elements (Art Bible defines). Greyed-out unaffordable moves read as "unavailable this turn," not "broken" (Combat UI owns the panel).
+
+**V3-10 — Switch: Tactical vs. Emergency.** Voluntary: outgoing steps back (0.3–0.4 s), incoming steps forward (0.3–0.4 s) — deliberate, composed. Forced/DOWNED: collapse/shutdown animation first (sparks, darkening, ~0.4 s), then an urgent, reactive entry; total ≤ 0.8 s. Status icons on the downed Symbot disappear as part of the downed animation (EC-TBC-14), never linger.
+
+**V3-11 — Region Damage / Break Events.** Hosted by TBC; owned by the Part-Break System GDD (Not Started). Break pips are Combat UI's (Enemy DB ED6). TBC's requirement is limited to firing `hit_resolved` correctly per hit; break VFX direction goes to the Part-Break GDD when authored.
+
+**V3-12 — Victory / Defeat / Flee.** Victory: clear positive payoff; the winning build gets a visible beat; the loot moment is calmer than the fight. Defeat: somber, not shameful — educational register with an immediate re-challenge path. Flee: neutral, clean, no fanfare. Victory/defeat skippable after 1.0 s.
+
+### V4 — Audio Requirements per Combat Event
+
+The Audio System GDD owns assets and mix parameters; TBC emits signals, the Audio System subscribes. This table defines the **character** each sound must have:
+
+| Event | Signal / Trigger | Character |
+|---|---|---|
+| Battle start | Transition settle | Rising mechanical hum — tension building, not menacing |
+| Turn begins (player) | `TURN_ACTIVE(player)` | Subtle ready chime — "your move" |
+| Turn begins (enemy) | `TURN_ACTIVE(enemy)` | Lower mechanical tick — rhythm maintained, slight threat |
+| Volt hit | `hit_resolved`, element=Volt | Sharp electric crack — bright and snappy, < 300 ms |
+| Thermal hit | `hit_resolved`, element=Thermal | Deep whomp with heat trail — warmth and weight |
+| Kinetic hit | `hit_resolved`, element=Kinetic | Heavy metallic impact — mass, white-noise burst, no sustain |
+| Super-effective hit | T=×1.5 | Layer above the base hit: a distinct resonance "ring" — "that landed right" |
+| Resisted hit | T=×0.75 | A dulled version of the base hit — the same blow, dampened |
+| Shock apply | Status application (Volt) | Brief electric zap, distinct from the hit sound |
+| Burn apply | Status application (Thermal) | Soft ignition — small flame catching |
+| Stagger apply | Status application (Kinetic) | Heavy thud + rattle — chassis disrupted |
+| Burn tick | TBC-F3 at turn start | Low crackling pulse — ongoing, not alarming, < 0.3 s |
+| Shock tick (initiative reduce) | Initiative recalc shows penalty | Brief descending electronic tone — "something shifted" |
+| Status expiry | Duration reaches 0 | Quiet dissipating sound — threat passed, not celebratory |
+| Heat increase | Post-move heat gain | Rising pressure sound scaling with gauge: 0–69 near-silent; 70–89 low hiss; 90+ tense steam pressure |
+| Overheat | Heat hits 100 | Sharp pressure burst / steam release — mechanical, dramatic, not punishing. The loudest combat event outside victory |
+| Energy spend | Move use | Clean energy-discharge tick — light, non-intrusive |
+| Energy recharge | Turn start | Soft rising fill tone — background texture |
+| Voluntary switch | Player switches | Clean mechanical swap — confident, composed |
+| DOWNED / forced switch | `current_structure = 0` | Two sounds with a beat between: shutdown wind-down, then urgent incoming entry |
+| Repair | TBC-F6 fires | Warm resonant repair tone — restorative; distinct from energy recharge |
+| Region damage tick / part break | `hit_resolved` hook | Deferred to Part-Break System GDD audio spec |
+| Victory | `battle_ended(VICTORY,…)` | Satisfying mechanical resolution — energetic but earned, not bombastic |
+| Defeat | `battle_ended(DEFEAT,…)` | Low quiet wind-down — loss acknowledged, not rubbed in |
+| Flee | `battle_ended(FLED,…)` | Quick retreating sound — neutral, no failure register |
+
+**Audio identity note**: element hit sounds must be as mutually distinct as the V3-3 visual profiles — a player should identify Volt vs. Thermal vs. Kinetic from audio alone (complementary channel; the audio equivalent of the flash-alone test).
+
+### V5 — Deferral Boundaries
+
+| Item | Owner | Status |
+|---|---|---|
+| Per-asset dimensions, formats, palette locks, frame budgets | Art Bible | Not Started |
+| Combat screen layout, gauge placement, break pip UI | Combat UI GDD | Not Started |
+| Part-break VFX and break event visual treatment | Part-Break System GDD | Not Started |
+| Region sub-targeting visual feedback | Part-Break System GDD | Not Started |
+| Audio asset specs, mix parameters, music direction | Audio System GDD | Not Started |
+| Skip / fast-forward interaction model | Combat UI GDD | Not Started |
+| Enemy-side visual design (attack animations, silhouettes) | Art Bible + Enemy DB visual extension | Not Started |
+| DOWNED animation frame detail | Art Bible | Not Started |
+| Status icon art (Shock / Burn / Stagger) | Art Bible | Not Started |
+| Color-blind mode palette alternatives | Art Bible accessibility chapter | Not Started |
+
+*Joint delivery note: this section's readability requirements (V1-1, V3-4 effectiveness tinting, V3-5 status icons) depend on the Combat UI GDD for placement and the Art Bible for palette ratification — neither exists yet. Authored against the Visual Identity Anchor; revisit for consistency at the first Art Bible review.*
+
+📌 **Asset Spec** — Visual/Audio requirements are defined. After the art bible is approved, run `/asset-spec system:turn-based-combat` to produce per-asset visual descriptions, dimensions, and generation prompts from this section.
 
 ## UI Requirements
 
-[To be designed]
+Requirements this system places on the Combat UI GDD (Not Started). These are obligations, not designs — layout and interaction belong to that GDD.
+
+1. **Move panel**: 4 fixed slots (Basic Attack + Moves 2–4). Unaffordable moves greyed with their Energy cost visible; null slots render "—" (identical for Common-ARMS and missing-Move-DB cases); Basic Attack is never greyed. Touch targets ≥ 44×44pt.
+2. **Turn-order display**: persistent, shows upcoming order; Shock-caused reorders animate perceivably before the displaced combatant acts (V2/V3-2 constraint).
+3. **Damage feedback**: damage numbers with effectiveness tinting + non-color channels per V3-4. **Requires resolving DF OQ-1**: how the type multiplier `T` reaches the UI from a damage resolution event (struct return vs. parallel lookup) — Combat UI GDD decides jointly with the TBC call contract.
+4. **Status readout**: per-combatant status bar (icons per V3-5), tick and expiry moments visible; zero-potency statuses still shown.
+5. **Resource gauges**: Heat as the three-zone design (V3-7 — 70–89 must read as exciting, not alarming); Energy bar with pre-VFX cost deduction (V3-9).
+6. **Bench visibility**: benched Symbots' current Structure and active statuses must be readable before choosing a switch — the switch decision is a resource comparison, not a guess.
+7. **Break pips**: enemy break-region display (Enemy DB ED6 — labels from `break_regions[].display_name`); region damage state visualization is Part-Break GDD territory; pips are Combat UI's.
+8. **Battle log**: per the game concept's feedback-clarity requirement ("battle log describes why moves hit hard or weak"), a scrollable log entry per resolution: move used, damage, effectiveness, statuses applied/ticked/expired, Overheat events.
+9. **Skip/fast-forward**: tap-to-skip for all non-interactive animations after their minimum read window (V2); interaction model is Combat UI's.
+10. **Outcome screens**: victory (with drop payout readout), defeat (immediate re-challenge path), flee — registers per V3-12.
+
+> **📌 UX Flag — Turn-Based Combat**: this system has extensive screen-level UI requirements. In Phase 4 (Pre-Production), run `/ux-design` for the combat screen before writing implementation epics. Stories referencing combat UI should cite `design/ux/combat.md`, not this GDD directly.
 
 ## Acceptance Criteria
 
-[To be designed]
+ACs marked **BLOCKING** are Logic-type: they gate story completion and require automated unit tests in `tests/unit/tbc/`. ACs marked **DEFERRED** require integration with one or more Not-Started systems; they must be unblocked before the integrating system's story is marked Done, not TBC's own stories. ACs marked **ADVISORY** gate content authoring pipelines rather than runtime correctness.
+
+**Test-type note:** statuses, initiative, recharge, and repair are fully unit-testable with stub combatants (a `Dictionary` carrying `final_stat`, `current_structure`, `current_energy`, `current_heat`, `max_structure`, `max_energy_capacity`, `cached_bonus_block`). No live scene or Enemy DB lookup is required for any BLOCKING AC below.
+
+**Consumer-ownership note (SYN-F4):** AC-SYN-06 and AC-SYN-10 in the Synergy GDD define the SYN-F4 contract and must be implemented in `tests/unit/tbc/` (as well as `tests/unit/workshop_ui/`). They are not re-stated here; the ACs below that apply SYN-F4 (AC-TBC-07, AC-TBC-22) test TBC's pipeline around it, not the formula in isolation.
+
+**DF-1 registered range:** per the Formulas re-derivation, DF-1's output range is **[1, 225]**. All TBC ACs using DF-1 operate within this range.
+
+---
+
+### Battle Start Sequence (Rule 2)
+
+**AC-TBC-01** (BLOCKING): Battle-start snapshot locks Assembly state and calls `evaluate_silent()` exactly once per Symbot, with no `synergy_changed` emitted.
+GIVEN a battle begins with 3 player Symbots and exactly one enemy, WHEN `BATTLE_INIT` → `ROUND_START` executes, THEN: (a) `evaluate_silent(parts)` is called exactly 3 times and `synergy_changed` is NOT emitted during the sequence; (b) each Symbot's `cached_bonus_block` holds the correct frozen bonus for its own part set; (c) the enemy receives no `evaluate_silent` call and has no synergy block; (d) `current_structure == max_structure`, `current_energy == max_energy_capacity`, `current_heat == 0` for all three player Symbots; (e) enemy `current_structure` == authored `stats["structure"]`.
+FAIL: any `synergy_changed` fires during battle start; `evaluate_silent` call count ≠ 3; any Symbot's heat ≠ 0; enemy has a synergy block. **Test type**: Unit.
+
+**AC-TBC-02** (BLOCKING): Enemy dead-stat fields are read but never applied.
+GIVEN an enemy with authored `stats = { structure: 120, mobility: 40, physical_power: 30, armor: 20, cooling: 15, energy_capacity: 80, recharge: 5 }`, WHEN instantiated, THEN the enemy tracks no `current_heat` and no `current_energy` (sentinel null/absent, not a live 0), and all its moves are always available regardless of any cost.
+FAIL: enemy has a live heat counter that can Overheat; enemy moves gated by an energy check. **Test type**: Unit.
+
+### Initiative and Round Structure (Rule 3 / TBC-F1)
+
+**AC-TBC-03** (BLOCKING): Initiative tie — including 0 vs. 0 — breaks in the player's favor. *(Verifies EC-TBC-01)*
+GIVEN active Symbot and enemy both at `effective_mobility = 0` (Symbot mobility 0, no synergy, Shock active with processing-0 penalty 0; enemy mobility 0), WHEN initiative is computed at `ROUND_START`, THEN the player Symbot acts first. *Second fixture:* both at 35 → player first.
+FAIL: enemy acts first on a tie; RNG tiebreak used. **Test type**: Unit.
+
+**AC-TBC-04** (BLOCKING): Initiative recomputes at every `ROUND_START`.
+GIVEN Round 1: Symbot mobility 30, enemy mobility 50 (enemy first). Player applies Shock (processing 53 → penalty 15) to the enemy. THEN Round 2: enemy effective = 35, still first at 35 > 30 — proving recomputation ran without inferring it from an order change. *Discriminating flip case:* Symbot mobility 40, enemy 50, Shock 15 → Round 2 enemy 35 < 40 → order flips.
+FAIL: initiative computed once at battle start; Round 2 order ignores the Shock penalty; flip case does not flip. **Test type**: Unit.
+
+**AC-TBC-05** (BLOCKING): TBC-F1/F4 Shock penalty floor discrimination.
+GIVEN `snapshotted_processing = 53`, WHEN `shock_penalty = floor(53 × 0.3 + 0.0001)`, THEN penalty = **15**; on a mobility-64 target, `effective_mobility = 49`.
+FAIL: penalty = 16 (round()/ceil() — 15.9 rounds up); effective = 48. *Edge:* processing 0 → penalty 0, no crash. **Test type**: Unit.
+
+### Turn Phase Order (Rule 4)
+
+**AC-TBC-06** (BLOCKING): No-affordable-moves and null move slot — Basic Attack always available; no soft-lock. *(Verifies EC-TBC-02 + EC-TBC-11)*
+*Fixture A:* GIVEN `current_energy = 5` and Moves 1–3 cost 15/22/30, THEN Basic Attack available (cost 0); Moves 1–3 greyed with costs shown; no soft-lock.
+*Fixture B:* GIVEN Move 4 = null (EC-SA-04 upstream), THEN slot renders "—", no crash, other moves unaffected.
+FAIL: Basic Attack greyed; turn skipped without input; null slot crashes or renders as available. Both fixtures required. **Test type**: Unit.
+
+**AC-TBC-07** (BLOCKING): Turn-start phase order: Heat decay → Energy recharge → Burn tick, players only.
+GIVEN heat 30 / cooling 10; energy 40 / cap 95 / recharge 22; Burn active (processing 72); structure 50, WHEN the turn starts (not Overheated), THEN in order: heat = max(0, 30−10) = **20**; energy = min(95, 40+10+22) = **72**; burn = max(2, floor(5.7601)) = **5** → structure **45**.
+FAIL: burn = 6 (round/ceil); energy = 105 (no cap); Burn ticks before decay. *Enemy exclusion:* no decay/recharge on enemy turns. **Test type**: Unit.
+
+**AC-TBC-08** (BLOCKING): TBC-F2 recharge — cap-fires and cap-silent pair.
+*Case A:* `min(95, 73+10+22) = 95`. FAIL: 105 (min omitted). *Case B:* `min(95, 40+10+22) = 72`. Both required together — a no-cap implementation passes B accidentally. **Test type**: Unit.
+
+**AC-TBC-09** (BLOCKING): Overheated turn skips the action phase but runs all bookkeeping. *(Verifies EC-TBC-03)*
+GIVEN a Symbot entering its turn OVERHEATED (heat 100), Burn active (processing 72, 2 turns left), energy 50 / cap 95 / recharge 22, structure 40, WHEN the turn resolves, THEN: (1) heat decay does NOT run — heat set directly to carry-in **20**; (2) energy = **82**; (3) burn ticks 5 → structure **35**; (4) no action phase; (5) turn-end decrements Burn 2 → **1**; (6) OVERHEATED clears, next turn acts normally.
+FAIL: `max(0, 100−cooling)` applied instead of flat 20; action executes; Burn doesn't tick; duration doesn't decrement. **Test type**: Unit.
+
+### Down-Ordering and Victory Check (EC-TBC-04 / EC-TBC-05)
+
+**AC-TBC-10** (BLOCKING): Burn kill at turn start — correct branching. *(Verifies EC-TBC-04)*
+*Scenario A (player):* GIVEN active Symbot structure 3, Burn tick 5, one living benched Symbot, WHEN its turn starts, THEN it is DOWNED before acting; forced switch is free; the incoming Symbot does NOT act this round; the round continues from the next initiative slot.
+*Scenario B (enemy):* GIVEN enemy structure 3, Burn tick 5, WHEN its turn starts, THEN `battle_ended(VICTORY, …)` emits immediately — no enemy action phase.
+FAIL: downed combatant acts; forced switch consumes a turn; incoming Symbot acts same round; victory not emitted. **Test type**: Unit.
+
+**AC-TBC-11** (BLOCKING): Victory is checked before heat gain — kill+self-down resolves as VICTORY. *(Verifies EC-TBC-05)*
+GIVEN Symbot heat 90, move `heat_generation = 20` (non-THERMAL), max_structure 50 (Overheat self-damage 5), current_structure 4, WHEN the move drops the enemy to 0, THEN `battle_ended(VICTORY, …)` emits at that moment; heat gain (Rule 5 step d) never executes; no Overheat; the Symbot is NOT downed.
+FAIL: heat resolves first → self-down → DEFEAT reported. The Rule 5 order (c) resolve → end-check → (d) heat is the system under test. **Test type**: Unit.
+
+### Switch and Flee (Rules 6–7)
+
+**AC-TBC-12** (BLOCKING): Switch with no living bench rejected; forced switch free and stateful. *(Verifies EC-TBC-06)*
+*Scenario A:* GIVEN both benched Symbots DOWNED, THEN switch is absent from the action set; a direct `switch_to(index)` call is rejected with a logged error, no state change.
+*Scenario B:* GIVEN active Symbot downed, one benched alive, THEN the replacement fields immediately, no turn consumed, arriving with its own independently-tracked resources (not reset).
+FAIL: switch offered with dead bench; forced switch consumes a turn; incoming resources reset; incoming acts in the same round. **Test type**: Unit.
+
+**AC-TBC-17** (BLOCKING): Flee rejected in BOSS; succeeds in WILD. *(Verifies EC-TBC-12)*
+*Scenario A (BOSS):* flee absent from action set; direct `flee()` rejected with logged error; no outcome emitted; state unchanged.
+*Scenario B (WILD):* flee emits `battle_ended(FLED, enemy_id, {})`, consumes the action, discards all state, no drops.
+FAIL: FLED emitted in a BOSS fight; flee fails vs. WILD; drops awarded on FLED. **Test type**: Unit.
+
+**AC-TBC-18** (BLOCKING): Bench freezes statuses; DOWNED clears them. *(Verifies EC-TBC-13 + EC-TBC-14)*
+*Scenario A (bench freeze):* GIVEN Symbot A active with Burn (2 turns left), player switches to B, WHEN B takes turns, THEN A's Burn stays at 2 turns (no ticks, no decrement while benched); on switching back, it ticks and decrements normally from A's next turn start.
+*Scenario B (DOWNED clears):* GIVEN A has Burn (1) and Shock (2) active and is downed by an enemy hit, THEN all statuses on A are removed immediately at DOWNED.
+FAIL: benched durations decrement; ticks apply while benched; statuses linger on a DOWNED record. **Test type**: Unit.
+
+### Enemy Asymmetry (Rule 8)
+
+**AC-TBC-21** (BLOCKING): Enemy moves always available — no energy gating, no Overheat.
+GIVEN an enemy with `energy_capacity = 80` authored and a skill costing 30, WHEN it is the enemy's turn at any point, THEN all skills are selectable by the AI hook; no energy check; the enemy never enters OVERHEATED; no heat tracking exists for it.
+FAIL: skills filtered by energy; enemy Overheats; energy initialized at battle start. **Test type**: Unit.
+
+### Damage Resolution (Rule 10)
+
+**AC-TBC-22** (BLOCKING): SYN-F4 applies to both sides before DF-1; the fixture discriminates synergy-amplified vs. base-only.
+GIVEN active Symbot `physical_power = 90` with frozen synergy delta `{ physical_power: 25 }` → effective A = 115; enemy `armor = 55`, no synergy → D = 55; PHYSICAL KINETIC move; enemy `core_element = KINETIC` → T = 1.0, WHEN the move resolves, THEN `compute_damage(115, PHYSICAL, KINETIC, 55, KINETIC, 1.0)` is called (argument-capture stub) and damage = `floor(13225/170 + 0.0001)` = **77**; enemy structure −77.
+FAIL: `compute_damage(90, …)` called (SYN-F4 skipped — damage 55); synergy applied to enemy defense.
+*Type-effectiveness integration:* same fixture but enemy `core_element = VOLT` → T = 1.5 (Kinetic is super-effective vs. Volt per the DF-1 type chart), THEN damage = `floor(77.7941… × 1.5 + 0.0001)` = **116**. FAIL: T = 1.0 (lookup failed) or T = 0.75 (inverted chart). **Test type**: Unit.
+
+**AC-TBC-23** (BLOCKING): Burn bypasses DF-1 — Armor/Resistance/type never reduce it.
+GIVEN enemy `armor = 80`, `resistance = 80`, `core_element = KINETIC`; Burn active (processing 72 → tick 5), WHEN Burn ticks, THEN structure −5 exactly; `compute_damage` NOT called; no type multiplier applied.
+FAIL: Burn routed through DF-1; tick reduced by armor; tick scaled by type matchup. **Test type**: Unit.
+
+### Status System (Rule 11)
+
+**AC-TBC-13** (BLOCKING): Reapplication refreshes duration AND re-snapshots — newest wins entirely. *(Verifies EC-TBC-07)*
+GIVEN Burn active with `snapshotted_processing = 30` (tick 2), 1 turn left, WHEN reapplied with processing 72, THEN duration = 2 (reset, not 1+2) and tick = 5 (snapshot replaced).
+*Discriminating lower-processing reapplication:* then reapply with processing 10 → tick = **2**, duration = 2. FAIL: tick = 5 (max()/higher-wins logic retained the old snapshot instead of newest-wins). **Test type**: Unit.
+
+**AC-TBC-14** (BLOCKING): Unknown effect ID: log + skip, no crash. *(Verifies EC-TBC-08 / Synergy EC-SYN-05 obligation)*
+GIVEN the registry lacks `&"unknown_passive_xyz"` and a Symbot's effect list is `[&"volt_shock_on_hit", &"unknown_passive_xyz"]`, WHEN triggers fire, THEN `volt_shock_on_hit` resolves normally; exactly one content error logged naming the unknown ID; no crash; remaining effects unaffected.
+FAIL: crash; silent swallow; the unknown ID halts processing of the rest of the pool. **Test type**: Unit (stub logger captures the message).
+
+**AC-TBC-15** (BLOCKING): Zero-potency statuses are legal no-ops; Burn still ticks BURN_MIN. *(Verifies EC-TBC-09)*
+GIVEN applier processing 0: Shock penalty = 0 (target mobility unchanged, status displays and expires); Stagger pct = 0 (`floor(50 × 1.0 + 0.0001) = 50`, no reduction); Burn tick = `max(2, 0)` = **2**.
+FAIL: zero-potency status rejected or crashes; mobility/damage wrongly reduced; Burn ticks 0. **Test type**: Unit.
+
+**AC-TBC-24** (BLOCKING): All three statuses coexist; reapplication targets same-type only.
+GIVEN Shock (proc 53), Burn (proc 72), Stagger (proc 86) all applied to one target, THEN all three present with independent snapshots/durations (penalty 15, tick 5, pct 21). WHEN Burn reapplied (proc 30), THEN only Burn's record changes; Shock and Stagger untouched.
+FAIL: statuses overwrite each other; any status rejected because another type is present. **Test type**: Unit.
+
+### Formula Discriminators (Section D fixtures)
+
+**AC-TBC-25** (BLOCKING): TBC-F3 Burn floor. processing 72 → `floor(5.7601)` = **5** (round/ceil → 6 FAIL). Boundaries: processing 0 → 2 (BURN_MIN, guard-only); processing 110 → `floor(8.8001)` = **8** (round/ceil → 9 FAIL). **Test type**: Unit.
+
+**AC-TBC-26** (BLOCKING): TBC-F5 two-step floor. Step 1: processing 86 → `floor(21.5001)` = **21** (GDScript round-half-away gives 22 — FAIL). Step 2: damage 50, pct 21 → `floor(39.5001)` = **39** (round/ceil → 40 FAIL). Floor guard: damage 1, pct 27 → `max(1, floor(0.7301))` = **1**. **Test type**: Unit.
+
+**AC-TBC-27** (BLOCKING): TBC-F6 Repair floor. ep 45 → `floor(12.6501)` = **12** (round/ceil → 13 FAIL); ep 150 → `floor(30.5001)` = **30** (round → 31 FAIL). **Test type**: Unit.
+
+**AC-TBC-28** (BLOCKING): DF-1 extended range. Absolute ceiling A=150, D=0, T=1.5 → **225**. Realistic ceiling A=150, D=55, T=1.5 → `floor(164.6342…)` = **164** (round/ceil → 165 FAIL). Minimum A=1, D=182, T=0.75 → `max(1, 0)` = **1** (DAMAGE_FLOOR). **Test type**: Unit.
+
+**AC-TBC-16** (BLOCKING): Repair caps at max_structure; costs still paid. *(Verifies EC-TBC-10)*
+GIVEN structure 98/100, ep 45 (repair 12), move cost 15 energy / 8 heat, energy 60, heat 20, WHEN used, THEN energy 45, structure `min(100, 110)` = **100** (overheal discarded), heat 28. *At exactly full:* repair is legal, wasteful, costs apply.
+FAIL: rejected at full; uncapped overheal; costs skipped on wasted repair. **Test type**: Unit.
+
+### Passive Effect Registry (Rule 13)
+
+**AC-TBC-29** (BLOCKING): `&"volt_shock_on_hit"` fires on any DAMAGE move; applies Shock with **duration 1** (not 2); snapshot = user's effective processing at the hit. *Negative case:* REPAIR moves do not trigger it.
+FAIL: not applied; duration 2; snapshot unset. **Test type**: Unit.
+
+**AC-TBC-30** (BLOCKING): `&"thermal_burn_on_weapon"` fires on WEAPON-slot DAMAGE moves only. WEAPON move → Burn (2 turns) applied; HEAD-slot DAMAGE move → NOT applied.
+FAIL: slot filter ignored; duration ≠ 2. **Test type**: Unit.
+
+### Battle End (Rule 12)
+
+**AC-TBC-31** (BLOCKING): `battle_ended` payloads for all three outcomes; break events deduplicated.
+*VICTORY:* break events `"arm_broken"` (fired twice) + `"head_cracked"` (once) → payload set has exactly 2 elements. FAIL: multiset of 3; empty set despite breaks.
+*DEFEAT:* all 3 Symbots downed → `(DEFEAT, enemy_id, {})` — break events discarded. FAIL: events included.
+*FLED:* `(FLED, enemy_id, {})`. FAIL: anything else.
+*(Break-set collection is unit-tested with a stub emitter; the full hit_resolved chain is AC-TBC-INT-01.)* **Test type**: Unit.
+
+**AC-TBC-32** (BLOCKING): All runtime state discarded after any outcome.
+GIVEN a battle ends with Symbot A at heat 45 and Burn on the enemy, WHEN a new battle begins, THEN A's heat = 0, structure/energy at max, no statuses anywhere, fresh enemy instance, `evaluate_silent` runs again (snapshots not reused).
+FAIL: any state carries over; post-battle reads of live combat state succeed. **Test type**: Unit.
+
+### Enemy Stat Safety
+
+**AC-TBC-19** (BLOCKING): Absent enemy stat keys read 0 via `.get()`. *(Verifies EC-TBC-15)*
+GIVEN enemy `stats = { "structure": 80 }` only, THEN `mobility` reads 0 (acts last — player first per tie rule); `processing` reads 0 (its Shock/Stagger have zero potency; its Burn ticks at BURN_MIN 2); `armor`/`resistance` read 0 (full damage); no crash on any absent key.
+FAIL: bracket-access runtime error; null propagates into a formula call. **Test type**: Unit.
+
+### Content Validation (ADVISORY)
+
+**AC-TBC-20** (ADVISORY, DEFERRED): All MVP move entries author `ammo_cost = 0`; validator warns on violations naming the move ID; TBC initializes no ammo pool. *Unblocks when: Move Database GDD + content validation tooling exist.* **Test type**: Content Validation.
+
+**AC-TBC-33** (ADVISORY): `SYNERGY_POWER_BUDGET` (40) and `SYNERGY_DEFENSE_BUDGET` (50) enforced by the Synergy content validator — cumulative stat_delta across simultaneously active tiers, not per-tier. GIVEN content summing energy_power deltas to 41 across the 7-tier worst case, THEN a BLOCKING validation failure names the exceeded budget. FAIL: over-budget content passes; check is per-tier instead of cumulative. *Implementation lives in the Synergy content validator; stated here because TBC derived the constants.* **Test type**: Content Validation.
+
+### Integration ACs (DEFERRED)
+
+**AC-TBC-INT-01** (BLOCKING, DEFERRED): `hit_resolved(move, damage, target)` hook — Part-Break receives post-SYN-F4/post-Stagger final damage per hit; break events flow into the Rule 12 set. *Unblocks when: Part-Break GDD defines its subscription and accrual interface.* **Test type**: Integration.
+
+**AC-TBC-INT-02** (BLOCKING, DEFERRED): Enemy AI hook returns exactly one legal move at enemy `ACTION_PENDING`; TBC resolves it through the same pipeline as player input; no energy gating applied. *Unblocks when: Enemy AI GDD defines `request_move(battle_state)`.* **Test type**: Integration.
+
+**AC-TBC-INT-03** (BLOCKING, DEFERRED): Drop System consumes `battle_ended` — loot on VICTORY only, deduplicated set semantics. *Unblocks when: Drop System GDD defines its consumer interface.* **Test type**: Integration.
+
+**AC-TBC-INT-04** (BLOCKING, DEFERRED): Workshop equip rejected while a battle is active; no `evaluate_silent` mid-battle. *Unblocks when: Workshop System GDD defines its lockout (Synergy DCO-8).* **Test type**: Integration.
+
+### Summary
+
+33 numbered ACs (29 BLOCKING unit, 2 ADVISORY content-validation, plus 4 DEFERRED integration). EC↔AC cross-check: every EC-TBC-01…15 observable outcome is verified by its named AC (see the Verified-by references in Edge Cases).
 
 ## Open Questions
 
-[To be designed]
+| # | Question | Owner | Impact |
+|---|----------|-------|--------|
+| OQ-TBC-1 | Move Database GDD must **ratify MOVE-CONTRACT-1** (Rule 9) — accept the schema or negotiate changes explicitly with this GDD; silent divergence is forbidden. | Move Database GDD | Blocks Move DB authoring; blocks final validation of Rules 5/9 |
+| OQ-TBC-2 | How does the type multiplier `T` reach the Combat UI from a damage event — `compute_damage()` returns a struct `{final_damage, type_mult}`, or TBC looks up T separately and forwards it? (Damage Formula OQ-1, restated — the decision is jointly owned by the TBC call contract and Combat UI GDD.) | Combat UI GDD + TBC implementation | Blocks Combat UI damage feedback spec (UI Req 3) |
+| OQ-TBC-3 | **What does a SCAN move actually do?** MOVE-CONTRACT-1 lists SCAN as a behavior (HEAD skills are "scan or utility" per Assembly Rule 4) but no system defines its effect. Natural candidate: reveal enemy break regions/drop hints — which would make SCAN the delivery mechanism for Enemy DB constraint ED6's "drop-hint mechanism." Needs a design decision before Move DB content authoring. | Game Designer (resolve with Move DB GDD; coordinate with ED6) | HEAD-slot moves are unauthorable until defined; ED6's information layer may depend on it |
+| OQ-TBC-4 | UTILITY behavior taxonomy — which non-damage, non-status, non-repair move behaviors exist in MVP (buffs? Heat venting? energy transfer?), if any? MVP could ship with zero UTILITY moves; the enum value exists for Move DB headroom. | Move Database GDD | Low — enum headroom; content decision |
+| OQ-TBC-5 | Multi-enemy battles (Vertical Slice): Rule 1 locks MVP to one enemy; the `battle_ended` payload carries `enemy_id` extensibly. When multi-enemy is designed, targeting UI, initiative with multiple enemies, and AoE move semantics all need design. | Vertical Slice design | None for MVP |
+| OQ-TBC-6 | Victory rewards beyond drops: MVP awards loot only (Drop System via `battle_ended`) — no XP (concept: no level grind), no currency (crafting/scrap deferred to Alpha blueprint system). Confirm the Drop System GDD is the sole reward channel or define scrap salvage there. | Drop System GDD / Economy Designer | Reward loop completeness at MVP |

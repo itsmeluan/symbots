@@ -112,6 +112,7 @@ formulas:
     source: design/gdd/symbot-assembly.md
     referenced_by:
       - design/gdd/symbot-assembly.md
+      - design/gdd/turn-based-combat.md
     variables:
       - stat_bonuses (per-part flat integer, from SympartData)
       - upgrade_tier (0–5, per-part)
@@ -152,6 +153,7 @@ formulas:
     source: design/gdd/synergy-system.md
     referenced_by:
       - design/gdd/synergy-system.md
+      - design/gdd/turn-based-combat.md
     variables:
       - tag (StringName — e.g. &"ironclad", &"VOLT")
       - synergy_tags (Array[StringName] per SympartData — null slots contribute 0)
@@ -167,6 +169,7 @@ formulas:
     source: design/gdd/synergy-system.md
     referenced_by:
       - design/gdd/synergy-system.md
+      - design/gdd/turn-based-combat.md
     variables:
       - tier.requirements (list of (tag, min_count) pairs — one pair for single-tag, two+ for combined)
       - tag_count (from SYN-F1)
@@ -182,6 +185,7 @@ formulas:
     source: design/gdd/synergy-system.md
     referenced_by:
       - design/gdd/synergy-system.md
+      - design/gdd/turn-based-combat.md
     variables:
       - active_tiers (from SYN-F2)
       - tier.stat_delta (Dictionary[String, int] per tier)
@@ -201,6 +205,7 @@ formulas:
     source: design/gdd/synergy-system.md
     referenced_by:
       - design/gdd/synergy-system.md
+      - design/gdd/turn-based-combat.md
     variables:
       - Assembly.final_stat[S] (integer from SA-F1, already ≥ 0)
       - synergy_bonus_block.stat_delta.get(S, 0) (integer from SYN-F3; 0 if no active synergy)
@@ -233,6 +238,77 @@ formulas:
     added: 2026-07-10
     revised: ""
 
+  - name: TBC-F3
+    status: active
+    source: design/gdd/turn-based-combat.md
+    referenced_by:
+      - design/gdd/turn-based-combat.md
+    variables:
+      - snapshotted_processing (applier's processing at application time, 0-110)
+      - BURN_COEFF (0.08)
+      - BURN_MIN (2)
+    output_range: [2, 8]
+    expression: "burn_damage = max(BURN_MIN, floor(snapshotted_processing * BURN_COEFF + 0.0001))"
+    notes: "Burn DoT per tick at afflicted combatant's turn start. BYPASSES DF-1 —
+      armor/resistance/type do not apply. 2-turn duration, no stacking, newest-wins
+      reapplication. Epsilon defensive (scanned 2026-07-10). Enemy AI and Combat UI
+      will read this for threat evaluation and display."
+    added: 2026-07-10
+    revised: ""
+
+  - name: TBC-F4
+    status: active
+    source: design/gdd/turn-based-combat.md
+    referenced_by:
+      - design/gdd/turn-based-combat.md
+    variables:
+      - snapshotted_processing (applier's processing at application time, 0-110)
+      - SHOCK_COEFF (0.3)
+    output_range: [0, 33]
+    expression: "shock_penalty = floor(snapshotted_processing * SHOCK_COEFF + 0.0001)"
+    notes: "Shock mobility penalty feeding TBC-F1 initiative. Flips initiative across
+      mobility gaps <= 33 at max. Zero-potency (processing 0) is a legal no-op.
+      Epsilon defensive (scanned 2026-07-10 — an analytical load-bearing claim at
+      multiples of 10 was empirically refuted)."
+    added: 2026-07-10
+    revised: ""
+
+  - name: TBC-F5
+    status: active
+    source: design/gdd/turn-based-combat.md
+    referenced_by:
+      - design/gdd/turn-based-combat.md
+    variables:
+      - snapshotted_processing (applier's processing, 0-110)
+      - STAGGER_COEFF (0.25)
+      - final_damage (DF-1 output, 1-225)
+      - DAMAGE_FLOOR (1, shared with DF-1)
+    output_range: [1, 225]
+    expression: |
+      step1: stagger_pct = floor(snapshotted_processing * STAGGER_COEFF + 0.0001)   # 0-27
+      step2: staggered_damage = max(DAMAGE_FLOOR, floor(final_damage * (1 - stagger_pct / 100.0) + 0.0001))
+    notes: "Stagger applies POST-DF-1 (linear, predictable — ratified over pre-A reduction).
+      Cannot zero a hit (DAMAGE_FLOOR). Epsilon defensive on both steps (scanned 2026-07-10)."
+    added: 2026-07-10
+    revised: ""
+
+  - name: TBC-F6
+    status: active
+    source: design/gdd/turn-based-combat.md
+    referenced_by:
+      - design/gdd/turn-based-combat.md
+    variables:
+      - user_energy_power (effective via SYN-F4, 0-150)
+      - REPAIR_COEFF (0.17 — hard ceiling; 0.18+ opens stall loops)
+      - REPAIR_BASE (5)
+      - REPAIR_MIN (5)
+    output_range: [5, 30]
+    expression: "repair_amount = max(REPAIR_MIN, floor(user_energy_power * REPAIR_COEFF + REPAIR_BASE + 0.0001)); applied capped at max_structure"
+    notes: "Anti-stall invariant: repair(150) = 30 < WILD-mid DPS 33 (margin 3).
+      Epsilon defensive (scanned 2026-07-10). Overheal discarded; costs still paid."
+    added: 2026-07-10
+    revised: ""
+
   - name: EDB-1
     status: active
     source: design/gdd/enemy-database.md
@@ -257,18 +333,21 @@ formulas:
     referenced_by:
       - design/gdd/damage-formula.md
       - design/gdd/enemy-database.md
+      - design/gdd/turn-based-combat.md
     variables:
-      - A (attacker power stat)
-      - D (target defense stat)
+      - A (attacker power stat — effective via SYN-F4, max 150 under SYNERGY_POWER_BUDGET)
+      - D (target defense stat — effective via SYN-F4, max 182 under SYNERGY_DEFENSE_BUDGET)
       - T (type effectiveness multiplier)
       - crit_mult
       - EPSILON
       - DAMAGE_FLOOR
-    output_range: [1, 165]
+    output_range: [1, 225]
     expression: "max(DAMAGE_FLOOR, floor((A*A/(A+D)) * T * crit_mult + EPSILON))"
-    notes: "Realistic range 3–106. PHYSICAL path: A=physical_power, D=armor. ENERGY path: A=energy_power, D=resistance."
+    notes: "Realistic MVP ceiling vs. authored enemies: 164 (A=150, D=55, T=1.5).
+      PHYSICAL path: A=physical_power, D=armor. ENERGY path: A=energy_power, D=resistance.
+      Extended input range A[1,150] x D[0,182] exhaustively epsilon-scanned 2026-07-10: no float traps."
     added: 2026-07-09
-    revised: ""
+    revised: "2026-07-10"  # was [1, 165] — invalidated by SYN-F4's uncapped effective_stat; re-derived under SYNERGY_POWER_BUDGET=40 by turn-based-combat.md (approved errata, Synergy re-review #5 obligation fulfilled)
 
 # Example:
 #
@@ -372,6 +451,49 @@ constants:
     value: 1
     unit: Structure points (integer damage)
     added: 2026-07-09
+    revised: ""
+
+  - name: SYNERGY_POWER_BUDGET
+    status: active
+    source: design/gdd/turn-based-combat.md
+    referenced_by:
+      - design/gdd/turn-based-combat.md
+      - design/gdd/synergy-system.md
+      - design/gdd/damage-formula.md
+    value: 40
+    unit: max cumulative synergy stat_delta to physical_power or energy_power across all simultaneously active tiers
+    notes: "Closes Synergy OQ-2's cap from the consumer side (ratified 2026-07-10).
+      Sets DF-1's A ceiling at 150. Synergy content validation must enforce the
+      CUMULATIVE total (not per-tier). Safe range 30-50; changing it invalidates
+      the DF-1 registered range and TTK impact table — re-run the TBC re-derivation."
+    added: 2026-07-10
+    revised: ""
+
+  - name: SYNERGY_DEFENSE_BUDGET
+    status: active
+    source: design/gdd/turn-based-combat.md
+    referenced_by:
+      - design/gdd/turn-based-combat.md
+      - design/gdd/synergy-system.md
+    value: 50
+    unit: max cumulative synergy stat_delta to armor or resistance across all simultaneously active tiers
+    notes: "Sets DF-1's D ceiling at 182. Lower risk than the power budget
+      (diminishing returns in DF-1's denominator). Safe range 40-60."
+    added: 2026-07-10
+    revised: ""
+
+  - name: BASE_ENERGY_REGEN
+    status: active
+    source: design/gdd/turn-based-combat.md
+    referenced_by:
+      - design/gdd/turn-based-combat.md
+      - design/gdd/part-database.md
+    value: 10
+    unit: Energy regenerated per turn start (before recharge stat bonus)
+    notes: "Part DB Rule 4 already references 'the fixed base regen of 10' —
+      TBC-F2 formalizes it: new_energy = min(cap, current + 10 + recharge).
+      Safe range 8-15 per TBC Tuning Knobs."
+    added: 2026-07-10
     revised: ""
 
   - name: DAMAGE_FORMULA_EPSILON
