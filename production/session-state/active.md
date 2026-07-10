@@ -100,5 +100,5 @@ Recommended also applied: AC-TBC-06 split (state vs. rendering — UI assertions
 <!-- STATUS -->
 Epic: MVP Core GDDs
 Feature: Move Database GDD → APPROVED
-Task: /consistency-check PASS (1 conflict found + resolved: DF-1 range in damage-formula.md); next: /design-system Passive Database (#1b) or Encounter Zone (#7)
+Task: Passive Database GDD COMPLETE (all 8 sections + Visual/Audio, UI, Open Questions) — status Designed; awaiting /design-review in a fresh session
 <!-- /STATUS -->
