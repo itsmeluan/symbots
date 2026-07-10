@@ -28,7 +28,7 @@ designed first.
 | 1 | Part Database | Foundation | MVP | Approved | design/gdd/part-database.md | — |
 | 1a | Move Database | Foundation | MVP | Not Started | — | Part Database |
 | 1b | Passive Database | Foundation | MVP | Not Started | — | Part Database |
-| 2 | Enemy Database | Foundation | MVP | Designed | design/gdd/enemy-database.md | Part Database |
+| 2 | Enemy Database | Foundation | MVP | In Review | design/gdd/enemy-database.md | Part Database |
 | 3 | Damage Formula System | Foundation | MVP | Approved | design/gdd/damage-formula.md | Part Database |
 | 4 | Symbot Assembly System | Gameplay | MVP | Not Started | — | Part Database |
 | 5 | Synergy System | Gameplay | MVP | Not Started | — | Part Database, Symbot Assembly |

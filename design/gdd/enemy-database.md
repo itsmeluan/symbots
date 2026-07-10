@@ -1,7 +1,7 @@
 # Enemy Database
 
 > **Status**: Designed — Pending Review
-> **Review Notes**: Authored in lean mode — CD-GDD-ALIGN gate skipped; systems-designer consulted for Formulas, qa-lead for ACs
+> **Review Notes**: Authored in lean mode — CD-GDD-ALIGN gate skipped; systems-designer consulted for Formulas, qa-lead for ACs. Revised 2026-07-09 per full /design-review (game-designer, systems-designer, economy-designer, qa-lead, creative-director) — 6 blocking items resolved; see reviews/enemy-database-review-log.md
 > **Author**: Luan + Claude Code (game-designer)
 > **Last Updated**: 2026-07-09
 > **Implements Pillar**: Pillar 2 (Every Battle Has a Harvest Goal), Pillar 5 (The World Is a Workshop)
@@ -50,7 +50,7 @@ Every enemy in the game is defined by the following fields. The Enemy Database s
 | Class | Count (MVP) | Loot Profile | Break Regions |
 |-------|-------------|--------------|---------------|
 | `WILD` | ~8 types | Common and Rare parts only | 2–3 regions; breaks boost Common/Rare drop rates |
-| `BOSS` | 2 | Common, Rare, **and Boss-grade exclusive** parts | 2–3 regions; **at least one region's break event must gate the Boss-grade drop** (chains with Part DB AC-11: multiplier ≥ 500) |
+| `BOSS` | 2 | Common, Rare, **and Boss-grade exclusive** parts | 2–3 regions; **at least one region's break event must gate the Boss-grade drop** (product invariant: `base_rate × multiplier ≥ BOSS_GRADE_BREAK_GUARANTEE`, see AC-ED-09; stricter than Part DB AC-11's ×500 floor) |
 
 Boss-grade parts never appear in a `WILD` enemy's `loot_pool` (Part DB Rule 8: "cannot appear in wild drop tables"). Prototype parts may appear in either class's pool — their gradient conditions (Part DB Formula 3) govern acquisition.
 
@@ -63,6 +63,8 @@ Enemy stats are **hand-authored**, not derived from equipped parts. They use the
 **Range constraint (hard, inherited from DF-1):** `physical_power`, `energy_power`, `armor`, and `resistance` must stay within **[0, 110]** — the input range under which Damage Formula DF-1's behavior is verified. `structure` is exempt (it is the HP pool, not a DF-1 input) and may exceed 110, particularly for bosses. Unknown stat keys follow Part DB EC-08: warn and ignore.
 
 **Design intent:** an enemy's stats should *read as if* it were built from parts — a heavily armored crawler has high Armor and low Mobility, matching its visible silhouette — but no formula enforces this. The fiction is carried by content authoring and by the anatomy-linked loot rule (Rule 5), not by a derivation pipeline. Full Vision may migrate `BOSS` entries to true part-assembly; the schema reserves that path (see Open Questions).
+
+**A = 0 edge note:** a stat key absent from `stats` is treated as 0 (EC-ED-06), so `physical_power = 0` is legal enemy content. Paired with a zero-Armor player, this sends A=0, D=0 into DF-1's `A²/(A+D)` term (0/0). DF-1's `DAMAGE_FLOOR` guard owns that case — this schema merely notes it authorizes the input; do not add a second guard here.
 
 ---
 
@@ -99,6 +101,8 @@ Each entry in `break_regions` defines one breakable component:
 
 Pool size guidance (MVP): `WILD` 2–4 parts; `BOSS` 4–6 parts including exactly 1–2 Boss-grade exclusives.
 
+**Harvest-decision rule (hard, WILD):** `loot_pool.size()` must **exceed** `break_regions.size()`. Rationale: EDB-3 forces every region to be loot-connected, so a pool that merely equals the region count degenerates into a 1:1 region-to-part mapping — the player's harvest *decision* ("which target do I commit to?") collapses into a checklist, defeating Pillar 2. With pool > regions there is always at least one part not uniquely gated to a single break, preserving a real prioritization choice. In practice this raises the WILD pool floor to `regions + 1` (a 2-region WILD needs ≥3 pool parts). `BOSS` satisfies this by construction (pool 4–6 vs. 2–3 regions) — the validator still checks both classes (AC-ED-15c).
+
 ---
 
 ### States and Transitions
@@ -132,28 +136,32 @@ break_hp = max( BREAK_HP_MIN, floor( structure × region_fraction + 0.0001 ) )
 
 | Variable | Symbol | Type | Range | Description |
 |----------|--------|------|-------|-------------|
-| Enemy body structure | `structure` | int | 60–600 | The enemy's full HP pool from its stat block (EDB-2 ranges) |
+| Enemy body structure | `structure` | int | 60–594 | The enemy's full HP pool from its stat block (EDB-2 guidance ranges) |
 | Region fraction | `region_fraction` | float | 0.15–0.55 | Fraction of body Structure this region absorbs before breaking. Encodes *when* in the fight the region breaks — see guidance table. |
-| Minimum break HP | `BREAK_HP_MIN` | int | 5 (tunable) | Hard floor preventing trivial single-hit breaks on low-Structure enemies |
-| Result | `break_hp` | int | 5–330 | Independent damage pool for this region. Does not reduce body Structure. |
+| Minimum break HP | `BREAK_HP_MIN` | int | 5 (tunable) | Defensive floor — never activates for in-spec content (minimum derived value is 9) |
+| Result | `break_hp` | int | 9–326 in-spec | Independent damage pool for this region. Does not reduce body Structure. |
 
 **Region fraction guidance (content authoring):**
 
-| Fraction | Break timing (mid-game neutral, ~33 dmg/turn) | Use for |
-|----------|-----------------------------------------------|---------|
-| 0.15–0.25 | Early fight | "Opener" region — breaks with minimal focus; rewards attentiveness |
-| 0.25–0.40 | Mid fight | Primary harvest target — the deliberate hunt objective |
-| 0.40–0.55 | Late fight | Expert challenge — requires committed region focus or type advantage |
+Break commitment scales with fight length: turns of region focus ≈ `region_fraction × TTK_body` (break_hp is `fraction × structure`, and body TTK is `structure ÷ dmg`, so the ratio holds at any damage level). The tier labels below describe *proportional* timing — they only produce three *distinct* commitment tiers on fights of ~5+ turns (WILD-mid, BOSS):
 
-The 0.55 cap is the safety bound for EDB-3's break-cheaper-than-kill invariant. Fractions across an enemy's regions need not sum to 1.0 — regions are independent pools.
+| Fraction | Proportional timing | Use for |
+|----------|--------------------|---------|
+| 0.15–0.25 | ~first quarter of the fight | "Opener" region — breaks with minimal focus; rewards attentiveness |
+| 0.25–0.40 | ~mid fight | Primary harvest target — the deliberate hunt objective |
+| 0.40–0.55 | ~late fight | Expert challenge — requires committed region focus or type advantage |
 
-**Output range:** 5 to floor(600 × 0.55) = 330. Practical: WILD 5–88, BOSS 52–330.
+**Short-fight compression warning (WILD-early):** on a 2–4 turn fight, all three tiers compress to 1–2 turns of commitment — the tier distinctions are not meaningful. For WILD-early enemies, author regions as simply "cheap" (0.15–0.30) or "committed" (0.35–0.55) and do not expect three readable timing tiers.
+
+The 0.55 cap keeps break cost well under kill cost (see EDB-3 note — the invariant itself cannot fail for any fraction < 1.0; the cap is a *worth* judgment, not a math bound). Fractions across an enemy's regions need not sum to 1.0 — regions are independent pools.
+
+**Output range:** floor(594 × 0.55 + 0.0001) = 326 at the top. In-spec minimum is floor(60 × 0.15) = **9** — `BREAK_HP_MIN` (5) never activates for spec-valid content (structure ≥ 60, fraction ≥ 0.15) and is purely defensive, per AC-ED-08(b). Practical: WILD 9–88, BOSS 54–326.
 
 **Worked example (discriminating — floor ≠ round ≠ ceil):** Rustcrawler, structure = 85, Left Arm at region_fraction = 0.35:
 - `85 × 0.35 = 29.749999999999996` (IEEE 754); `+ 0.0001 → 29.7501`; `break_hp = max(5, floor(29.7501)) = 29`
 - Verification: floor = **29**; round = 30; ceil = 30 — an implementation using round() or ceil() returns 30 and fails. (The nudge does not change this case; see AC-ED-08(c) for a case where it does.)
 
-**Rebalancing behavior:** retuning Rustcrawler's structure 85 → 100 auto-updates break_hp to floor(100 × 0.35) = 35 — same relative fight timing, no manual audit.
+**Rebalancing behavior:** retuning Rustcrawler's structure 85 → 88 (the WILD-early ceiling) auto-updates break_hp to floor(88 × 0.35 + 0.0001) = 30 — same relative fight timing, no manual audit.
 
 ---
 
@@ -176,23 +184,29 @@ where `damage_per_turn` is DF-1 evaluated at a calibration loadout:
 
 | Variable | Symbol | Type | Range | Description |
 |----------|--------|------|-------|-------------|
-| Enemy structure | `structure` | int | 60–600 | Full HP pool — the primary TTK lever |
+| Enemy structure | `structure` | int | 60–594 | Full HP pool — the primary TTK lever |
 | Enemy defense | `D_enemy` | int | 0–110 | Armor or Resistance (DF-1's D input) |
 | Calibration player power | `A_cal` | int | 20–80 | Assumed player power at the balancing milestone |
 | Type effectiveness | `T` | float | {0.75, 1.0, 1.5} | Matchup assumed for calibration; use 1.0 as baseline |
 | Result | `TTK_turns` | int | 2–18 | Expected fight length at the calibration point |
 
-**TTK targets and authored stat ranges (normative for AC-ED-05):**
+**TTK bands (normative) and stat range guidance:**
 
-| Class | TTK target | Structure | Physical Power | Energy Power | Armor | Resistance |
-|-------|-----------|-----------|----------------|--------------|-------|------------|
-| WILD (early) | 2–3 turns | 60–100 | 18–30 | 18–30 | 15–30 | 15–30 |
-| WILD (mid) | 3–5 turns | 90–160 | 25–40 | 25–40 | 20–35 | 20–35 |
-| BOSS | 12–18 turns | 350–600 | 35–70 | 35–70 | 30–55 | 30–55 |
+The **TTK band is the normative constraint**, validated per-enemy by AC-ED-14's *computed* check: `dmg = floor(A_cal² / (A_cal + armor))`, `TTK = ceil(structure / dmg)` — using the enemy's *actual* authored Armor (and Resistance, checked separately with the same formula), not a fixed reference D. This jointly bounds structure × defense automatically: a high-Armor boss must carry proportionally less Structure to stay in band. *(Float-safety: exhaustively scanned 2026-07-09 — zero float/int divergences for A_cal ∈ {35, 53}, armor 0–110, structure 1–700; pure IEEE 754 division is correctly rounded, so no epsilon is needed here, unlike EDB-1. Implement in integer arithmetic anyway per project convention.)*
 
-**WILD power cap (hard content rule):** WILD enemies' `physical_power` and `energy_power` must not exceed **40**. Derivation: at A=45, T=1.5, vs. a glass-cannon player (Armor 10, Structure 60), DF-1 gives 55 dmg/hit — a 2-hit death from a *wild* encounter is a cheap death. At the cap (A=40): `1600/50 × 1.5 = 48` dmg — still a 2-hit threat but only against a zero-armor, minimum-structure build in the worst matchup, which is a legitimate build-failure outcome. BOSS power is exempt (up to 70; bosses are allowed to demand build homework).
+| Class | A_cal | TTK band (normative) | Structure guidance* | Physical Power | Energy Power | Armor | Resistance |
+|-------|-------|---------------------|--------------------|----------------|--------------|-------|------------|
+| WILD (early) | 35 | 2–4 turns | 60–88 | 18–30 | 18–30 | 15–30 | 15–30 |
+| WILD (mid) | 53 | 3–5 turns | 90–160 | 25–39 | 25–39 | 20–35 | 20–35 |
+| BOSS | 53 | 12–18 turns | 364–594 | 35–70 | 35–70 | 30–55 | 30–55 |
 
-**Boss TTK note:** the 12–18 turn band (not 10–20) is a mobile session-length decision — at 33 dmg/turn, 20 turns implies Structure ~660 and a 5–8 minute fight; 350–600 keeps bosses substantial but bounded. A higher-armor boss trades structure for defense within the same TTK: D=45, Structure 350 → 2809/98 = 28 dmg/turn → ceil(350/28) = 13 turns.
+\* Structure ranges are **authoring guidance at the class's reference defense** (WILD-early D=20, mid/BOSS D=30) — not independently normative. Extreme *combinations* within these ranges can still leave the TTK band (e.g., BOSS Armor 55 + Structure 594 → 26 dmg/turn → TTK 23); the computed AC-ED-14 check catches them. Conversely, a high-Armor boss may legitimately sit *below* the structure floor (D=45, Structure 350 → 28 dmg/turn → TTK 13 ✓ — in band).
+
+Derivations at reference defense: WILD-early ceiling `ceil(88/22) = 4` ✓ (89+ gives 5 — out of band); BOSS floor `ceil(364/33) = 12` ✓ (350 gives 11 — out); BOSS ceiling `ceil(594/33) = 18` ✓ (600 gives 19 — out).
+
+**WILD power cap (hard content rule):** WILD enemies' `physical_power` and `energy_power` must not exceed **39**. Derivation: the binding worst case is a **zero-Armor** player (Armor 0 is a legal stat value) at minimum Structure 60 in a super-effective matchup. At A=40, D=0, T=1.5: `floor(1600/40 × 1.5) = 60` — a **one-hit kill** from a wild encounter, which is unacceptable even as a build-failure outcome. At the cap (A=39): `floor(1521/39 × 1.5) = floor(58.5) = 58 < 60` — no one-shot exists against any legal build; a 2-hit death (58+58) against a zero-armor, minimum-structure build remains possible and is the legitimate build-failure outcome. BOSS power is exempt (up to 70; bosses are allowed to demand build homework).
+
+**Boss TTK note:** the 12–18 turn band (not 10–20) is a mobile session-length decision — at 33 dmg/turn, 19+ turns means Structure ≥ 595 and a 5–8 minute fight; 364–594 keeps bosses substantial but bounded. A higher-armor boss trades structure for defense within the same TTK band: D=45, Structure 350 → 2809/98 = 28 dmg/turn → ceil(350/28) = 13 turns.
 
 ---
 
@@ -208,8 +222,8 @@ region_is_valid         = break_cheaper_than_kill AND loot_connected
 
 | Variable | Symbol | Type | Range | Description |
 |----------|--------|------|-------|-------------|
-| Region break HP | `break_hp` | int | 5–330 | From EDB-1 |
-| Enemy structure | `structure` | int | 60–600 | Full body HP pool |
+| Region break HP | `break_hp` | int | 9–326 in-spec | From EDB-1 |
+| Enemy structure | `structure` | int | 60–594 | Full body HP pool |
 | Break event | `break_event` | StringName | — | Event this region emits (e.g., `"arm_broken"`) |
 | Loot pool | `loot_pool` | Array[StringName] | — | This enemy's droppable Part DB ids |
 | Result | `region_is_valid` | bool | — | `false` = content authoring error, caught at import — never a runtime fallback |
@@ -241,7 +255,7 @@ region_is_valid         = break_cheaper_than_kill AND loot_connected
 **If** a `WILD` enemy's pool contains a Boss-grade part: content validation fails (Part DB Rule 8: Boss-grade never appears in wild drop tables). **If** a `BOSS` pool contains no Boss-grade part: content validation fails (Rule 2 requires 1–2 exclusives). Both are import-time errors.
 
 ### EC-ED-05 — `core_element` is null
-**If** `core_element` is null: valid content — an elementless construct. DF-1's EC-04 fallback applies (×1.0 neutral for all incoming skills). Note the strategic consequence: a null-element enemy cannot be exploited by type-matching, making it a "neutral wall" — use sparingly, as it mutes the type-mastery fantasy.
+**If** `core_element` is null: valid content — an elementless construct. DF-1's EC-04 fallback applies (×1.0 neutral for all incoming skills). Note the strategic consequence: a null-element enemy cannot be exploited by type-matching, making it a "neutral wall" — it mutes the type-mastery fantasy and is systematically slower to farm (no ×1.5 route). **Enforced density cap**: at most `NULL_ELEMENT_MAX_WILD` (currently 1) null-element `WILD` entries per zone — a second one emits a zone-level ADVISORY warning (AC-ED-15d). "Use sparingly" is a validated rule, not a hope.
 
 ### EC-ED-06 — Missing or unknown keys in `stats`
 **If** a canonical stat key is absent: treated as 0, with one exception — `structure` absent or 0 fails validation (a 0-Structure enemy dies on contact; never valid content). **If** an unknown key is present: warn and ignore, matching Part DB EC-08 — the shared 11-stat vocabulary evolves in one place.
@@ -295,14 +309,16 @@ All values live in external config, not code. Drop-rate knobs (`BASE_DROP_*`, br
 
 | Knob | Current Value | Safe Range | What Changing It Does |
 |------|--------------|------------|----------------------|
-| `BREAK_HP_MIN` | 5 | 3–10 | Floor on derived break HP. Below 3, weak enemies' regions break on any hit (breaks stop feeling earned); above 10, low-Structure enemies' regions can approach the kill threshold, straining EDB-3. |
+| `BREAK_HP_MIN` | 5 | 3–10 | Floor on derived break HP. **Design preference, not a formula safety bound** — EDB-3 cannot fail until BREAK_HP_MIN ≥ structure (i.e., ≥ 60), and the guard never activates for in-spec content anyway (minimum derived value is 9). Below 3, out-of-spec weak enemies' regions would break on any hit; above ~10 the floor starts overriding authored fractions on hypothetical low-Structure content. |
 | `REGION_FRACTION_MIN` | 0.15 | 0.10–0.20 | Lower authoring bound for EDB-1. Lowering makes "opener" regions nearly free; raising removes the early-break reward tier. |
-| `REGION_FRACTION_MAX` | 0.55 | 0.45–0.60 | Upper authoring bound. Raising above 0.60 lets breaks cost more than half the kill — approaching the EDB-3 worth threshold; lowering compresses the expert-challenge tier. |
-| `WILD_POWER_CAP` | 40 | 30–45 | Max WILD `physical_power`/`energy_power`. Above 45, glass-cannon players face 2-hit deaths from trash encounters (EDB-2 derivation); below 30, wild enemies stop threatening mid-game builds and combat pacing sags. |
-| WILD Structure bands | 60–100 / 90–160 | ±20% | Fight length for trash encounters. Directly multiplies session pacing — the primary "does farming feel fast" lever. |
-| BOSS Structure band | 350–600 | 300–660 | Boss fight length (12–18 turns at calibration). Above 660 ≈ 20+ turns — mobile grind territory; below 300, bosses die inside 10 turns and stop feeling like walls that demand build homework. |
-| Boss TTK target | 12–18 turns | 10–20 | The design intent behind the Structure band. Changing this requires recomputing the band via EDB-2 — never change one without the other. |
-| Pool size (WILD / BOSS) | 2–4 / 4–6 | 2–6 / 3–8 | Larger pools dilute per-part rates if the Drop System divides by pool size (Part DB knob note) — coordinate any change with the Drop System GDD. |
+| `REGION_FRACTION_MAX` | 0.55 | 0.45–0.60 | Upper authoring bound. **Design judgment, not a math bound** — EDB-3's `break_hp < structure` invariant cannot fail for any fraction < 1.0; the cap exists because a break costing >55% of the kill damage stops feeling like the cheaper commitment (Pillar 2 *worth*, not formula safety). Lowering compresses the expert-challenge tier. |
+| `WILD_POWER_CAP` | 39 | 30–39 | Max WILD `physical_power`/`energy_power`. At 40+, a super-effective hit one-shots a zero-armor minimum-structure player (EDB-2 derivation: floor(1600/40 × 1.5) = 60 ≥ 60); at 39 the worst case is 58 — 2-hit deaths remain the legitimate build-failure floor. Below 30, wild enemies stop threatening mid-game builds and combat pacing sags. |
+| `NULL_ELEMENT_MAX_WILD` | 1 | 0–2 | Max null-element WILD entries per zone before AC-ED-15d warns. Each null-element enemy is a fight where type mastery does nothing — at 2+ of 8 wilds, a quarter of the roster mutes the game's #2 aesthetic (Challenge via type knowledge). |
+| `BOSS_GRADE_BREAK_GUARANTEE` | 1.0 | 0.5–1.0 | The product floor for AC-ED-09 (`base_rate × multiplier`). At 1.0, Boss-grade drops are guaranteed on break; lowering introduces variance — **do not lower without the Drop System GDD ratifying a pity policy** (Open Question 4). |
+| WILD Structure bands | 60–88 / 90–160 | ±20% | Fight length guidance for trash encounters (normative gate is computed TTK, AC-ED-14). Directly multiplies session pacing — the primary "does farming feel fast" lever. |
+| BOSS Structure band | 364–594 | 330–650 | Boss fight length guidance at reference D=30 (normative gate is computed TTK, AC-ED-14 — high-Armor bosses need proportionally less). Above the band ≈ 19+ turns — mobile grind territory; below, bosses die inside 12 turns and stop feeling like walls that demand build homework. |
+| Boss TTK band | 12–18 turns | 10–20 | The normative constraint (validated per-enemy by AC-ED-14's computed check). Changing this changes the Structure guidance via EDB-2 — never change one without the other. |
+| Pool size (WILD / BOSS) | 2–4 / 4–6 | 2–6 / 3–8 | WILD floor is effectively `regions + 1` (Rule 6 harvest-decision rule, AC-ED-15c). Larger pools dilute per-part rates if the Drop System divides by pool size (Part DB knob note) — coordinate any change with the Drop System GDD (Open Question 5). |
 
 **Knob interaction warning:** `WILD_POWER_CAP`, the Structure bands, and the Boss TTK target are all coupled through EDB-2's calibration points, which are themselves derived from DF-1 at assumed player loadouts. If the Part Database stat budgets or DF-1's type multipliers are retuned, re-run the EDB-2 calibration table before trusting any of these ranges.
 
@@ -328,17 +344,23 @@ ACs marked **BLOCKING** gate story completion (Logic type — automated tests in
 
 **AC-ED-04** (BLOCKING): `loot_pool` referential integrity. **Pass when**: (a) every `loot_pool` entry satisfies `PartDatabase.get_part(id) != null` — zero dangling references (fail); (b) a pool where **all** parts have `drop_enabled == false` fails (EC-ED-03 escalation — zero obtainable drops); (c) a pool with **some** disabled parts passes with an ADVISORY warning per disabled entry in the validation report; (d) duplicate ids within one pool are deduplicated with an ADVISORY warning (EC-ED-08); (e) **happy path**: a pool of 3 valid, enabled, distinct part ids passes with zero warnings; (f) an **empty** `loot_pool` fails — an enemy with nothing to drop violates Pillar 2 (see also AC-ED-15). **Test type**: Content Validation.
 
-**AC-ED-05** (BLOCKING): Stat ranges. **Pass when**: (a) `stats["structure"]` present and ≥ 1 — 0 or missing fails (EC-ED-06); (b) `physical_power`, `energy_power`, `armor`, `resistance` each ∈ [0, 110] — outside fails (DF-1 verified input range; this is a schema-safety gate, distinct from the balance bands in AC-ED-14); (c) for every `WILD` entry: `physical_power <= 40` AND `energy_power <= 40` — above fails (`WILD_POWER_CAP`); (d) **positive case**: a WILD entry with `physical_power = 40` and `energy_power = 40` passes; (e) unknown stat keys emit an ADVISORY warning and are ignored (EC-ED-06). **Test type**: Content Validation.
+**AC-ED-05** (BLOCKING): Stat ranges. **Pass when**: (a) `stats["structure"]` present and ≥ 1 — 0 or missing fails (EC-ED-06); **positive boundary**: `structure = 1` passes, `structure = 0` fails; (b) `physical_power`, `energy_power`, `armor`, `resistance` each ∈ [0, 110] — outside fails (DF-1 verified input range; this is a schema-safety gate, distinct from the balance bands in AC-ED-14); (c) for every `WILD` entry: `physical_power <= 39` AND `energy_power <= 39` — above fails (`WILD_POWER_CAP`); (d) **positive boundary**: a WILD entry with `physical_power = 39` and `energy_power = 39` passes; one with `physical_power = 40` fails; (e) unknown stat keys emit an ADVISORY warning and are ignored (EC-ED-06). **Test type**: Content Validation.
 
-**AC-ED-06** (BLOCKING): Class/pool rarity rules. Rarity is resolved by querying `PartDatabase.get_part(id).rarity` for each pool entry. **Pass when**: (a) zero `WILD` entries whose pool contains a part with `rarity == BOSS_GRADE` (Part DB Rule 8); (b) every `BOSS` entry's pool contains 1 or 2 parts with `rarity == BOSS_GRADE` — 0 fails, 3+ fails (Rule 2); (c) **positive case**: a BOSS pool with exactly 1 Boss-grade and 3 Rare/Common parts passes; (d) **cross-enemy exclusivity**: zero part ids appearing in both a BOSS pool with `rarity == BOSS_GRADE` and any WILD pool — assertion (a) covers this by construction, stated here explicitly so the validator checks all pools, not per-enemy in isolation. **Test type**: Content Validation.
+**AC-ED-06** (BLOCKING): Class/pool rarity rules. Rarity is resolved by querying `PartDatabase.get_part(id).rarity` for each pool entry. **Pass when**: (a) zero `WILD` entries whose pool contains a part with `rarity == BOSS_GRADE` (Part DB Rule 8); (b) every `BOSS` entry's pool contains 1 or 2 parts with `rarity == BOSS_GRADE` — 0 fails, 3+ fails (Rule 2); (c) **all four count boundaries explicit**: exactly 1 Boss-grade passes; exactly **2 passes**; exactly **3 fails**; 0 fails — an implementation accepting only 1, or accepting 3, must fail this AC; positive case: a BOSS pool with exactly 1 Boss-grade and 3 Rare/Common parts passes; (d) **cross-enemy exclusivity**: zero part ids appearing in both a BOSS pool with `rarity == BOSS_GRADE` and any WILD pool — assertion (a) covers this by construction, stated here explicitly so the validator checks all pools, not per-enemy in isolation. **Test type**: Content Validation.
 
 ### Break Region Validation
 
-**AC-ED-07** (BLOCKING): Break region validity (EDB-3 + EDB-1 consistency). For every region of every enemy: **Pass when**: (a) **stored-equals-derived**: `break_hp == max(BREAK_HP_MIN, floor(structure × region_fraction + 0.0001))` — integer equality; a hand-edited stale `break_hp` fails even if it satisfies (b); (b) **EDB-3 both clauses**: `break_hp < structure` AND the region's `break_event` appears as a condition key in `PartDatabase.get_part(id).drop_conditions` for at least one id in this enemy's `loot_pool` — the traversal is region → `break_event` → pool parts' `drop_conditions`; (c) `region_id` unique within the enemy — duplicate fails (EC-ED-08; e.g., two regions both named `"left_arm"` fail); each region's `display_name` is a non-empty String; (d) `region_fraction` within bounds **with float tolerance**: `0.15 − 1e-9 <= region_fraction <= 0.55 + 1e-9` (EC-ED-11) — tolerance required because 0.15 and 0.55 are not exactly representable in IEEE 754 and a strict `>=` fails correctly-authored content; (e) every enemy has `break_regions.size() >= 1` (EC-ED-01). **Test type**: Content Validation.
+**AC-ED-07** (BLOCKING): Break region validity (EDB-3 + EDB-1 consistency). For every region of every enemy: **Pass when**: (a) **stored-equals-derived**: `break_hp == max(BREAK_HP_MIN, floor(structure × region_fraction + 0.0001))` — integer equality; a hand-edited stale `break_hp` fails even if it satisfies (b); (b) **EDB-3 both clauses**: `break_hp < structure` AND the region's `break_event` matches the `condition` field of at least one `drop_conditions` entry on at least one pool part — schema citation: `PartDatabase.get_part(id).drop_conditions` is `Array[Dictionary]` where each entry is `{ condition: StringName, multiplier: float }` (Part DB Rule 1 / AC-11); the traversal is region → `break_event` → each pool part → each `drop_conditions[i].condition`; (c) `region_id` unique within the enemy — duplicate fails (EC-ED-08; e.g., two regions both named `"left_arm"` fail); each region's `display_name` is a non-empty String; (d) `region_fraction` within bounds **with float tolerance**: `0.15 − 1e-9 <= region_fraction <= 0.55 + 1e-9` (EC-ED-11) — tolerance required because 0.15 and 0.55 are not exactly representable in IEEE 754 and a strict `>=` fails correctly-authored content; (e) every enemy has `break_regions.size() >= 1` (EC-ED-01). **Test type**: Content Validation.
 
-**AC-ED-08** (BLOCKING): Formula EDB-1 unit test. **Pass when**: (a) **discriminating case**: `structure = 85, region_fraction = 0.35` returns exactly `29` — `85 × 0.35 = 29.749999999999996` in IEEE 754; floor = 29, round = ceil = 30; an implementation using round() or ceil() returns 30 and fails. This case also confirms `BREAK_HP_MIN` is inactive in normal ranges (29 > 5). (b) **BREAK_HP_MIN activation (out-of-band formula-behavior test)**: `structure = 20, region_fraction = 0.15` returns exactly `5` — `20 × 0.15 = 3.0` (verified exact in IEEE 754; no epsilon interaction), `max(5, 3) = 5`. Honesty note: within MVP content ranges (structure ≥ 60, fraction ≥ 0.15 → `60 × 0.15 = 9.0` exactly, floor 9 > 5) the guard never activates — it is defensive, like the Part DB F1/F2 epsilon. (c) **Epsilon regression case (LOAD-BEARING — verified 2026-07-09)**: `structure = 180, region_fraction = 0.35` returns exactly `63` — `180 × 0.35 = 62.99999999999999` in IEEE 754; without the `+ 0.0001` nudge, floor returns 62 (wrong). An implementation omitting the nudge fails this case. Exhaustive scan: 8 such inputs exist at 2-decimal fractions in valid content ranges. **Test type**: Unit.
+**AC-ED-08** (BLOCKING): Formula EDB-1 unit test. **Pass when**: (a) **discriminating case**: `structure = 85, region_fraction = 0.35` returns exactly `29` — `85 × 0.35 = 29.749999999999996` in IEEE 754; floor = 29, round = ceil = 30; an implementation using round() or ceil() returns 30 and fails. This case also confirms `BREAK_HP_MIN` is inactive in normal ranges (29 > 5). (b) **BREAK_HP_MIN activation (out-of-band, GUARD-ONLY test)**: `structure = 20, region_fraction = 0.15` returns exactly `5` — `20 × 0.15 = 3.0` (verified exact in IEEE 754; no epsilon interaction), `max(5, 3) = 5`. **This case does NOT discriminate rounding mode** — floor, round, and ceil all return 3 on an exact 3.0; it proves only that the `max()` guard fires. Rounding-mode discrimination is owned exclusively by cases (a) and (c). Honesty note: within MVP content ranges (structure ≥ 60, fraction ≥ 0.15 → `60 × 0.15 = 9.0` exactly, floor 9 > 5) the guard never activates — it is defensive, like the Part DB F1/F2 epsilon. (c) **Epsilon regression case (LOAD-BEARING — verified 2026-07-09)**: `structure = 180, region_fraction = 0.35` returns exactly `63` — `180 × 0.35 = 62.99999999999999` in IEEE 754; without the `+ 0.0001` nudge, floor returns 62 (wrong). An implementation omitting the nudge fails this case. Exhaustive scan: 8 such inputs exist at 2-decimal fractions in valid content ranges. **Test type**: Unit.
 
-**AC-ED-09** (BLOCKING): Boss-grade break gating. For every `BOSS` entry, the check is a two-step lookup: (1) collect the set of this boss's `break_event` values; (2) for each pool part with `rarity == BOSS_GRADE`, assert it has at least one `drop_conditions` entry whose `condition` key is in that set AND whose `multiplier >= 1000`. **Pass when**: zero BOSS entries where any Boss-grade pool part lacks such a condition. Threshold rationale: at ×1000, `clamp(0.001 × 1000) = 1.0` — the drop is **guaranteed** when the break fires, satisfying Rule 2's "gates the drop" (a ×500 condition yields only 0.5 and satisfies Part DB AC-11 but NOT this AC — assert a part with only a ×500 condition fails). **Test type**: Content Validation.
+**AC-ED-09** (BLOCKING): Boss-grade break gating. For every `BOSS` entry, the check is a two-step lookup: (1) collect the set of this boss's `break_event` values; (2) for each pool part with `rarity == BOSS_GRADE`, assert it has at least one `drop_conditions` entry whose `condition` is in that set AND which satisfies the **product invariant**:
+
+```
+BASE_DROP_BOSS_GRADE × multiplier >= BOSS_GRADE_BREAK_GUARANTEE
+```
+
+where `BASE_DROP_BOSS_GRADE` is read from the Part DB Tuning Knobs config (currently 0.001) and `BOSS_GRADE_BREAK_GUARANTEE` is a config constant (currently **1.0** = guaranteed on break). **Pass when**: zero BOSS entries where any Boss-grade pool part lacks such a condition. **The AC asserts the product, never a hardcoded multiplier** — at the current base rate the threshold works out to ×1000, but the invariant survives base-rate retuning: if `BASE_DROP_BOSS_GRADE` is tuned to 0.0005, a stored ×1000 (product 0.5) correctly **fails** rather than silently degrading the "guaranteed" promise to a coin flip. Cross-system boundary case: a part whose only break condition is ×500 satisfies Part DB AC-11 (≥ 500) but yields product 0.5 < 1.0 and fails this AC — assert exactly that case (Part DB accepts the entry; Enemy DB rejects the boss pool). Policy note: whether Boss-grade acquisition stays a hard guarantee or becomes a pity arc/variance model is a **Drop System GDD decision** (Open Question 4); this AC keeps that door open — the Drop System may lower `BOSS_GRADE_BREAK_GUARANTEE` below 1.0 without rewriting this schema. **Test type**: Content Validation.
 
 ### Runtime Behavior
 
@@ -350,16 +372,29 @@ ACs marked **BLOCKING** gate story completion (Logic type — automated tests in
 
 ### Content Rules
 
-**AC-ED-13**: Reserved and bounded fields — two independently labeled assertions: (a) ADVISORY: `tier == 1` for all MVP entries — other values emit a warning, not a failure (EC-ED-12); (b) BLOCKING: `flavor_text.length() <= 100` — a 100-char string **passes**, a 101-char string **fails** (boundary explicit). *Sync note: Part DB does not yet enforce a flavor_text length AC; if Part DB ratifies a different value, this threshold must sync (Rule 1 alignment note).* **Test type**: Content Validation.
+**AC-ED-13a** (ADVISORY): Reserved `tier` field. `tier == 1` for all MVP entries — other values emit a warning in the validation report, never a failure (EC-ED-12). **Test type**: Content Validation.
 
-**AC-ED-14** (ADVISORY): EDB-2 stat band validator. **Pass when** the validator is implemented and emits warnings (never failures) for: WILD entries outside `structure ∈ [60, 160]`, `physical_power/energy_power ∈ [18, 40]`, `armor/resistance ∈ [15, 35]`; BOSS entries outside `structure ∈ [350, 600]`, `physical_power/energy_power ∈ [35, 70]`, `armor/resistance ∈ [30, 55]`. The AC exists so the warning surface is real and tested — a "warning" with no implemented validator is a promise with no mechanism. **Test type**: Content Validation (ADVISORY).
+**AC-ED-13b** (BLOCKING): Flavor text length. `flavor_text.length() <= FLAVOR_TEXT_MAX` where `FLAVOR_TEXT_MAX` is a **shared config constant** (currently 100) — never a literal in validator code. Boundary explicit: a 100-char string **passes**, a 101-char string **fails**. *Sync note: Part DB does not yet enforce a flavor_text length AC; both schemas must read the same constant, so a Part DB ratification of a different value is a one-line config change, not an AC rewrite (Rule 1 alignment note).* **Test type**: Content Validation.
 
-**AC-ED-15** (ADVISORY, except where noted): Content density counts. (a) `break_regions.size() > 3` warns (MVP intent 2–3; minimum 1 is BLOCKING via AC-ED-07(e)); (b) WILD `loot_pool.size()` outside [2, 4] warns; BOSS outside [4, 6] warns; empty pool is BLOCKING via AC-ED-04(f). **Test type**: Content Validation.
+**AC-ED-14** (ADVISORY): EDB-2 **computed TTK** validator. For every enemy, compute per defense channel:
 
-**AC-ED-16** (DEFERRED): Null `core_element` integration path. **Pass when**: an enemy with `core_element = null` passed through Turn-Based Combat into `compute_damage()` produces no crash and applies `T = 1.0` (DF-1 EC-04 fallback) — e.g., Volt skill at A=53, D=30 vs. null-element enemy returns 33, not 50. *Unblocks when: Turn-Based Combat GDD defines its damage call contract.* **Test type**: Integration.
+```
+dmg_armor  = floor( A_cal² / (A_cal + stats["armor"]) )
+dmg_resist = floor( A_cal² / (A_cal + stats["resistance"]) )
+TTK        = ceil( stats["structure"] / dmg )        # per channel
+```
+
+with `A_cal` = 35 (WILD-early), 53 (WILD-mid, BOSS). **Pass when** the validator is implemented and emits a warning (never a failure) whenever either channel's TTK falls outside the class band: WILD-early 2–4, WILD-mid 3–5, BOSS 12–18. **Boundary direction explicit**: TTK exactly **at** a band edge produces **no warning** (BOSS TTK = 12 → silent; TTK = 18 → silent); one turn outside warns (TTK = 11 → warning; TTK = 19 → warning). This computed check replaces static per-stat range checks as the normative gate — it jointly bounds structure × defense (a BOSS with Armor 55 + Structure 594 → dmg 26 → TTK 23 → **warns**, even though each stat is individually within guidance ranges). Power/defense stat guidance ranges from the EDB-2 table remain authoring reference only, not validated assertions. WILD-early vs WILD-mid classification for A_cal selection: MVP has one zone — classify by structure guidance band (< 90 → early); revisit when tiers activate. Float-safety: verified no float/int divergence across the full input space (2026-07-09 scan); implement in integer arithmetic. The AC exists so the warning surface is real and tested — a "warning" with no implemented validator is a promise with no mechanism. **Test type**: Content Validation (ADVISORY).
+
+**AC-ED-15** (ADVISORY, except where noted): Content density counts. (a) `break_regions.size() > 3` warns (MVP intent 2–3; minimum 1 is BLOCKING via AC-ED-07(e)); (b) WILD `loot_pool.size()` outside [2, 4] warns; BOSS outside [4, 6] warns; empty pool is BLOCKING via AC-ED-04(f); (c) **BLOCKING — harvest-decision rule (Rule 6)**: for every entry, `loot_pool.size() > break_regions.size()` — equality or less fails; boundary explicit: 2 regions + 3 pool parts **passes**, 2 regions + 2 pool parts **fails**; (d) ADVISORY — null-element density (EC-ED-05): if the count of `WILD` entries with `core_element == null` exceeds `NULL_ELEMENT_MAX_WILD` (currently 1), emit a zone-level warning — boundary: 1 null-element WILD silent, 2 warns. **Test type**: Content Validation.
+
+**AC-ED-16** (DEFERRED): Null `core_element` integration path. **Pass when**: an enemy with `core_element = null` passed through Turn-Based Combat into `compute_damage()` produces no crash and applies `T = 1.0` (DF-1 EC-04 fallback). Expected value derived **from DF-1 itself** (damage-formula.md Formula DF-1: `max(DAMAGE_FLOOR, floor(A²/(A+D) × T × crit_mult + EPSILON))`), not from the EDB-2 calibration table: Volt skill at A=53, D=30, T=1.0, crit_mult=1.0 → `floor(2809/83 + ε) = floor(33.84...) = 33` — returns 33, not 50 (the ×1.5 value). A deferred implementer can verify 33 independently from the DF-1 definition. *Unblocks when: Turn-Based Combat GDD defines its damage call contract.* **Test type**: Integration.
 
 ## Open Questions
 
 1. **Full Vision boss assembly migration (owner: game-designer, resolve: before Full Vision zone 2 content):** Rule 3 reserves the path to migrate `BOSS` entries from hand-authored stats to true part-assembly (stats derived via Part DB Formula 1). This requires deciding whether boss "equipped parts" become their literal loot pool. No MVP action; revisit when the Synergy System makes assembled bosses meaningful ("bosses use advanced synergies" — game concept).
 2. **Compound break events (owner: systems-designer, resolve: with Drop System GDD):** EC-ED-07's set semantics mean double-breaks can't be rewarded more than single breaks. If playtesting shows players want "break everything" incentives, a compound event vocabulary (`"all_regions_broken"`, `"both_arms_broken"`) must be added to the Part DB drop_conditions vocabulary — Drop System GDD should reserve the naming pattern.
 3. **Enemy resource economy symmetry (owner: game-designer, resolve: in Turn-Based Combat GDD — already a hard constraint, ED1):** Do enemies track Heat/Overheat and Energy identically to players? If Combat simplifies enemy resources (e.g., no enemy Overheat), the Cooling/Energy Capacity/Recharge keys in enemy stat blocks become dead data and Rule 3 must be amended.
+4. **Boss-grade acquisition policy and bad-luck protection (owner: economy-designer, resolve: in Drop System GDD — MUST be addressed there, not optional):** Two coupled decisions this schema deliberately does not make. (a) Boss-grade: hard guarantee on break (current `BOSS_GRADE_BREAK_GUARANTEE = 1.0`) vs. pity arc vs. variance — the guarantee removes acquisition tension (2–4 Boss-grade parts total in MVP, all acquired within the first handful of boss breaks); AC-ED-09's product invariant keeps all three options open. (b) Rare drops: no bad-luck protection exists anywhere in the current design — at pool-diluted rates a player has a ~52% chance of zero target-Rare drops in 10 fights. A farming fantasy of "deliberate, learnable hunting" breaks on bad streaks; the Drop System GDD must take an explicit position (pity floor, streak-breaker, or a documented decision to accept variance).
+5. **Pool-size dilution vs. Part DB "3–5 attempts" framing (owner: economy-designer, resolve: in Drop System GDD — blocking for that GDD's sign-off):** Part DB's Rare base rate (0.25) is framed as "~3–5 attempts," which assumes pool size 1. If the Drop System divides base rates by pool size (Part DB knob note), a Rare in a 6-part BOSS pool has an effective per-target rate of ~4.2% → ~24 boss fights (≈ 96–144 minutes) for one Rare — an order of magnitude off the framing, and a direct threat to the 5-hour MVP engagement target. Neither this schema nor Part DB owns the bridging arithmetic today. The Drop System GDD must own it and reconcile the two documents.
+6. **Roster-level coverage validation (owner: TBD — Encounter Zone GDD or a dedicated content-lint tool; resolve: before MVP content authoring completes):** Pillar 5 ("every enemy worth hunting") is unenforceable per-enemy. Three roster-level checks need a home: (a) reverse coverage — every drop-enabled Part DB entry appears in ≥ 1 loot pool; (b) slot/element coverage — the zone's union of pools spans all slot types and elements (no starved build paths); (c) `part_family` progression arcs — a family's Common/Rare/Boss-grade variants are distributed coherently across enemy tiers (no skipped rungs). A single Enemy Database entry cannot see the roster; this schema's per-enemy ACs deliberately exclude these.
