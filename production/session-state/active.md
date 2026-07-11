@@ -180,16 +180,26 @@ Re-review 2026-07-10 verdict = MAJOR REVISION NEEDED (9 blockers). All 9 worked 
 - Registry: +MULTIPLIER_FLOOR; N_PROTO_PITY note corrected; last_updated 2026-07-11.
 - AC count now: 27 BLOCKING unit + 1 gated (AC-DS-28) + 4 deferred (AD-1,3,4,5).
 
+## Session 18 — Part-Break /design-review (full, 5 agents) → NEEDS REVISION → 11 blockers fixed same session
+Full review spawned game-designer + systems-designer + qa-lead + ux-designer + creative-director (synthesis). Verdict NEEDS REVISION (surgical, no redesign). CD committed to APPROVE-via-fix-confirmation once must-do items landed. User chose "revise now" + "re-review in fresh session."
+- **PB-F5 enrage retuned 0.15 → 0.12** (user decision): cap +45%→+36%; epsilon re-scanned (python3) → now ALL-DEFENSIVE (old load-bearing 1.15 gone); output_range 456→428. Honest calibration note replaces false "3-4 hits" claim — glass cannon (SA-F1 floor 60) is one-shot at 1 stack (55×1.12=61>60); tied to OQ-PB-3. Registry synced (PB-F5 entry + ENRAGE_PER_BREAK const + last_updated).
+- **7 qa-lead AC hardenings**: AC-PB-05(c)+new(d) kill-path, 09(N=1), 18(spillover==0), 21(precondition), 23(spillover==14/struct==0), 24(reinit non-null), 30(dynamic mid-battle exclusion).
+- **New AC-PB-31** (Combat-UI break-progress data contract, Integration BLOCKING). AC count 30→31 (29 BLOCKING).
+- **Player Fantasy reframed** (CD-adjudicated): harvest cost = turns+enrage (systemic, AC-PB-28-guaranteed for any bias); BALANCED = opportunity cost. **1.00 anchor KEPT** (rejected GD's 0.80 proposal).
+- **UI-3 pre-SCAN = hidden-until-SCAN** (user decision) + tutorial-dependency caveat.
+- **Recommended applied**: 2.0×-ratio absolute-floor companion; AC-PB-28 TBC-harness prerequisite declared.
+- Review log created: design/gdd/reviews/part-break-review-log.md. systems-index: #9 → "In Review — NEEDS REVISION addressed".
+
 ## Next
-- **/design-review design/gdd/drop-system.md in a FRESH session** (re-review the MAJOR REVISION fixes — never same-session as authoring/revision).
-- Then /consistency-check (new registry const MULTIPLIER_FLOOR + Enemy DB/Part DB errata).
-- Surfaced follow-up: Part DB should add a content-validation AC for the ≥×3.0 Prototype drop-condition floor (DS-2 analog of AC-11).
-- Next MVP system in design order: #7 Encounter Zone (Not Started) or #9 Part-Break (binding Pillar-2; also closes OQ-DS-1/OQ-DS-2 for Drop).
+- **/design-review design/gdd/part-break.md in a FRESH session** (fix-confirmation re-review — CD pre-committed to APPROVE if fixes verify; lighter than full 5-agent sweep). Never same-session as revision.
+- Still pending from Session 17: **/design-review design/gdd/drop-system.md in a fresh session** (Drop MAJOR REVISION fixes) + /consistency-check (MULTIPLIER_FLOOR + errata).
+- 3 Part-Break ERRATA obligations still unapplied on TBC / Move DB / Drop System (see top of file) — apply before those docs are re-approved.
+- Next MVP system in design order: #7 Encounter Zone (Not Started) or #10 Enemy AI.
 
 <!-- STATUS -->
 Epic: MVP Core GDDs
-Feature: Drop System GDD → MAJOR REVISION addressed (pending re-review)
-Task: 9/9 blockers fixed (dedupe + economy rederivation + MULTIPLIER_FLOOR + pity rules + AC fixes + AD-2→AC-DS-28 + errata). Next: /design-review in fresh session.
+Feature: Part-Break GDD → NEEDS REVISION addressed (pending fresh-session re-review)
+Task: 11 blockers fixed (ENRAGE 0.15→0.12 + 7 AC hardenings + AC-PB-31 + fantasy reframe + pre-SCAN IA). Next: /design-review in fresh session, then Drop re-review.
 <!-- /STATUS -->
 
 <!-- CONSISTENCY-CHECK: 2026-07-11 | GDDs checked: 9 | Conflicts found: 0 (1 stale registry note synced: N_PROTO_PITY calibration) | Drop-owned constants N_PROTO_PITY/M_BOSS_PITY/MULTIPLIER_FLOOR all consistent across Part DB + Enemy DB -->

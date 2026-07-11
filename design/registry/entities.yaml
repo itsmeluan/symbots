@@ -37,7 +37,7 @@
 #   Each entry: name, status, source, referenced_by[], attributes{}, added, revised
 
 version: 1
-last_updated: "2026-07-11"  # + Part-Break: PB-F1..F5 formulas, BREAK_SPILLOVER/ENRAGE_PER_BREAK/BREAK_BIAS_MULTIPLIERS constants; referenced_by updated on EDB-1/BREAK_HP_MIN/DAMAGE_FLOOR/MOVE-F1/TBC-F5. Earlier: N_PROTO_PITY calibration re-sync; MULTIPLIER_FLOOR (Rule 5a); N_PROTO_PITY, M_BOSS_PITY; passives section (3 status riders)
+last_updated: "2026-07-11"  # Part-Break design-review revision: ENRAGE_PER_BREAK retuned 0.15->0.12 (PB-F5 output_range 456->428, all enrage mults now epsilon-defensive). Earlier same day: Part-Break PB-F1..F5 formulas, BREAK_SPILLOVER/ENRAGE_PER_BREAK/BREAK_BIAS_MULTIPLIERS constants; referenced_by updated on EDB-1/BREAK_HP_MIN/DAMAGE_FLOOR/MOVE-F1/TBC-F5. Earlier: N_PROTO_PITY calibration re-sync; MULTIPLIER_FLOOR (Rule 5a); N_PROTO_PITY, M_BOSS_PITY; passives section (3 status riders)
 
 # ─── ENTITIES ────────────────────────────────────────────────────────────────
 # Named game-world objects: enemies, NPCs, characters, factions, bosses.
@@ -537,14 +537,15 @@ formulas:
     variables:
       - enemy_hit_resolved (enemy TBC-F5 output, 1-315)
       - broken_region_count (0-3)
-      - ENRAGE_PER_BREAK (0.15)
+      - ENRAGE_PER_BREAK (0.12)
       - DAMAGE_FLOOR (1, shared)
       - EPSILON (0.0001)
-    output_range: [1, 456]
+    output_range: [1, 428]
     expression: "enraged_damage = max(DAMAGE_FLOOR, floor(enemy_hit_resolved * (1 + broken_region_count * ENRAGE_PER_BREAK) + 0.0001))"
-    notes: "Enrage: +15% enemy outgoing damage per broken region (max +45% at 3). Applied by TBC to enemy
-      damage. LOAD-BEARING epsilon at multiplier 1.15 (broken_region_count=1; 4 cases — python3-scanned
-      2026-07-11); defensive at 1.30/1.45. Multiplier range [1.00, 1.45]. Re-run scan if ENRAGE_PER_BREAK retuned."
+    notes: "Enrage: +12% enemy outgoing damage per broken region (max +36% at 3). Applied by TBC to enemy
+      damage. All multipliers {1.12, 1.24, 1.36} epsilon-DEFENSIVE (python3-scanned 2026-07-11 after retune from
+      0.15; the former load-bearing 1.15 case existed only at the old 0.15 value). Multiplier range [1.00, 1.36].
+      Re-run scan if ENRAGE_PER_BREAK retuned. Retuned 0.15->0.12 in design-review 2026-07-11."
     added: 2026-07-11
     revised: ""
 
@@ -796,12 +797,15 @@ constants:
     referenced_by:
       - design/gdd/part-break.md              # PB-F5, Rule 7
       - design/gdd/turn-based-combat.md        # TBC applies enrage to enemy outgoing damage (Rule 10 erratum)
-    value: 0.15
+    value: 0.12
     unit: additive enemy outgoing-damage bonus per broken region
-    notes: "PB-F5. Greed tax — each broken region raises enemy damage by 15% (max +45% at 3). Safe range 0.08-0.20;
-      at 0.20 a fully-enraged enemy can two-shot glass cannons, at 0.08 enrage is cosmetic. Coupled to SA-F1 Structure
-      ranges — recheck the glass-cannon case if enemy power (EDB-2) or Structure ranges change. Re-run the PB-F5
-      epsilon scan if changed. Global constant in MVP (all enemies); per-enemy enrage_enabled is OQ-PB-4."
+    notes: "PB-F5. Greed tax — each broken region raises enemy damage by 12% (max +36% at 3). Retuned 0.15->0.12 in
+      design-review 2026-07-11 to widen the tanky-build absorption band. Safe range 0.08-0.20. KNOWN/INTENDED: at 0.12
+      a minimum-Structure build (SA-F1 floor 60) is one-shot by a realistic ~55 enemy hit at a single enrage stack
+      (55*1.12=61>60) — the thin margin is base-hit-vs-Structure-floor, not the multiplier; playtest-gated (OQ-PB-3).
+      Coupled to SA-F1 Structure ranges — recheck the glass-cannon case if enemy power (EDB-2) or Structure ranges
+      change. Re-run the PB-F5 epsilon scan if changed. Global constant in MVP (all enemies); per-enemy enrage_enabled
+      is OQ-PB-4."
     added: 2026-07-11
     revised: ""
 
