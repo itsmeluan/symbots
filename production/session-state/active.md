@@ -3,8 +3,11 @@
 ## Current Task
 Session 17: **Part-Break System GDD `/design-system part-break`** (lean mode). Skeleton created at `design/gdd/part-break.md`. Starting Section A (Overview).
 **File**: design/gdd/part-break.md
-**Sections complete**: A (Overview)
-**Current section**: B — Player Fantasy
+**Sections complete**: A (Overview), B (Player Fantasy), C (Detailed Design)
+**Current section**: D — Formulas
+**Key locked decisions**: Two-pool model (Structure + region break pools from EDB-1); free target selection (Structure OR region, no turn cost); break_bias enum STRUCTURE_HEAVY/BALANCED/BREAK_HEAVY; BREAK_SPILLOVER=0.20; deterministic break (one RNG gate = the drop); unlimited multi-break gated by fraction cost + ENRAGE_PER_BREAK escalator; all_boss_parts_broken capstone.
+**Erratum obligations created (Approved docs)**: Move DB (+break_bias field + BREAK_BIAS_MULTIPLIERS), TBC (Rule 10 target routing + spillover + bias + enrage), Drop System (break deterministic → drops P(break fires) + break-failure pity from provisional Rule 5/7).
+**New constants to register (Phase 5)**: BREAK_SPILLOVER, BREAK_BIAS_MULTIPLIERS, ENRAGE_PER_BREAK.
 
 ### Passive DB blockers resolved this session (all in design/gdd/passive-database.md)
 1. **Schema hole** — STAT_AURA/RESOURCE_EFFECT/STRUCTURAL_EFFECT had no data fields → added **Rule 3a `behavior_params`** typed sub-schema; added field to Rule 1 + Rule 5 table.
