@@ -1,5 +1,15 @@
 # Review Log: Drop System
 
+## Review — 2026-07-11 (re-review) — Verdict: NEEDS REVISION (revisions applied; pending re-review)
+Scope signal: L
+Specialists: game-designer, economy-designer, systems-designer, qa-lead, creative-director
+Blocking items: 9 | Recommended: ~12
+Summary: Fresh-context re-review of the MAJOR-REVISION fixes. All 9 prior blockers verified closed; systems-designer independently verified all 11 numerical claims (zero arithmetic errors). New findings were a level deeper — design-experience and AC-discrimination, not math. Nine new blockers: (1) DS-2 all-or-nothing pity credit dead-ends partial-execution players against a hidden counter [game-designer]; (2) OQ-DS-6 break-on-defeat was an uncontracted gap to Not-Started Part-Break [game-designer]; (3) economy modeled only arc-total, not back-loaded early timing [economy-designer]; (4) Boss-grade 25% absorption implausible at 2-boss scope [economy-designer]; (5) States table implied roll-then-pity, contradicting pre-roll pseudocode [systems-designer + game-designer, triple-convergent]; (6) AC-DS-25 fixture ×1.4 below MULTIPLIER_FLOOR [qa-lead]; (7) AC-DS-26 non-discriminating vs omitted-pity [systems-designer]; (8) AC pity-interaction gaps — multi-guarantee stream, joint pity, output order, undefined "identical pity state" [qa-lead]; (9) AC-DS-19 vs scrap-yield range inversion [economy-designer].
+CD directive on the central tension: hidden pity STAYS hidden (rejected the reveal asks) — the defect is the credit model, fixed with partial-credit-per-condition, not the UI.
+Revisions applied this session (user chose "revise now"): DS-2 rebuilt as partial-credit (`pity_credit += c`, threshold `N_PROTO_PITY × C`; optimal play unchanged at 25 attempts); OQ-DS-6 accepted victory-only as final (user decision, no Part-Break obligation); Boss-grade → 0% absorption (faucet ~1,840) + game-thirds temporal sketch; States-table pity fold; AC-DS-25 → ×1.5; AC-DS-26 positive companion; AC-DS-10/24/21/18 multi-part coverage; new AC-DS-29 (partial-credit discriminator); scrap-yield ranges made non-overlapping + invariant note. AC count 27 → 28 BLOCKING.
+Prior verdict resolved: Yes — all 9 prior (MAJOR) blockers closed and verified; this verdict is a step down to NEEDS REVISION.
+Next: fresh-session re-review of these fixes (never same-session as revision); then /consistency-check (N_PROTO_PITY × C threshold, Boss-grade 0% absorption, scrap-yield ranges vs registry/Part DB/Enemy DB).
+
 ## Review — 2026-07-10 (re-review) — Verdict: MAJOR REVISION NEEDED
 Scope signal: L
 Specialists: game-designer, systems-designer, economy-designer, qa-lead, creative-director

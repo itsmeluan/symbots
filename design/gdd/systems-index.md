@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Created**: 2026-07-09
-> **Last Updated**: 2026-07-10 (Drop System GDD re-reviewed — MAJOR REVISION NEEDED)
+> **Last Updated**: 2026-07-11 (Drop System GDD re-reviewed — NEEDS REVISION; revisions applied, pending fresh-session re-review)
 > **Source Concept**: design/gdd/game-concept.md
 
 ---
@@ -34,7 +34,7 @@ designed first.
 | 5 | Synergy System | Gameplay | MVP | Approved | design/gdd/synergy-system.md | Part Database, Symbot Assembly |
 | 6 | Turn-Based Combat System | Gameplay | MVP | Approved | design/gdd/turn-based-combat.md | Damage Formula, Symbot Assembly, Enemy Database, Synergy, Part Database |
 | 7 | Encounter Zone System | World | MVP | Not Started | — | Enemy Database |
-| 8 | Drop System | Economy | MVP | NEEDS REVISION | design/gdd/drop-system.md | Part Database, Enemy Database |
+| 8 | Drop System | Economy | MVP | In Review (revisions applied 2026-07-11, pending re-review) | design/gdd/drop-system.md | Part Database, Enemy Database |
 | 9 | Part-Break System | Gameplay | MVP | Not Started | — | Turn-Based Combat, Drop System |
 | 10 | Enemy AI System | Gameplay | MVP | Not Started | — | Turn-Based Combat, Enemy Database |
 | 11 | Inventory System | Economy | MVP | Not Started | — | Part Database |
