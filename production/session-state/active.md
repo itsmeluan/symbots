@@ -3,8 +3,9 @@
 ## Current Task
 Session 17: **Part-Break System GDD `/design-system part-break`** (lean mode). Skeleton created at `design/gdd/part-break.md`. Starting Section A (Overview).
 **File**: design/gdd/part-break.md
-**Sections complete**: A (Overview), B (Player Fantasy), C (Detailed Design), D (Formulas — scan-verified)
-**Current section**: E — Edge Cases
+**Sections complete**: A, B, C (+Rule 11), D (scan-verified), E (12 ECs), F (Dependencies + 3 errata: TBC/Move DB/Drop System), G (Tuning Knobs)
+**Current section**: H — Acceptance Criteria (spawn qa-lead — lean HIGH-risk exception)
+**Multi-target skills**: RESERVED extension (Rule 11) — target_profile schema hook + split rule reserved; no MVP content. User confirmed.
 **Section D locked**: BREAK_BIAS_MULTIPLIERS = STRUCTURE_HEAVY(1.25,0.55)/BALANCED(1.00,1.00)/BREAK_HEAVY(0.70,1.40); BREAK_SPILLOVER=0.20; ENRAGE_PER_BREAK=0.15. Epsilon scan (python3, M∈[1,315]): PB-F1@0.70 LOAD-BEARING, PB-F2@1.40 LOAD-BEARING, PB-F3 defensive, PB-F5@1.15 LOAD-BEARING; 0 overcorrections, 0 unfixed. Formulas PB-F1..F5 + DAMAGE_FLOOR=1 guards.
 **Key locked decisions**: Two-pool model (Structure + region break pools from EDB-1); free target selection (Structure OR region, no turn cost); break_bias enum STRUCTURE_HEAVY/BALANCED/BREAK_HEAVY; BREAK_SPILLOVER=0.20; deterministic break (one RNG gate = the drop); unlimited multi-break gated by fraction cost + ENRAGE_PER_BREAK escalator; all_boss_parts_broken capstone.
 **Erratum obligations created (Approved docs)**: Move DB (+break_bias field + BREAK_BIAS_MULTIPLIERS), TBC (Rule 10 target routing + spillover + bias + enrage), Drop System (break deterministic → drops P(break fires) + break-failure pity from provisional Rule 5/7).

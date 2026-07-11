@@ -51,6 +51,8 @@ TBC owns Structure and applies both Structure reductions; Part-Break owns and ap
 
 **Rule 10 — Break damage uses the full combat pipeline.** Region damage is the *same* `move_damage` Structure would receive — it passes through DF-1 (type effectiveness, the enemy's Armor/Resistance), MOVE-F1 (power tier), and Stagger (TBC-F5) before the `break_mult` split. So build power and element matchup matter for breaking exactly as for killing: the right element breaks faster, off-element pays more, and a heavily-armored enemy's regions are slow to break (intended build friction). MVP regions inherit the enemy's single defense stat — no per-region hitzone values (a possible post-MVP enrichment; see Open Questions).
 
+**Rule 11 — Multi-target moves (reserved extension; no MVP content).** MVP DAMAGE moves are strictly **single-sub-target** (Rule 2 — one Structure hit or one region hit). The architecture, however, supports multi-hit moves natively: because Part-Break is a per-hit accumulator on `hit_resolved`, a move that produces several hits is simply routed several times through Rule 4, each sub-hit independently able to trigger a break (PB-F4) and an enrage stack (Rule 7). A future move may therefore declare a **`target_profile`** — an ordered list of `(target, damage_mult)` sub-hits (e.g. a `SHATTER` sweep = `[(all_regions, 0.5)]`, a `CLEAVE` = `[(structure, 0.7),(arm, 0.7)]`). Reserved constraints for whoever authors the first one: (a) `target_profile` **replaces** `break_bias` for that move (a move is either a single-bias hit or a profiled multi-hit, never both); (b) per-target multipliers must be balanced so no single move both kills *and* fully breaks (content rule); (c) a sweep that breaks multiple regions in one resolution applies **one enrage stack per break**, all in that hit (a deliberate risk spike). This rule reserves the schema and the routing contract; **no MVP move authors a `target_profile`**, and the Move DB erratum this GDD creates need only add the field as reserved/nullable. *(See Open Questions.)*
+
 ### States and Transitions
 
 Per **region** (each tracked independently):
@@ -225,15 +227,94 @@ Applied by TBC to the **enemy's** outgoing hit (Rule 7), after the enemy's own D
 
 ## Edge Cases
 
-[To be designed]
+**EC-PB-01 — Kill before break (the core tension).** *If Structure reaches 0 while a region is still `INTACT`*: the fight ends in VICTORY immediately (TBC Rule 12), the region is never broken, and its `<region>_broken` key never enters `fired_break_events`. The harvest is lost — this is the intended "don't finish too early" discipline, not an error. *Verified by AC-PB-01.*
+
+**EC-PB-02 — Resolution order within one region hit (break vs. victory).** A region-targeted hit resolves in fixed order: (1) apply PB-F2 to the region pool — if depleted, the break fires and `broken_region_count` increments (PB-F4); (2) apply PB-F3 spillover to Structure; (3) TBC checks victory. Because the break (step 1) always resolves before the victory check (step 3), **a hit that both breaks the region and drops Structure to 0 via spillover counts the break** — the event is already in the set when VICTORY fires, so it pays out. *Verified by AC-PB-02.*
+
+**EC-PB-03 — Spillover kills without breaking.** *If a region-targeted hit's PB-F3 spillover drops Structure to 0 while the region pool is not yet depleted*: step 1 fires no break, step 3 triggers VICTORY, and the region is lost un-broken. Legible consequence of over-committing spillover on a low-Structure enemy — the player killed it a hit early. *Verified by AC-PB-03.*
+
+**EC-PB-04 — Overkill break damage is discarded and does not inflate spillover.** *If `break_damage` exceeds the region's remaining `current_break_hp`*: the pool floors at 0 (PB-F4 `max(0,…)`), the region breaks once, and the excess is discarded. Spillover (PB-F3) is computed from raw `move_damage`, **not** from HP actually depleted, so a one-shot break on a near-empty region deals normal spillover, never an outsized burst. *Verified by AC-PB-08.*
+
+**EC-PB-05 — Hit on an already-broken region.** *If a DAMAGE move is directed at a region already `BROKEN`* (via API/edge; the Combat UI normally removes it as a target): the hit is redirected entirely to Structure at the move's `structure_mult` (treated as a Structure hit, PB-F1). No re-break, no re-emitted event, no lost damage. *Verified by AC-PB-05.*
+
+**EC-PB-06 — Enemy with zero breakable regions.** *If an enemy authors an empty `break_regions`*: no region targets exist, every DAMAGE hit resolves against Structure, no break event can fire, and `broken_region_count` stays 0 (enrage never engages). No crash. *Verified by AC-PB-06.*
+
+**EC-PB-07 — Region at the `BREAK_HP_MIN` floor is one-shot-breakable.** *If `EDB-1` floors a region at `break_hp = 5`* (tiny enemy): any hit dealing ≥ 5 break damage depletes it in one hit and breaks it normally (PB-F4). Legal — Part-Break consumes whatever `EDB-1` produces; the floor is Enemy DB's concern (its AC-ED-07). *Verified by AC-PB-07.*
+
+**EC-PB-08 — Weakest breaking tool still makes progress (no zero-progress soft-lock).** *If a `STRUCTURE_HEAVY` move (`break_mult = 0.55`) hits a region at `move_damage = 1`*: `floor(1 × 0.55 + ε) = 0`, but `DAMAGE_FLOOR = 1` raises it to 1. Every hit chips at least 1 break HP, so even the worst tool can eventually break any region — there is no build that is *unable* to break (the "failure" mode is dying first, a build problem, not an RNG wall). This is why DB3(b)'s break-failure pity is dissolved. *Verified by AC-PB-04.*
+
+**EC-PB-09 — Region progress survives a player switch.** *If the player switches Symbots mid-break*: region pools are the **enemy's** battle state, independent of which player Symbot is active. Break progress accumulated by one Symbot persists and a switched-in Symbot continues from the same `current_break_hp`. *Verified by AC-PB-09.*
+
+**EC-PB-10 — Break progress evaporates on non-victory.** *If the player flees or is defeated after damaging or breaking regions*: all region pools, `is_broken` flags, and enrage stacks are discarded (Rule 8), and TBC discards `fired_break_events` (Rule 12) — no drops, no persisted progress (consistent with Drop System EC-DS-07). Nothing carries to the next encounter with that enemy. *Verified by AC-PB-10.*
+
+**EC-PB-11 — Non-DAMAGE move on the enemy.** *If a STATUS / SCAN / UTILITY move targets the enemy*: it has no sub-target (Rule 2) and routes no damage through Part-Break — no Structure damage, no region damage, no break progress. (A STATUS move still applies its status via TBC; that path is unchanged.) *Verified by AC-PB-11.*
+
+**EC-PB-12 — The spillover "total-damage" property is not a dominant strategy (design note, no runtime branch).** A `BREAK_HEAVY` hit on a region deals a *combined* coefficient of 1.68 (1.40 region + 0.28 spillover) versus `STRUCTURE_HEAVY`'s 1.25 direct-to-Structure — but this is **not** a kill-speed exploit: for pure killing, `STRUCTURE_HEAVY` puts 1.25 into Structure while `BREAK_HEAVY`'s spillover puts only 0.28 there, so a player who doesn't want the break is always faster hitting Structure directly. The extra region damage is only "value" if you want the part. *No dedicated AC — this is a balance property of the bias table (Section D), not an observable failure branch; the bias multipliers' ≥2.0× ratio is the enforcing mechanism.*
 
 ## Dependencies
 
-[To be designed]
+### Upstream (Part-Break reads from / is triggered by)
+
+| System | What Part-Break reads | Status | Hard/Soft |
+|--------|----------------------|--------|-----------|
+| **Turn-Based Combat** | `hit_resolved(move, damage, target)` per-hit hook; battle lifecycle (`BATTLE_INIT` to init pools, `BATTLE_END` to discard); the `fired_break_events` set it writes into | Approved | Hard |
+| **Enemy Database** | `break_regions` (region ids + `region_fraction`) and each region's `EDB-1`-derived `break_hp` | Approved | Hard |
+| **Move Database** | `break_bias` per DAMAGE move (and reserved `target_profile`, Rule 11) | Approved | Hard (via TBC erratum) |
+| **Damage Formula** | Indirect — region damage is DF-1 output (via TBC Rule 10) before the `break_mult` split | Approved | Soft (no direct call) |
+
+### Downstream (these read from Part-Break)
+
+| System | What it reads | Status | Obligation on that GDD |
+|--------|---------------|--------|------------------------|
+| **Drop System** | The `<region>_broken` / `all_boss_parts_broken` keys in `fired_break_events` (delivered by TBC on VICTORY) as Formula 3 condition multipliers | Approved | Break keys must match Drop System Rule 5 vocabulary exactly (they do); **must update its provisional Part-Break contract** — see Errata below |
+| **Turn-Based Combat** | Region-pool reductions (Part-Break applies); break events (into TBC's set); `broken_region_count` (feeds PB-F5, TBC applies) | Approved | **Must ratify the routing + spillover + bias + enrage erratum** — see Errata below |
+| **Combat UI** *(Not Started)* | Per-region target selectors; break-progress pips (`current_break_hp / break_hp`); break-pop VFX/SFX trigger; enrage indicator | Not Started | Must render region targeting and break progress; must make targeting legible (the Pillar-2 "visible tilt" wiring) |
+
+### Errata obligations this GDD creates on Approved documents
+
+| Target (Approved) | Change required | Source decision | Re-review weight |
+|-------------------|-----------------|-----------------|------------------|
+| **Turn-Based Combat** | Rule 10 damage application must (a) route by sub-target — Structure vs a region; (b) apply `structure_mult` / `break_mult` from `BREAK_BIAS_MULTIPLIERS`; (c) apply PB-F3 spillover to Structure on region hits; (d) apply PB-F5 enrage to the **enemy's** outgoing damage; (e) extend the action / Move Contract with the region sub-targeting layer TBC explicitly deferred to Part-Break. Also: **the BINDING Pillar-2 obligation TBC placed on Part-Break is discharged** (see below). | Rules 3–7, Formulas | **Substantial** — touches the core damage pipeline; needs a focused re-review |
+| **Move Database** | Add a `break_bias` field (enum, default `BALANCED`) + the `BREAK_BIAS_MULTIPLIERS` constant table; add a reserved/nullable `target_profile` field (Rule 11, no MVP content); list Part-Break as a referencing system (bidirectionality). | Rule 3, Rule 11 | Small — additive field + table |
+| **Drop System** | Its provisional Rule 5/7 characterization of Part-Break as owning `P(break fires)` + a break-failure pity is **redefined**: break is deterministic on pool depletion (PB-F4), so there is no break probability and no break-failure pity. **DS-3 drop-RNG pity is unaffected** (it still handles the post-break drop-roll tail). Update Rule 5, Rule 7, and the Part-Break dependency row. | Rules 5, 9; DB3 resolution | Small — clarifying prose; no formula/number change |
+
+### Upstream obligations this GDD discharges
+
+- **Part DB DB3** (Part-Break must define break triggering + a break-failure escalation mechanic): **(a)** triggering = deterministic pool depletion (PB-F4) — no probability; **(b)** the break-failure escalation/soft-lock is **dissolved**, not built: because break is deterministic and `DAMAGE_FLOOR` guarantees every hit makes progress (EC-PB-08), no build can be RNG-walled from breaking — the only failure is player defeat, recoverable by rebuilding (Pillar 1/3). The *drop*-RNG tail after a break remains Drop System DS-3's pity. This is a **legitimate resolution of DB3** — it satisfies the constraint's intent (no soft-lock) by removing the RNG DB3 feared.
+- **Enemy DB ED2 / `break_regions` runtime semantics**: Part-Break defines what `break_regions` *means* at runtime — one independent pool per region, initialized from `EDB-1`, depleted by region-targeted damage (PB-F2), broken deterministically (PB-F4). Discharged.
+- **TBC BINDING (Pillar-2 anchor)** — "part-targeting MUST impose a real cost relative to fastest-kill routing": **discharged**. Breaking costs (i) extra turns of exposure (break damage is largely off the kill clock — only 20% spills), (ii) rising enrage risk per region broken (PB-F5), and (iii) reduced kill-efficiency when using Breaker bias on Structure. Part-Break carries its own AC for this (AC-PB-12, Section H), as TBC required.
+- **Drop System provisional contract** (Part-Break emits exactly the Rule 5 keys): discharged — Rule 9 mandates exact vocabulary match.
+
+### Bidirectionality
+
+- **Turn-Based Combat** already lists Part-Break as a downstream dependent (with the BINDING Pillar-2 note) ✓
+- **Enemy Database** already references Part-Break (`break_regions`, `drop_conditions` vocabulary, DB3) ✓
+- **Drop System** already references Part-Break (provisional Rule 5/7 contract) ✓ — this GDD redefines that contract (Errata)
+- **Part Database** already references Part-Break (DB3) ✓
+- **Move Database** does **not** yet reference Part-Break (it predates this GDD) — the erratum above adds the reference (bidirectionality gap to close)
+- **Combat UI** (Not Started) will reference Part-Break when authored
 
 ## Tuning Knobs
 
-[To be designed]
+| Knob | Value | Safe Range | What changing it does |
+|------|-------|-----------|-----------------------|
+| `BREAK_SPILLOVER` | 0.20 | 0.10 – 0.30 | Fraction of region-hit damage that bleeds into Structure (PB-F3). Higher → breaking chips the kill faster, harvest cost drops (toward ~0.67× a region's worth), Breaker builds also kill decently; lower → breaking is a purer detour, harvest cost rises (toward ~0.90×), a failed drop feels more wasted. **Re-run the epsilon scan if changed** (product coefficients shift). |
+| `ENRAGE_PER_BREAK` | 0.15 | 0.08 – 0.20 | Additive enemy outgoing-damage bonus per broken region (PB-F5); max total = 3× this at full dismantle. At 0.20 (max +60%) a fully-enraged enemy can two-shot glass-cannon Symbots — tips from "risky" to "punishing." At 0.08 (max +24%) enrage is cosmetic and full-dismantle becomes near-free loot. **Re-run the epsilon scan if changed** (new multipliers). |
+| `BREAK_BIAS_MULTIPLIERS` → STRUCTURE_HEAVY `structure_mult` | 1.25 | 1.15 – 1.40 | Crusher kill speed. Higher sharpens the kill-vs-harvest identity; toward 1.15 the Crusher collapses into Balanced. |
+| STRUCTURE_HEAVY `break_mult` | 0.55 | keep ratio `structure_mult : break_mult` ≥ 2.0× | Crusher's (poor) breaking. Must stay low enough that the Crusher is clearly bad at harvesting. |
+| BALANCED `(structure_mult, break_mult)` | (1.00, 1.00) | **FIXED** | The calibration anchor for the whole table (mirrors POWER_TIER's STANDARD = 1.00). Do not tune — all other multipliers are defined relative to it. |
+| BREAK_HEAVY `break_mult` | 1.40 | 1.20 – 1.60 | Breaker break speed. Toward 1.60, even mid Breaker hits one-shot large regions (collapses the "which region" choice); toward 1.20, breaking big regions becomes a multi-hit slog. |
+| BREAK_HEAVY `structure_mult` | 0.70 | keep ratio `break_mult : structure_mult` ≥ 2.0× | Breaker's (poor) kill speed. **Load-bearing epsilon coefficient (PB-F1)** — re-run the scan if changed. |
+
+**Owned elsewhere — referenced, not duplicated:**
+- `DAMAGE_FLOOR` = 1 (Damage Formula) — floors every Part-Break damage formula.
+- `BREAK_HP_MIN` = 5, `region_fraction` (0.15–0.55), `EDB-1` (Enemy Database) — **the always-on harvest-cost lever.** The primary control over "how expensive is it to break everything" is not a Part-Break knob but the region fractions in Enemy DB content: bigger fractions → bigger pools → more turns exposed → costlier full dismantle. Enrage is the *active* escalator layered on top; fraction tuning is the *passive* baseline.
+- `move_damage` pipeline (DF-1 → MOVE-F1 → TBC-F5) — the damage input; its ceiling (315) sets Part-Break's output ceilings.
+
+**Knob interaction warnings:**
+1. **Any change to a bias multiplier, `BREAK_SPILLOVER`, or `ENRAGE_PER_BREAK` invalidates the epsilon scan** — the load-bearing/defensive split (PB-F1@0.70, PB-F2@1.40, PB-F5@1.15 load-bearing; rest defensive) is coefficient-specific. Re-run the python3 scan and update Section D.
+2. **`ENRAGE_PER_BREAK` is coupled to player Structure ranges** — it is balanced against SA-F1's Structure output (60–594) and the DF-1 enemy-damage band. Retuning enemy power (EDB-2) or Structure ranges shifts what enrage "feels like"; check the glass-cannon case (low-Structure builds vs. max enrage) before shipping a change.
+3. **Full-dismantle difficulty is a two-lever system** — `region_fraction` (Enemy DB, passive cost) and `ENRAGE_PER_BREAK` (active risk). Tune them together: raising both compounds, and a high-fraction + high-enrage boss can become a wall for anything but a top-tier build (which may be the intent for a capstone, but is a design decision, not a tuning pass).
 
 ## Visual/Audio Requirements
 
