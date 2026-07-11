@@ -1,8 +1,8 @@
 # Drop System
 
-> **Status**: In Design
+> **Status**: In Review
 > **Author**: Luan + Claude Code Game Studios agents
-> **Last Updated**: 2026-07-10
+> **Last Updated**: 2026-07-10 (design review revisions applied)
 > **Implements Pillar**: Pillar 2 (Every Battle Has a Harvest Goal), Pillar 1/3 (parts as the persistent economy)
 
 ## Overview
@@ -19,7 +19,7 @@ The peak beat is the **targeted pull**: you entered this fight for one specific 
 
 This fantasy is delivered downstream — the player *feels* it on the victory/loot screen (Combat UI) and in the Workshop when they slot the part they earned. The Drop System's role is to make sure that when the reward lands, it reads as *the hunt worked*, not *the RNG blinked*.
 
-> *Lean-mode note: `creative-director` was not consulted on this section (review mode = lean). Review manually before production.*
+> *Reviewed by `creative-director` 2026-07-10. Player Fantasy aligns with Pillar 2 (Harvest Goal) and the deliberate-hunter construct. Full legibility obligation added to UI Requirements (see §UI Requirements) to wire the "visible tilt" promise to a downstream system.*
 
 ## Detailed Design
 
@@ -33,6 +33,8 @@ This fantasy is delivered downstream — the player *feels* it on the victory/lo
 
 **Rule 4 — Effective rate (evaluates Part DB Formula 3).** Per rolled part: `effective_drop_rate = clamp(base_drop_rate[rarity] × Π matching-condition multipliers, 0, 1)`. Base rates from Part DB config: Common 0.70, Rare 0.25, Boss-grade 0.001, Prototype 0.05. (Full formula + worked examples in Formulas.)
 
+> **Note — Boss-grade persistence floor:** The 0.001 base rate is a **deliberate persistence floor**, not a zero gate. A patient player who never fires the qualifying break can still acquire Boss-grade parts over hundreds of fights (~39% cumulative at 500 no-break fights). The qualifying break improves odds by ×500 and earns DS-3 pity progress — mastery is strongly rewarded, but not hard-required.
+
 **Rule 5 — Canonical drop-condition vocabulary (owned here per Part DB Rule 9).** The Drop System defines the closed set of condition keys. **These keys must match Part-Break's emitted event vocabulary exactly** (provisional Part-Break contract — Part-Break GDD Not Started). MVP categories:
 - **Break events** (from Part-Break): `<region>_broken` (e.g. `arm_broken`, `head_broken`, `core_broken`), `all_boss_parts_broken`.
 - **Finish damage type:** `defeated_by_physical`, `defeated_by_energy`; element variants `defeated_by_thermal` / `_volt` / `_kinetic`.
@@ -40,7 +42,7 @@ This fantasy is delivered downstream — the player *feels* it on the victory/lo
 
 An unknown condition key in a part's `drop_conditions` is **logged as a content error and skipped**, never a crash (mirrors TBC EC-TBC-08 / Part DB null-tolerance).
 
-**Rule 6 — Prototype gradient pity (discharges Part DB DB2).** A per-Prototype-ID counter tracks consecutive **optimal-condition attempts** (all of that part's `drop_conditions` fired) that failed to drop it. After **N** such attempts, the next optimal attempt is a **guaranteed** drop. Counter increments only on a qualifying (optimal-but-no-drop) attempt, resets to 0 on any drop of that part. (Exact N + partial-attempt handling in Formulas.)
+**Rule 6 — Prototype gradient pity (discharges Part DB DB2).** A per-Prototype-ID counter tracks consecutive **optimal-condition attempts** (all of that part's `drop_conditions` fired) that failed to drop it. After **N** such consecutive *failures*, the next optimal attempt is a **guaranteed** drop (worst case: N+1 optimal attempts total). Counter increments only on a qualifying (optimal-but-no-drop) attempt, resets to 0 on any drop of that part. (Exact N + partial-attempt handling in Formulas.)
 
 **Rule 7 — Boss-grade deterministic floor (discharges Part DB EC-16).** A per-Boss-grade-ID counter tracks consecutive **qualifying breaks** (the required break fired, the part was eligible) that failed the drop roll. After **M** such breaks, the next qualifying break **guarantees** the Boss-grade drop. This bounds the *drop-RNG* tail only; it does **not** address repeated break *failure* — that soft-lock path is Part-Break's DB3 obligation. (Exact M in Formulas.)
 
@@ -119,7 +121,7 @@ On a NON-optimal attempt (not all conditions fired): pity_counter[p] unchanged (
 | Counter | `pity_counter[p]` | int | 0–`N_PROTO_PITY` | Consecutive failed optimal attempts; per-Prototype-ID; persisted in save |
 | Threshold | `N_PROTO_PITY` | int const | **25** (safe 15–25) | Guarantee fires on the (N+1)th optimal attempt in the worst case |
 
-**Hidden from the player** — no pity-counter UI (surprise-rescue design). Integer-only; no rounding, no epsilon. **Worked example:** counter at 24, optimal attempt → `24 >= 25` false → roll, fails → counter 25. Next optimal attempt → `25 >= 25` true → **guaranteed drop**, counter → 0. (Natural odds of reaching 25 consecutive optimal failures at the ~16.9% optimal rate: `0.831²⁵ ≈ 0.9%`.)
+**Hidden from the player** — no pity-counter UI (surprise-rescue design). Integer-only; no rounding, no epsilon. **Worked example:** counter at 24, optimal attempt → `24 >= 25` false → roll, fails → counter 25. Next optimal attempt → `25 >= 25` true → **guaranteed drop**, counter → 0. (Natural odds of reaching 25 consecutive optimal failures at the ~16.9% optimal rate: `0.831²⁵ ≈ 0.9%`. *~16.9% = 0.05 × 1.5³ — valid when the Prototype has ≥3 conditions totaling ≥×3.0, per Part DB's Prototype authoring rule. Prototypes with fewer/weaker conditions have lower optimal rates and will hit pity more frequently.)*
 
 ### DS-3 — Boss-grade Deterministic Floor (BGDF-1) — discharges Part DB EC-16
 
@@ -145,7 +147,7 @@ Break did NOT fire this battle: break_pity_counter[p] unchanged (break-failure i
 
 ## Edge Cases
 
-**EC-DS-01 — Victory with no conditions fired.** *If the player wins having fired zero drop conditions*: every part rolls at `base_drop_rate × 1.0` (no multipliers). Commons/Rares still drop at base; Boss-grade sits at ~0.001 (functionally zero — you didn't break it). No crash. *Verified by AC-DS-05.*
+**EC-DS-01 — Victory with no conditions fired.** *If the player wins having fired zero drop conditions*: every part rolls at `base_drop_rate × 1.0` (no multipliers). Commons/Rares still drop at base; Boss-grade rolls at 0.001 (its deliberate persistence floor — see Rule 4 note; DS-3 counter is not incremented since no qualifying break fired). No crash. *Verified by AC-DS-05.*
 
 **EC-DS-02 — Empty or fully-disabled loot pool.** *If the enemy's pool is empty or every part is `drop_enabled = false`*: zero drops emitted; the loot report is an empty list; no crash. *Verified by AC-DS-06.*
 
@@ -210,7 +212,9 @@ Break did NOT fire this battle: break_pity_counter[p] unchanged (break-failure i
 | Scrap yield — Prototype | 35 | 25–50 | 7× Common, **deliberately below Boss-grade** — prevents a perverse "scrap the second Prototype instead of running it on another Symbot" incentive. |
 | Pool Common cap (content rule) | ≤2 WILD, ≤3 BOSS | — | Caps Common slots per loot pool so independent rolls don't flood. Authoring constraint honored by **Enemy DB** loot-pool authoring. Removing it re-introduces the ~2.8-drops/fight Common flood. |
 
-**Sink values (proposed here, owned by Part Upgrade / Workshop GDD):** upgrade cost per tier — `0→1: 10`, `1→2: 20`, `2→3: 40`, `3→4: 80`, `4→5: 130` (Common cap +3 = 70 total; Rare+ cap +5 = 280 total). Accelerating steps: fast first hit hooks the upgrade habit; the +4/+5 wall (costs more than +0→+3 combined) makes maxing a deliberate choice. Over the ~10hr MVP this yields **mild scarcity** (~730–1,095 Scrap earned vs ~1,260–1,960 to fully upgrade priority parts) — you can't max everything, so upgrade choices stay meaningful.
+**Sink values (proposed here, owned by Part Upgrade / Workshop GDD):** upgrade cost per tier — `0→1: 10`, `1→2: 20`, `2→3: 40`, `3→4: 80`, `4→5: 130` (Common cap +3 = 70 total; Rare+ cap +5 = 280 total). Accelerating steps: fast first hit hooks the upgrade habit; the +4/+5 wall (110+130 = more than the entire +0→+3 journey) makes maxing a deliberate choice. Note: the doubling pattern (10→20→40→80) breaks intentionally at +4→+5 (130 vs. the expected 160) — this is the wall inflection, not a typo.
+
+**Economy model assumption — 3-Symbot baseline.** The faucet band (~730–1,095 Scrap earned over ~10 hours) and sink band (~1,260–1,960 to fully upgrade priority parts) assume the player is equipping and upgrading parts for **3 Symbots** (matching `TEAM_ROSTER_CAP = 3`). Scrap sink at 3 Symbots: 3 × ~6 priority parts × avg 175 Scrap each ≈ 1,050 Scrap — within the faucet range at expected play (~1,140 expected including Boss-grade duplicates). Mild scarcity holds at this assumption. If the player builds fewer Symbots, Scrap saturates early; more Symbots extend scarcity. See OQ-DS-5. Pool cap (≤2 WILD / ≤3 BOSS) is an Enemy DB authoring constraint — the Drop System has no runtime enforcement and no AC for it; a future QA tester should not hunt for one.
 
 **Referenced (owned elsewhere, not Drop System knobs):** the per-rarity `base_drop_rate` (Common 0.70 / Rare 0.25 / Boss-grade 0.001 / Prototype 0.05) and condition multipliers are **Part DB** config — tune them there, not here. `BOSS_GRADE_BREAK_GUARANTEE = 0.5` (×500 break multiplier) is **Enemy DB**.
 
@@ -229,9 +233,14 @@ The Drop System authors no assets; all drop/loot feedback is owned by Combat UI 
 Obligations this system places on Not-Started UIs:
 
 1. **Victory/loot screen (Combat UI):** list each dropped instance by `display_name` + rarity with rarity-escalated emphasis; touch-friendly at 44pt targets; **must not display pity counters** (hidden by design, DS-2/DS-3).
-2. **Scrap action (Inventory/Workshop UI):** player-initiated, per-part **and** batch ("scrap all duplicates of type"), with a confirmation showing Scrap gained (Rule 9).
 
-> 📌 **UX Flag — Drop System**: the loot screen and scrap action are player-facing needs. Fold them into the combat-screen and inventory `/ux-design` passes (`design/ux/combat.md`, `design/ux/inventory.md`), not this GDD.
+2. **Condition legibility (Combat UI) — full-legibility mandate:** for each part in the enemy's loot pool, the loot screen (or a per-part detail panel, tappable) must show which drop conditions fired this fight and their combined net multiplier (e.g., `arm_broken ×1.5, targeting_active ×1.3 → effective rate ×1.95`). This is how "every drop condition you fire is a visible tilt of the odds" (Player Fantasy) is wired to the player — fired conditions are player actions, not hidden state. This obligation is owned by Drop System because it owns the canonical condition vocabulary (Rule 5).
+
+3. **Boss-grade break requirement label (Combat UI) — pre- or in-fight:** any Boss-grade part in the enemy's loot pool must have its required break event surfaced before or during combat (e.g., on the enemy info panel: "Core Drop: requires `core_broken`"). Players cannot deliberate-hunt if they cannot discover the hunt condition. This is the primary anti-Pillar-2-violation gate for the Boss-grade acquisition mechanic.
+
+4. **Scrap action (Inventory/Workshop UI):** player-initiated, per-part **and** batch ("scrap all duplicates of type"), with a confirmation showing Scrap gained (Rule 9).
+
+> 📌 **UX Flag — Drop System**: the loot screen and scrap action are player-facing needs. Fold items 1–3 into the combat-screen `/ux-design` pass (`design/ux/combat.md`) and item 4 into the inventory pass (`design/ux/inventory.md`), not this GDD. The obligations above are binding requirements; the UX spec owns layout and interaction design.
 
 ## Acceptance Criteria
 
@@ -239,15 +248,15 @@ All BLOCKING ACs are Logic-type automated unit tests in `tests/unit/drop_system/
 
 ### Roll & Formula
 
-**AC-DS-03** (BLOCKING): rate > 1.0 pre-clamp guarantees the drop. GIVEN Common `scrap_bolt` (0.70) with `arm_broken`(×1.5)+`targeting_active`(×1.3) fired (product 1.365), WHEN DS-1 evaluated with any draw in [0,1), THEN `effective_drop_rate = 1.0` and drops. FAIL: rate returned unclamped; drop false for a draw < 1.0. *Verifies EC-DS-04.*
+**AC-DS-03** (BLOCKING): rate > 1.0 pre-clamp guarantees the drop. GIVEN Common `scrap_bolt` (0.70) with `arm_broken`(×1.5)+`targeting_active`(×1.3) fired (product 1.365 → clamped to 1.0). SCENARIO A: draw = **0.001** → drops. SCENARIO B: draw = **0.99** → drops. THEN `effective_drop_rate = 1.0` for both. FAIL: rate returned unclamped (1.365); drop false for any draw < 1.0. *Verifies EC-DS-04.*
 
-**AC-DS-04** (BLOCKING): strict-`<` boundary. GIVEN Rare `servo_arm`, rate 0.25, WHEN draw = 0.25 exactly, THEN drops = **false**; WHEN draw = `0.25 − ulp` THEN drops = **true**. FAIL: draw==rate drops (indicates `<=`). *The canonical `<` vs `<=` discriminator.*
+**AC-DS-04** (BLOCKING): strict-`<` boundary. GIVEN Rare `servo_arm`, rate 0.25. SCENARIO A: draw = **0.25** → drops = **false** (0.25 is not less than 0.25). SCENARIO B: draw = **0.24** → drops = **true** (0.24 < 0.25). FAIL: SCENARIO A returns true (indicates `<=`). *`0.25` is exactly representable in IEEE 754 double — no ulp arithmetic needed. GDScript: stub the RNG by subclassing `RandomNumberGenerator` and overriding `randf()` to return the specified value. The canonical `<` vs `<=` discriminator.*
 
 **AC-DS-05** (BLOCKING): no conditions fired → base rates. GIVEN pool [Common 0.70, Rare 0.25, Boss-grade 0.001], empty fired set, draws (ID-asc) 0.65/0.20/0.0005, THEN all three drop at base rate (no multipliers). SECOND: Boss-grade draw 0.002 → no drop (0.002 ≥ 0.001). FAIL: conditions applied on empty set; Boss-grade treated as rate 0.0 (impossible instead of ~0.001). *Verifies EC-DS-01.*
 
 **AC-DS-07** (BLOCKING): unknown condition key logged + skipped. GIVEN Rare `servo_arm` with conditions `arm_broken`(×1.5), `UNKNOWN_KEY_XYZ`(×2.0), `targeting_active`(×1.3); `arm_broken`+`targeting_active` fired; draw 0.41, THEN rate = clamp(0.25×1.5×1.3)=0.4875, drops, exactly one content error names `UNKNOWN_KEY_XYZ`, no crash. SECOND: draw 0.70 → no drop (discriminates: applying ×2.0 would give 0.975 and falsely drop). FAIL: exception; unknown multiplier applied; no log. *Verifies EC-DS-03.*
 
-**AC-DS-12** (BLOCKING): independent per-part rolls, no pool dilution. GIVEN a 5-part pool, no conditions, draws all below base rates, THEN Rare rate = 0.25 (not ÷5), all 5 drop, RNG called exactly 5×. SECOND: 10-part pool → Rare rate still 0.25 (not 0.025). FAIL: rate shrinks with pool size; pool normalization applied. *Verifies R2.*
+**AC-DS-12** (BLOCKING): independent per-part rolls, no pool dilution. GIVEN a 5-part pool: [Common `bolt_plate` (0.70), Common `wire_coil` (0.70), Common `grip_ring` (0.70), Rare `servo_arm` (0.25), Common `armor_seal` (0.70)]; no conditions; draws ID-ascending = [0.65, 0.65, 0.65, **0.10**, 0.65]. THEN all 5 drop; `servo_arm` rate = 0.25; RNG called exactly 5×. SECOND: pool of 10 parts; draw for `servo_arm` = **0.10** → drops (rate still 0.25, not ÷pool_size). FAIL: `servo_arm` does not drop on draw 0.10 (pool-normalization bug: at 0.25÷5=0.05, draw 0.10 ≥ 0.05 → no drop — this is the discriminator). *Verifies R2.*
 
 **AC-DS-22** (BLOCKING): condition matching is exact-string. GIVEN part with condition `arm_broken`; fired set has `ARM_BROKEN` + `arm_break` (not `arm_broken`), THEN no multiplier applied, rate = 0.25, no log error. FAIL: case-insensitive/substring match applies ×1.5. *Verifies R5 exact match.*
 
@@ -255,7 +264,7 @@ All BLOCKING ACs are Logic-type automated unit tests in `tests/unit/drop_system/
 
 ### Pity — Prototype (DS-2)
 
-**AC-DS-13** (BLOCKING): trigger at counter=25, not 24. SCENARIO A: counter 24, optimal attempt, draw 0.50 (>0.16875) → `24≥25` false → roll fails → counter 25. SCENARIO B: counter 25, optimal attempt → `25≥25` true → guaranteed drop, RNG **not** called, counter → 0, instance emitted. FAIL: fires at 24 (off-by-one); B calls RNG or doesn't reset. *Verifies DB2/DS-2 boundary.*
+**AC-DS-13** (BLOCKING): trigger at counter=25, not 24. PRECONDITION: `delta_core` is a Prototype (base 0.05) with conditions `core_overload`(×1.5), `head_broken`(×1.5), `zero_defeats`(×1.5); effective optimal rate = clamp(0.05×1.5³) = 0.16875; optimal = all three fired. SCENARIO A: counter 24, all three conditions fired, draw **0.50** (> 0.16875) → `24≥25` false → roll fails → counter = 25; no emit; one RNG draw consumed. SCENARIO B: counter 25, all three conditions fired → `25≥25` true → guaranteed drop; RNG **not** called; counter → 0; exactly one instance emitted. FAIL: fires at 24 (off-by-one); B calls RNG or doesn't reset; B emits 0 or 2+ instances. *Verifies DB2/DS-2 boundary.*
 
 **AC-DS-14** (BLOCKING): non-optimal attempt gets no credit. GIVEN `delta_core` counter 10, only 2 of 3 conditions fired, draw 0.50 fails, THEN counter stays **10**. FAIL: counter → 11 (crediting a non-optimal miss). *Anti-exploit.*
 
@@ -265,15 +274,15 @@ All BLOCKING ACs are Logic-type automated unit tests in `tests/unit/drop_system/
 
 **AC-DS-16** (BLOCKING): trigger at counter=8, not 7. SCENARIO A: counter 7, qualifying break `core_broken`, draw 0.60 (>0.5) → `7≥8` false → fails → counter 8. SCENARIO B: counter 8, qualifying break → guaranteed, RNG not called, counter → 0, emitted. FAIL: fires at 7; B calls RNG or no reset. *Verifies EC-16/DS-3 boundary.*
 
-**AC-DS-17** (BLOCKING): break-not-fired leaves counter unchanged. GIVEN `forge_core` counter 5, empty fired set, WHEN VICTORY resolved, THEN roll at 0.001, counter stays **5**. FAIL: → 6 or → 0 (treating any victory as qualifying). *Complements AC-DS-09 from the DS-3 update path.*
+**AC-DS-17** (BLOCKING): break-not-fired leaves counter unchanged. GIVEN `forge_core` counter 5, empty fired set, draw **0.50** (> 0.001), WHEN VICTORY resolved. THEN rate = 0.001, draw 0.50 ≥ 0.001 → no drop; counter stays **5**. FAIL: counter → 6 or → 0 (treating any victory as qualifying). *Complements AC-DS-09 from the DS-3 update path.*
 
 **AC-DS-09** (BLOCKING): Boss-grade won without qualifying break → DS-3 counter NOT incremented. GIVEN `forge_core` counter 3, empty fired set, draw 0.5, THEN rate 0.001, counter stays **3**, no drop. FAIL: → 4; reset to 0; drop true. *Verifies EC-DS-05.*
 
-**AC-DS-24** (BLOCKING): pity counters are per-part-ID, not global. GIVEN two Boss-grade parts, `forge_core` counter 8 + `volt_cannon` counter 2, both qualifying-break, THEN `forge_core` guaranteed→reset 0, `volt_cannon` rolls and its counter moves independently. FAIL: shared counter; resetting one affects the other.
+**AC-DS-24** (BLOCKING): pity counters are per-part-ID, not global. GIVEN `forge_core` counter 8 (qualifying break `core_broken` fired) + `volt_cannon` counter 2 (qualifying break `cannon_broken` fired); draw for `volt_cannon` = **0.60** (> 0.5 effective break rate). THEN `forge_core`: `8≥8` → guaranteed drop, counter → 0, instance emitted, RNG not consumed; `volt_cannon`: roll 0.60 ≥ 0.5 → no drop, counter → 3. FAIL: `volt_cannon` counter resets to 0 due to `forge_core` reset (shared counter); `volt_cannon` counter stays 2 (no update); `forge_core` RNG draw consumed.
 
 ### Trigger, Emit, Determinism
 
-**AC-DS-01** (BLOCKING): emit contract. GIVEN a pity-guaranteed `forge_core`, WHEN VICTORY resolved, THEN exactly one `PartInstance{part_id, upgrade_tier=0}` emitted and `break_pity_counter` reset to 0. FAIL: no emit; tier≠0; not reset; 2+ emits. *Verifies EC-DS-09.*
+**AC-DS-01** (BLOCKING): emit contract. GIVEN a pity-guaranteed `forge_core`, WHEN VICTORY resolved, THEN Inventory mock receives exactly one `receive_part_instance({part_id: 'forge_core', upgrade_tier: 0})` call and `break_pity_counter['forge_core']` resets to 0. FAIL: mock receives 0 or 2+ calls; `upgrade_tier ≠ 0`; counter not reset. *Verifies EC-DS-09.*
 
 **AC-DS-02** (BLOCKING): defeat/flee → no drops, no pity change. GIVEN counters `proto_arms`=12, `forge_core`=5, non-empty fired set, WHEN DEFEAT (then FLED) resolved, THEN zero emits, both counters unchanged, RNG not called. FAIL: any emit; counter changes. *Verifies EC-DS-07.*
 
@@ -287,19 +296,27 @@ All BLOCKING ACs are Logic-type automated unit tests in `tests/unit/drop_system/
 
 **AC-DS-18** (BLOCKING): deterministic reproducibility. GIVEN two DropSystem instances seeded identically with identical pity state, WHEN both resolve the same VICTORY, THEN identical drop lists + identical post-resolution pity state. FAIL: divergence (e.g. a global RNG singleton shared across instances). *Verifies R10.*
 
-**AC-DS-20** (BLOCKING): instances emitted at `upgrade_tier = 0` for all rarities. GIVEN one part of each rarity, draws guaranteeing all drop, THEN 4 instances, each tier 0. FAIL: any tier≠0 (e.g. rarity used as tier proxy). *Verifies R8.*
+**AC-DS-20** (BLOCKING): instances emitted at `upgrade_tier = 0` for all rarities. GIVEN one part of each rarity (IDs alphabetically: `armor_bolt` Common 0.70, `core_shield` Prototype 0.05, `forge_core` Boss-grade 0.001, `servo_arm` Rare 0.25); draws ID-ascending = [**0.0009**, **0.0009**, **0.0009**, **0.0009**] (all < 0.001 minimum base rate — confirms strict `<` at the tightest boundary). THEN 4 instances emitted, each `upgrade_tier = 0`. FAIL: any tier≠0; Boss-grade does not drop (draw 0.0009 < 0.001 must drop — draw 0.001 would NOT due to strict `<`). *Verifies R8.*
 
 **AC-DS-21** (BLOCKING): parts rolled in ID-ascending order. GIVEN pool with IDs sorting alpha<beta<gamma (inserted non-alphabetically), RNG call-recording stub, THEN calls issued alpha→beta→gamma. FAIL: insertion-order iteration (GDScript Dictionary default). *Verifies R10 ordering.*
 
-**AC-DS-19** (BLOCKING): Scrap yield per rarity. `get_scrap_yield`: Common 5, Rare 20, Boss-grade 60, Prototype 35. FAIL: any value wrong; **Prototype ≥ Boss-grade** (35<60 is a design invariant). *Verifies R9 yield constants (source side; the player-initiated action is Inventory's, Advisory).*
+**AC-DS-19** (BLOCKING): Scrap yield per rarity. `get_scrap_yield`: Common 5, Rare 20, Prototype 35, Boss-grade 60. FAIL: any value wrong. INVARIANT chain: Common (5) < Rare (20) < Prototype (35) < Boss-grade (60) — FAIL if any step inverts (inverting any step creates perverse scrapping incentives against the rarity hierarchy). *Verifies R9 yield constants (source side; the player-initiated action is Inventory's, Advisory).*
+
+### New Blocking ACs (this revision)
+
+**AC-DS-25** (BLOCKING): outcome-fact conditions apply their multipliers — unit-testable half of AD-1. GIVEN a part with condition `zero_defeats`(×1.4) and base rate 0.25; fired set = {`zero_defeats`} (injected directly as a Set of strings — no TBC interface required for this unit test). SCENARIO A: draw = **0.34** → rate = clamp(0.25×1.4)=0.35, drops (0.34 < 0.35). SCENARIO B: draw = **0.36** → no drop (0.36 ≥ 0.35). FAIL: multiplier not applied (rate remains 0.25 — SCENARIO A would drop at 0.34 < 0.25, so it wouldn't distinguish; add THIRD: draw 0.26 → no drop at rate 0.25, but drops at rate 0.35 — this is the discriminator). *Outcome-fact keys are plain strings; their multiplier application is identical to break-event keys.*
+
+**AC-DS-26** (BLOCKING): `drop_enabled=false` part's pity counter not incremented. GIVEN `forge_core` with `drop_enabled = false` and `break_pity_counter = 3`; qualifying break `core_broken` fired; WHEN VICTORY resolved. THEN counter stays **3**; no instance emitted; RNG not consumed for this part. FAIL: counter → 4 (pity update runs before drop_enabled check); any emit.
+
+**AC-DS-27** (BLOCKING): Phase 6 output list contract. GIVEN pool with `servo_arm` (Rare 0.25), no conditions, draw **0.20** (< 0.25). WHEN VICTORY resolved. THEN resolution returns a list containing exactly one `PartInstance{part_id: 'servo_arm', upgrade_tier: 0}`. FAIL: list is null or empty; list contains wrong part_id; tier ≠ 0. *Phase 6 output contract is testable independently of Combat UI.*
 
 ### Deferred (gated on Not-Started systems)
 
-- **AD-1 — Outcome-fact assembly** (R3, OQ-DS-2): once the TBC↔Drop interface for `defeated_by_thermal`/`zero_defeats`/`no_repairs_used`/`flawless` exists, verify outcome facts join the fired-condition set. *Unblocks when OQ-DS-2 resolves.*
-- **AD-2 — Pity persistence** (R6/R7): integration test — serialize counters, reload, verify identical. *Unblocks when Save/Load is designed.*
-- **AD-3 — Loot-screen report** (Phase 6): *unblocks when Combat UI is designed.*
+- **AD-1 — Outcome-fact provenance** (R3, OQ-DS-2): integration test — verify TBC emits outcome-fact keys (`defeated_by_thermal`, `zero_defeats`, `no_repairs_used`, `flawless`) to the Drop System's fired-condition set with the correct string values. *Unblocks when OQ-DS-2 interface is defined. Unit-testable multiplier-application half promoted to AC-DS-25 (BLOCKING).*
+- **AD-2 — Pity persistence** (R6/R7): integration test — serialize counters, reload, verify identical. *Unblocks when Save/Load is designed. Note: pity non-persistence is a release blocker — do not ship without this test passing.*
+- **AD-3 — Loot-screen report** (Phase 6): *unblocks when Combat UI is designed. Note: Drop System's output list contract is now covered by AC-DS-27; this tests UI rendering.*
 - **AD-4 — Player scrap action** (R9): *unblocks when Inventory is designed.*
-- **AD-5 — Part-Break contract** (R5/R7, OQ-DS-1): validate break-event keys match exactly. *Unblocks when Part-Break is designed.*
+- **AD-5 — Part-Break contract** (R5/R7, OQ-DS-1): validate break-event keys match exactly. *Unblocks when Part-Break is designed. Until resolved, a vocabulary mismatch between Part-Break and Rule 5 produces silent multiplier loss (EC-DS-03 behavior), not a crash.*
 
 ### EC↔AC Cross-Check
 
@@ -307,9 +324,9 @@ EC-DS-01→AC-DS-05 · EC-DS-02→AC-DS-06 · EC-DS-03→AC-DS-07 · EC-DS-04→
 
 ### Summary
 
-**24 ACs: 21 BLOCKING unit + 5 deferred** (AD-1–5). Coverage: R1 (02,11), R2 (08,12), R3 (23), Formula 3/R4 (03,05,07,23), R5 (07,22), R6/DS-2 (13,14,15,24), R7/DS-3 (09,16,17,24), R8 (01,20), R9 (19), R10 (10,18,21), DS-1 boundary (04).
+**27 BLOCKING unit + 5 deferred** (AD-1–5; AD-1 unit-half promoted to AC-DS-25). Coverage: R1 (02,11), R2 (08,12), R3 (23,25), Formula 3/R4 (03,05,07,23), R5 (07,22), R6/DS-2 (13,14,15,24), R7/DS-3 (09,16,17,24), R8 (01,20,27), R9 (19), R10 (10,18,21), DS-1 boundary (04), drop_enabled pity (26), outcome-fact multipliers (25).
 
-**Known coverage gaps (deferred, not blocking this GDD):** outcome-fact provenance (OQ-DS-2), pity save/load persistence (Save/Load Not Started), pity-counter upper-bound assertion (low priority — add to AC-DS-13A).
+**Known coverage gaps (not blocking this GDD):** pity save/load persistence (AD-2, Save/Load Not Started — release blocker); pity-counter upper-bound assertion (low priority — add to AC-DS-13A when N_PROTO_PITY minimum floor is asserted); pool cap (≤2 WILD / ≤3 BOSS) has no runtime AC — Enemy DB authoring constraint, enforced at content time only.
 
 **GDScript testability constraints:** inject the RNG (no module-level singleton); assert floats with `<1e-9`; explicitly sort pool IDs ascending before iterating (Dictionary iterates in insertion order).
 
@@ -318,6 +335,8 @@ EC-DS-01→AC-DS-05 · EC-DS-02→AC-DS-06 · EC-DS-03→AC-DS-07 · EC-DS-04→
 | # | Question | Owner | Impact |
 |---|----------|-------|--------|
 | OQ-DS-1 | **Part-Break contract binding.** The Rule 5 break-event vocabulary and `P(break fires)` must be ratified by the Part-Break GDD; condition keys must match this catalog exactly. | Part-Break GDD | Blocks full Boss-grade acquisition-rate math (Part DB DB3); Rule 5/7 are provisional until then |
-| OQ-DS-2 | **"Outcome fact" conditions provenance.** The non-break conditions (`defeated_by_thermal`, `zero_defeats`, `no_repairs_used`, `flawless`) need a computed source — TBC (or a battle-stats tracker) must expose them to the Drop System. The interface is undefined. | TBC ↔ Drop interface | Rule 3 condition assembly is incomplete for non-break conditions until this is defined |
+| OQ-DS-2 | **"Outcome fact" conditions provenance.** The non-break conditions (`defeated_by_thermal`, `zero_defeats`, `no_repairs_used`, `flawless`) need a computed source — TBC must expose them to the Drop System via the `battle_ended` payload or a companion interface. **TBC GDD needs errata** to add this interface obligation. The Drop System unit test for multiplier application is already covered (AC-DS-25, BLOCKING); what is deferred is TBC's end of the wire. | TBC GDD (errata needed) + TBC ↔ Drop interface | Rule 3 condition assembly is incomplete for non-break conditions until the interface is defined; flawless/zero-defeat style conditions can't fire |
 | OQ-DS-3 | **Designs (Alpha).** The `Design` drop type + fabrication economy (currency + materials) is reserved (Rule 11) but unspecified. | Blueprint Crafting GDD (Alpha) | None in MVP — reserved only |
 | OQ-DS-4 | **Inventory cap / batch-scrap UX.** Parts inventory is unbounded in MVP (EC-DS-09); a future cap/overflow policy and the scrap UX are Inventory's. | Inventory GDD | Low in MVP — unbounded is acceptable at 2-boss scope |
+| OQ-DS-5 | **Scrap economy Symbot-count validation.** The 730–1,095 Scrap faucet band assumes 3 Symbots (see Tuning Knobs economy model). **Watch criterion at playtesting:** if players are building <3 Symbots, Scrap saturates early (check that upgrade choices remain meaningful past hour 5); if building >3, scarcity holds longer than modeled. | Playtesting + Workshop/Inventory GDD (must fix total Symbot count) | Economy model precision; mild scarcity may break at extreme Symbot counts |
+| OQ-DS-6 | **Defeat-after-break — playtesting watch criterion.** Rule 1 (victory-only) means a player who successfully fires break events then loses gets zero drops and zero pity progress. Over time this may train break-avoidance in high-risk fights (optimal play is penalized on defeat). **Watch criterion:** track whether players disengage from break targeting when the fight is dangerous. Surfaces as a design tension for the Part-Break GDD (its DB3 should consider partial-credit mechanisms for break attempts on defeat). | Part-Break GDD + Playtesting | Medium — could suppress engagement with the core break mechanic if not monitored |
