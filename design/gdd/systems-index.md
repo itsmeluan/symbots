@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Created**: 2026-07-09
-> **Last Updated**: 2026-07-11 (Part-Break /design-review run — NEEDS REVISION, 11 blockers fixed same session incl. ENRAGE_PER_BREAK 0.15→0.12; pending fresh-session re-review. Still creates 3 erratum obligations on Approved docs: TBC, Move DB, Drop System)
+> **Last Updated**: 2026-07-11 (Part-Break fix-confirmation re-review — **APPROVED**. 5-agent adversarial sweep verified the 11 prior blockers fixed; 3 new surgical fixes applied (phantom-pity prose, AC-PB-31 data contract + breaking-hit element, AC-PB-26 → BLOCKING). Still creates 3 erratum obligations on Approved docs: TBC, Move DB, Drop System)
 > **Source Concept**: design/gdd/game-concept.md
 
 ---
@@ -35,7 +35,7 @@ designed first.
 | 6 | Turn-Based Combat System | Gameplay | MVP | Approved | design/gdd/turn-based-combat.md | Damage Formula, Symbot Assembly, Enemy Database, Synergy, Part Database |
 | 7 | Encounter Zone System | World | MVP | Not Started | — | Enemy Database |
 | 8 | Drop System | Economy | MVP | Approved (2026-07-11, re-review punch-list applied) | design/gdd/drop-system.md | Part Database, Enemy Database |
-| 9 | Part-Break System | Gameplay | MVP | In Review — NEEDS REVISION addressed (2026-07-11; 11 blockers fixed, pending fresh-session re-review) | design/gdd/part-break.md | Turn-Based Combat, Drop System |
+| 9 | Part-Break System | Gameplay | MVP | Approved (2026-07-11, fix-confirmation re-review — 3 surgical fixes applied) | design/gdd/part-break.md | Turn-Based Combat, Drop System |
 | 10 | Enemy AI System | Gameplay | MVP | Not Started | — | Turn-Based Combat, Enemy Database |
 | 11 | Inventory System | Economy | MVP | Not Started | — | Part Database |
 | 12 | Zone & World Map System | World | MVP | Not Started | — | Encounter Zone |
@@ -199,8 +199,8 @@ layered structure. Part Database sits at the root with no cycles back from depen
 |--------|-------|
 | Total systems identified | 30 |
 | Design docs started | 10 |
-| Design docs reviewed | 8 |
-| Design docs approved | 8 |
+| Design docs reviewed | 9 |
+| Design docs approved | 9 |
 | MVP systems designed | 10 / 22 |
 | Vertical Slice systems designed | 0 / 2 |
 | Alpha systems designed | 0 / 3 |

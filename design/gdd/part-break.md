@@ -1,6 +1,6 @@
 # Part-Break System
 
-> **Status**: In Design
+> **Status**: Approved (2026-07-11, fix-confirmation re-review — 3 surgical fixes applied)
 > **Author**: Luan + Claude Code Game Studios agents
 > **Last Updated**: 2026-07-11
 > **Implements Pillar**: Pillar 2 (Every Battle Has a Harvest Goal), Pillar 1 (Engineer, Don't Collect)
@@ -21,7 +21,7 @@ The **move bias** (Rule 3) is a second, orthogonal lever layered on top of this 
 
 The peak beat is the **break pop**: the moment a region threshold is crossed, the enemy's part explodes visually, an audio cue lands, and the break event fires into the victory payload. At that moment the player knows — before the loot screen even appears — that their targeting investment paid off. The harvesting fantasy is causal: *I broke it, so I get a shot at it.*
 
-Beneath the pop, two quieter experiences sustain the system. First, **progress visibility**: break pips on the Combat UI show accumulated region damage as a partial fill (authored for Combat UI — not owned here), so the player always knows whether they're two hits or eight hits from the threshold. Without that feedback the break goal feels like gambling, not execution. Second, **persistence convergence**: the break-failure pity mechanic (Part-Break's DB3 obligation) means that even a player who consistently targets correctly but gets unlucky with break *firing* is guaranteed to eventually get the event. Bad luck can add turns, never wall the goal.
+Beneath the pop, two quieter experiences sustain the system. First, **progress visibility**: break pips on the Combat UI show accumulated region damage as a partial fill (authored for Combat UI — not owned here), so the player always knows whether they're two hits or eight hits from the threshold. Without that feedback the break goal feels like gambling, not execution. Second, **no-soft-lock guarantee**: because break is deterministic on pool depletion (Rule 5) and every hit deals at least 1 break damage (`DAMAGE_FLOOR`, EC-PB-08), a player who keeps targeting a region *will* eventually deplete it — there is no RNG "break roll" that can fail, and no build too weak to make progress. The only failure mode is being DOWNED before the pool empties, a skill/build problem with a learnable fix — never an RNG wall. Bad luck (damage variance leaving you a hit short one turn) can add turns, never wall the goal.
 
 *Joint delivery note: the peak beat requires Combat UI (break pips) and Audio System (break SFX) to be realized. This GDD builds the break event emission; Combat UI owns the visual progress; Audio owns the sound. Neither this system nor TBC alone delivers the full fantasy.*
 
@@ -351,7 +351,7 @@ Applied by TBC to the **enemy's** outgoing hit (Rule 7), after the enemy's own D
 
 ## Acceptance Criteria
 
-Validated by `qa-lead` (2026-07-11; hardened 2026-07-11 in design-review revision). **31 criteria — 29 BLOCKING (Logic / Integration), 2 ADVISORY (Content Validation).** Every core rule (R1–R11), every formula (PB-F1–F5), and all 13 edge cases have a verifying AC. Formula ACs carry two fixture kinds where relevant: a **rounding-method discriminator** (input where floor ≠ round ≠ ceil) and an **epsilon regression** (input whose exact product is integer but whose naive float floor is one low). All fixtures are deterministic; enemy/build stats live in test fixtures, not inline.
+Validated by `qa-lead` (2026-07-11; hardened 2026-07-11 in design-review revision; AC-PB-26 reclassified BLOCKING in fix-confirmation re-review 2026-07-11). **31 criteria — 30 BLOCKING (Logic / Integration), 1 ADVISORY (Content Validation).** Every core rule (R1–R11), every formula (PB-F1–F5), and all 13 edge cases have a verifying AC. Formula ACs carry two fixture kinds where relevant: a **rounding-method discriminator** (input where floor ≠ round ≠ ceil) and an **epsilon regression** (input whose exact product is integer but whose naive float floor is one low). All fixtures are deterministic; enemy/build stats live in test fixtures, not inline.
 
 ### Formula criteria
 
@@ -385,7 +385,7 @@ Validated by `qa-lead` (2026-07-11; hardened 2026-07-11 in design-review revisio
 
 **AC-PB-13 (enrage stacking via PB-F5 output).** **[Logic, BLOCKING]** **GIVEN** `enemy_hit_resolved = 100`, **WHEN** `broken_region_count` is 0, 1, 2, 3, **THEN** `enraged_damage` is 100, 112, 124, 136 respectively (multipliers 1.00 / 1.12 / 1.24 / 1.36 at `ENRAGE_PER_BREAK = 0.12`). Reset at battle end is covered by AC-PB-24.
 
-**AC-PB-14 (enrage applied to real player-received damage).** **[Integration, BLOCKING]** **GIVEN** `broken_region_count = 1` and an enemy whose resolved hit is 100, **WHEN** the enemy attacks a player Symbot end-to-end through TBC, **THEN** the Symbot's `current_structure` drops by **112** (PB-F5 ×1.12 applied to outgoing enemy damage, not just computed). *(Catches an impl that computes the multiplier but never applies it.)*
+**AC-PB-14 (enrage applied to real player-received damage).** **[Integration, BLOCKING]** *Fixture prerequisite: requires the TBC integration harness with PB-F5 wired into the enemy's outgoing-damage path and the result delivered to the player Symbot's `current_structure` — a stub TBC that passes `enemy_hit_resolved` through unchanged must NOT satisfy this AC.* **GIVEN** `broken_region_count = 1` and an enemy whose resolved hit is 100, **WHEN** the enemy attacks a player Symbot end-to-end through TBC, **THEN** the Symbot's `current_structure` drops by **112** (PB-F5 ×1.12 applied to outgoing enemy damage, not just computed). *(Catches an impl that computes the multiplier but never applies it.)*
 
 ### Pool-independence & lifecycle criteria
 
@@ -415,7 +415,7 @@ Validated by `qa-lead` (2026-07-11; hardened 2026-07-11 in design-review revisio
 
 ### Content-validation & invariant criteria
 
-**AC-PB-26 (break-key vocabulary match).** **[Content Validation, ADVISORY]** **GIVEN** every break key Part-Break can emit, **WHEN** validated against the Drop System Rule 5 vocabulary (`design/gdd/drop-system.md` Rule 5), **THEN** every key is a member (`<region>_broken`, `all_boss_parts_broken`); zero keys fall outside it.
+**AC-PB-26 (break-key vocabulary match).** **[Integration, BLOCKING]** **GIVEN** every break key Part-Break can emit, **WHEN** validated against the Drop System Rule 5 vocabulary (`design/gdd/drop-system.md` Rule 5), **THEN** every key is a member (`<region>_broken`, `all_boss_parts_broken`); zero keys fall outside it. *(Reclassified ADVISORY → BLOCKING 2026-07-11: a vocabulary mismatch is a silent cross-system failure — the player breaks the part, earns the harvest, and receives no drop with no error, breaking the causal fantasy "I broke it, so I get a shot at it." This is a load-bearing output contract, not cosmetic content validation.)*
 
 **AC-PB-27 (multi-target reserved — no MVP content).** **[Content Validation, ADVISORY]** **GIVEN** all MVP moves, **WHEN** validated, **THEN** zero moves author a non-null `target_profile` (Rule 11 is reserved; MVP is single-sub-target).
 
@@ -425,7 +425,13 @@ Validated by `qa-lead` (2026-07-11; hardened 2026-07-11 in design-review revisio
 
 **AC-PB-30 (closed target-set invariant).** **[Logic, BLOCKING]** *(a) At construction:* **GIVEN** an enemy with a specific set of unbroken regions, **WHEN** the legal sub-target set for a DAMAGE move is constructed, **THEN** it equals exactly `{STRUCTURE} ∪ {unbroken existing regions}` — no region absent from the enemy is selectable, and an already-broken region is excluded. *(b) Dynamic mid-battle exclusion:* **GIVEN** the same enemy, **WHEN** region A breaks and the sub-target set is re-queried on the **next** turn, **THEN** A is absent from the set — the set is rebuilt from live region state each turn, not snapshotted at battle start. *(Catches an impl that constructs the set once at battle start and never removes broken regions — passes (a), fails (b).)* *(c) Reserved:* a multi-region `target_profile` whose `all_regions` selector is expanded on a 2-region enemy resolves against exactly those 2 regions, dropping any profile entry naming an absent region. There is no invalid-target runtime branch — validity is structural (Rule 2).
 
-**AC-PB-31 (break-progress data contract for Combat UI).** **[Integration, BLOCKING]** Part-Break must **expose** — not render — the data the "progress visibility" Player-Fantasy beat depends on, so Combat UI (Not Started) has a testable interface to consume. **GIVEN** a region at partial break HP (e.g. `current_break_hp = 18` of `break_hp = 30`) and a currently-selected DAMAGE move, **WHEN** the battle state is queried, **THEN** the system returns, per unbroken region: (i) the ratio `current_break_hp / break_hp` (here `0.60`), and (ii) the selected move's projected `break_damage` against that region (PB-F2 output for the current `move_damage` and bias). *(This is the data half of VA-2 / UI-2; rendering the pip and the "hits-to-break" readout is Combat UI's responsibility, but the contract is Part-Break's and is asserted here so the fantasy promise cannot silently vanish when Combat UI is authored. Catches an impl that tracks break HP internally but exposes no queryable progress interface.)*
+**AC-PB-31 (break-progress data contract for Combat UI).** **[Integration, BLOCKING]** Part-Break must **expose** — not render — the data the "progress visibility" (VA-2 / UI-2) and "break-pop" (VA-1) Player-Fantasy beats depend on, so Combat UI (Not Started) has a testable interface to consume.
+
+*Interface contract — two queries:*
+- **Progress query** — `query_break_progress(move) -> Array[RegionProgress]`, returning **one entry per unbroken region**, each a struct `{ region_id: StringName, ratio: float, projected_break_damage: int }`. Broken regions are **omitted** from the array (their absence signals BROKEN to Combat UI; UI-1 removes them as targets). If no DAMAGE move is selected, `projected_break_damage = 0` for every entry (the ratio remains valid).
+- **Break-event payload** — each `<region>_broken` key written to `fired_break_events` is accompanied by the **element of the triggering hit** (the breaking move's element, sourced from the `hit_resolved` that depleted the pool), so Combat UI can color the VA-1 break-pop by the breaking hit's element (VA-1's binding requirement), not the region's.
+
+*(a) Progress:* **GIVEN** a region at partial break HP (`current_break_hp = 18` of `break_hp = 30`) and a selected DAMAGE move, **WHEN** `query_break_progress(move)` is called, **THEN** the returned entry for that region has `ratio == 0.60` and `projected_break_damage ==` PB-F2 output for the current `move_damage` and bias. *(b) No-move-selected:* **WHEN** queried with no selected move, **THEN** `ratio == 0.60` still, and `projected_break_damage == 0`. *(c) Broken-region omission:* **GIVEN** the same enemy after that region breaks, **WHEN** re-queried, **THEN** the broken region is absent from the array. *(d) Element payload:* **GIVEN** a Kinetic-element move depletes the region, **WHEN** the break fires, **THEN** the `<region>_broken` entry in `fired_break_events` carries element `Kinetic`. *(Catches an impl that tracks break HP internally but exposes no queryable interface, and one that emits the break key without the element VA-1 needs — the fantasy promise cannot silently vanish when Combat UI is authored.)*
 
 ## Open Questions
 

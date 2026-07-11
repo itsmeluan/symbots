@@ -190,16 +190,29 @@ Full review spawned game-designer + systems-designer + qa-lead + ux-designer + c
 - **Recommended applied**: 2.0×-ratio absolute-floor companion; AC-PB-28 TBC-harness prerequisite declared.
 - Review log created: design/gdd/reviews/part-break-review-log.md. systems-index: #9 → "In Review — NEEDS REVISION addressed".
 
+## Session 19 — Part-Break fix-confirmation re-review (full, 5 agents) → APPROVED
+Ran full 5-agent adversarial sweep (game-designer + systems-designer + qa-lead + ux-designer + creative-director synthesis) despite CD's "lighter pass" pre-commit. All 11 prior blockers verified fixed. systems-designer: ZERO blocking (formulas sound at every boundary; AC-PB-28 2-vs-5-turn fixture reconfirmed). Re-sweep raised 13 new "blocking" claims; CD triaged to 3 genuine this-GDD fixes — all applied this session:
+- **Fix 1 — phantom pity paragraph** (Player Fantasy ¶4): described the DISSOLVED DB3(b) break-failure pity as if live. Rewrote as "no-soft-lock guarantee" = determinism + DAMAGE_FLOOR (EC-PB-08); kept "bad luck adds turns, never walls the goal."
+- **Fix 2 — AC-PB-31 data contract**: named two queries (`query_break_progress(move) → Array[RegionProgress]{region_id,ratio,projected_break_damage}`, broken regions omitted, no-move → projected=0) + added **breaking-hit element** to the `<region>_broken` payload (VA-1's element-colored pop had no data source). Sub-asserts (a)–(d). Also added AC-PB-14 TBC-harness fixture prerequisite (symmetric w/ AC-PB-28).
+- **Fix 3 — AC-PB-26** reclassified ADVISORY → Integration BLOCKING (break-key vocab mismatch = silent no-drop). Header count → 30 BLOCKING / 1 ADVISORY.
+- CD adjudication: 6 of 7 ux "blockers" are Combat-UI *rendering* reqs → deferred to Pre-Production /ux-design (Part-Break owns no UI). Only VA-1 element (data) gated.
+- Tracking done: part-break.md Status → Approved; systems-index #9 → Approved + Progress Tracker 8→9 reviewed/approved; review log appended (APPROVED fix-confirmation entry). **No re-review #3.**
+
 ## Next
-- **/design-review design/gdd/part-break.md in a FRESH session** (fix-confirmation re-review — CD pre-committed to APPROVE if fixes verify; lighter than full 5-agent sweep). Never same-session as revision.
-- Still pending from Session 17: **/design-review design/gdd/drop-system.md in a fresh session** (Drop MAJOR REVISION fixes) + /consistency-check (MULTIPLIER_FLOOR + errata).
-- 3 Part-Break ERRATA obligations still unapplied on TBC / Move DB / Drop System (see top of file) — apply before those docs are re-approved.
+- **TBC ERRATUM (user chose FRESH session — "Substantial" per CD, core damage pipeline).** Apply 5 changes to design/gdd/turn-based-combat.md, then /design-review it:
+  (a+b+c) **Rule 10** (line ~84): replace "Region damage routing awaits the Part-Break GDD…" deferral with actual routing — sub-target dispatch (STRUCTURE vs region), structure_mult/break_mult from BREAK_BIAS_MULTIPLIERS, PB-F3 spillover 0.20 to Structure on region hits.
+  (d) **Enrage** (Rule 10 / new sub-rule): enemy outgoing = move_damage × (1 + broken_region_count × 0.12), applied after enemy DF-1, before reducing player Structure (PB-F5).
+  (e) **Move Contract** (line ~76): ratify DAMAGE sub-target (STRUCTURE or unbroken region_id); Basic Attack break_bias = BALANCED.
+  — **Dependencies/Part-Break row** (line ~355): status Not Started → Approved; BINDING Pillar-2 obligation DISCHARGED (Part-Break carries AC-PB-28).
+  — **AC-TBC-INT-01** (line ~722): un-DEFER; add ACs verifying TBC-side routing/spillover/enrage application.
+- Other pending ERRATA: **Move DB** (add break_bias enum default BALANCED + BREAK_BIAS_MULTIPLIERS table + reserved/nullable target_profile + list Part-Break as referencer) — "Small"; **Drop System** (redefine provisional Rule 5/7: break is deterministic, no P(break fires), no break-failure pity; DS-3 drop-RNG pity unaffected) — "Small".
+- Still pending from Session 17: /design-review drop-system.md (Drop MAJOR REVISION fixes) + /consistency-check (MULTIPLIER_FLOOR + errata). NOTE: systems-index shows Drop already "Approved (2026-07-11, re-review punch-list applied)" — verify whether the fresh re-review is still needed or already closed.
 - Next MVP system in design order: #7 Encounter Zone (Not Started) or #10 Enemy AI.
 
 <!-- STATUS -->
 Epic: MVP Core GDDs
-Feature: Part-Break GDD → NEEDS REVISION addressed (pending fresh-session re-review)
-Task: 11 blockers fixed (ENRAGE 0.15→0.12 + 7 AC hardenings + AC-PB-31 + fantasy reframe + pre-SCAN IA). Next: /design-review in fresh session, then Drop re-review.
+Feature: Part-Break GDD → APPROVED (fix-confirmation re-review, 3 surgical fixes applied)
+Task: Part-Break DONE. Next: TBC erratum in FRESH session (Rule 10 routing/spillover/enrage + Move Contract + Dependencies discharge + AC-TBC-INT-01), then /design-review turn-based-combat.md.
 <!-- /STATUS -->
 
 <!-- CONSISTENCY-CHECK: 2026-07-11 | GDDs checked: 9 | Conflicts found: 0 (1 stale registry note synced: N_PROTO_PITY calibration) | Drop-owned constants N_PROTO_PITY/M_BOSS_PITY/MULTIPLIER_FLOOR all consistent across Part DB + Enemy DB -->

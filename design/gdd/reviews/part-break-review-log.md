@@ -17,3 +17,15 @@ Revisions applied same session (2026-07-11):
 - Recommended applied: 2.0×-ratio absolute-floor companion rule; AC-PB-28 TBC-harness prerequisite.
 
 Prior verdict resolved: First review. Re-review pending in a fresh session (fix-confirmation pass per CD commitment — not a full 5-agent sweep).
+
+## Review — 2026-07-11 — Verdict: APPROVED (fix-confirmation re-review)
+Scope signal: S (3 surgical prose/pointer fixes; no rule, formula, or architecture change)
+Specialists: game-designer, systems-designer, qa-lead, ux-designer, creative-director (senior synthesis)
+Blocking items: 3 (all fixed same session) | Recommended: 4 (punch-list, non-gating) | Deferred to Combat UI /ux-design: 7
+
+Summary: Full 5-agent adversarial sweep (despite CD's "lighter pass" pre-commit — ran full to be safe). All 11 prior blockers verified fixed. systems-designer found zero blocking issues — all five formulas sound at every boundary, AC-PB-28's 2-vs-5-turn fixture independently reconfirmed. Re-sweep surfaced 13 new "blocking" claims; CD triaged to 3 genuine this-GDD fixes: (1) **phantom pity paragraph** — Player Fantasy ¶4 still described the dissolved DB3(b) break-failure pity mechanic (stale pre-dissolution artifact); rewrote as determinism + DAMAGE_FLOOR no-soft-lock guarantee; (2) **AC-PB-31 data contract** under-specified — named query signature + return struct, added breaking-hit element to break-event payload (VA-1's element-colored pop had no data source), added AC-PB-14 TBC-harness prerequisite; (3) **AC-PB-26** reclassified ADVISORY → Integration BLOCKING (break-key vocab mismatch = silent no-drop). CD's key adjudication: 6 of 7 ux "blockers" are Combat-UI *rendering* requirements, correctly deferred to Pre-Production /ux-design (Part-Break owns no UI); only VA-1's breaking-hit element (data Part-Break must expose) gated here.
+
+Non-blocking punch-list (deferred): epsilon-scan note undercounts load-bearing cases (all multiples of 10, not 3 — formula correct); AC-PB-05 BALANCED spillover-floor coverage; AC-PB-19/24 precondition tightening; enrage_stacks == broken_region_count assertion.
+Forward-dependency register (input to Combat UI /ux-design): UI-1 SE layout/spacing, UI-2 pip representation, UI-3 post-SCAN reflow + persistence-in-UI-Requirements, UI-4 effect representation + stack-0 state, UI-7 structure-vs-region hit feedback, VA-3 accessibility-doc citation, Mac keyboard/mouse sub-target nav.
+
+Prior verdict resolved: Yes — NEEDS REVISION (2026-07-11) fully resolved; 11 original blockers verified fixed + 3 new surgical fixes applied. No re-review #3 (per CD pre-commitment).
