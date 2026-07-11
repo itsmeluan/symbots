@@ -1,5 +1,22 @@
 # Review Log: Drop System
 
+## Review — 2026-07-10 (re-review) — Verdict: MAJOR REVISION NEEDED
+Scope signal: L
+Specialists: game-designer, systems-designer, economy-designer, qa-lead, creative-director
+Blocking items: 9 | Recommended: 7
+Summary: Fresh-context re-review of the revised GDD. The mechanical core (independent per-condition rolls, Scrap "no drop is garbage" floor, dual convergence guarantee) is sound and aligns with Pillar 2 — failure is concentrated in the periphery. Nine blockers, converging independently across specialists:
+(1) EC-DS-08 (duplicate pool IDs → independent trials) directly contradicts Approved Enemy DB EC-ED-08 (dedupe to unique IDs) — AC-DS-08 untestable until resolved; a DESIGN DECISION, not a wording fix.
+(2) Economy arithmetic broken + internally self-contradictory: "avg 175 Scrap/part" only holds at exact 50/50 rarity mix (realistic mix → ~3,800–4,400 sink = 3.6× faucet); same paragraph states sink as both "~1,260–1,960" and "~1,050", and "~1,140 expected vs ~1,050 sink" implies surplus while claiming "mild scarcity". Needs from-scratch rederivation with stated absorption-rate assumption.
+(3) MULTIPLIER_FLOOR obligation (Enemy DB ED3-OQ7 names Drop System as owner) absent entirely.
+(4) Pity calibration claims wrong across legal range: N=25 "~0.9%" is ~1.72% at legal Prototype floor; DS-3 "~0.4%" assumes all Boss-grade use ×500 (unenforced; ×200 → ~16.8%). Need authoring rules.
+(5) "+4/+5 wall (110+130)" numeric error (line 215) — tier +4 costs 80; wall framing inverted (130 < 160 doubling).
+(6) AC-DS-25 FAIL clause has false arithmetic ("0.34 < 0.25") + doesn't enforce THIRD discriminator.
+(7) AC test-spec defects: AC-DS-23 ghost value 0.225; AC-DS-09/17 redundant, orphan increment/reset paths; nominal 0→1 increment untested; AC-DS-13 misses post-roll pity-check bug; AC-DS-19 invariant is prose.
+(8) AD-2 (pity persistence, self-labeled "release blocker") must be promoted to a numbered gated AC.
+(9) Part DB line 696 stale "÷ pool_size" errata still not discharged (flagged prior review).
+PROCESS FINDING (creative-director): three previously-flagged blockers (Part DB errata, economy assumption, AC discrimination) resurfaced un-discharged despite being marked "addressed" — a blocker is closed only when a specific line changed AND the change is verifiable against the file. Recommend revising in a fresh session (economy rederivation + 2 design decisions + cross-GDD errata).
+Prior verdict resolved: No — prior NEEDS REVISION blockers partially un-discharged; re-review escalated to MAJOR REVISION.
+
 ## Review — 2026-07-10 — Verdict: NEEDS REVISION (revisions applied; pending re-review)
 Scope signal: L
 Specialists: game-designer, systems-designer, economy-designer, qa-lead, creative-director
