@@ -77,7 +77,151 @@ Part-Break has **no state machine of its own** — it is a passive accumulator h
 
 ## Formulas
 
-[To be designed]
+Part-Break owns five formulas (PB-F1…F5) plus a battle-start initialization step that re-materializes the Enemy DB's `EDB-1` output into runtime state. All damage formulas take the combat pipeline's per-hit integer `move_damage` (DF-1 → MOVE-F1 → TBC-F5, registered range **[1, 315]**) as their sole damage input. `DAMAGE_FLOOR = 1` (shared with Damage Formula) guards every damage formula so a weak hit against an unfavorable multiplier never deals 0.
+
+**Break pool initialization (not a new formula — restates Enemy DB `EDB-1`).** At `BATTLE_INIT`, for each breakable region `R`:
+```
+R.current_break_hp = max(BREAK_HP_MIN, floor(enemy.stats["structure"] × R.region_fraction + 0.0001))   # = EDB-1
+R.is_broken = false
+```
+Ownership: the value is `EDB-1`'s (Enemy DB); Part-Break only reads and stores it. Range: `[5, 330]`.
+
+### BREAK_BIAS_MULTIPLIERS
+
+The `(structure_mult, break_mult)` pair keyed on each move's `break_bias` enum. **Defined here; applied by TBC** (Rule 4). BALANCED = `(1.00, 1.00)` is the fixed calibration anchor (mirrors POWER_TIER's STANDARD = 1.00) — do not tune.
+
+| `break_bias` | `structure_mult` | `break_mult` | Character | Effective vs Structure @ M=100 | Effective vs Region @ M=100 |
+|--------------|------------------|--------------|-----------|-------------------------------|------------------------------|
+| `STRUCTURE_HEAVY` | 1.25 | 0.55 | "Crusher" | 125 | 55 |
+| `BALANCED` | 1.00 | 1.00 | — | 100 | 100 |
+| `BREAK_HEAVY` | 0.70 | 1.40 | "Breaker" | 70 (+14 spillover) | 140 |
+
+The enum enforces the trade: no bias is strong against both pools. The ratio `structure_mult : break_mult` is 2.27× for Crusher and 2.0× for Breaker — keep both ≥ 2.0× or the specialist collapses toward Balanced.
+
+---
+
+### Epsilon status (python3 scan-verified 2026-07-11)
+
+An exhaustive scan over `move_damage ∈ [1,315]` (and `enemy_hit_resolved ∈ [1,315]` for PB-F5), comparing bare float `floor`, epsilon `floor(...+0.0001)`, and exact-rational `floor` as ground truth, found **zero epsilon overcorrections and zero unfixed errors** — the `+0.0001` nudge is necessary and sufficient. Load-bearing status per coefficient:
+
+| Formula | Coefficient | Status | Sample load-bearing input |
+|---------|-------------|--------|---------------------------|
+| PB-F1 | `structure_mult = 0.70` (Breaker) | **LOAD-BEARING** | M=90 → exact 63.0, bare floor 62, eps 63 (also M=170, 180) |
+| PB-F1 | 1.00, 1.25 | defensive | — |
+| PB-F2 | `break_mult = 1.40` (Breaker) | **LOAD-BEARING** | M=165 → exact 231.0, bare floor 230, eps 231 (7 cases; same trap MOVE-F1 documents) |
+| PB-F2 | 0.55, 1.00 | defensive | — |
+| PB-F3 | all (`break_mult × 0.20`) | defensive | none — analytically *expected* load-bearing, empirically clean |
+| PB-F5 | `1 + 1×0.15 = 1.15` | **LOAD-BEARING** | EHR=100 → exact 115.0, bare floor 114, eps 115 (4 cases) |
+| PB-F5 | 1.30, 1.45 | defensive | — |
+
+**Re-run this scan if any bias multiplier, `BREAK_SPILLOVER`, or `ENRAGE_PER_BREAK` is retuned** — the all-defensive/load-bearing split is input- and coefficient-specific.
+
+---
+
+### PB-F1 — Structure-Target Damage
+
+```
+structure_damage = max(DAMAGE_FLOOR, floor(move_damage × structure_mult + 0.0001))
+```
+Applied to the enemy's `current_structure` when the move sub-targets `STRUCTURE` (Rule 4a). **Applied by TBC** (it owns Structure).
+
+| Variable | Symbol | Type | Range | Description |
+|----------|--------|------|-------|-------------|
+| Pipeline damage | `move_damage` | int | 1–315 | TBC-F5 output (post DF-1/MOVE-F1/Stagger) |
+| Structure multiplier | `structure_mult` | float | {0.70, 1.00, 1.25} | From BREAK_BIAS_MULTIPLIERS |
+| Damage floor | `DAMAGE_FLOOR` | int | 1 | Shared with Damage Formula |
+| Output | `structure_damage` | int | 1–393 | `floor(315 × 1.25 + ε) = 393` at ceiling |
+
+**Worked example (rounding-discriminating):** M=107, Crusher (1.25): `max(1, floor(107 × 1.25 + 0.0001)) = max(1, floor(133.7501)) = 133` — round/ceil give 134.
+**Worked example (epsilon-discriminating):** M=90, Breaker (0.70): exact `90 × 0.70 = 63.0`, but IEEE-754 bare `floor(62.99999…) = 62` — epsilon corrects to **63**. A naive floor is off by one here.
+
+---
+
+### PB-F2 — Region Break Damage
+
+```
+break_damage = max(DAMAGE_FLOOR, floor(move_damage × break_mult + 0.0001))
+```
+Applied to the sub-targeted region's `current_break_hp` (Rule 4b). **Applied by Part-Break.**
+
+| Variable | Symbol | Type | Range | Description |
+|----------|--------|------|-------|-------------|
+| Pipeline damage | `move_damage` | int | 1–315 | Shared input with PB-F1 |
+| Break multiplier | `break_mult` | float | {0.55, 1.00, 1.40} | From BREAK_BIAS_MULTIPLIERS |
+| Damage floor | `DAMAGE_FLOOR` | int | 1 | Shared constant |
+| Output | `break_damage` | int | 1–441 | `floor(315 × 1.40 + ε) = 441` at ceiling |
+
+**Content note:** `break_damage` can exceed `EDB-1`'s max pool (330), so a peak-synergy Breaker SIGNATURE move one-shots any single region. Intended (decisive endgame breaking); encounter designers should expect it.
+
+**Worked example (rounding-discriminating):** M=89, Breaker (1.40): `max(1, floor(89 × 1.40 + 0.0001)) = max(1, floor(124.6001)) = 124` — round/ceil give 125.
+**Worked example (epsilon-discriminating):** M=165, Breaker (1.40): exact `231.0`, IEEE-754 bare `floor(230.9999…) = 230` — epsilon corrects to **231** (the registry's documented MOVE-F1 trap, recurring here).
+
+---
+
+### PB-F3 — Break Spillover to Structure
+
+```
+spillover_damage = max(DAMAGE_FLOOR, floor(move_damage × break_mult × BREAK_SPILLOVER + 0.0001))
+```
+Fires alongside PB-F2 on every region-targeted hit; subtracted from `current_structure` (Rule 4b). **Applied by TBC.** `BREAK_SPILLOVER = 0.20`.
+
+| Variable | Symbol | Type | Range | Description |
+|----------|--------|------|-------|-------------|
+| Pipeline damage | `move_damage` | int | 1–315 | Shared input |
+| Break multiplier | `break_mult` | float | {0.55, 1.00, 1.40} | Same bias as PB-F2 — the bias that governs break efficiency also governs spillover |
+| Spillover fraction | `BREAK_SPILLOVER` | float | 0.20 | Tuning knob |
+| Damage floor | `DAMAGE_FLOOR` | int | 1 | Shared constant |
+| Output | `spillover_damage` | int | 1–88 | `floor(315 × 1.40 × 0.20 + ε) = 88` at ceiling |
+
+**Worked example (rounding-discriminating):** M=107, Breaker (1.40): `max(1, floor(107 × 1.40 × 0.20 + 0.0001)) = max(1, floor(29.9601)) = 29` — round/ceil give 30. (Scan-verified: PB-F3 epsilon is defensive across all coefficients — no epsilon-discriminating case exists.)
+
+---
+
+### PB-F4 — Region Break Trigger (deterministic)
+
+Pure integer state update — **no float arithmetic, no epsilon, no RNG** (Rule 5). This is the entirety of the break "success" mechanic (DB3(a)).
+
+```
+R.current_break_hp = max(0, R.current_break_hp − break_damage)
+if R.current_break_hp == 0 and not R.is_broken:
+    R.is_broken = true
+    emit(<region_id> + "_broken")           # into TBC fired_break_events set
+    enemy.broken_region_count += 1           # feeds PB-F5
+    if all(reg.is_broken for reg in enemy.break_regions):
+        emit("all_boss_parts_broken")
+```
+
+| Variable | Symbol | Type | Range | Description |
+|----------|--------|------|-------|-------------|
+| Region pool | `R.current_break_hp` | int | 0–330 | Remaining break HP; `max(0)`-guarded |
+| Break damage | `break_damage` | int | 1–441 | PB-F2 output |
+| Broken flag | `R.is_broken` | bool | — | Guard: a region emits its event at most once |
+
+**Overkill:** excess break damage beyond the pool is discarded — it does **not** add to `spillover_damage` (PB-F3 is computed from raw `move_damage`, not HP actually depleted, so a one-shot break on a near-empty region does not deal outsized spillover). *Verified by AC-PB-08.*
+
+**Worked example:** `R.current_break_hp = 30`, `break_damage = 35` → `max(0, 30 − 35) = 0` → region breaks, emits `arm_broken`, `broken_region_count` → 1.
+
+---
+
+### PB-F5 — Enrage Damage Multiplier
+
+```
+enraged_damage = max(DAMAGE_FLOOR, floor(enemy_hit_resolved × (1.0 + broken_region_count × ENRAGE_PER_BREAK) + 0.0001))
+```
+Applied by TBC to the **enemy's** outgoing hit (Rule 7), after the enemy's own DF-1/pipeline resolution, before it reduces a player Symbot's `current_structure`. `ENRAGE_PER_BREAK = 0.15`.
+
+| Variable | Symbol | Type | Range | Description |
+|----------|--------|------|-------|-------------|
+| Enemy resolved hit | `enemy_hit_resolved` | int | 1–315 | Enemy's TBC-F5 output pre-enrage (realistic ≤ ~55 at EDB-2 base calibration) |
+| Broken region count | `broken_region_count` | int | 0–3 | Enemy regions currently `is_broken` (MVP cap 3) |
+| Enrage per break | `ENRAGE_PER_BREAK` | float | 0.15 | Tuning knob; additive per break |
+| Damage floor | `DAMAGE_FLOOR` | int | 1 | Shared constant |
+| Output | `enraged_damage` | int | 1–456 | Multiplier range [1.00, 1.45]; `floor(315 × 1.45 + ε) = 456` at theoretical ceiling |
+
+**Worked example (rounding-discriminating):** `enemy_hit_resolved = 73`, `broken_region_count = 2` → mult 1.30: `max(1, floor(73 × 1.30 + 0.0001)) = max(1, floor(94.9001)) = 94` — round/ceil give 95.
+**Worked example (epsilon-discriminating):** `enemy_hit_resolved = 100`, `broken_region_count = 1` → mult 1.15: exact `115.0`, IEEE-754 bare `floor(114.9999…) = 114` — epsilon corrects to **115**.
+
+**Calibration:** at 3 breaks (+45%) a mid enemy dealing ~40 rises to ~58 vs a ~200-Structure Symbot (5 hits-to-down → 3–4). Dangerous for glass cannons, absorbable by tanky/synergy builds — full dismantle is a skilled challenge, not a wall. The `all_boss_parts_broken` capstone is thus fought against a maximally enraged enemy.
 
 ## Edge Cases
 
