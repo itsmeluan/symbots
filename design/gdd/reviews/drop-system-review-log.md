@@ -1,5 +1,15 @@
 # Review Log: Drop System
 
+## Review — 2026-07-11 (fresh-session re-review, round 4) — Verdict: APPROVED (punch-list applied)
+Scope signal: L
+Specialists: economy-designer, game-designer, systems-designer, qa-lead, creative-director (senior synthesis)
+Blocking items (as raised): 15 across 4 specialists → adjudicated by CD to 0 hard implementation-blockers + a 7-item non-blocking punch-list (all applied this session).
+Summary: Mandatory fresh-session re-review of the prior NEEDS-REVISION fixes. All 9 prior blockers verified closed. New findings were a level deeper — AC discriminability, pseudocode completeness, and prose/number precision, no formula-math errors. The CD went to the file and overturned several "BLOCKING" specialist findings: QA F1 (AC-DS-03 already carries the `effective_drop_rate == 1.0` value assertion), QA F5 (EC-DS-09 forecloses the storage-rejection branch in MVP — unbounded inventory), and the Boss-grade-vs-Pillar-2 tension (an already-accepted design position, Rule 4 + OQ-DS-6). One genuine coverage hole survived → AC-DS-30 (DS-3 natural-drop reset, the DS-2/AC-DS-15 analog). Orchestrator independently verified in Python: pity off-by-one (true worst-case guarantee attempts 26/39/76, not 25/38/75), calibration figures (compliant floor 0.16875→0.99%, not 0.15→1.72%), economy band floor (1,556 not 1,600), and game-thirds derivation (~1,565, third-3 was overstated ~48%).
+Punch-list applied (7): (1) DS-2 c=0 pseudocode completed with base-roll + conditional reset; (2) new AC-DS-30 (29 BLOCKING total); (3) partial-play attempts-to-guarantee corrected to `⌈N×C/c⌉+1` (39/76); (4) pity-calibration label fixed to floor-compliant 0.16875→0.99%; (5) economy band floor → ~1,556, mild-scarcity qualified across band; (6) game-thirds recomputed ~300/650/615 = ~1,565, reframed as the back-loaded ≈-floor scenario; (7) Rule 6 anti-exploit wording scoped to the part's own conditions.
+CD directive: this is the third clean structural pass — **no fifth full re-review**; restrict any further work to fix-verifying the changed lines. Non-blocking follow-ups deferred to backlog: targeting_active semantic definition, AC-DS-29 second scenario should use c≥2, Phase-2 rarity-dispatch pseudocode note, AC-DS-28 minimum Save/Load interface, Part-Break provisional-vocabulary silent-fail risk.
+Surfaced cross-GDD obligation (carried): Part DB should add a content-validation AC for the ≥×3.0 Prototype drop-condition floor (the DS-2 analog of AC-11).
+Prior verdict resolved: Yes — all prior NEEDS-REVISION blockers closed and verified; stepped up to APPROVED.
+
 ## Review — 2026-07-11 (re-review) — Verdict: NEEDS REVISION (revisions applied; pending re-review)
 Scope signal: L
 Specialists: game-designer, economy-designer, systems-designer, qa-lead, creative-director
