@@ -46,8 +46,15 @@ No mutually-exclusive AC pairs. Passive DB and TBC ACs on rider durations/scope 
 
 ### Design Decision Required (out of scope for the 8 approved GDDs; blocks the Not-Started Drop System GDD)
 
-**HOLISM-01 — Part economy sink undefined.**
-The persistent part economy has a designed faucet (drops) but no designed sink. Duplicate-part disposition is undecided: (a) scrap-as-currency, (b) inventory accumulation with cap, or (c) no-store/zero-inventory. Part DB defers this to Drop System constraint DB5; Enemy DB OQ-4/OQ-5 depend on it. The decision propagates into Workshop, Inventory, and session pacing. Must be taken before the Drop System GDD is authored. (Option a best serves Pillar 1 by giving Common parts endgame utility but is the most work; option c is MVP-fastest.)
+**HOLISM-01 — Part economy sink — RESOLVED 2026-07-10 (creative-director decision).**
+The persistent part economy's faucet is drops; the sink is now defined:
+
+- **Parts are instances** (each copy is a distinct physical part). Duplicates have genuine utility — the same part type can be equipped on multiple Symbots (each needs its own instance). Duplicates are **stored in inventory**, never auto-scrapped.
+- **Player-initiated scrapping**: the player may scrap any part on demand to yield **Scrap** (generic currency). Never forced — the player chooses when/if. Satisfies Part DB **DB5** (duplicate Commons carry player-perceived value: multi-Symbot use OR on-demand scrap).
+- **Scrap sink (MVP): part upgrading is material-gated** (upgrade_tier 0→5 costs Scrap). Closes the currency loop inside MVP.
+- **Designs (Alpha — this is the Blueprint Crafting System, #25):** a rarer template/blueprint drop. Owning a Design lets the player **fabricate instances** of that specific part on demand, paying currency + materials, instead of re-rolling the RNG drop. Fabricated parts are themselves instances — deterministic/targeted acquisition layered on the RNG loop. Alpha-tier per game-concept's explicit MVP exclusion of blueprint crafting; recorded now for economy coherence.
+
+**Propagation:** unblocks the Drop System GDD (duplicate disposition + Design drop tier). Informs Inventory (instance storage, stacking, per-instance upgrade state — the large-mobile-inventory save/UX risk; player-scrap is the pressure valve), Workshop/Part Upgrade (Scrap-gated upgrading), Blueprint Crafting/Designs (Alpha). Enemy DB OQ-4/OQ-5 (drop rates/pity) remain owned by Drop System.
 
 ### Warnings (watch/track — no rules change)
 
@@ -87,7 +94,7 @@ Insight: both seams live exclusively in deferred passive paths. MVP content (all
 ## Required Actions Before /create-architecture
 
 1. ~~Apply TBC errata for B-1 (ON_OVERHEAT ordering) and B-2 (STAT_AURA application path)~~ **DONE 2026-07-10.** TBC Rule 13 now carries a "Trigger dispatch & firing order" contract (ON_OVERHEAT fires before the Overheat consequence; PERSISTENT is an application mode sieved from event dispatch; alphabetical multi-passive ordering). TBC Rule 10 now folds PERSISTENT STAT_AURA part-passive deltas into `effective_stat` via a `frozen_passive_aura` block. Both closed bidirectionally (Passive DB Rule 2a / Rule 3a note the closure). AC-PDB-D2 remains the OQ-PDB-1 entry gate that exercises the B-2 path.
-2. Take the HOLISM-01 duplicate-part-sink decision before authoring the Drop System GDD.
+2. ~~Take the HOLISM-01 duplicate-part-sink decision~~ **DONE 2026-07-10** — parts are instances; duplicates stored + player-scrappable → Scrap currency; MVP sink = Scrap-gated part upgrading; Designs (rare blueprint drops → fabricate instances w/ currency+materials) are the Alpha Blueprint Crafting layer. See the resolved HOLISM-01 entry above.
 3. (Recommended) Confirm OQ-PDB-1 Core passive content pass is gated as a design prerequisite before the first content authoring sprint (Pillar 4 delivery).
 4. Note: 14 of 22 MVP systems remain undesigned — architecture should not begin until the MVP GDD set is complete. Next in design order: #7 Encounter Zone; #9 Part-Break is the binding Pillar-2 obligation.
 

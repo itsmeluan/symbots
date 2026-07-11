@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Created**: 2026-07-09
-> **Last Updated**: 2026-07-10 (Passive Database GDD Approved — re-review round 2 passed)
+> **Last Updated**: 2026-07-10 (Drop System GDD authored — Designed, pending review)
 > **Source Concept**: design/gdd/game-concept.md
 
 ---
@@ -34,7 +34,7 @@ designed first.
 | 5 | Synergy System | Gameplay | MVP | Approved | design/gdd/synergy-system.md | Part Database, Symbot Assembly |
 | 6 | Turn-Based Combat System | Gameplay | MVP | Approved | design/gdd/turn-based-combat.md | Damage Formula, Symbot Assembly, Enemy Database, Synergy, Part Database |
 | 7 | Encounter Zone System | World | MVP | Not Started | — | Enemy Database |
-| 8 | Drop System | Economy | MVP | Not Started | — | Part Database, Enemy Database |
+| 8 | Drop System | Economy | MVP | Designed | design/gdd/drop-system.md | Part Database, Enemy Database |
 | 9 | Part-Break System | Gameplay | MVP | Not Started | — | Turn-Based Combat, Drop System |
 | 10 | Enemy AI System | Gameplay | MVP | Not Started | — | Turn-Based Combat, Enemy Database |
 | 11 | Inventory System | Economy | MVP | Not Started | — | Part Database |
@@ -127,7 +127,7 @@ designed first.
 
 23. **NPC System** — rival Symbot Mechanics with unique builds; introduces new elements and synergies in story encounters
 24. **Tutorial System** — first-session onboarding: workshop tutorial, first combat guide, break targeting explanation
-25. **Blueprint Crafting System** — recipe-based part crafting as an alternative to drop acquisition
+25. **Blueprint Crafting System** — the **Designs** layer: rare blueprint/template drops that let the player **fabricate part instances on demand** (paying Scrap currency + materials) instead of re-rolling the RNG drop. Deterministic/targeted acquisition on top of the RNG loop; fabricated parts are instances like any other. (Economy model set 2026-07-10, HOLISM-01 — see part-database.md DB5.)
 26. **Part Upgrade System** — enhance individual parts with materials; tuning layer on top of base part stats
 27. **Endgame Loop System** — challenge zones with scaling difficulty and rare-tier part pools; the post-story grind
 28. **PvP System** — build-vs-build asynchronous or real-time matches; requires networking infrastructure
@@ -198,10 +198,10 @@ layered structure. Part Database sits at the root with no cycles back from depen
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 30 |
-| Design docs started | 8 |
+| Design docs started | 9 |
 | Design docs reviewed | 7 |
 | Design docs approved | 7 |
-| MVP systems designed | 8 / 22 |
+| MVP systems designed | 9 / 22 |
 | Vertical Slice systems designed | 0 / 2 |
 | Alpha systems designed | 0 / 3 |
 | Full Vision systems designed | 0 / 1 |

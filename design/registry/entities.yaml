@@ -37,7 +37,7 @@
 #   Each entry: name, status, source, referenced_by[], attributes{}, added, revised
 
 version: 1
-last_updated: "2026-07-10"  # added passives section (3 ratified status riders from passive-database.md)
+last_updated: "2026-07-10"  # + N_PROTO_PITY, M_BOSS_PITY (drop-system.md); earlier: passives section (3 status riders)
 
 # ─── ENTITIES ────────────────────────────────────────────────────────────────
 # Named game-world objects: enemies, NPCs, characters, factions, bosses.
@@ -604,6 +604,36 @@ constants:
     unit: dimensionless float offset
     notes: "IEEE 754 nudge for floor() in Formula DF-1. Fixed — not a tuning knob."
     added: 2026-07-09
+    revised: ""
+
+  - name: N_PROTO_PITY
+    status: active
+    source: design/gdd/drop-system.md
+    referenced_by:
+      - design/gdd/drop-system.md            # DS-2 Prototype gradient pity
+      - design/gdd/part-database.md           # discharges DB2 (Prototype pity constraint)
+    value: 25
+    unit: consecutive failed optimal-condition attempts before a guaranteed Prototype drop
+    notes: "DS-2 (PGP-1). Per-Prototype-ID counter; guarantee fires on the (N+1)th optimal attempt
+      worst-case. Hidden from the player (surprise-rescue). At 25, ~0.9% of hunters ever hit pity
+      (geometric tail at the ~16.9% optimal rate). Safe range 15–25; below ~12 pity becomes the
+      expected acquisition path. Persisted by Save/Load."
+    added: 2026-07-10
+    revised: ""
+
+  - name: M_BOSS_PITY
+    status: active
+    source: design/gdd/drop-system.md
+    referenced_by:
+      - design/gdd/drop-system.md            # DS-3 Boss-grade deterministic floor
+      - design/gdd/part-database.md           # discharges EC-16 (Boss-grade acquisition floor)
+    value: 8
+    unit: consecutive qualifying-break drop-roll failures before a guaranteed Boss-grade drop
+    notes: "DS-3 (BGDF-1). Per-Boss-grade-ID counter; only qualifying breaks (required break fired)
+      count — break-failure is Part-Break's DB3, not this counter. Guarantee fires on the (M+1)th
+      qualifying break worst-case. Hidden. At 8, ~0.4% hit pity (0.5^8) — preserves the ~2-attempt
+      average intent (Enemy DB BOSS_GRADE_BREAK_GUARANTEE). Safe range 5–8. Persisted by Save/Load."
+    added: 2026-07-10
     revised: ""
 
   - name: POWER_TIER_MULTIPLIERS

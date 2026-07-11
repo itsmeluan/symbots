@@ -132,15 +132,29 @@ Recommended also applied: AC-TBC-06 split (state vs. rendering — UI assertions
   - B-1: ON_OVERHEAT firing order → TBC Rule 13 "Trigger dispatch & firing order" note (fires before Overheat consequence; PERSISTENT sieved from event dispatch; alphabetical multi-passive order). Passive DB Rule 2a notes closure.
   - B-2: STAT_AURA path → TBC Rule 10 `frozen_passive_aura` block folds PERSISTENT part-passive deltas into effective_stat. Passive DB Rule 3a notes closure. AC-PDB-D2 remains the OQ-PDB-1 gate that exercises it.
   - (Both were forward-looking — no MVP content exercises them; all 3 riders are STATUS_RIDER/ON_HIT.)
-- **HOLISM-01 (design decision, blocks Not-Started Drop System GDD):** duplicate-part sink undecided (scrap-currency / inventory-cap / no-store). Take position before Drop System authoring. Part DB DB5, Enemy DB OQ-4/5.
+- **HOLISM-01 — RESOLVED 2026-07-10 (CD decision):** Parts are **instances** (multiple copies useful — same part on multiple Symbots). Duplicates **stored** in inventory, **player-chooses** to scrap → **Scrap** (generic currency); never auto-scrapped. Satisfies Part DB DB5. **MVP Scrap sink = material-gated part upgrading** (tier 0→5 costs Scrap). **Designs** = rarer blueprint drops → **fabricate** part instances on demand w/ currency+materials (deterministic acquisition atop RNG); Designs = Blueprint Crafting System #25, **Alpha-tier**. Unblocks Drop System GDD; informs Inventory (instance storage/stacking — mobile save/UX risk), Workshop/Part Upgrade, Blueprint Crafting. Enemy DB OQ-4/5 (rates/pity) still Drop System's.
 - Watches: Pillar-4 flat-passive gap (OQ-PDB-1 CRITICAL PATH must ship before content); Kinetic Stagger incoming-damage asymmetry (playtest watch); 4-demand attention budget (Combat UI 44pt constraint).
 - **Errata APPLIED this session (8 fixes):** W-1 Part DB +Move DB downstream row (9→10); W-2 TBC dep labels Move/Passive DB→Approved (+Synergy's TBC label); W-3 Synergy +Passive DB downstream reciprocity; W-4 TBC STATUS_DURATION scope="move-applied only"; W-5 Enemy DB OQ-3 RESOLVED + Rule 3 dead-data note + EDB-2 max-synergy addendum; W-7 Part DB AC-13 unblocked (ACTIVE); W-8/W-9 registry DAMAGE_FLOOR + BASE_ENERGY_REGEN referenced_by += move-database.md. W-6 withdrawn (AC-MDB-10 exists).
 - No GDD marked Needs Revision — all issues were errata (applied) or forward-looking obligations (tracked), not GDD-invalidating.
 - Report: design/gdd/gdd-cross-review-2026-07-10.md
 - Recommended next: apply B-1/B-2 TBC seam errata OR decide HOLISM-01 OR /design-system encounter-zone (#7) / part-break (#9, binding Pillar-2).
 
+## Drop System GDD — COMPLETE (this session, Designed/pending review)
+- All 8 sections written. Independent per-part rolls (Enemy DB OQ-5 → option b). Hidden pity (surprise-rescue). Mild-scarcity Scrap.
+- Formulas: DS-1 (roll, strict <), DS-2 (Prototype pity N_PROTO_PITY=25), DS-3 (Boss-grade pity M_BOSS_PITY=8). 24 ACs (21 BLOCKING unit) via qa-lead; EC↔AC 9/9.
+- Discharges Part DB DB2 (N=25), EC-16 (M=8), DB5 (scrap: yields Common5/Rare20/BG60/Proto35, sink=upgrading 10/20/40/80/130). Resolves Enemy DB OQ-4 & OQ-5.
+- Scrap yields owned here; upgrade-cost curve proposed here but owned by Part Upgrade/Workshop. Pool Common cap (≤2 WILD/≤3 BOSS) = Enemy DB authoring rule.
+- Applied: registry +N_PROTO_PITY/+M_BOSS_PITY; Enemy DB OQ-4/OQ-5 → RESOLVED errata; systems-index #8 → Designed (started 8→9, MVP designed 8→9/22).
+- Provisional/open: OQ-DS-1 Part-Break contract (break vocab + P(break)); OQ-DS-2 outcome-fact provenance (TBC↔Drop interface — real gap); OQ-DS-3 Designs (Alpha); OQ-DS-4 inventory cap/scrap UX. Deferred ACs AD-1..5.
+- CD-GDD-ALIGN skipped (lean). Player Fantasy drafted without creative-director (lean) — manual pillar check before production.
+
+## Next
+- /design-review design/gdd/drop-system.md in a FRESH session (never same-session as authoring).
+- Then /consistency-check (new registry constants + Enemy DB errata).
+- Next MVP system in design order: #7 Encounter Zone (Not Started) or #9 Part-Break (binding Pillar-2; also closes OQ-DS-1/OQ-DS-2 for Drop).
+
 <!-- STATUS -->
 Epic: MVP Core GDDs
-Feature: Cross-GDD review → CONCERNS (8 errata + B-1/B-2 seams closed)
-Task: Foundation+Core coherent & seams closed; open: HOLISM-01 sink decision; next system Encounter Zone (#7) / Part-Break (#9)
+Feature: Drop System GDD → Designed (pending review)
+Task: 8/8 sections done; tracking applied. Next: /design-review drop-system in fresh session, then Encounter Zone (#7) or Part-Break (#9).
 <!-- /STATUS -->
