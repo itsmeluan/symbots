@@ -173,3 +173,5 @@ Epic: MVP Core GDDs
 Feature: Drop System GDD → MAJOR REVISION addressed (pending re-review)
 Task: 9/9 blockers fixed (dedupe + economy rederivation + MULTIPLIER_FLOOR + pity rules + AC fixes + AD-2→AC-DS-28 + errata). Next: /design-review in fresh session.
 <!-- /STATUS -->
+
+<!-- CONSISTENCY-CHECK: 2026-07-11 | GDDs checked: 9 | Conflicts found: 0 (1 stale registry note synced: N_PROTO_PITY calibration) | Drop-owned constants N_PROTO_PITY/M_BOSS_PITY/MULTIPLIER_FLOOR all consistent across Part DB + Enemy DB -->
