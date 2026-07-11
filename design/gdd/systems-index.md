@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Created**: 2026-07-09
-> **Last Updated**: 2026-07-11 (Drop System GDD re-reviewed — APPROVED; re-review punch-list applied, no further review warranted)
+> **Last Updated**: 2026-07-11 (Part-Break System GDD authored — Designed, pending fresh-session /design-review. Creates 3 erratum obligations on Approved docs: TBC, Move DB, Drop System)
 > **Source Concept**: design/gdd/game-concept.md
 
 ---
@@ -35,7 +35,7 @@ designed first.
 | 6 | Turn-Based Combat System | Gameplay | MVP | Approved | design/gdd/turn-based-combat.md | Damage Formula, Symbot Assembly, Enemy Database, Synergy, Part Database |
 | 7 | Encounter Zone System | World | MVP | Not Started | — | Enemy Database |
 | 8 | Drop System | Economy | MVP | Approved (2026-07-11, re-review punch-list applied) | design/gdd/drop-system.md | Part Database, Enemy Database |
-| 9 | Part-Break System | Gameplay | MVP | Not Started | — | Turn-Based Combat, Drop System |
+| 9 | Part-Break System | Gameplay | MVP | Designed (2026-07-11, pending review) | design/gdd/part-break.md | Turn-Based Combat, Drop System |
 | 10 | Enemy AI System | Gameplay | MVP | Not Started | — | Turn-Based Combat, Enemy Database |
 | 11 | Inventory System | Economy | MVP | Not Started | — | Part Database |
 | 12 | Zone & World Map System | World | MVP | Not Started | — | Encounter Zone |
@@ -198,10 +198,10 @@ layered structure. Part Database sits at the root with no cycles back from depen
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 30 |
-| Design docs started | 9 |
+| Design docs started | 10 |
 | Design docs reviewed | 8 |
 | Design docs approved | 8 |
-| MVP systems designed | 9 / 22 |
+| MVP systems designed | 10 / 22 |
 | Vertical Slice systems designed | 0 / 2 |
 | Alpha systems designed | 0 / 3 |
 | Full Vision systems designed | 0 / 1 |

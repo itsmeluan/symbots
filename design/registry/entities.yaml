@@ -37,7 +37,7 @@
 #   Each entry: name, status, source, referenced_by[], attributes{}, added, revised
 
 version: 1
-last_updated: "2026-07-11"  # N_PROTO_PITY calibration re-sync (floor-compliant 0.16875->0.99%, per drop-system.md APPROVED punch-list); + MULTIPLIER_FLOOR (Rule 5a); earlier: N_PROTO_PITY, M_BOSS_PITY; passives section (3 status riders)
+last_updated: "2026-07-11"  # + Part-Break: PB-F1..F5 formulas, BREAK_SPILLOVER/ENRAGE_PER_BREAK/BREAK_BIAS_MULTIPLIERS constants; referenced_by updated on EDB-1/BREAK_HP_MIN/DAMAGE_FLOOR/MOVE-F1/TBC-F5. Earlier: N_PROTO_PITY calibration re-sync; MULTIPLIER_FLOOR (Rule 5a); N_PROTO_PITY, M_BOSS_PITY; passives section (3 status riders)
 
 # ─── ENTITIES ────────────────────────────────────────────────────────────────
 # Named game-world objects: enemies, NPCs, characters, factions, bosses.
@@ -348,6 +348,7 @@ formulas:
     referenced_by:
       - design/gdd/turn-based-combat.md
       - design/gdd/move-database.md
+      - design/gdd/part-break.md             # TBC-F5 output (move_damage / enemy_hit_resolved) feeds PB-F1/F2/F3/F5
     variables:
       - snapshotted_processing (applier's processing, 0-110)
       - STAGGER_COEFF (0.25)
@@ -387,6 +388,7 @@ formulas:
     referenced_by:
       - design/gdd/move-database.md
       - design/gdd/turn-based-combat.md
+      - design/gdd/part-break.md             # move_damage (MOVE-F1 output via TBC-F5) is the input to PB-F1/F2/F3
     variables:
       - df1_output (DF-1 output, 1-225 — DF-1's own range unchanged)
       - power_mult (from power_tier enum: BASIC 0.70, LIGHT 0.80, STANDARD 1.00, HEAVY 1.20, SIGNATURE 1.40)
@@ -409,6 +411,7 @@ formulas:
     source: design/gdd/enemy-database.md
     referenced_by:
       - design/gdd/enemy-database.md
+      - design/gdd/part-break.md             # consumes break_hp to init region pools at BATTLE_INIT (PB-F6 init step)
     variables:
       - structure (enemy HP pool)
       - region_fraction (0.15-0.55, authored per region)
@@ -444,6 +447,106 @@ formulas:
       Extended input range A[1,150] x D[0,182] exhaustively epsilon-scanned 2026-07-10: no float traps."
     added: 2026-07-09
     revised: "2026-07-10"  # was [1, 165] — invalidated by SYN-F4's uncapped effective_stat; re-derived under SYNERGY_POWER_BUDGET=40 by turn-based-combat.md (approved errata, Synergy re-review #5 obligation fulfilled)
+
+  - name: PB-F1
+    status: active
+    source: design/gdd/part-break.md
+    referenced_by:
+      - design/gdd/part-break.md
+      - design/gdd/turn-based-combat.md      # TBC applies structure_damage to current_structure (Rule 10 erratum)
+    variables:
+      - move_damage (TBC-F5 pipeline output, 1-315)
+      - structure_mult (from BREAK_BIAS_MULTIPLIERS: 0.70/1.00/1.25)
+      - DAMAGE_FLOOR (1, shared)
+      - EPSILON (0.0001)
+    output_range: [1, 393]
+    expression: "structure_damage = max(DAMAGE_FLOOR, floor(move_damage * structure_mult + 0.0001))"
+    notes: "Structure-target damage. LOAD-BEARING epsilon at structure_mult=0.70 (BREAK_HEAVY; 3 cases
+      M=90,170,180 — python3-scanned 2026-07-11); defensive at 1.00/1.25. Applied by TBC (owns Structure).
+      Re-run scan if any bias multiplier retuned."
+    added: 2026-07-11
+    revised: ""
+
+  - name: PB-F2
+    status: active
+    source: design/gdd/part-break.md
+    referenced_by:
+      - design/gdd/part-break.md
+      - design/gdd/turn-based-combat.md      # move_damage supplied by TBC pipeline; break routing is Part-Break's
+    variables:
+      - move_damage (TBC-F5 pipeline output, 1-315)
+      - break_mult (from BREAK_BIAS_MULTIPLIERS: 0.55/1.00/1.40)
+      - DAMAGE_FLOOR (1, shared)
+      - EPSILON (0.0001)
+    output_range: [1, 441]
+    expression: "break_damage = max(DAMAGE_FLOOR, floor(move_damage * break_mult + 0.0001))"
+    notes: "Region break damage, applied by Part-Break to region current_break_hp. LOAD-BEARING epsilon at
+      break_mult=1.40 (BREAK_HEAVY; 7 cases incl. M=165 -> 231, the documented MOVE-F1 trap — python3-scanned
+      2026-07-11); defensive at 0.55/1.00. Ceiling 441 > EDB-1 max pool 330: peak Breaker one-shots any region."
+    added: 2026-07-11
+    revised: ""
+
+  - name: PB-F3
+    status: active
+    source: design/gdd/part-break.md
+    referenced_by:
+      - design/gdd/part-break.md
+      - design/gdd/turn-based-combat.md      # TBC applies spillover to current_structure (Rule 10 erratum)
+    variables:
+      - move_damage (TBC-F5 pipeline output, 1-315)
+      - break_mult (from BREAK_BIAS_MULTIPLIERS: 0.55/1.00/1.40)
+      - BREAK_SPILLOVER (0.20)
+      - DAMAGE_FLOOR (1, shared)
+      - EPSILON (0.0001)
+    output_range: [1, 88]
+    expression: "spillover_damage = max(DAMAGE_FLOOR, floor(move_damage * break_mult * BREAK_SPILLOVER + 0.0001))"
+    notes: "Break spillover to Structure on region hits (20% of break damage). Epsilon DEFENSIVE across all
+      coefficients (python3-scanned 2026-07-11 — analytically expected load-bearing, empirically clean; the
+      project's 'specialists err in both directions' pattern). Computed from move_damage, NOT depleted HP (EC-PB-04)."
+    added: 2026-07-11
+    revised: ""
+
+  - name: PB-F4
+    status: active
+    source: design/gdd/part-break.md
+    referenced_by:
+      - design/gdd/part-break.md
+      - design/gdd/drop-system.md             # emits <region>_broken / all_boss_parts_broken into fired_break_events (DS Rule 5 vocab)
+      - design/gdd/turn-based-combat.md        # writes into TBC fired_break_events set (Rule 12)
+    variables:
+      - current_break_hp (0-330)
+      - break_damage (PB-F2 output, 1-441)
+      - is_broken (bool guard)
+    output_range: "boolean event emission (no numeric output)"
+    expression: |
+      current_break_hp = max(0, current_break_hp - break_damage)
+      if current_break_hp == 0 and not is_broken: emit(<region>_broken); broken_region_count += 1;
+         if all regions broken: emit(all_boss_parts_broken)
+    notes: "Deterministic break trigger — pure integer, NO RNG (discharges Part DB DB3(a); break-failure pity
+      DB3(b) DISSOLVED). Break is guaranteed on pool depletion. Emits into TBC's fired_break_events set for the
+      Drop System. Break keys MUST match Drop System Rule 5 vocabulary."
+    added: 2026-07-11
+    revised: ""
+
+  - name: PB-F5
+    status: active
+    source: design/gdd/part-break.md
+    referenced_by:
+      - design/gdd/part-break.md
+      - design/gdd/turn-based-combat.md      # TBC applies enrage to enemy outgoing damage (Rule 10 erratum)
+    variables:
+      - enemy_hit_resolved (enemy TBC-F5 output, 1-315)
+      - broken_region_count (0-3)
+      - ENRAGE_PER_BREAK (0.15)
+      - DAMAGE_FLOOR (1, shared)
+      - EPSILON (0.0001)
+    output_range: [1, 456]
+    expression: "enraged_damage = max(DAMAGE_FLOOR, floor(enemy_hit_resolved * (1 + broken_region_count * ENRAGE_PER_BREAK) + 0.0001))"
+    notes: "Enrage: +15% enemy outgoing damage per broken region (max +45% at 3). Applied by TBC to enemy
+      damage. LOAD-BEARING epsilon at multiplier 1.15 (broken_region_count=1; 4 cases — python3-scanned
+      2026-07-11); defensive at 1.30/1.45. Multiplier range [1.00, 1.45]. Re-run scan if ENRAGE_PER_BREAK retuned."
+    added: 2026-07-11
+    revised: ""
 
 # Example:
 #
@@ -531,6 +634,7 @@ constants:
     source: design/gdd/enemy-database.md
     referenced_by:
       - design/gdd/enemy-database.md
+      - design/gdd/part-break.md             # consumes via EDB-1 init; EC-PB-07 asserts a 5-HP region is one-shot-breakable
     value: 5
     unit: region break HP (integer damage pool floor)
     notes: "Floor on EDB-1 derived break_hp. Defensive within MVP content ranges
@@ -546,6 +650,7 @@ constants:
       - design/gdd/damage-formula.md
       - design/gdd/turn-based-combat.md      # TBC-F5 Stagger floors at DAMAGE_FLOOR
       - design/gdd/move-database.md           # MOVE-F1 floors the power-tier multiply at DAMAGE_FLOOR
+      - design/gdd/part-break.md              # PB-F1/F2/F3/F5 all floor at DAMAGE_FLOOR
     value: 1
     unit: Structure points (integer damage)
     added: 2026-07-09
@@ -669,6 +774,51 @@ constants:
       epsilon scan. Tiers must stay strictly ordered BASIC<LIGHT<STANDARD<HEAVY<SIGNATURE. Energy/heat
       bands per tier are Part DB Formula 5/6 (Move DB Rule 3 binds them for coherence)."
     added: 2026-07-10
+    revised: ""
+
+  - name: BREAK_SPILLOVER
+    status: active
+    source: design/gdd/part-break.md
+    referenced_by:
+      - design/gdd/part-break.md              # PB-F3 (Rule 4b)
+      - design/gdd/turn-based-combat.md        # TBC applies spillover to current_structure (Rule 10 erratum)
+    value: 0.20
+    unit: fraction of region-hit damage that also reduces Structure
+    notes: "PB-F3. Ensures breaking is not zero-productive when the post-break drop roll fails — 20% of break
+      damage advances the kill. Safe range 0.10-0.30. Changing it shifts harvest cost (0.90x at 0.10 -> 0.67x at
+      0.30 of a region's worth) but does NOT invalidate the PB-F3 scan (defensive). Owned by Part-Break; applied by TBC."
+    added: 2026-07-11
+    revised: ""
+
+  - name: ENRAGE_PER_BREAK
+    status: active
+    source: design/gdd/part-break.md
+    referenced_by:
+      - design/gdd/part-break.md              # PB-F5, Rule 7
+      - design/gdd/turn-based-combat.md        # TBC applies enrage to enemy outgoing damage (Rule 10 erratum)
+    value: 0.15
+    unit: additive enemy outgoing-damage bonus per broken region
+    notes: "PB-F5. Greed tax — each broken region raises enemy damage by 15% (max +45% at 3). Safe range 0.08-0.20;
+      at 0.20 a fully-enraged enemy can two-shot glass cannons, at 0.08 enrage is cosmetic. Coupled to SA-F1 Structure
+      ranges — recheck the glass-cannon case if enemy power (EDB-2) or Structure ranges change. Re-run the PB-F5
+      epsilon scan if changed. Global constant in MVP (all enemies); per-enemy enrage_enabled is OQ-PB-4."
+    added: 2026-07-11
+    revised: ""
+
+  - name: BREAK_BIAS_MULTIPLIERS
+    status: active
+    source: design/gdd/part-break.md
+    referenced_by:
+      - design/gdd/part-break.md              # Rule 3, PB-F1/F2/F3
+      - design/gdd/turn-based-combat.md        # TBC applies the multipliers in damage routing (Rule 10 erratum)
+      - design/gdd/move-database.md            # break_bias field authored per move (Move DB erratum)
+    value: "{STRUCTURE_HEAVY: [1.25, 0.55], BALANCED: [1.00, 1.00], BREAK_HEAVY: [0.70, 1.40]}"
+    unit: (structure_mult, break_mult) pair keyed on a move's break_bias enum
+    notes: "Per-move kill-vs-harvest trade. BALANCED (1.00,1.00) is the FIXED calibration anchor (mirrors
+      POWER_TIER STANDARD=1.00 — do not tune). Keep both specialist ratios >= 2.0x or the bias collapses toward
+      Balanced. structure_mult=0.70 and break_mult=1.40 are LOAD-BEARING epsilon coefficients (PB-F1/PB-F2) —
+      re-run the scan if any value is retuned. Owned by Part-Break; break_bias field lives on the Move (Move DB)."
+    added: 2026-07-11
     revised: ""
 
 # Example:

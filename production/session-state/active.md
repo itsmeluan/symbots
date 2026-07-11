@@ -3,8 +3,19 @@
 ## Current Task
 Session 17: **Part-Break System GDD `/design-system part-break`** (lean mode). Skeleton created at `design/gdd/part-break.md`. Starting Section A (Overview).
 **File**: design/gdd/part-break.md
-**Sections complete**: A, B, C (+Rule 11), D (scan-verified), E (12 ECs), F (Dependencies + 3 errata: TBC/Move DB/Drop System), G (Tuning Knobs)
-**Current section**: H — Acceptance Criteria (spawn qa-lead — lean HIGH-risk exception)
+**STATUS: Part-Break GDD COMPLETE** (design/gdd/part-break.md — all 8 required + Visual/Audio + UI + Open Questions). Status: Designed, pending fresh-session /design-review.
+**Phase 5 done**: self-check (0 placeholders); registry updated (PB-F1..F5 + BREAK_SPILLOVER/ENRAGE_PER_BREAK/BREAK_BIAS_MULTIPLIERS + referenced_by on EDB-1/BREAK_HP_MIN/DAMAGE_FLOOR/MOVE-F1/TBC-F5; YAML valid); systems index updated (10/22 MVP designed). CD-GDD-ALIGN skipped (lean).
+**3 ERRATA OBLIGATIONS on Approved docs (must be applied before those docs are re-approved):**
+  1. TBC (substantial) — Rule 10 damage routing by sub-target + PB-F3 spillover + BREAK_BIAS_MULTIPLIERS + PB-F5 enrage on enemy outgoing; region sub-targeting layer.
+  2. Move DB (small) — add break_bias field (enum, default BALANCED) + BREAK_BIAS_MULTIPLIERS table + reserved target_profile; add part-break to referenced systems.
+  3. Drop System (small) — redefine provisional Rule 5/7: break is deterministic (no P(break fires), no break-failure pity); DS-3 drop pity unaffected.
+**DB3 resolution**: (a) deterministic pool depletion (PB-F4); (b) break-failure soft-lock DISSOLVED (DAMAGE_FLOOR guarantees progress).
+
+## Next
+- **/design-review design/gdd/part-break.md in a FRESH session** (never same-session as authoring).
+- Then /consistency-check (new PB constants/formulas + the 3 pending errata).
+- Apply the 3 errata to TBC / Move DB / Drop System (they'll need re-review touches).
+- Next MVP system in design order: #7 Encounter Zone or #10 Enemy AI.
 **Multi-target skills**: RESERVED extension (Rule 11) — target_profile schema hook + split rule reserved; no MVP content. User confirmed.
 **Section D locked**: BREAK_BIAS_MULTIPLIERS = STRUCTURE_HEAVY(1.25,0.55)/BALANCED(1.00,1.00)/BREAK_HEAVY(0.70,1.40); BREAK_SPILLOVER=0.20; ENRAGE_PER_BREAK=0.15. Epsilon scan (python3, M∈[1,315]): PB-F1@0.70 LOAD-BEARING, PB-F2@1.40 LOAD-BEARING, PB-F3 defensive, PB-F5@1.15 LOAD-BEARING; 0 overcorrections, 0 unfixed. Formulas PB-F1..F5 + DAMAGE_FLOOR=1 guards.
 **Key locked decisions**: Two-pool model (Structure + region break pools from EDB-1); free target selection (Structure OR region, no turn cost); break_bias enum STRUCTURE_HEAVY/BALANCED/BREAK_HEAVY; BREAK_SPILLOVER=0.20; deterministic break (one RNG gate = the drop); unlimited multi-break gated by fraction cost + ENRAGE_PER_BREAK escalator; all_boss_parts_broken capstone.
