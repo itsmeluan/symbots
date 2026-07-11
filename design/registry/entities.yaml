@@ -37,7 +37,7 @@
 #   Each entry: name, status, source, referenced_by[], attributes{}, added, revised
 
 version: 1
-last_updated: "2026-07-10"  # + N_PROTO_PITY, M_BOSS_PITY (drop-system.md); earlier: passives section (3 status riders)
+last_updated: "2026-07-11"  # + MULTIPLIER_FLOOR (drop-system.md Rule 5a); N_PROTO_PITY calibration note fix; earlier: N_PROTO_PITY, M_BOSS_PITY; passives section (3 status riders)
 
 # ─── ENTITIES ────────────────────────────────────────────────────────────────
 # Named game-world objects: enemies, NPCs, characters, factions, bosses.
@@ -615,11 +615,12 @@ constants:
     value: 25
     unit: consecutive failed optimal-condition attempts before a guaranteed Prototype drop
     notes: "DS-2 (PGP-1). Per-Prototype-ID counter; guarantee fires on the (N+1)th optimal attempt
-      worst-case. Hidden from the player (surprise-rescue). At 25, ~0.9% of hunters ever hit pity
-      (geometric tail at the ~16.9% optimal rate). Safe range 15–25; below ~12 pity becomes the
-      expected acquisition path. Persisted by Save/Load."
+      worst-case. Hidden from the player (surprise-rescue). At 25, ~1.0% of hunters hit pity at the
+      typical optimal rate (0.169) and ~1.72% at the authored floor (0.15 — Prototype drop_conditions
+      must total >= x3.0, a Part DB authoring rule DS-2 depends on). Safe range 15–25; below ~12 pity
+      becomes the expected acquisition path. Persisted by Save/Load."
     added: 2026-07-10
-    revised: ""
+    revised: "2026-07-11 — calibration note corrected to floor-based odds (was ~0.9%)."
 
   - name: M_BOSS_PITY
     status: active
@@ -632,8 +633,24 @@ constants:
     notes: "DS-3 (BGDF-1). Per-Boss-grade-ID counter; only qualifying breaks (required break fired)
       count — break-failure is Part-Break's DB3, not this counter. Guarantee fires on the (M+1)th
       qualifying break worst-case. Hidden. At 8, ~0.4% hit pity (0.5^8) — preserves the ~2-attempt
-      average intent (Enemy DB BOSS_GRADE_BREAK_GUARANTEE). Safe range 5–8. Persisted by Save/Load."
+      average intent (Enemy DB BOSS_GRADE_BREAK_GUARANTEE). Safe range 5–8. Persisted by Save/Load.
+      Calibration valid only while the >= x500 Boss-grade break rule (Part DB AC-11) holds — load-bearing."
     added: 2026-07-10
+    revised: ""
+
+  - name: MULTIPLIER_FLOOR
+    status: active
+    source: design/gdd/drop-system.md
+    referenced_by:
+      - design/gdd/drop-system.md            # Rule 5a — drop-condition incentive floor
+      - design/gdd/enemy-database.md          # discharges ED3-OQ7 / Recommended #7
+    value: 1.5
+    unit: minimum drop-condition multiplier that counts as a perceivable harvest incentive
+    notes: "Rule 5a. Content-validation constant (not runtime). A drop_conditions multiplier >= 1.5 is a
+      valid incentive; (1.0, 1.5) is a content warning; <= 1.0 is a content error. Gives Enemy DB's
+      syntactic loot_connected check functional teeth (Pillar 2). Boss-grade keeps its separate >= x500
+      floor (Part DB AC-11) — MULTIPLIER_FLOOR is the general Common/Rare/Prototype floor. Safe range 1.2–2.0."
+    added: 2026-07-11
     revised: ""
 
   - name: POWER_TIER_MULTIPLIERS

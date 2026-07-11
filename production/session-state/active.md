@@ -148,13 +148,28 @@ Recommended also applied: AC-TBC-06 split (state vs. rendering — UI assertions
 - Provisional/open: OQ-DS-1 Part-Break contract (break vocab + P(break)); OQ-DS-2 outcome-fact provenance (TBC↔Drop interface — real gap); OQ-DS-3 Designs (Alpha); OQ-DS-4 inventory cap/scrap UX. Deferred ACs AD-1..5.
 - CD-GDD-ALIGN skipped (lean). Player Fantasy drafted without creative-director (lean) — manual pillar check before production.
 
+## Drop System GDD — MAJOR REVISION addressed (2026-07-11, this session)
+Re-review 2026-07-10 verdict = MAJOR REVISION NEEDED (9 blockers). All 9 worked in a fresh session. Two design decisions resolved by user: **dedupe-to-unique** duplicate-pool-ID contract; **mild-scarcity** economy target.
+- **B1 dup contract** → dedupe to unique (Rule 2 rewritten, EC-DS-08, AC-DS-08). Aligns with Approved Enemy DB EC-ED-08; no Enemy DB change needed.
+- **B2 economy** → rederived from scratch: A1 ~200 victories, A2 per-victory yield, A3 absorption (C75/R50/BG25/P25%). Faucet ~1,915 (band 1,700–2,300); sink 2 Rare+1 Proto+1 Common maxed = ~1,000/Symbot ×3 = ~3,000; funds ≈2 loadouts → mild scarcity. OQ-DS-5 reframed to assumptions.
+- **B3 MULTIPLIER_FLOOR=1.5** defined (Rule 5a; new registry const) → discharges Enemy DB ED3-OQ7 + Recommended #7 (both marked RESOLVED in Enemy DB).
+- **B4 pity calibration** → new "Pity Calibration Authoring Rules" table: Proto floor ×3.0 (→1.72% at floor; Part DB rule exists, surfaced missing-AC obligation); Boss ×500 load-bearing (Part DB AC-11) → 0.39%. Corrected old "~0.9%"/"~0.4%".
+- **B5 upgrade curve** → +4→+5 fixed to 160 (pure doubling; Common+3=70, Rare+ +5=310); "wall" framing corrected (was inverted 130<160).
+- **B6 AC-DS-25** → false arithmetic removed; single discriminator draw 0.30 (rate 0.35).
+- **B7 AC fixes** → AC-DS-23 ghost 0.225→0.10 additive, draws 0.11/0.15; AC-DS-09/17 dedup (17 repurposed to nominal 0→1 increment); AC-DS-13 pre-roll pity ordering explicit; AC-DS-19 invariant → 3 boolean assertions.
+- **B8 AD-2** → promoted to numbered gated **AC-DS-28** (pity persistence, release-blocker).
+- **B9 stale ÷pool_size** → erratum applied to Part DB line 696 + Enemy DB loot-pool prose (line 104).
+- Registry: +MULTIPLIER_FLOOR; N_PROTO_PITY note corrected; last_updated 2026-07-11.
+- AC count now: 27 BLOCKING unit + 1 gated (AC-DS-28) + 4 deferred (AD-1,3,4,5).
+
 ## Next
-- /design-review design/gdd/drop-system.md in a FRESH session (never same-session as authoring).
-- Then /consistency-check (new registry constants + Enemy DB errata).
+- **/design-review design/gdd/drop-system.md in a FRESH session** (re-review the MAJOR REVISION fixes — never same-session as authoring/revision).
+- Then /consistency-check (new registry const MULTIPLIER_FLOOR + Enemy DB/Part DB errata).
+- Surfaced follow-up: Part DB should add a content-validation AC for the ≥×3.0 Prototype drop-condition floor (DS-2 analog of AC-11).
 - Next MVP system in design order: #7 Encounter Zone (Not Started) or #9 Part-Break (binding Pillar-2; also closes OQ-DS-1/OQ-DS-2 for Drop).
 
 <!-- STATUS -->
 Epic: MVP Core GDDs
-Feature: Drop System GDD → Designed (pending review)
-Task: 8/8 sections done; tracking applied. Next: /design-review drop-system in fresh session, then Encounter Zone (#7) or Part-Break (#9).
+Feature: Drop System GDD → MAJOR REVISION addressed (pending re-review)
+Task: 9/9 blockers fixed (dedupe + economy rederivation + MULTIPLIER_FLOOR + pity rules + AC fixes + AD-2→AC-DS-28 + errata). Next: /design-review in fresh session.
 <!-- /STATUS -->
