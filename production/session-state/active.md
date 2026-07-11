@@ -1,8 +1,10 @@
 # Active Session State
 
 ## Current Task
-Session 16: **Passive Database GDD `/design-review`** (full mode: game-designer, systems-designer, qa-lead, creative-director). Verdict **NEEDS REVISION — 4 blocking gates, all resolved same session**. Awaiting **fix-confirmation re-review in a FRESH session** (user chose this path).
-**Run next (after /clear):** `/design-review design/gdd/passive-database.md` — fix-confirmation focus on the 4 fixed regions (below), not a full re-review.
+Session 17: **Part-Break System GDD `/design-system part-break`** (lean mode). Skeleton created at `design/gdd/part-break.md`. Starting Section A (Overview).
+**File**: design/gdd/part-break.md
+**Sections complete**: A (Overview)
+**Current section**: B — Player Fantasy
 
 ### Passive DB blockers resolved this session (all in design/gdd/passive-database.md)
 1. **Schema hole** — STAT_AURA/RESOURCE_EFFECT/STRUCTURAL_EFFECT had no data fields → added **Rule 3a `behavior_params`** typed sub-schema; added field to Rule 1 + Rule 5 table.
