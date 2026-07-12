@@ -51,7 +51,7 @@ The intended emotional arc of a fight: **read** (scan the enemy — element, reg
 
 1. **Turn start**: (a) Heat decay — Part DB Formula 4: `heat = max(0, heat − cooling)` (player Symbots only); (b) Energy recharge — `energy = min(max_energy_capacity, energy + 10 + final_stat["recharge"])` (players only; resolves the Assembly recharge obligation: recharge = bonus Energy at turn start); (c) status ticks — Burn damage applies now; status durations decrement at the *end* of the afflicted combatant's turn.
 2. **Overheat check**: a combatant entering its turn OVERHEATED skips the action phase entirely (Part DB Formula 5 consequences), then clears to Heat 20.
-3. **Action**: exactly one of — use a move (Rule 5), switch (Rule 6), flee (Rule 7).
+3. **Action**: exactly one of — use a move (Rule 5), switch (Rule 6), flee (Rule 7), use item (Rule 7a).
 4. **Turn end**: decrement this combatant's own status durations; expired statuses lift.
 
 **Rule 5 — Using a move.** The active Symbot's 4-slot pool comes from Assembly (Basic Attack + WEAPON + HEAD + ARMS skills; Move 4 may be null). To use a move: (a) **cost gate** — `current_energy ≥ energy_cost`, else the move is unavailable this turn (greyed out; Basic Attack costs 0 and is always available); (b) **pay** the Energy cost; (c) **resolve** the move's behavior per the Move Contract (Rule 9) — damage moves call DF-1 (Rule 10), status moves apply their status (Rule 11), utility/repair/scan resolve per their contract entry; (d) **heat gain** — Part DB Formula 5: `heat = min(100, heat + heat_generation + (5 if part.element == THERMAL else 0))`; if heat hits 100, Overheat triggers (10% max-structure self-damage now, skip next turn, carry-in 20). **Ammo is deferred to Full Vision**: `ammo_cost` exists in the part schema but the Ammo Capacity stat is Full Vision-reserved (Part DB Rule 4), so MVP content must author `ammo_cost = 0` and TBC tracks no ammo pool — flagged as a content validation rule.
@@ -59,6 +59,16 @@ The intended emotional arc of a fight: **read** (scan the enemy — element, reg
 **Rule 6 — Switching.** Switching to a living benched Symbot **consumes the turn**. The incoming Symbot arrives with its own battle-start snapshot, its own frozen synergy block, and its own current resources (each of the 3 Symbots tracks Structure/Energy/Heat independently for the whole battle — benched Symbots neither decay Heat nor recharge Energy; their state is frozen while benched). **Forced replacement is free**: when the active Symbot's Structure reaches 0 (DOWNED), the player immediately chooses a living benched replacement without consuming a turn (if only one lives, it auto-fields). If none live, defeat (Rule 12).
 
 **Rule 7 — Fleeing.** Available against WILD enemies only; always succeeds; consumes the action and ends the battle immediately with outcome `FLED` — no drops, no rewards, no penalty beyond the encounter's lost time. Never available in BOSS battles.
+
+**Rule 7a — Using an item (Consumable Database erratum, 2026-07-12).** The active Symbot's turn may be spent using a consumable — the **4th action** alongside move / switch / flee. The item schema, effect model, and constants are owned by the **Consumable Database** (this GDD only wires the action into the turn). Contract:
+
+- **Target.** The action takes a target argument. `RESTORE_STRUCTURE / REDUCE_HEAT / RESTORE_ENERGY` items target a **living team Symbot** (`Structure > 0`), active *or* benched — targeting a benched Symbot does **not** switch it in (Consumable Rule 4). A **downed** Symbot (`Structure == 0`) is not a valid target (consumables never revive). `BOOST_DROP` (Salvage Beacon) targets the current battle, not a unit.
+- **Effect.** Applies Consumable CD-1/CD-2/CD-3 to the target (TBC owns Structure/Heat/Energy and mutates them per those clamped formulas), or sets the per-battle **Salvage Beacon** flag (`BOOST_DROP`, CD-4).
+- **Turn cost — successful apply only.** A use that applies **consumes the turn**. A **rejected** use (no valid target, wrong context, zero-net/already-full, none in inventory, second Beacon while one is active) is a **pre-action validation gate — the turn is NOT consumed and the item is NOT decremented** (Consumable Rule 3); the player picks another action that same turn.
+- **No Heat, no Energy.** The item action **generates no Heat and costs no Energy** — it never touches the Formula 5 Heat-gain or the Energy-cost path.
+- **Overheat timing — preventive only.** The item action resolves **within the action phase and gets NO carve-out ahead of the Rule 4 Overheat skip check.** A Symbot that starts its turn Overheated (Heat 100) skips its action phase entirely (Rule 4), so it **cannot Coolant-Flush its way out of Overheat** — Coolant Flush is a preventive vent used on an earlier turn (Consumable CD-2). This deliberately preserves Overheat as a self-inflicted, legible failure (Player Fantasy).
+- **Salvage Beacon outcome coupling.** The Beacon flag is set on use; the Drop System applies its ×multiplier **only on `VICTORY`**. On flee/loss the Beacon is already spent with no effect (intended tension — a Beacon declares "this kill matters," so a fight you don't win pays nothing; Consumable Rule 5). The battle context exposes `beacon_used_this_battle` (set on use, cleared at battle end) and `beacon_drop_multiplier_applied` (true only on VICTORY) for the Drop System (Consumable Rule 5 observable contract).
+- **Context.** `WORLD`-only consumables (Signal Jammer, Scrap Lure) are **not offered** in battle; only `BATTLE` / `BOTH` items appear in the in-battle item menu (Consumable Rule 3 / EC-CD-03).
 
 **Rule 8 — Resources and the enemy asymmetry (ED1 resolution).** Player Symbots run the full Heat/Energy economy (Formulas 4/5, recharge, Overheat). **Enemies track no Heat and no Energy** — their moves are always available and they never Overheat. This **ratifies Enemy DB constraint ED1 in the simplified direction**: `cooling`, `energy_capacity`, and `recharge` in enemy stat blocks are dead data in MVP; the Enemy Database GDD must be errata'd (Rule 3 note) and content validation SHOULD warn when enemy entries author non-zero values for those three keys. Statuses (Rule 11) apply to enemies normally — Burn ticks on enemy turns; Shock lowers enemy initiative.
 
@@ -383,6 +393,7 @@ New DF-1 input ceilings: `A_max = 110 + 40 = 150`; `D_max = 132 + 50 = 182`.
 | **Part Database** | Formulas 4/5 (Heat), Energy cost tiers, `heat_generation`/`element` per part, damage_type routing enums | Approved | Hard |
 | **Move Database** | MOVE-CONTRACT-1 (Rule 9) — ratified by Move DB (adds MOVE-F1 power-tier multiply, post-DF-1); every move resolution depends on it | **Approved** | Hard |
 | **Passive Database** | Passive IDs from Assembly's pool resolve through the Rule 13 registry | **Approved** | Soft (null-tolerant per EC-SA-04 / EC-TBC-08) |
+| **Consumable Database** | `effect_type` / `effect_params` / `use_context` / `target` for `BATTLE`/`BOTH` items; CD-1/2/3 effect constants; the Salvage Beacon flag contract (Rule 7a) | **Approved (2026-07-12)** | Soft (data-schema; TBC applies CD effects but reads no runtime state from it) |
 
 ### Downstream (these systems read from this one)
 
@@ -405,7 +416,7 @@ New DF-1 input ceilings: `A_max = 110 + 40 = 150`; `D_max = 132 + 50 = 182`.
 
 ### Bidirectionality
 
-Damage Formula, Enemy Database, Symbot Assembly, and Synergy System all already list Turn-Based Combat as a downstream dependent (verified in their Dependencies sections). Move Database and Passive Database have ratified their contracts. **Part-Break (Approved 2026-07-11) already lists TBC and defines the `hit_resolved(…, sub_target)` subscription, the routing split, and the enrage/`broken_region_count` feed — bidirectionality confirmed; this GDD's erratum discharges the obligation.** Enemy AI, Drop System, Combat UI, and Audio System must list TBC when authored.
+Damage Formula, Enemy Database, Symbot Assembly, and Synergy System all already list Turn-Based Combat as a downstream dependent (verified in their Dependencies sections). Move Database and Passive Database have ratified their contracts. **Part-Break (Approved 2026-07-11) already lists TBC and defines the `hit_resolved(…, sub_target)` subscription, the routing split, and the enrage/`broken_region_count` feed — bidirectionality confirmed; this GDD's erratum discharges the obligation.** Enemy AI, Drop System, Combat UI, and Audio System must list TBC when authored. **Consumable Database (Approved 2026-07-12) already lists TBC as a downstream reader** (its Downstream table + errata obligation 1) — bidirectionality confirmed; this Rule 7a erratum discharges that obligation.
 
 ## Tuning Knobs
 
@@ -647,7 +658,13 @@ FAIL: benched durations decrement; ticks apply while benched; statuses linger on
 GIVEN it is the active Symbot's turn and a living benched Symbot exists, WHEN the player chooses a voluntary switch, THEN the action phase is consumed — the enemy acts next in the same round — and the incoming Symbot first acts at the next round's initiative order. *Contrast fixture:* forced switch (AC-TBC-12 Scenario B) consumes no turn — the two paths must behave differently.
 FAIL: incoming Symbot acts in the same round after a voluntary switch; the enemy loses its turn; voluntary and forced switch behave identically. **Test type**: Unit.
 
-### Enemy Asymmetry (Rule 8)
+### Use Item (Rule 7a — Consumable Database erratum)
+
+**AC-TBC-41** (BLOCKING): Use-item action applies the effect, consumes the turn on success, and is resource-neutral.
+*Scenario A (successful apply):* GIVEN the active Symbot's turn, a Weld Patch (CD-1, +25) in inventory, and a living target at `current_structure=50` / `max_structure=594`, WHEN use-item resolves, THEN target `current_structure == 75`, the item `qty` decrements by 1, the action phase is consumed (the enemy acts next), and **`heat` is unchanged AND `energy` is unchanged** (no Formula 5 Heat gain, no Energy cost).
+*Scenario B (rejected use — pre-action gate):* GIVEN a Weld Patch and a target already at full Structure (zero-net), WHEN use-item is attempted, THEN it is rejected, the **turn is NOT consumed** (the player may still act), the item `qty` is unchanged, and no Heat/Energy change occurs.
+*Scenario C (preventive-only Overheat):* GIVEN the active Symbot starts its turn Overheated (Heat 100), THEN the action phase is skipped (Rule 4) and the item menu is **not** reachable that turn — a Coolant Flush cannot clear the active Overheat.
+FAIL: item use generates Heat or costs Energy; a rejected use consumes the turn or decrements the item; use-item is offered during the Overheat-skip turn; a benched target is switched in on use. **Test type**: Unit (injected stub Consumable DB + inventory).
 
 **AC-TBC-21** (BLOCKING): Enemy moves always available — no energy gating, no Overheat.
 GIVEN an enemy with `energy_capacity = 80` authored and a skill costing 30, WHEN it is the enemy's turn at any point, THEN all skills are selectable by the AI hook; no energy check; the enemy never enters OVERHEATED; no heat tracking exists for it.

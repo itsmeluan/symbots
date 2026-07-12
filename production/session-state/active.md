@@ -280,10 +280,20 @@ Ran full 5-agent adversarial sweep (game-designer + systems-designer + qa-lead +
   3. Encounter Zone — EZ-1 encounter_rate modifier hook (CD-5) + OQ-EZ-4 → RESOLVED; Overworld Nav counts down duration.
 - **NEXT**: `/clear` then `/design-review design/gdd/consumable-database.md` in a FRESH session. After approval: apply the 3 errata. Then #10 Enemy AI or #11 Inventory.
 
+## Consumable Database (#1c) — /design-review DONE → APPROVED + 3 ERRATA APPLIED (2026-07-12)
+- **Full-panel /design-review** (game/systems/economy designers + qa-lead + CD synthesis). Verdict NEEDS REVISION → **5 surgical blockers fixed same session** → **APPROVED**. systems-index #1c → Approved; reviewed/approved 11→12; review-log created.
+- **IEEE-754 blocker REFUTED**: systems-designer claimed AC-CD-09/10 (`0.15×0.1`, `0.35×2.5`) would fail on inexact floats. **python3 scan proved them EXACT** (qa-lead concurred). ACs unchanged. (Reinforces float-epsilon-empirics: verify both directions.)
+- **5 blockers fixed**: (1) Rule 3 rejection = pre-action gate, NO turn consumed; (2) AC-CD-14 → named `EncounterModifierState` owner, true unit test; (3) AC-CD-12 → `beacon_qty==0` flee-no-refund assertion; (4) new AC-CD-25 (no-Heat/no-Energy unit); (5) CD-2 Coolant Flush **preventive-only** re Overheat (no carve-out ahead of TBC Rule 4 skip). 24→25 ACs (19 BLOCKING).
+- **Design decisions locked** (user): rejection consumes no turn; Coolant Flush preventive-only (can't rescue an already-Overheated Symbot). Combat model reconfirmed: 1 active Symbot, benched have no turns; using a consumable IS the active Symbot's action.
+- **ALL 3 ERRATA APPLIED** (GDD + registry together): **TBC** Rule 7a use-item action + Upstream row + AC-TBC-41 + bidirectionality; **Drop System** Rule 12 consumable channel + Beacon injection (DS-1 addendum) + Interactions/Upstream rows + AC-DS-31 + OQ-DS-7; **Encounter Zone** EZ-1 modifier hook + Rule 3 note + Upstream row + AC-EZ-59 + OQ-EZ-4 RESOLVED (59→60 ACs). Registry `last_updated` refreshed; Consumable GDD errata-status → APPLIED.
+- **3 RECOMMENDED still open** (not blocking): (a) encounter-modifier "latest wins" — a COMMON Lure silently consumes an active RARE Jammer (consider rejection-with-confirm); (b) Beacon flee-spend explicit intended-tension framing; (c) "Beacon 2:1 self-replenish" claim contingent on OQ-DS-7.
+- **OQ-DS-7 OPEN (Part B)**: consumable drop-channel *frequencies* not yet set — an economy decision (per-rarity consumable drop rates + level/rarity scaling) feeding the sell-faucet + Beacon accrual. Scoped in Drop System; tackle via focused pass / economy-designer + Consumable OQ-CD-2.
+- **NEXT**: `/consistency-check` (new CD constants + 3 errata) OR `/review-all-gdds` (12 GDDs) OR `/design-system enemy-ai` (#10, next in design order) OR set OQ-DS-7 (consumable drop frequencies).
+
 <!-- STATUS -->
 Epic: MVP Foundation GDDs
-Feature: Consumable Database (#1c) — Designed, pending fresh-session /design-review
-Task: /clear then /design-review design/gdd/consumable-database.md; on approval apply 3 errata (TBC/Drop/Encounter Zone); then #10 Enemy AI or #11 Inventory
+Feature: Consumable Database (#1c) — APPROVED (2026-07-12); 3 errata applied (TBC/Drop/Encounter Zone)
+Task: Next — /consistency-check or /review-all-gdds or /design-system enemy-ai (#10); OQ-DS-7 (consumable drop frequencies) open
 <!-- /STATUS -->
 
 <!-- CONSISTENCY-CHECK: 2026-07-11 | GDDs checked: 9 | Conflicts found: 0 (1 stale registry note synced: N_PROTO_PITY calibration) | Drop-owned constants N_PROTO_PITY/M_BOSS_PITY/MULTIPLIER_FLOOR all consistent across Part DB + Enemy DB -->

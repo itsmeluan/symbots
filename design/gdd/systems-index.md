@@ -28,7 +28,7 @@ designed first.
 | 1 | Part Database | Foundation | MVP | Approved | design/gdd/part-database.md | — |
 | 1a | Move Database | Foundation | MVP | Approved | design/gdd/move-database.md | Part Database |
 | 1b | Passive Database | Foundation | MVP | Approved | design/gdd/passive-database.md | Part Database |
-| 1c | Consumable Database | Foundation | MVP | Designed (2026-07-12, pending fresh-session /design-review) | design/gdd/consumable-database.md | — (standalone schema authority; unlike 1a/1b it does **not** depend on Part Database) |
+| 1c | Consumable Database | Foundation | MVP | Approved (2026-07-12, full-panel /design-review — NEEDS REVISION → 5 surgical blockers fixed same session; systems-designer IEEE-754 blocker refuted by python3 scan) | design/gdd/consumable-database.md | — (standalone schema authority; unlike 1a/1b it does **not** depend on Part Database) |
 | 2 | Enemy Database | Foundation | MVP | Approved | design/gdd/enemy-database.md | Part Database |
 | 3 | Damage Formula System | Foundation | MVP | Approved | design/gdd/damage-formula.md | Part Database |
 | 4 | Symbot Assembly System | Gameplay | MVP | Approved | design/gdd/symbot-assembly.md | Part Database |
@@ -205,8 +205,8 @@ layered structure. Part Database sits at the root with no cycles back from depen
 |--------|-------|
 | Total systems identified | 32 |
 | Design docs started | 12 |
-| Design docs reviewed | 11 |
-| Design docs approved | 11 |
+| Design docs reviewed | 12 |
+| Design docs approved | 12 |
 | MVP systems designed | 12 / 23 |
 | Vertical Slice systems designed | 0 / 3 |
 | Alpha systems designed | 0 / 3 |

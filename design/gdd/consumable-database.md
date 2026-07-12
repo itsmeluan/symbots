@@ -1,6 +1,6 @@
 # Consumable Database
 
-> **Status**: **Designed — pending fresh-session `/design-review`** (lean mode; specialists consulted for Formulas + Acceptance Criteria: systems-designer, economy-designer, qa-lead. CD-GDD-ALIGN skipped per lean — manual pillar check before production.)
+> **Status**: **APPROVED — 2026-07-12 full-panel `/design-review`** (game-designer, systems-designer, economy-designer, qa-lead + creative-director synthesis). Verdict NEEDS REVISION → 5 surgical blockers resolved + verified same session (CD committed APPROVE on fix-confirmation). The systems-designer's IEEE-754 blocker on AC-CD-09/10 was **refuted** by a python3 float scan (independently confirmed by qa-lead) — `0.15×0.1`/`0.35×2.5`/`0.15×2.5` are exact; ACs unchanged. Blockers fixed: (1) Rule 3 rejection = pre-action gate, no turn consumed; (2) AC-CD-14 → named `EncounterModifierState` owner, true unit test; (3) AC-CD-12 → added `beacon_qty==0` flee-no-refund assertion; (4) new AC-CD-25 (BLOCKING unit: no-Heat/no-Energy on use); (5) CD-2 Coolant Flush **preventive-only** re Overheat (no carve-out ahead of TBC Rule 4 skip — bound to the TBC erratum). 24→25 ACs (19 BLOCKING). **3 RECOMMENDED carry into errata work**: latest-wins modifier replacement + Beacon flee-spend framing (bind as intended-behavior notes), and the contingent "Beacon 2:1 self-replenish" claim (pending Drop System drop-frequency erratum).
 > **Author**: Luan + Claude Code Game Studios agents
 > **Last Updated**: 2026-07-12
 > **Implements Pillar**: Pillar 5 (The World Is a Workshop), Pillar 2 (Every Battle Has a Harvest Goal) — support layer under Pillar 1 (Engineer, Don't Collect)
@@ -49,7 +49,7 @@ Consumables also sharpen the hunt itself. A **Salvage Beacon** is the player dec
 
 *(Exact magnitudes → Formulas / Tuning Knobs.)*
 
-**Rule 3 — Use context & turn economics.** `BATTLE` items **consume the active Symbot's turn** (a 4th action alongside move/switch/flee — the TBC erratum), generate **no Heat**, cost **no Energy**, and resolve in the action phase. `WORLD` items are used from the overworld/inventory menu with no turn concept, applied immediately. `BOTH` items work in either context and apply the same effect.
+**Rule 3 — Use context & turn economics.** A `BATTLE` item that **successfully applies consumes the active Symbot's turn** (a 4th action alongside move/switch/flee — the TBC erratum), generates **no Heat**, costs **no Energy**, and resolves in the action phase. `WORLD` items are used from the overworld/inventory menu with no turn concept, applied immediately. `BOTH` items work in either context and apply the same effect. **Rejection is a pre-action validation gate, never charged.** A use that fails validation (no valid target, wrong context, zero-net/already-full, none in inventory, second Beacon while one is active — see Edge Cases) is rejected *before the action commits*: the **turn is NOT consumed** and the **item is NOT decremented**, and the player is free to choose another action that same turn. The battle item-menu SHOULD grey out an item that has no valid target in the current context (UI Requirements 1–2) so the common rejection is prevented at selection rather than surfaced after a wasted tap.
 
 **Rule 4 — Targeting.** `RESTORE_*` items target a **player-chosen living team Symbot** (`Structure > 0`), active *or* benched — using a Repair Kit on a benched Symbot does **not** switch it in. A **downed** Symbot (Structure 0) is **not a valid target**: consumables never revive (revive is out of MVP; loss-stakes unchanged — TBC Rule 12). `BOOST_DROP` targets `CURRENT_BATTLE`; `MODIFY_ENCOUNTER_RATE` targets `OVERWORLD` movement (neither picks a unit).
 
@@ -69,7 +69,7 @@ Consumables also sharpen the hunt itself. A **Salvage Beacon** is the player dec
 
 The Consumable Database is a static schema authority with **no runtime state machine** (like Part DB / Drop System) — consumable *definitions* are immutable. The only mutable state is **inventory quantity** (owned by Inventory) plus two transient effect flags this DB's effects create but does **not** store:
 - **Salvage Beacon boost** — a per-battle boolean (set on use, read by Drop System at `battle_ended VICTORY`, cleared when the battle ends). Owned by the battle context (TBC), not this DB.
-- **Encounter modifier** — a `(rate_multiplier, steps_remaining)` pair active during overworld movement (set on use, decremented per step by Overworld Navigation, expires at 0). Owned by the overworld/traversal context, not this DB.
+- **Encounter modifier** — an `EncounterModifierState` holding a `(rate_multiplier, steps_remaining)` pair active during overworld movement (set on use, decremented per step by Overworld Navigation via its sole mutator `on_overworld_step()`, expires at 0). It exposes **no battle-turn handler** — the countdown is frozen during battle *structurally* (battle turns never call it), not by an in-battle guard (AC-CD-14). Owned by the overworld/traversal context, not this DB.
 
 A single **use** is an atomic transaction: validate (item in inventory, valid target, valid context) → apply effect → decrement quantity by 1. There is no multi-step or reversible state — a use either fully applies or is rejected (Edge Cases), never partial.
 
@@ -85,7 +85,7 @@ A single **use** is an atomic transaction: validate (item in inventory, valid ta
 | **NPC System / future Shop** *(Not Started)* | → read by | Post-MVP: reads `buy_price`/`sell_price` to run vendor buy/sell in Scrap. Inert in MVP (no shops). |
 | **Combat UI / World Map UI** *(Not Started)* | → read by | Item menus (name/icon/use_context), the battle **target-picker** (living team member), and the Beacon + encounter-modifier active indicators. |
 
-*Provisional: the TBC / Drop System / Encounter Zone errata are pending (to be applied when this GDD is approved — see Dependencies); Inventory / Overworld Navigation / NPC-Shop interfaces are provisional (Not Started).*
+*The TBC / Drop System / Encounter Zone errata are **APPLIED** (2026-07-12, on approval — TBC Rule 7a + AC-TBC-41; Drop Rule 12 + AC-DS-31; Encounter Zone EZ-1 hook + AC-EZ-59 / OQ-EZ-4 RESOLVED; registry + GDDs updated together). Inventory / Overworld Navigation / NPC-Shop interfaces remain provisional (Not Started).*
 
 ## Formulas
 
@@ -117,6 +117,8 @@ A single **use** is an atomic transaction: validate (item in inventory, valid ta
 | Output | `new_heat` | int | [0, current_heat] | Heat after application; floored at 0, never negative |
 
 **Output range:** [0, current_heat]. `max(0, …)` clamp prevents negative Heat; if the result drops below the Overheat threshold the Symbot exits Overheat via TBC's normal Heat logic (no special flag). **50 rescues a near-Overheat state with margin** (90 → 40) while leaving Heat management meaningful (not a full reset — a full 100→0 wipe would delete the Heat tension entirely).
+
+**Preventive-only interaction with Overheat (design decision, 2026-07-12).** Because using a consumable *is* the active Symbot's action, and a Symbot that **starts its turn already Overheated (Heat 100) skips its action phase** (TBC Rule 4), a Coolant Flush **cannot rescue an already-Overheated Symbot** — the action phase in which the item would resolve is skipped. Coolant Flush is therefore a **preventive** vent, used on an earlier turn to bleed Heat down *before* the gauge tips to 100 (e.g. 90 → 40). An already-Overheated Symbot eats its skip; the consumable layer deliberately does **not** soften Overheat's self-inflicted, legible penalty (TBC Player Fantasy — "Overheat is a self-inflicted failure"). Only the *active* Symbot builds Heat (benched Symbots are frozen — TBC Rule 6), so this interaction only ever concerns the active Symbot. **This is a binding note on the TBC erratum** (Dependencies → Errata): the erratum adds `use item` as a normal action *within* the action phase, with **no** carve-out ahead of the Rule 4 Overheat skip check.
 
 **Worked example:** current 90 → `max(0, 40) = 40` (near-Overheat rescue, no clamp). current 30 → `max(0, −20) = 0` (clamp fires, floors at 0 — the `amount > current_heat` case).
 
@@ -167,7 +169,7 @@ A single **use** is an atomic transaction: validate (item in inventory, valid ta
 
 ## Edge Cases
 
-**EC-CD-01 — Zero-net-effect use (overheal / already-full / already-cool).** A `RESTORE_STRUCTURE` on a full-Structure target, `RESTORE_ENERGY` on a full-Energy target, or `REDUCE_HEAT` on a target at Heat 0 would change nothing: the use is **rejected before consumption** — the item is NOT consumed and feedback tells the player it would have no effect. A *partial* effect (e.g. current 55 / max 60, Weld Patch heals 5 then clamps) is **allowed and consumed** — only an exactly-zero net change is rejected. Prevents accidental waste. *Verified by AC-CD-05.*
+**EC-CD-01 — Zero-net-effect use (overheal / already-full / already-cool).** A `RESTORE_STRUCTURE` on a full-Structure target, `RESTORE_ENERGY` on a full-Energy target, or `REDUCE_HEAT` on a target at Heat 0 would change nothing: the use is **rejected before consumption** — the item is NOT consumed, **the turn is NOT spent (Rule 3 — rejection is a pre-action gate)**, and feedback tells the player it would have no effect. A *partial* effect (e.g. current 55 / max 60, Weld Patch heals 5 then clamps) is **allowed and consumed** — only an exactly-zero net change is rejected. Prevents accidental waste. *Verified by AC-CD-05.*
 
 **EC-CD-02 — Use on a downed Symbot.** A `RESTORE_*` item targeting a Symbot at `Structure == 0` is **rejected**, item not consumed — consumables never revive (Rule 4). *Verified by AC-CD-06.*
 
@@ -213,7 +215,7 @@ A single **use** is an atomic transaction: validate (item in inventory, valid ta
 
 Each errata'd doc needs a light re-review touch. Per the project's consistency-failure lesson (`docs/consistency-failures.md`), **the source GDD and the registry are updated together**, never one without the other.
 
-1. **Turn-Based Combat** — add **use item** as a 4th action in Rule 3's action set (alongside move / switch / flee), taking a target arg (a living team Symbot, `Structure > 0`); it consumes the turn, generates no Heat, costs no Energy; applies `RESTORE_STRUCTURE / REDUCE_HEAT / RESTORE_ENERGY` (CD-1/2/3) to the target; sets the per-battle Salvage Beacon flag. New AC. References the CD effect constants.
+1. **Turn-Based Combat** — add **use item** as a 4th action in Rule 3's action set (alongside move / switch / flee), taking a target arg (a living team Symbot, `Structure > 0`); it consumes the turn **only on a successful apply** (a rejected use is a pre-action gate and consumes no turn — CD Rule 3), generates no Heat, costs no Energy; applies `RESTORE_STRUCTURE / REDUCE_HEAT / RESTORE_ENERGY` (CD-1/2/3) to the target; sets the per-battle Salvage Beacon flag. **The item action resolves *within* the action phase — it gets NO carve-out ahead of the Rule 4 Overheat skip check, so a Symbot that starts its turn Overheated cannot Coolant-Flush out of it (CD-2 preventive-only note).** New AC. References the CD effect constants.
 2. **Drop System** — add consumables as a **level/rarity-scaled drop output class**, a channel separate from the part loot pool; read the Beacon per-battle flag to inject `beacon_multiplier` into `effective_drop_rate` (CD-4, `clamp` [0,1]). New rule + AC. Consumable drop frequency owned here.
 3. **Encounter Zone** — add the **EZ-1 `encounter_rate` modifier hook** (`effective_rate = clamp(base_rate × active_modifier, 0, 1)`, CD-5); Overworld Navigation counts down `duration_steps`. New rule/AC, and **OQ-EZ-4 → RESOLVED** (repel/lure consumables are now designed).
 
@@ -221,7 +223,7 @@ Each errata'd doc needs a light re-review touch. Per the project's consistency-f
 
 ### Bidirectionality
 
-- **Turn-Based Combat, Drop System, Encounter Zone** will each list Consumable Database as an upstream dependency once their errata land (applied when this GDD is approved).
+- **Turn-Based Combat, Drop System, Encounter Zone** each now list Consumable Database as an upstream dependency — **errata APPLIED 2026-07-12** (TBC Upstream table + Rule 7a; Drop Upstream/Interactions + Rule 12; Encounter Zone Upstream + EZ-1 hook). Bidirectionality confirmed in all three.
 - **Inventory, Overworld Navigation, NPC System / Shop, Combat UI, World Map UI** (all Not Started) must list Consumable Database when authored.
 
 ## Tuning Knobs
@@ -333,13 +335,13 @@ Obligations on Combat UI, World Map UI, and Inventory UI (all Not Started) — l
 
 **AC-CD-11** (BLOCKING, Unit): EC-CD-05 second Beacon rejected. **A:** `beacon_used_this_battle=true`, second Beacon `qty=1` → `USE_REJECTED`, `qty==1`, flag still true. **B:** fresh battle `beacon_used_this_battle=false` → `USE_OK`, flag true, `qty==0`. Discriminator: a stacking impl consumes the second (qty→0) in A.
 
-**AC-CD-12** (BLOCKING, Unit): EC-CD-07 Beacon spent on flee/loss. **A:** `beacon_used_this_battle=true`, `on_battle_end(FLEE)` → `beacon_drop_multiplier_applied==false`, flag cleared. **B:** `on_battle_end(WIN)` → `beacon_drop_multiplier_applied==true`. Discriminator: an outcome-ignoring impl applies the multiplier in A.
+**AC-CD-12** (BLOCKING, Unit): EC-CD-07 Beacon spent on flee/loss, never refunded. Setup: the Beacon was consumed on use this battle (`beacon_qty` went 1 → 0). **A:** `beacon_used_this_battle=true`, `on_battle_end(FLEE)` → `beacon_drop_multiplier_applied==false`, flag cleared, **and `beacon_qty == 0` (spent, NOT refunded on flee)**. **B:** `on_battle_end(WIN)` → `beacon_drop_multiplier_applied==true`, `beacon_qty == 0`. Discriminator: an outcome-ignoring impl applies the multiplier in A; a **flee-refund impl restores `beacon_qty` to 1 in A** (the qty assertion is the sole catch for this economy bug).
 
 ### Encounter modifier state (EC-CD-06/08)
 
 **AC-CD-13** (BLOCKING, Unit): EC-CD-06 second modifier replaces. Active Jammer (`steps_remaining=5`), use Scrap Lure (`base=0.35`) → `modifier_type==LURE`, `steps_remaining==15`, `effective==0.875` (exact), Lure `qty==0`, old Jammer gone. Discriminator: a stacking impl gives `0.35×0.1×2.5 = 0.0875`; a retain-old impl leaves JAMMER/5.
 
-**AC-CD-14** (BLOCKING, Unit): EC-CD-08 countdown frozen in battle, no crash. **A:** Jammer `steps=20`; 3 `on_overworld_step`, 4 `on_battle_turn`, 1 `on_overworld_step` → `steps_remaining==16` (battle turns don't count). **B:** 8 `on_overworld_step` → `12`. No-crash: `on_battle_turn` with no active modifier raises nothing. Discriminator: a battle-turns-count impl gives 12 in A.
+**AC-CD-14** (BLOCKING, Unit): EC-CD-08 countdown advances on overworld steps only. **Unit under test: `EncounterModifierState`** — the `(rate_multiplier, steps_remaining)` counter owned by the overworld/traversal context (States and Transitions). Its **sole mutator is `on_overworld_step()`** (decrement, expire at 0); it exposes **no** battle-turn handler, so the "frozen in battle" property is *structural* (battle turns never call it) and is asserted by construction. **A:** Jammer `steps=20`; 3× `on_overworld_step()` → `steps_remaining==17`; (a battle occurs — zero calls to the counter) ; 1× `on_overworld_step()` → `steps_remaining==16`. **B:** 8× `on_overworld_step()` from 20 → `12`. **No-crash:** querying `steps_remaining` / `effective_rate` with no active modifier returns the inert default and raises nothing. Discriminator: a per-step-off-by-one impl gives 17 in A step-2 or 13 in B; the *live* battle-freeze (that battle turns genuinely issue no step to this counter) is the integration concern of AC-CD-22 (DEFERRED).
 
 ### Content validation (EC-CD-09/10/11)
 
@@ -359,6 +361,10 @@ Obligations on Combat UI, World Map UI, and Inventory UI (all Not Started) — l
 
 **AC-CD-24** (BLOCKING, Unit): valid living target accepted (affirmative path — closes the gap AC-CD-06 leaves). Repair Kit; `is_valid_target` for `structure ∈ {1, 45, 594}` → all `true`; `structure=0` → `false`. Discriminator: a reject-all impl fails `structure=1`; a `structure>=5` threshold fails the boundary `structure=1`.
 
+### Turn economics (Rule 3)
+
+**AC-CD-25** (BLOCKING, Unit): Rule 3 — a BATTLE consumable use emits **no Heat and no Energy cost**. Using Weld Patch (or any `RESTORE_*`) against a stub battle context with a living target and a successful apply → after resolve, `heat_generated == 0` **AND** `energy_consumed == 0` (the use pathway never invokes the move Heat-gain / Energy-cost hooks). Discriminator: an impl that routes item-use through the move damage/cost pipeline reports a non-zero Heat or Energy delta. (Turn *consumption* is integration-level — AC-CD-20, DEFERRED; this AC isolates the resource-neutrality contract testable now with a stub.)
+
 ### Deferred integration (activate when the erratum / Not-Started system lands)
 
 **AC-CD-20** (DEFERRED, Integration): TBC use-item action — 4th action slot; Weld Patch on a living target → `+25` structure (clamped), **turn consumed**, no Heat, no Energy, `qty−1`. Discriminator: a no-turn-consume impl lets the actor act again; a Heat-generating impl shows a Heat delta. *Activate when the TBC erratum lands.*
@@ -371,7 +377,7 @@ Obligations on Combat UI, World Map UI, and Inventory UI (all Not Started) — l
 
 ### Coverage
 
-Every core rule and formula (CD-1…5) and every edge case (EC-CD-01…12) has a verifying AC: CD-1→01, CD-2→02, CD-3→03, CD-4→04, CD-5→09/10; EC-01→05, EC-02→06/24, EC-03→07, EC-04→08, EC-05→11, EC-06→13, EC-07→12, EC-08→14, EC-09→15, EC-10→16, EC-11→17, EC-12→23(DEFERRED); roster→18/19; TBC/Drop/EZ integration→20/21/22. **24 ACs: 18 BLOCKING (15 Unit + 3 Content-Validation) / 2 ADVISORY (Content-Validation) / 4 DEFERRED (Integration).** Unit/content-testable now with stubs + injected RNG: AC-CD-01–19, 24. DEFERRED (await erratum / Not-Started): 20–23. No untestable ("feels-good") criteria.
+Every core rule and formula (CD-1…5) and every edge case (EC-CD-01…12) has a verifying AC: CD-1→01, CD-2→02, CD-3→03, CD-4→04, CD-5→09/10; EC-01→05, EC-02→06/24, EC-03→07, EC-04→08, EC-05→11, EC-06→13, EC-07→12, EC-08→14, EC-09→15, EC-10→16, EC-11→17, EC-12→23(DEFERRED); roster→18/19; Rule 3 turn-economics→25 (unit: no-Heat/no-Energy) + 20 (integration: turn-consume, DEFERRED); TBC/Drop/EZ integration→20/21/22. **25 ACs: 19 BLOCKING (16 Unit + 3 Content-Validation) / 2 ADVISORY (Content-Validation) / 4 DEFERRED (Integration).** Unit/content-testable now with stubs + injected RNG: AC-CD-01–19, 24, 25. DEFERRED (await erratum / Not-Started): 20–23. No untestable ("feels-good") criteria.
 
 ## Open Questions
 
