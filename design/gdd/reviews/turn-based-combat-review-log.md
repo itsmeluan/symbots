@@ -1,5 +1,23 @@
 # Review Log — Turn-Based Combat System
 
+## Review — 2026-07-11 — Verdict: NEEDS REVISION (Part-Break erratum) → erratum applied same session
+Scope signal: L
+Specialists: game-designer, systems-designer, qa-lead, creative-director (senior synthesis)
+Blocking items: 8 | Recommended: 2
+Summary: Focused erratum re-review triggered by Part-Break's approval (2026-07-11), which placed a "Substantial" obligation on TBC's core damage pipeline. TBC had not yet applied it. Specialists unanimously found the 5 named items undone, plus 4 load-bearing prerequisites that make them writable: (1) enrage (PB-F5) had no home — TBC documented no enemy-side resolution pipeline; (2) `enemy_hit_resolved` unanchored + Stagger×enrage floor-ordering unpinned; (3) no TBC formula slot for enrage; (4) `hit_resolved(move,damage,target)` signature could not express STRUCTURE-vs-region routing. CD confirmed these are prerequisites, not scope creep — "the erratum is not correct if enrage is bolted on without an enemy pipeline, a formula slot, and a sub_target-aware signature." No specialist disagreements (complementary: GD found the hole, SD found why unwritable, QA specified how to test it closed).
+Prior verdict resolved: Supersedes the 2026-07-10 APPROVED (invalidated by the downstream Part-Break approval).
+
+### Same-session resolution (2026-07-11) — all 8 blockers applied, user-approved
+Two design decisions ratified by the user before editing:
+- **Stagger×enrage ordering: POST-Stagger** — `enemy_hit_resolved` is post-DF-1/post-Stagger; enrage scales the final delivered hit.
+- **Floor-collision @ move_damage=1: accepted as documented degenerate** — no Part-Break PB-F3 cascade (inversion exists only at move_damage=1, unreachable at realistic DF-1 outputs).
+
+Fixes: (1) Rule 10 gains sub-target routing (STRUCTURE→PB-F1 by TBC, region→PB-F2 by Part-Break + PB-F3 20% spillover by TBC, `BREAK_BIAS_MULTIPLIERS`, already-broken redirect); (2) Rule 10 enemy side defines the enemy damage pipeline + enrage insertion point; (3) new **TBC-F7** enrage slot (owns PB-F5 application, discriminating examples + identity check); (4) `hit_resolved` widened to `(move,damage,target,sub_target)` — propagation flag on Passive DB ON_HIT subscribers; (5) Rule 9 Move Contract gains `break_bias` (Basic Attack=BALANCED) + runtime `sub_target`; (6) Dependencies Part-Break row → Approved, BINDING Pillar-2 obligation → DISCHARGED (interactions table + bidirectionality synced); (7) AC-TBC-INT-01 un-DEFERRED → 6 BLOCKING integration ACs (01a–01f) + AC-TBC-34 widened; (8) non-gating: Player Fantasy gains the enrage/spillover-kill beat. No formula coefficients changed (epsilon scans remain valid; enrage epsilon deferred to Part-Break §D scan).
+
+**Re-review guidance:** fix-confirmation on the 8 blocker regions (CD recommendation) — not a fresh adversarial sweep. Run in a clean session after /clear.
+
+**Open propagation item:** Passive DB ON_HIT subscribers (`volt_shock_on_hit`, `kinetic_stagger_on_hit`) must tolerate the widened four-arg `hit_resolved` — confirm/annotate in the Passive DB GDD.
+
 ## Review — 2026-07-10 — Verdict: NEEDS REVISION
 Scope signal: XL
 Specialists: game-designer, systems-designer, qa-lead, creative-director (senior synthesis)

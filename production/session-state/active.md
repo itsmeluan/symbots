@@ -199,20 +199,18 @@ Ran full 5-agent adversarial sweep (game-designer + systems-designer + qa-lead +
 - Tracking done: part-break.md Status → Approved; systems-index #9 → Approved + Progress Tracker 8→9 reviewed/approved; review log appended (APPROVED fix-confirmation entry). **No re-review #3.**
 
 ## Next
-- **TBC ERRATUM (user chose FRESH session — "Substantial" per CD, core damage pipeline).** Apply 5 changes to design/gdd/turn-based-combat.md, then /design-review it:
-  (a+b+c) **Rule 10** (line ~84): replace "Region damage routing awaits the Part-Break GDD…" deferral with actual routing — sub-target dispatch (STRUCTURE vs region), structure_mult/break_mult from BREAK_BIAS_MULTIPLIERS, PB-F3 spillover 0.20 to Structure on region hits.
-  (d) **Enrage** (Rule 10 / new sub-rule): enemy outgoing = move_damage × (1 + broken_region_count × 0.12), applied after enemy DF-1, before reducing player Structure (PB-F5).
-  (e) **Move Contract** (line ~76): ratify DAMAGE sub-target (STRUCTURE or unbroken region_id); Basic Attack break_bias = BALANCED.
-  — **Dependencies/Part-Break row** (line ~355): status Not Started → Approved; BINDING Pillar-2 obligation DISCHARGED (Part-Break carries AC-PB-28).
-  — **AC-TBC-INT-01** (line ~722): un-DEFER; add ACs verifying TBC-side routing/spillover/enrage application.
-- Other pending ERRATA: **Move DB** (add break_bias enum default BALANCED + BREAK_BIAS_MULTIPLIERS table + reserved/nullable target_profile + list Part-Break as referencer) — "Small"; **Drop System** (redefine provisional Rule 5/7: break is deterministic, no P(break fires), no break-failure pity; DS-3 drop-RNG pity unaffected) — "Small".
-- Still pending from Session 17: /design-review drop-system.md (Drop MAJOR REVISION fixes) + /consistency-check (MULTIPLIER_FLOOR + errata). NOTE: systems-index shows Drop already "Approved (2026-07-11, re-review punch-list applied)" — verify whether the fresh re-review is still needed or already closed.
+- **✅ TBC ERRATUM APPLIED (this session, 2026-07-11) — all 8 blockers.** `/design-review turn-based-combat.md` ran (5 agents: game-designer, systems-designer, qa-lead, creative-director) → verdict NEEDS REVISION; erratum applied same session with user approval. Two design decisions ratified: **Stagger×enrage = POST-Stagger**; **floor-collision @ move_damage=1 = accepted degenerate** (no Part-Break cascade).
+  - Applied: Rule 10 sub-target routing (STRUCTURE→PB-F1 by TBC / region→PB-F2 by Part-Break + PB-F3 20% spillover by TBC / already-broken redirect) + enemy damage pipeline w/ enrage insertion; new **TBC-F7** enrage slot; Rule 9 Move Contract +`break_bias`(Basic Attack=BALANCED)+runtime `sub_target`; **`hit_resolved` widened to 4-arg `(move,damage,target,sub_target)`**; Dependencies Part-Break→Approved + BINDING DISCHARGED; AC-TBC-INT-01 un-DEFERRED→01a–01f (6 BLOCKING) + AC-TBC-34 widened; Player Fantasy enrage/spillover-kill beat. Systems-index #6 → "erratum applied, awaiting re-review"; review-log appended.
+- **▶ IMMEDIATE NEXT: `/clear` then `/design-review turn-based-combat.md`** — fix-confirmation re-review (CD guidance: confirm the 8 blocker regions, NOT a fresh sweep). Verify: enemy pipeline coherent, TBC-F7 examples discriminating, 4-arg signature consistent, 6 INT-01 ACs testable.
+- **⚠ OPEN PROPAGATION:** the 4-arg `hit_resolved` change touches **Passive DB** ON_HIT subscribers (`volt_shock_on_hit`, `kinetic_stagger_on_hit`) — annotate they tolerate/ignore the new `sub_target` arg in passive-database.md.
+- Other pending ERRATA from Part-Break: **Move DB** (add break_bias enum default BALANCED + BREAK_BIAS_MULTIPLIERS table + reserved/nullable target_profile + list Part-Break as referencer) — "Small"; **Drop System** (redefine provisional Rule 5/7: break deterministic, no P(break fires), no break-failure pity; DS-3 drop-RNG pity unaffected) — "Small".
+- Still pending from Session 17: /consistency-check (MULTIPLIER_FLOOR + errata). NOTE: systems-index shows Drop already "Approved (2026-07-11, re-review punch-list applied)".
 - Next MVP system in design order: #7 Encounter Zone (Not Started) or #10 Enemy AI.
 
 <!-- STATUS -->
 Epic: MVP Core GDDs
-Feature: Part-Break GDD → APPROVED (fix-confirmation re-review, 3 surgical fixes applied)
-Task: Part-Break DONE. Next: TBC erratum in FRESH session (Rule 10 routing/spillover/enrage + Move Contract + Dependencies discharge + AC-TBC-INT-01), then /design-review turn-based-combat.md.
+Feature: TBC Part-Break erratum → APPLIED (8 blockers, this session); awaiting fix-confirmation re-review
+Task: NEXT — /clear then /design-review turn-based-combat.md (fix-confirmation). Then propagate 4-arg hit_resolved to Passive DB; apply Move DB + Drop System errata.
 <!-- /STATUS -->
 
 <!-- CONSISTENCY-CHECK: 2026-07-11 | GDDs checked: 9 | Conflicts found: 0 (1 stale registry note synced: N_PROTO_PITY calibration) | Drop-owned constants N_PROTO_PITY/M_BOSS_PITY/MULTIPLIER_FLOOR all consistent across Part DB + Enemy DB -->
