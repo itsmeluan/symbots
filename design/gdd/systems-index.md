@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Created**: 2026-07-09
-> **Last Updated**: 2026-07-12 (**Consumable Database (#1c) AUTHORED → Designed** via /design-system (lean; systems-designer + economy-designer + qa-lead consulted for Formulas/ACs). 8-item roster, schema + Rules 1–10 + CD-1..CD-5 formulas (all epsilon-exempt) + 24 ACs (18 BLOCKING/2 ADV/4 DEFERRED) + buy/sell pricing (buy>sell invariant). Registry: 8 items + 5 formulas + 10 constants added (YAML validated). Design docs started 11→12; MVP designed 11→12/23. **3 pending errata** (TBC use-item action / Drop consumable channel + Beacon / Encounter Zone EZ-1 modifier hook) to apply on approval. Next: fresh-session /design-review. **New deferred system #23a Key Item System** (Meta, Vertical Slice) — story/plot key items (unique, non-consumable, un-scrappable) that gate narrative/world progression; explicitly NOT the Consumable Database, NOT a rarity tier. Totals 31→32; Vertical Slice denom 2→3. Also flagged: NPC shops as a post-MVP consumable faucet (MVP is drops-only). **SCOPE ADDITION — Consumable items pulled into MVP** (user decision). New Foundation system **#1c Consumable Database** added (standalone schema authority; no Part DB dependency; design-order slot 10a, before Inventory #11). MVP drop taxonomy is now **parts + scrap + consumables** (designs/blueprints stay Alpha per HOLISM-01). Initial roster (6, world-themed salvage-tech): **Repair Kit** (Structure heal, tiered), **Coolant Flush** (Heat dump), **Power Cell** (Energy restore), **Salvage Beacon** (drop-odds boost → Drop System conditions), **Signal Jammer** (repel), **Scrap Lure** (lure). Drop source = **global level/rarity-scaled table** (no Enemy DB errata). **Pending errata (to be authored in the Consumable DB GDD):** (1) **TBC** — add `use item` to the battle action set (Rule 3: move/switch/flee → +use-item; consumes the turn, no Heat/Energy cost) + AC; (2) **Drop System** — consumables as a level/rarity-scaled drop output class + Salvage Beacon → drop-condition multiplier feedback; (3) **Encounter Zone** — un-defer OQ-EZ-4: add an `encounter_rate` modifier hook to EZ-1 (Signal Jammer / Scrap Lure) + ACs. Each errata'd Approved doc needs a light re-review touch. Totals: 30→31 identified; MVP designed denominator 22→23. Prior same-day: Encounter Zone (#7) **APPROVED** — 3rd-round confirmation re-review, fresh-session full-panel /design-review (5 specialists + CD). **All five specialists returned ZERO blocking**; the Round 2 delta re-gate, `is_farmable_target`, and `requires_defeated` sequencing all verified correct at the discriminator level (LIGHTER_REGATE→ALWAYS_OPEN collapse genuinely closed; AC-EZ-22 central discriminator). CD verdict APPROVED WITH ONE MINOR REVISION — the lone survivor of the mature-doc triage, a spec-silent fail-safe gap on `requires_defeated` naming a non-existent boss, was closed same session: **EC-EZ-12 + AC-EZ-58** (broken-ref → fail-safe LOCKED, never fail-open). Two converged recommendations folded in: **Tuning Knob warning 5** (re-gate × density coupling) + **`is_farmable_target` authoring criterion**. 58→59 ACs (39 BLOCKING). No Round 4. **All 11 MVP GDDs authored so far are now Approved.** Prior 2026-07-12 (2nd round, NEEDS REVISION → punch-list): delta re-gate, Boss-1-first sequencing, is_farmable_target field. Prior 2026-07-11: Full-panel /design-review (5 specialists + CD): 4 blockers + 4 recommended resolved same session. **WAVE gate cut to Reserved** (off-pillar + wave_pools undefined) → both MVP bosses now WIN_COUNT on a shared cumulative zone-win counter (Boss 1 @ 6, Boss 2 @ 10). WIN_COUNT semantic made normative (Rule 8a, cumulative/all-time/wins-only). AC-EZ-25 ADVISORY→BLOCKING; AC-EZ-40 split 40a/40b; terrain identity+weight-floor guardrail (Rule 2a). 52→56 ACs. gate_type taxonomy now: OPEN/WIN_COUNT authorable, WAVE/REACH/DUNGEON_RUSH reserved. Prior: Turn-Based Combat **APPROVED** — Part-Break erratum fix-confirmation re-review, 2 AC-integrity blockers fixed; all 4 propagation/errata applied; /consistency-check PASS.)
+> **Last Updated**: 2026-07-12 (**+2 systems captured** mid-#12 Zone & World Map design (user decision): **#10b Symbot Core Progression (Leveling)** — MVP Gameplay; the CORE is the Symbot's non-fungible *leveled* anchor, core level ← **battle XP only** (unbuyable — Scrap only upgrades parts), gates equipping high-tier parts via `level_requirement`, bounded stat growth as one of three progression legs, bench XP-share; fills symbot-assembly.md's open "CORE identity mechanical enforcement" obligation; **pending obligations before its design pass: game-concept anti-pillar revision + CD sign-off, errata to Approved Symbot Assembly + Part Database**. **#29 Auto-Adventure Dispatch** — Full Vision Meta (endgame idle/dispatch for XP+items). Totals 32→34; MVP designed denom 23→24; Full Vision denom 1→2. Zone & World Map #12 resumes (edge model unaffected). Prior: **Consumable Database (#1c) AUTHORED → Designed** via /design-system (lean; systems-designer + economy-designer + qa-lead consulted for Formulas/ACs). 8-item roster, schema + Rules 1–10 + CD-1..CD-5 formulas (all epsilon-exempt) + 24 ACs (18 BLOCKING/2 ADV/4 DEFERRED) + buy/sell pricing (buy>sell invariant). Registry: 8 items + 5 formulas + 10 constants added (YAML validated). Design docs started 11→12; MVP designed 11→12/23. **3 pending errata** (TBC use-item action / Drop consumable channel + Beacon / Encounter Zone EZ-1 modifier hook) to apply on approval. Next: fresh-session /design-review. **New deferred system #23a Key Item System** (Meta, Vertical Slice) — story/plot key items (unique, non-consumable, un-scrappable) that gate narrative/world progression; explicitly NOT the Consumable Database, NOT a rarity tier. Totals 31→32; Vertical Slice denom 2→3. Also flagged: NPC shops as a post-MVP consumable faucet (MVP is drops-only). **SCOPE ADDITION — Consumable items pulled into MVP** (user decision). New Foundation system **#1c Consumable Database** added (standalone schema authority; no Part DB dependency; design-order slot 10a, before Inventory #11). MVP drop taxonomy is now **parts + scrap + consumables** (designs/blueprints stay Alpha per HOLISM-01). Initial roster (6, world-themed salvage-tech): **Repair Kit** (Structure heal, tiered), **Coolant Flush** (Heat dump), **Power Cell** (Energy restore), **Salvage Beacon** (drop-odds boost → Drop System conditions), **Signal Jammer** (repel), **Scrap Lure** (lure). Drop source = **global level/rarity-scaled table** (no Enemy DB errata). **Pending errata (to be authored in the Consumable DB GDD):** (1) **TBC** — add `use item` to the battle action set (Rule 3: move/switch/flee → +use-item; consumes the turn, no Heat/Energy cost) + AC; (2) **Drop System** — consumables as a level/rarity-scaled drop output class + Salvage Beacon → drop-condition multiplier feedback; (3) **Encounter Zone** — un-defer OQ-EZ-4: add an `encounter_rate` modifier hook to EZ-1 (Signal Jammer / Scrap Lure) + ACs. Each errata'd Approved doc needs a light re-review touch. Totals: 30→31 identified; MVP designed denominator 22→23. Prior same-day: Encounter Zone (#7) **APPROVED** — 3rd-round confirmation re-review, fresh-session full-panel /design-review (5 specialists + CD). **All five specialists returned ZERO blocking**; the Round 2 delta re-gate, `is_farmable_target`, and `requires_defeated` sequencing all verified correct at the discriminator level (LIGHTER_REGATE→ALWAYS_OPEN collapse genuinely closed; AC-EZ-22 central discriminator). CD verdict APPROVED WITH ONE MINOR REVISION — the lone survivor of the mature-doc triage, a spec-silent fail-safe gap on `requires_defeated` naming a non-existent boss, was closed same session: **EC-EZ-12 + AC-EZ-58** (broken-ref → fail-safe LOCKED, never fail-open). Two converged recommendations folded in: **Tuning Knob warning 5** (re-gate × density coupling) + **`is_farmable_target` authoring criterion**. 58→59 ACs (39 BLOCKING). No Round 4. **All 11 MVP GDDs authored so far are now Approved.** Prior 2026-07-12 (2nd round, NEEDS REVISION → punch-list): delta re-gate, Boss-1-first sequencing, is_farmable_target field. Prior 2026-07-11: Full-panel /design-review (5 specialists + CD): 4 blockers + 4 recommended resolved same session. **WAVE gate cut to Reserved** (off-pillar + wave_pools undefined) → both MVP bosses now WIN_COUNT on a shared cumulative zone-win counter (Boss 1 @ 6, Boss 2 @ 10). WIN_COUNT semantic made normative (Rule 8a, cumulative/all-time/wins-only). AC-EZ-25 ADVISORY→BLOCKING; AC-EZ-40 split 40a/40b; terrain identity+weight-floor guardrail (Rule 2a). 52→56 ACs. gate_type taxonomy now: OPEN/WIN_COUNT authorable, WAVE/REACH/DUNGEON_RUSH reserved. Prior: Turn-Based Combat **APPROVED** — Part-Break erratum fix-confirmation re-review, 2 AC-integrity blockers fixed; all 4 propagation/errata applied; /consistency-check PASS.)
 > **Source Concept**: design/gdd/game-concept.md
 
 ---
@@ -38,8 +38,9 @@ designed first.
 | 8 | Drop System | Economy | MVP | Approved (2026-07-11, re-review punch-list applied) | design/gdd/drop-system.md | Part Database, Enemy Database |
 | 9 | Part-Break System | Gameplay | MVP | Approved (2026-07-11, fix-confirmation re-review — 3 surgical fixes applied) | design/gdd/part-break.md | Turn-Based Combat, Drop System |
 | 10 | Enemy AI System | Gameplay | MVP | Approved (2026-07-12, **2nd full-panel /design-review** reopened the 1st-pass approval — NEEDS REVISION → 5 blockers fixed & fix-confirmed same session. Two spec-wrong gaps in the flagship fix: B1 df1_preview += MOVE-F1 power-tier; B2 kill-securing invariant += STATUS_BASE_VALUE coeff, SBV range 2.0→1.5. +RNG int-seed contract, AC-EAI-04 split, GDScript AC traps. 18→19 ACs) | design/gdd/enemy-ai.md | Turn-Based Combat, Enemy Database |
+| 10b | Symbot Core Progression (Leveling) | Gameplay | MVP | Not Started | — | Symbot Assembly, Part Database, Turn-Based Combat |
 | 11 | Inventory System | Economy | MVP | Approved (2026-07-12, full-panel /design-review — NEEDS REVISION → 5 surgical blockers fixed same session: `next_instance_id` counter persisted (EC-INV-07 save/load), `instance_id` retyped plain int, INV-1 negative-qty/retune-down guards (EC-INV-11), Scrap-add `{accepted,rejected}` contract, OQ-INV-1 tier-refund LOCKED 0%. CD approve-on-fix-confirmation) | design/gdd/inventory.md | Part Database |
-| 12 | Zone & World Map System | World | MVP | Not Started | — | Encounter Zone |
+| 12 | Zone & World Map System | World | MVP | Designed (2026-07-12, lean; pending fresh-session /design-review) | design/gdd/zone-world-map.md | Encounter Zone |
 | 13 | World Loot System (inferred) | World | MVP | Not Started | — | Part Database, Zone & World Map |
 | 14 | Exploration Progress System (inferred) | World | MVP | Not Started | — | Zone & World Map |
 | 15 | Workshop System | Economy | MVP | Not Started | — | Symbot Assembly, Inventory |
@@ -57,6 +58,7 @@ designed first.
 | 26 | Part Upgrade System | Economy | Alpha | Not Started | — | Part Database, Inventory |
 | 27 | Endgame Loop System | Gameplay | Alpha | Not Started | — | All MVP Systems |
 | 28 | PvP System | Meta | Full Vision | Not Started | — | Turn-Based Combat, Synergy, Save/Load, Networking |
+| 29 | Auto-Adventure Dispatch | Meta | Full Vision | Not Started | — | Symbot Core Progression, Inventory (endgame idle/dispatch — send low-level cores on automatic runs for XP + items; anti-grind convenience for leveling alt cores) |
 
 ---
 
@@ -65,13 +67,13 @@ designed first.
 | Category | Description | Systems in Symbots |
 |----------|-------------|-------------------|
 | **Foundation** | Data schemas and formulas everything else reads | Part Database, Move Database, Passive Database, Consumable Database, Enemy Database, Damage Formula System |
-| **Gameplay** | The systems that make building and battling fun | Symbot Assembly, Synergy, Turn-Based Combat, Part-Break, Enemy AI, Endgame Loop |
+| **Gameplay** | The systems that make building and battling fun | Symbot Assembly, Synergy, Turn-Based Combat, Part-Break, Enemy AI, Symbot Core Progression, Endgame Loop |
 | **World** | Exploration, zones, and loot in the overworld | Encounter Zone, Zone & World Map, World Loot, Exploration Progress, Overworld Navigation |
 | **Economy** | Parts flowing in and out of the player's hands | Drop System, Inventory, Workshop, Blueprint Crafting, Part Upgrade |
 | **Persistence** | Saving and loading game state between sessions | Save/Load System |
 | **UI** | Player-facing screens and information displays | Workshop UI, Combat UI, World Map UI, Main Menu & Settings |
 | **Audio** | Sound effects and music throughout the game | Audio System |
-| **Meta** | Systems outside the main loop | NPC System, Key Item System, Tutorial System, PvP System |
+| **Meta** | Systems outside the main loop | NPC System, Key Item System, Tutorial System, PvP System, Auto-Adventure Dispatch |
 
 ---
 
@@ -107,6 +109,7 @@ designed first.
 
 9. **Part-Break System** — tracks break HP per enemy part region; integrates into Combat for targeting; feeds guaranteed drops to Drop System
 10. **Enemy AI System** — selects enemy actions using elemental and strategic heuristics; reads from Combat and Enemy Database
+- **Symbot Core Progression (Leveling)** *(10b)* — the CORE is the Symbot's non-fungible *leveled* anchor (element/identity/life). Core level rises from **battle XP only** (unbuyable; Scrap upgrades parts, never levels cores) and gates equipping high-level/high-rarity parts via a `level_requirement` field. Bounded per-stat growth makes leveling **one of three progression legs** (level cores / upgrade parts / hunt+craft), not the dominant lever. Benched Symbots earn partial XP (`BENCH_XP_SHARE`). Reads from Symbot Assembly (build/slots), Part Database (level_requirement), and Turn-Based Combat (XP award). **Fills symbot-assembly.md's open "CORE identity mechanical enforcement" Deferred Obligation.** *Requires a game-concept anti-pillar revision (+ CD sign-off) and errata to Approved Symbot Assembly + Part Database — executed in its own design pass. (Added 2026-07-12 — user decision; leveling pulled into MVP.)*
 11. **Inventory System** — stores and organizes collected parts; reads from Part Database for metadata
 12. **Zone & World Map System** — models the world graph: zones, connections, boss gates; reads from Encounter Zone
 13. **World Loot System** — places static chests and hidden items in the overworld; reads from Part Database and Zone & World Map
@@ -135,6 +138,7 @@ designed first.
 26. **Part Upgrade System** — enhance individual parts with materials; tuning layer on top of base part stats
 27. **Endgame Loop System** — challenge zones with scaling difficulty and rare-tier part pools; the post-story grind
 28. **PvP System** — build-vs-build asynchronous or real-time matches; requires networking infrastructure
+- **Auto-Adventure Dispatch** *(29)* — endgame idle/dispatch layer: send Symbots with low-level cores on automatic adventures to earn XP and items without manual battling. An anti-grind convenience for leveling alternate cores once the player has an established main team. Reads from Symbot Core Progression (XP award) and Inventory (item rewards). Deferred to Full Vision (endgame convenience, not core-loop critical). (Added 2026-07-12.)
 
 ---
 
@@ -156,6 +160,7 @@ Independent systems at the same layer can be designed in parallel.
 | 9 | Part-Break System | MVP | Feature | systems-designer | M |
 | 10 | Enemy AI System | MVP | Feature | game-designer | M |
 | 10a | Consumable Database | MVP | Foundation | game-designer, economy-designer | M |
+| 10b | Symbot Core Progression (Leveling) | MVP | Feature | game-designer, systems-designer | M | *(deps all Approved — designable now; needs concept revision + CD sign-off + Assembly/Part DB errata)* |
 | 11 | Inventory System | MVP | Feature | game-designer | M |
 | 12 | Zone & World Map System | MVP | Feature | level-designer, game-designer | M |
 | 13 | World Loot System | MVP | Feature | level-designer | S |
@@ -175,6 +180,7 @@ Independent systems at the same layer can be designed in parallel.
 | 26 | Part Upgrade System | Alpha | Polish | economy-designer | M |
 | 27 | Endgame Loop System | Alpha | Polish | game-designer, economy-designer | L |
 | 28 | PvP System | Full Vision | Polish | network-programmer, game-designer | L |
+| 29 | Auto-Adventure Dispatch | Full Vision | Polish | game-designer, economy-designer | M |
 
 *Effort: S = 1 session, M = 2-3 sessions, L = 4+ sessions. A session is one focused design conversation producing a complete GDD section.*
 
@@ -203,14 +209,14 @@ layered structure. Part Database sits at the root with no cycles back from depen
 
 | Metric | Count |
 |--------|-------|
-| Total systems identified | 32 |
-| Design docs started | 14 |
+| Total systems identified | 34 |
+| Design docs started | 15 |
 | Design docs reviewed | 14 |
 | Design docs approved | 14 |
-| MVP systems designed | 14 / 23 |
+| MVP systems designed | 15 / 24 |
 | Vertical Slice systems designed | 0 / 3 |
 | Alpha systems designed | 0 / 3 |
-| Full Vision systems designed | 0 / 1 |
+| Full Vision systems designed | 0 / 2 |
 
 ---
 

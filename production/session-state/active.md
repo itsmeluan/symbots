@@ -1,11 +1,21 @@
 # Active Session State
 
-## Current Task — Zone & World Map System (#12) /design-system IN PROGRESS (2026-07-12, lean)
-- **Sections complete**: A (Overview), B (Player Fantasy)
+## Current Task — Zone & World Map System (#12) /design-system COMPLETE → Designed (2026-07-12, lean)
+- **DONE**: all 8 required + Visual/Audio + UI + Open Questions (0 placeholders, ~4.7k words). systems-index #12 → Designed; docs started 14→15, MVP designed 14→15/24. CD-GDD-ALIGN skipped (lean). Registry: no changes (ZWM-F1/F2 + WorldMap schema held internal per EZ precedent until a consumer references them; no existing referenced_by bumps).
+- **Sections**: A/B / C (Rules 1-9 + States + Interactions) / D (ZWM-F1 edge predicate + ZWM-F2 reachability, graph/boolean, no float/scan) / E (11 edge cases, all AC-cited) / F Dependencies / G Tuning Knobs / H (15 ACs AC-ZWM-01..15, full EC coverage) / VA+UI (UX flag world-map.md) + OQ-ZWM-1..4.
+- **2 PENDING OBLIGATIONS from this session**: (1) **Encounter Zone light erratum** — add Zone & World Map as a downstream dependent (bidirectional touch, no behavioral change). (2) **Symbot Core Progression #10b** design pass still owed (see RESOLVED block below + project-core-progression.md).
+- **NEXT**: `/clear` then `/design-review design/gdd/zone-world-map.md` FRESH session. Then design **#10b Symbot Core Progression** (own pass) or continue MVP world layer (#13 World Loot / #14 Exploration Progress / #16 Overworld Navigation).
 - **Scope decision**: GDD owns both world graph data AND traversal state (current-zone / accessible-zones). Overworld Navigation reads this system for movement context.
 - **Zone connection model LOCKED**: directed edges, each ZoneEdge = { to_zone_id, unlock_condition }; default condition OPEN (open-world free travel, enemy difficulty self-gates); optional STORY_FLAG / BOSS_DEFEATED hard-lock for story gates. MVP = 1 zone (single node); schema supports N. Open-world-by-difficulty model (Pokémon-like) confirmed by user.
-- **PAUSED pending leveling decision**: User wants to EXPLORE adding a Symbot leveling / part level-requirement system (PoE/Pokémon-style). This is a VISION-LEVEL change (contradicts game-concept anti-pillar "NOT a grind-levels-to-win"; touches Part DB + Symbot Assembly + needs a new Progression system). Being handled as a SEPARATE design conversation, NOT inside zone-world-map.md. Zone & World Map GDD (Sections C+) resumes after the leveling direction is decided — its edge model is unaffected either way; only the "difficulty gates zones" framing text depends on the outcome.
-- **Next**: resolve leveling direction → then resume Section C (Detailed Design)
+
+### RESOLVED — new MVP system: Symbot Core Progression (Leveling) [captured 2026-07-12, design pass deferred until AFTER #12]
+- **Direction locked** (user co-designed): **The CORE is the Symbot** — non-fungible *leveled* anchor (element/identity/life). "New Symbot" = pick a core; other 7 slots stay swappable under a level-gate. Swapping a core ≡ switching Symbot (fresh core=lvl1 can't hold good parts). Fills symbot-assembly.md's existing "CORE identity mechanical enforcement" Deferred Obligation.
+- **Core level ← BATTLE XP ONLY, unbuyable.** Scrap spends ONLY on part upgrades (existing upgrade_tier). Two non-substitutable currencies = airtight anti-clone (can't dump stored Scrap to mint a maxed core — user caught that Scrap-leveling breaks it). Load-bearing guardrail.
+- **Bounded stat growth**: core carries full 11-stat block (some 0), grows per-stat with level. One of THREE progression legs (level cores / upgrade parts / hunt+craft), NOT dominant. Invariant: clever low-level build w/ great parts must beat lazy high-level.
+- **Equip gate**: high-level/high-rarity parts require core level ≥ X → new `level_requirement` field (Part DB).
+- **Fantasy**: core "learns from the world" (AI gaining knowledge). **Bench XP share** (Pokémon Exp-Share) → `BENCH_XP_SHARE` knob. **Future deferred system**: Auto-Adventure Dispatch (Alpha/FV) — send low cores on auto runs for XP+items.
+- **Tier**: **MVP** (user choice). **Obligations for the Core Progression /design-system pass**: (1) game-concept.md anti-pillar revision + **creative-director sign-off**; (2) errata to Approved symbot-assembly.md (core level axis, equip gate, core=anchor / new-Symbot flow); (3) errata to Approved part-database.md (level_requirement + core per-stat level-growth curves).
+- **Sequencing**: capture in systems-index NOW → finish Zone & World Map #12 → then run Core Progression as its own /design-system pass. Memory saved: project-core-progression.md.
 
 ---
 
