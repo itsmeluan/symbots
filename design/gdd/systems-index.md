@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Created**: 2026-07-09
-> **Last Updated**: 2026-07-12 (**SCOPE ADDITION — Consumable items pulled into MVP** (user decision). New Foundation system **#1c Consumable Database** added (standalone schema authority; no Part DB dependency; design-order slot 10a, before Inventory #11). MVP drop taxonomy is now **parts + scrap + consumables** (designs/blueprints stay Alpha per HOLISM-01). Initial roster (6, world-themed salvage-tech): **Repair Kit** (Structure heal, tiered), **Coolant Flush** (Heat dump), **Power Cell** (Energy restore), **Salvage Beacon** (drop-odds boost → Drop System conditions), **Signal Jammer** (repel), **Scrap Lure** (lure). Drop source = **global level/rarity-scaled table** (no Enemy DB errata). **Pending errata (to be authored in the Consumable DB GDD):** (1) **TBC** — add `use item` to the battle action set (Rule 3: move/switch/flee → +use-item; consumes the turn, no Heat/Energy cost) + AC; (2) **Drop System** — consumables as a level/rarity-scaled drop output class + Salvage Beacon → drop-condition multiplier feedback; (3) **Encounter Zone** — un-defer OQ-EZ-4: add an `encounter_rate` modifier hook to EZ-1 (Signal Jammer / Scrap Lure) + ACs. Each errata'd Approved doc needs a light re-review touch. Totals: 30→31 identified; MVP designed denominator 22→23. Prior same-day: Encounter Zone (#7) **APPROVED** — 3rd-round confirmation re-review, fresh-session full-panel /design-review (5 specialists + CD). **All five specialists returned ZERO blocking**; the Round 2 delta re-gate, `is_farmable_target`, and `requires_defeated` sequencing all verified correct at the discriminator level (LIGHTER_REGATE→ALWAYS_OPEN collapse genuinely closed; AC-EZ-22 central discriminator). CD verdict APPROVED WITH ONE MINOR REVISION — the lone survivor of the mature-doc triage, a spec-silent fail-safe gap on `requires_defeated` naming a non-existent boss, was closed same session: **EC-EZ-12 + AC-EZ-58** (broken-ref → fail-safe LOCKED, never fail-open). Two converged recommendations folded in: **Tuning Knob warning 5** (re-gate × density coupling) + **`is_farmable_target` authoring criterion**. 58→59 ACs (39 BLOCKING). No Round 4. **All 11 MVP GDDs authored so far are now Approved.** Prior 2026-07-12 (2nd round, NEEDS REVISION → punch-list): delta re-gate, Boss-1-first sequencing, is_farmable_target field. Prior 2026-07-11: Full-panel /design-review (5 specialists + CD): 4 blockers + 4 recommended resolved same session. **WAVE gate cut to Reserved** (off-pillar + wave_pools undefined) → both MVP bosses now WIN_COUNT on a shared cumulative zone-win counter (Boss 1 @ 6, Boss 2 @ 10). WIN_COUNT semantic made normative (Rule 8a, cumulative/all-time/wins-only). AC-EZ-25 ADVISORY→BLOCKING; AC-EZ-40 split 40a/40b; terrain identity+weight-floor guardrail (Rule 2a). 52→56 ACs. gate_type taxonomy now: OPEN/WIN_COUNT authorable, WAVE/REACH/DUNGEON_RUSH reserved. Prior: Turn-Based Combat **APPROVED** — Part-Break erratum fix-confirmation re-review, 2 AC-integrity blockers fixed; all 4 propagation/errata applied; /consistency-check PASS.)
+> **Last Updated**: 2026-07-12 (**New deferred system #23a Key Item System** (Meta, Vertical Slice) — story/plot key items (unique, non-consumable, un-scrappable) that gate narrative/world progression; explicitly NOT the Consumable Database, NOT a rarity tier. Totals 31→32; Vertical Slice denom 2→3. Also flagged: NPC shops as a post-MVP consumable faucet (MVP is drops-only). **SCOPE ADDITION — Consumable items pulled into MVP** (user decision). New Foundation system **#1c Consumable Database** added (standalone schema authority; no Part DB dependency; design-order slot 10a, before Inventory #11). MVP drop taxonomy is now **parts + scrap + consumables** (designs/blueprints stay Alpha per HOLISM-01). Initial roster (6, world-themed salvage-tech): **Repair Kit** (Structure heal, tiered), **Coolant Flush** (Heat dump), **Power Cell** (Energy restore), **Salvage Beacon** (drop-odds boost → Drop System conditions), **Signal Jammer** (repel), **Scrap Lure** (lure). Drop source = **global level/rarity-scaled table** (no Enemy DB errata). **Pending errata (to be authored in the Consumable DB GDD):** (1) **TBC** — add `use item` to the battle action set (Rule 3: move/switch/flee → +use-item; consumes the turn, no Heat/Energy cost) + AC; (2) **Drop System** — consumables as a level/rarity-scaled drop output class + Salvage Beacon → drop-condition multiplier feedback; (3) **Encounter Zone** — un-defer OQ-EZ-4: add an `encounter_rate` modifier hook to EZ-1 (Signal Jammer / Scrap Lure) + ACs. Each errata'd Approved doc needs a light re-review touch. Totals: 30→31 identified; MVP designed denominator 22→23. Prior same-day: Encounter Zone (#7) **APPROVED** — 3rd-round confirmation re-review, fresh-session full-panel /design-review (5 specialists + CD). **All five specialists returned ZERO blocking**; the Round 2 delta re-gate, `is_farmable_target`, and `requires_defeated` sequencing all verified correct at the discriminator level (LIGHTER_REGATE→ALWAYS_OPEN collapse genuinely closed; AC-EZ-22 central discriminator). CD verdict APPROVED WITH ONE MINOR REVISION — the lone survivor of the mature-doc triage, a spec-silent fail-safe gap on `requires_defeated` naming a non-existent boss, was closed same session: **EC-EZ-12 + AC-EZ-58** (broken-ref → fail-safe LOCKED, never fail-open). Two converged recommendations folded in: **Tuning Knob warning 5** (re-gate × density coupling) + **`is_farmable_target` authoring criterion**. 58→59 ACs (39 BLOCKING). No Round 4. **All 11 MVP GDDs authored so far are now Approved.** Prior 2026-07-12 (2nd round, NEEDS REVISION → punch-list): delta re-gate, Boss-1-first sequencing, is_farmable_target field. Prior 2026-07-11: Full-panel /design-review (5 specialists + CD): 4 blockers + 4 recommended resolved same session. **WAVE gate cut to Reserved** (off-pillar + wave_pools undefined) → both MVP bosses now WIN_COUNT on a shared cumulative zone-win counter (Boss 1 @ 6, Boss 2 @ 10). WIN_COUNT semantic made normative (Rule 8a, cumulative/all-time/wins-only). AC-EZ-25 ADVISORY→BLOCKING; AC-EZ-40 split 40a/40b; terrain identity+weight-floor guardrail (Rule 2a). 52→56 ACs. gate_type taxonomy now: OPEN/WIN_COUNT authorable, WAVE/REACH/DUNGEON_RUSH reserved. Prior: Turn-Based Combat **APPROVED** — Part-Break erratum fix-confirmation re-review, 2 AC-integrity blockers fixed; all 4 propagation/errata applied; /consistency-check PASS.)
 > **Source Concept**: design/gdd/game-concept.md
 
 ---
@@ -51,6 +51,7 @@ designed first.
 | 21 | Audio System | Audio | MVP (basic SFX) → Alpha (full) | Not Started | — | Turn-Based Combat, Part-Break System |
 | 22 | Main Menu & Settings (inferred) | UI | MVP | Not Started | — | Save/Load |
 | 23 | NPC System (inferred) | Meta | Vertical Slice | Not Started | — | Turn-Based Combat, Zone & World Map |
+| 23a | Key Item System | Meta | Vertical Slice | Not Started | — | Exploration Progress, Inventory (story/plot key items — unique, non-consumable, un-scrappable; **NOT** the Consumable Database) |
 | 24 | Tutorial System (inferred) | Meta | Vertical Slice | Not Started | — | Workshop UI, Combat UI, Workshop System |
 | 25 | Blueprint Crafting System | Economy | Alpha | Not Started | — | Part Database, Inventory |
 | 26 | Part Upgrade System | Economy | Alpha | Not Started | — | Part Database, Inventory |
@@ -70,7 +71,7 @@ designed first.
 | **Persistence** | Saving and loading game state between sessions | Save/Load System |
 | **UI** | Player-facing screens and information displays | Workshop UI, Combat UI, World Map UI, Main Menu & Settings |
 | **Audio** | Sound effects and music throughout the game | Audio System |
-| **Meta** | Systems outside the main loop | NPC System, Tutorial System, PvP System |
+| **Meta** | Systems outside the main loop | NPC System, Key Item System, Tutorial System, PvP System |
 
 ---
 
@@ -128,6 +129,7 @@ designed first.
 ### Polish Layer (depends on Presentation and Full MVP)
 
 23. **NPC System** — rival Symbot Mechanics with unique builds; introduces new elements and synergies in story encounters
+- **Key Item System** *(23a)* — defines story/plot **key items**: unique, non-consumable, un-scrappable, un-sellable items that gate narrative and world progression (a door key, a story macguffin, an access chip). Read by Exploration Progress (gating), stored by Inventory. **Not** drop-table-sourced or rarity-scaled — placed by story/quest design. Explicitly distinct from the Consumable Database (which owns *used-up* support items). Deferred to Vertical Slice alongside the story/NPC layer (story is out of MVP per game-concept.md).
 24. **Tutorial System** — first-session onboarding: workshop tutorial, first combat guide, break targeting explanation
 25. **Blueprint Crafting System** — the **Designs** layer: rare blueprint/template drops that let the player **fabricate part instances on demand** (paying Scrap currency + materials) instead of re-rolling the RNG drop. Deterministic/targeted acquisition on top of the RNG loop; fabricated parts are instances like any other. (Economy model set 2026-07-10, HOLISM-01 — see part-database.md DB5.)
 26. **Part Upgrade System** — enhance individual parts with materials; tuning layer on top of base part stats
@@ -167,6 +169,7 @@ Independent systems at the same layer can be designed in parallel.
 | 21 | Audio System (basic SFX) | MVP | Presentation | audio-director, sound-designer | M |
 | 22 | Main Menu & Settings | MVP | Presentation | ux-designer | S |
 | 23 | NPC System | Vertical Slice | Polish | narrative-director, game-designer | M |
+| 23a | Key Item System | Vertical Slice | Polish | game-designer, narrative-director | S |
 | 24 | Tutorial System | Vertical Slice | Polish | ux-designer, game-designer | M |
 | 25 | Blueprint Crafting System | Alpha | Polish | economy-designer, game-designer | L |
 | 26 | Part Upgrade System | Alpha | Polish | economy-designer | M |
@@ -200,12 +203,12 @@ layered structure. Part Database sits at the root with no cycles back from depen
 
 | Metric | Count |
 |--------|-------|
-| Total systems identified | 31 |
+| Total systems identified | 32 |
 | Design docs started | 11 |
 | Design docs reviewed | 11 |
 | Design docs approved | 11 |
 | MVP systems designed | 11 / 23 |
-| Vertical Slice systems designed | 0 / 2 |
+| Vertical Slice systems designed | 0 / 3 |
 | Alpha systems designed | 0 / 3 |
 | Full Vision systems designed | 0 / 1 |
 

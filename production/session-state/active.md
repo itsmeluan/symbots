@@ -260,10 +260,17 @@ Ran full 5-agent adversarial sweep (game-designer + systems-designer + qa-lead +
   4. Enemy DB — NONE (global-table drop source chosen).
 - **NEXT ACTION**: author the Consumable Database GDD via `/design-system` (schema authority first; errata reference its IDs). Enemy AI (#10) remains independent and can be sequenced whenever.
 
+## Consumable Database (#1c) — /design-system IN PROGRESS (2026-07-12)
+- **Sections written to file**: A Overview ✓, B Player Fantasy ✓, C Detailed Design ✓ (schema + Rules 1–10 + states + interactions). Remaining: D Formulas, E Edge Cases, F Dependencies+errata, G Tuning Knobs, Visual/Audio, UI, H Acceptance Criteria, Open Questions.
+- **Locked design decisions**: schema `ConsumableEntry` {consumable_id, display_name, rarity, effect_type(5), effect_params(typed), use_context(BATTLE/WORLD/BOTH), target(LIVING_TEAM_MEMBER/CURRENT_BATTLE/OVERWORLD), max_stack, buy_price, sell_price}. Battle item-use = 4th TBC action, consumes turn, no Heat/Energy. **Targeting = any LIVING team Symbot** (no revive — downed not targetable). **Salvage Beacon = flat fight-wide drop-rate boost** (per-battle flag, one per battle). Encounter modifiers = step-duration, replace-latest. **buy_price > sell_price strict invariant** (Scrap; reserved post-MVP shops, inert in MVP). Roster = 8 entries/6 concepts (Repair 3-tier family + Coolant/Power/Beacon/Jammer/Lure).
+- **Key Item System #23a REGISTERED** (Meta, Vertical Slice) — story/plot key items, NOT consumables, NOT a rarity. Systems-index updated (row/categories/dep-map/design-order; totals 31→32, VS denom 2→3).
+- **Shops** = tracked as post-MVP (NPC System #23 owns vendor buy/sell); NOT a new system row (decision) — will be an Open Question in the GDD.
+- **NEXT**: Section D Formulas (effect magnitudes per tier, Beacon multiplier, encounter-rate modifier math), lean mode (may spawn systems-designer for D/H as HIGH-risk). Then E/F/G/H + optional sections.
+
 <!-- STATUS -->
 Epic: MVP Foundation GDDs
-Feature: Consumable Database (#1c) — new MVP system, consumables scope added
-Task: /design-system consumable-database (author schema authority + 6-item roster); then apply pending errata to TBC / Drop System / Encounter Zone
+Feature: Consumable Database (#1c) — authoring GDD (A/B/C written; on Section D Formulas)
+Task: /design-system consumable-database — Sections D→H; then apply pending errata to TBC / Drop System / Encounter Zone (each needs re-review touch)
 <!-- /STATUS -->
 
 <!-- CONSISTENCY-CHECK: 2026-07-11 | GDDs checked: 9 | Conflicts found: 0 (1 stale registry note synced: N_PROTO_PITY calibration) | Drop-owned constants N_PROTO_PITY/M_BOSS_PITY/MULTIPLIER_FLOOR all consistent across Part DB + Enemy DB -->
