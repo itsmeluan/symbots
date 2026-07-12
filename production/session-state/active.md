@@ -1,9 +1,11 @@
 # Active Session State
 
 ## Current Task — Zone & World Map System (#12) /design-system IN PROGRESS (2026-07-12, lean)
-- **Sections complete**: A (Overview)
+- **Sections complete**: A (Overview), B (Player Fantasy)
 - **Scope decision**: GDD owns both world graph data AND traversal state (current-zone / accessible-zones). Overworld Navigation reads this system for movement context.
-- **Next**: Section B (Player Fantasy)
+- **Zone connection model LOCKED**: directed edges, each ZoneEdge = { to_zone_id, unlock_condition }; default condition OPEN (open-world free travel, enemy difficulty self-gates); optional STORY_FLAG / BOSS_DEFEATED hard-lock for story gates. MVP = 1 zone (single node); schema supports N. Open-world-by-difficulty model (Pokémon-like) confirmed by user.
+- **PAUSED pending leveling decision**: User wants to EXPLORE adding a Symbot leveling / part level-requirement system (PoE/Pokémon-style). This is a VISION-LEVEL change (contradicts game-concept anti-pillar "NOT a grind-levels-to-win"; touches Part DB + Symbot Assembly + needs a new Progression system). Being handled as a SEPARATE design conversation, NOT inside zone-world-map.md. Zone & World Map GDD (Sections C+) resumes after the leveling direction is decided — its edge model is unaffected either way; only the "difficulty gates zones" framing text depends on the outcome.
+- **Next**: resolve leveling direction → then resume Section C (Detailed Design)
 
 ---
 
