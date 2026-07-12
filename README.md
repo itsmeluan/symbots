@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/status-early%20design-yellow" alt="Status: Early Design">
+  <img src="https://img.shields.io/badge/status-in%20design%20(14%2F23%20MVP%20GDDs)-yellow" alt="Status: In Design — 14/23 MVP GDDs approved">
   <img src="https://img.shields.io/badge/engine-Godot%204.6-478cbf?logo=godotengine&logoColor=white" alt="Godot 4.6">
   <img src="https://img.shields.io/badge/platform-Mac%20%7C%20iOS-lightgrey" alt="Mac | iOS">
 </p>
@@ -50,13 +50,19 @@ Full detail in [`design/gdd/game-concept.md`](design/gdd/game-concept.md).
 
 Currently in **Design phase** (pre-production). The core build/hunt loop has
 been validated in a throwaway concept prototype ([findings](prototypes/symbot-build-loop-concept/REPORT.md) —
-verdict: **PROCEED**). Foundation system design is underway:
+verdict: **PROCEED**). MVP system design is well underway — **14 of 23 MVP
+system GDDs are authored and approved**, each through a multi-agent
+`/design-review`:
 
-| System | Status |
-| ---- | ---- |
-| Part Database | Revised, pending re-review |
-| Damage Formula System | Designed, pending review |
-| Everything else | Not started — see [`design/gdd/systems-index.md`](design/gdd/systems-index.md) |
+| Layer | Systems | Status |
+| ---- | ---- | ---- |
+| **Foundation** | Part Database · Move Database · Passive Database · Consumable Database · Enemy Database · Damage Formula | ✅ Approved (6) |
+| **Gameplay** | Symbot Assembly · Synergy · Turn-Based Combat · Part-Break · Enemy AI | ✅ Approved (5) |
+| **World / Economy** | Encounter Zone · Drop System · Inventory | ✅ Approved (3) |
+| **World · Integration · Presentation** | Zone & World Map, Workshop, Save/Load, Combat UI, Audio, … | ⏳ Not started (9) |
+
+Next up: **Zone & World Map System** (#12). Full breakdown, dependency map, and
+design order in [`design/gdd/systems-index.md`](design/gdd/systems-index.md).
 
 ## Tech Stack
 
