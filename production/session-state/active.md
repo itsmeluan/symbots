@@ -1,6 +1,13 @@
 # Active Session State
 
-## Current Task — Inventory System (#11) /design-review → APPROVED (2026-07-12)
+## Current Task — Zone & World Map System (#12) /design-system IN PROGRESS (2026-07-12, lean)
+- **Sections complete**: A (Overview)
+- **Scope decision**: GDD owns both world graph data AND traversal state (current-zone / accessible-zones). Overworld Navigation reads this system for movement context.
+- **Next**: Section B (Player Fantasy)
+
+---
+
+## Prior Task — Inventory System (#11) /design-review → APPROVED (2026-07-12)
 - **Full-panel /design-review** (economy/systems/qa/game-designer + CD). Verdict NEEDS REVISION → **5 surgical blockers fixed same session** → **APPROVED** (CD approve-on-fix-confirmation; no further full re-review).
 - **Blockers fixed** (all in design/gdd/inventory.md): (1) `next_instance_id` counter now a 4th **persisted** field (Rule 1) — fixes EC-INV-07 "never reused" across save/load; AC-INV-09 hardened vs `max(live)+1`, AC-INV-15 asserts counter round-trip. (2) `instance_id` retyped plain **int** (was "int StringName-safe"). (3) INV-1 input guards: `qty←max(qty,0)`, `capacity=max(max_stack−current,0)`, load-time current clamp → new **EC-INV-11**, AC-INV-01 +3 sub-cases +per-field FAIL. (4) `add(Scrap)` now returns `{accepted,rejected}` at SCRAP_MAX (AC-INV-10). (5) **OQ-INV-1 tier-refund LOCKED 0% total sink** (user decision) — future refund additive/non-retroactive only.
 - **Tracking updated**: inventory.md header→Approved; systems-index #11→Approved + reviewed/approved 13→14; review log created (design/gdd/reviews/inventory-review-log.md).
