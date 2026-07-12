@@ -141,12 +141,12 @@ Inventory **imports these by name; it does not define or shadow them** (redefini
 - **EC-INV-01 — Consumable stack overflow (INV-1 reject).** Acquiring a consumable that would push a stack past `max_stack`: the count is clamped to `max_stack`, the excess is **rejected** (not stored, not converted), and `add` returns `{accepted, rejected}` so the caller fires a "stack full" notice. Sub-cases: **partial** (`current=14, qty=9, cap=20` → accepted 6, rejected 3); **already full** (`current=20` → accepted 0, all rejected). No silent loss — the reject is always reported. *Verified by AC-INV-01. Resolves Consumable EC-CD-12; un-blocks AC-CD-23.*
 - **EC-INV-02 — Scrap an equipped part (blocked).** A scrap request on an instance in Workshop's equipped set is **rejected**; the instance is untouched and no Scrap is granted (Rule 5 guard). The player must unequip first. *Verified by AC-INV-04.*
 - **EC-INV-03 — Scrap a missing/invalid `instance_id`.** A scrap request naming an id not in `part_instances` is a **no-op** — rejected, no Scrap granted, no crash. *Verified by AC-INV-05.*
-- **EC-INV-04 — Use/decrement a consumable at quantity 0.** A decrement when the id's count is 0 (or absent) does nothing — Inventory refuses to go below 0; the use is rejected upstream (Consumable EC-CD-04). No negative count, no crash. *Verified by AC-INV-06.*
+- **EC-INV-04 — Use/decrement a consumable at quantity 0.** A decrement when the id's count is 0 (or absent) does nothing — Inventory refuses to go below 0; the use is rejected upstream (Consumable EC-CD-04). No negative count, no crash. *Verified by AC-INV-07.*
 - **EC-INV-05 — Duplicate part instances never merged.** Holding N copies of the same `part_id` yields N distinct `PartInstance` records, each with its own `instance_id` and `upgrade_tier`; `get_parts` returns all N separately (Part DB EC-05). No dedup, no stacking, ever. *Verified by AC-INV-03.*
-- **EC-INV-06 — Scrap balance at `SCRAP_MAX` (defensive).** Adding Scrap beyond `SCRAP_MAX` clamps at `SCRAP_MAX`; the excess is not stored. In MVP the whole-arc faucet is ~1,555–2,125 Scrap (Drop System), far below any sane `SCRAP_MAX`, so this is a defensive guard that never fires in normal play. *Verified by AC-INV-07.*
-- **EC-INV-07 — `instance_id` never reused.** Ids come from a monotonic per-save counter; a scrapped instance's id is **never** reassigned to a future part. This prevents a dangling Workshop/UI reference from silently resolving to a different part. *Verified by AC-INV-08.*
-- **EC-INV-08 — Unknown `part_id` / `consumable_id` on `add` (referential guard).** An `add` naming an id absent from Part DB / Consumable DB is a **content/integrity error**: rejected and logged naming the bad id; never stored, never crashes. (In shipped play this can only arise from a data bug or a stale save after content removal.) *Verified by AC-INV-09.*
-- **EC-INV-09 — Absent consumable key ≡ 0.** `get_consumable_count(id)` for an id never acquired returns `0` (absent key is equivalent to zero — Rule 3), not null, no crash. *Verified by AC-INV-06.*
+- **EC-INV-06 — Scrap balance at `SCRAP_MAX` (defensive).** Adding Scrap beyond `SCRAP_MAX` clamps at `SCRAP_MAX`; the excess is not stored. In MVP the whole-arc faucet is ~1,555–2,125 Scrap (Drop System), far below any sane `SCRAP_MAX`, so this is a defensive guard that never fires in normal play. *Verified by AC-INV-10.*
+- **EC-INV-07 — `instance_id` never reused.** Ids come from a monotonic per-save counter; a scrapped instance's id is **never** reassigned to a future part. This prevents a dangling Workshop/UI reference from silently resolving to a different part. *Verified by AC-INV-09.*
+- **EC-INV-08 — Unknown `part_id` / `consumable_id` on `add` (referential guard).** An `add` naming an id absent from Part DB / Consumable DB is a **content/integrity error**: rejected and logged naming the bad id; never stored, never crashes. (In shipped play this can only arise from a data bug or a stale save after content removal.) *Verified by AC-INV-11.*
+- **EC-INV-09 — Absent consumable key ≡ 0.** `get_consumable_count(id)` for an id never acquired returns `0` (absent key is equivalent to zero — Rule 3), not null, no crash. *Verified by AC-INV-08.*
 - **EC-INV-10 — Future shop-sell loop (future-scope, no MVP AC).** If a post-MVP shop ever sells consumables *for Scrap*, the loop `earn Scrap → buy consumable → sell consumable → earn Scrap` could open. MVP's reject-with-no-conversion overflow policy breaks the consumable→Scrap half today, so no loop exists now. **No MVP AC** — the selling path does not exist in MVP (drops-only); flagged so the future Shop GDD runs a rate audit before enabling consumable sell. *(Surfaced by the systems-designer exploit scan.)*
 
 ## Dependencies
@@ -205,16 +205,69 @@ Inventory **imports these by name; it does not define or shadow them** (redefini
 
 ## Visual/Audio Requirements
 
-[To be designed]
+> Inventory is a data layer and owns no assets. These are advisory obligations on the presentation systems.
+
+- **VA-1 (advisory) — Acquire feedback.** A distinct, satisfying deposit cue when items enter inventory, differentiated for part / consumable / Scrap. The "three new parts land in the box → *what can I build?*" moment (Player Fantasy) lives on this cue. *(Inventory UI / Audio.)*
+- **VA-2 (advisory) — Scrap feedback.** A tactile "recycle/crush" SFX plus a Scrap-gain readout when a part is scrapped, so the irreversible-but-rewarding action reads as deliberate. *(Inventory UI / Audio.)*
+- **VA-3 (advisory) — Stack-full notice.** A soft, non-alarming cue when overflow is rejected (EC-INV-01) — distinct from an error tone; the player should read "already stocked," not "something went wrong." *(Inventory UI / Audio.)*
+- **Audio intent:** reuse the shared UI SFX palette; no bespoke inventory music.
 
 ## UI Requirements
 
-[To be designed]
+> Obligations on Inventory UI / Combat UI (both Not Started) — layout and interaction belong to those GDDs.
+
+1. **Scrap confirmation.** The irreversible scrap (Rule 5) requires an explicit confirm showing the Scrap to be gained *before* committing. Equipped parts render visibly non-scrappable (`is_scrappable == false` → blocked with a reason).
+2. **Stack-full feedback.** When `add` returns `rejected > 0`, surface a clear "stack full (+N not kept)" notice (EC-INV-01) — informative, not lossy-feeling.
+3. **No completion counter.** The UI must **not** present a Pokédex-style "X/Y collected" metric (anti-pillar / Player Fantasy). Organize by *build-relevance* (slot, rarity, family), never by a checklist.
+4. **Touch-first.** ≥44×44pt targets; sort/filter by `slot_type` / `rarity` / `part_family`; no hover-only interactions (technical-preferences).
+5. **Batch-scrap.** Support scrapping multiple surplus parts in one confirmed action (Drop System's "batch-scrap" note), with equipped parts auto-excluded.
+6. **Consumable stack display.** Show `quantity / max_stack` per consumable (e.g., "7 / 20").
+
+> **📌 UX Flag — Inventory**: this system places scrap-confirm, stack-full-notice, no-completion-counter, and batch-scrap requirements on the Inventory UI. In Pre-Production, run `/ux-design` for the Inventory UI **before** writing epics; stories should cite the resulting `design/ux/` spec, not this GDD directly.
 
 ## Acceptance Criteria
 
-[To be designed]
+**Tags:** BLOCKING (automated test, gates story completion) · DEFERRED (needs a Not-Started system). **Test types:** Unit (GUT, `tests/unit/inventory/`) · Integration. The scrap guard takes the equipped-instance set as an **injected parameter** (Workshop's `equipped_instance_ids()`), never a singleton call — so every unit test runs without Workshop. All fixtures use Consumable DB `max_stack` and Drop System `SCRAP_YIELD` **by name**, never magic numbers.
+
+**AC-INV-01** (BLOCKING, Unit): **INV-1 overflow split.** GIVEN `max_stack=20 (COMMON)`. THEN: partial `current=14, qty=9 → {accepted:6, rejected:3}`; full `current=20, qty=5 → {0, 5}`; exact `current=15, qty=5 → {5, 0}`; no-op `qty=0 → {0, 0}`. Every case asserts `accepted + rejected == qty` and the stored count never exceeds `max_stack`. FAIL: negative output, `accepted+rejected ≠ qty`, or count > cap. *(EC-INV-01)*
+
+**AC-INV-02** (BLOCKING, Unit): **`add(part)` appends a new instance + return shape.** GIVEN an empty store. WHEN `add` a Common part at tier 0. THEN `part_instances.size() == 1`, the new `PartInstance` has a fresh `instance_id` and `upgrade_tier == 0`, and the call returns `{accepted:1, rejected:0}`. Adding 600 distinct parts leaves all 600 present (uncapped). FAIL: not appended, wrong return shape, or a cap rejects the 600th. *(R4, R2)*
+
+**AC-INV-03** (BLOCKING, Unit): **Duplicate parts never merged.** WHEN `add` the same `part_id` three times. THEN `get_parts()` returns **3 distinct** `PartInstance`s with 3 distinct `instance_id`s; none merged or stacked. FAIL: any dedup/merge, or fewer than 3 instances. *(EC-INV-05, R2)*
+
+**AC-INV-04** (BLOCKING, Unit): **Scrap blocked on equipped.** GIVEN an instance whose id is in the injected equipped set. WHEN `scrap(instance_id)`. THEN return `{ok:false, scrap_gained:0}`, the instance remains in `part_instances`, and the Scrap balance is unchanged. FAIL: instance removed, any Scrap granted, or `ok:true`. *(EC-INV-02, R5)*
+
+**AC-INV-05** (BLOCKING, Unit): **Scrap missing id + unknown-id queries.** WHEN `scrap(unknown_id)` → `{ok:false, scrap_gained:0}`, balance unchanged (no-op). AND `get_instance(unknown_id) → null` (no crash), `has_instance(unknown_id) → false`. FAIL: crash, non-null instance, or any balance change. *(EC-INV-03, R7)*
+
+**AC-INV-06** (BLOCKING, Unit): **Scrap a HELD part grants `SCRAP_YIELD[rarity]`, tier-ignored.** WHEN `scrap` a HELD instance. THEN it is removed, `balance += SCRAP_YIELD[rarity]`, and return is `{ok:true, scrap_gained:yield}`. Fixtures — Common tier-0 → **+5**; **Common tier-3 → +5** (tier ignored — discriminating vs. any tier-scaled bug); Rare → **+20**; Prototype → **+35**; Boss-grade → **+60**. FAIL: tier changes the yield, wrong per-rarity value, or `scrap_gained` mismatches the balance delta. *(R5, referenced SCRAP_YIELD)*
+
+**AC-INV-07** (BLOCKING, Unit): **`decrement_consumable` success/floor.** GIVEN count 3 → `decrement` returns `true`, count `2`. GIVEN count 0 → returns `false`, count stays `0` (never negative). FAIL: decrement below 0, wrong return, or count mutated at 0. *(EC-INV-04, R6)*
+
+**AC-INV-08** (BLOCKING, Unit): **Absent-key & empty-query defaults.** `get_consumable_count(never-acquired id) → 0` (not null). `get_parts(filter matching zero instances) → []` (empty list, not null, no crash). FAIL: null return or crash on either. *(EC-INV-09, R7)*
+
+**AC-INV-09** (BLOCKING, Unit): **`instance_id` never reused.** WHEN `add` a part (id `A`), `scrap` it, then `add` another part. THEN the new instance's id `≠ A`. FAIL: the scrapped id is reassigned. *(EC-INV-07)*
+
+**AC-INV-10** (BLOCKING, Unit): **Scrap balance clamps at `SCRAP_MAX`.** GIVEN balance at `SCRAP_MAX − 2`. WHEN Scrap `+10` is added. THEN balance `== SCRAP_MAX` (excess discarded), no overflow/negative wrap. FAIL: balance exceeds `SCRAP_MAX` or wraps. *(EC-INV-06)*
+
+**AC-INV-11** (BLOCKING, Unit): **Unknown id on `add` rejected + logged.** GIVEN a stub Part DB / Consumable DB that reports "not found" for a bad id. WHEN `add` that id. THEN the item is not stored, exactly one content error is logged naming the bad id, and no exception is thrown. FAIL: stored anyway, silent, or crash. *(EC-INV-08)*
+
+**AC-INV-12** (BLOCKING, Unit): **`is_scrappable` paths.** **(a)** equipped instance → `false`; **(b)** missing id → `false`; **(c)** held (unequipped) instance → `true`. (Split 12a/12b/12c in the test file for isolation.) FAIL: any path returns the wrong boolean. *(R7, R5 guard)*
+
+**AC-INV-13** (DEFERRED, Integration): **Drop System deposit end-to-end.** GIVEN a victory drop bundle. WHEN Drop calls `add` for parts, consumables, and Scrap. THEN part instances appear, consumable stacks increment (with `{accepted, rejected}` honored), and the Scrap balance rises. *Activate when: Drop System is wired to a live Inventory.*
+
+**AC-INV-14** (DEFERRED, Integration): **TBC in-battle use decrement.** GIVEN a battle item use (TBC Rule 7a). WHEN the use **succeeds**, the consumable count drops by 1; when **rejected**, it is unchanged. *Activate when: TBC's item-use action is implemented.* (The pure `decrement_consumable` contract is already covered now by AC-INV-07; this covers only the TBC wiring.)
+
+**AC-INV-15** (DEFERRED, Integration): **Save/Load round-trip.** GIVEN a populated inventory. WHEN serialized and restored. THEN the three stores (part_instances, consumable_stacks, scrap) are deep-equal to the originals, including `instance_id`s and tiers. *Activate when: Save/Load System exists.*
+
+### EC ↔ AC Coverage
+
+EC-01→01, EC-02→04, EC-03→05, EC-04→07, EC-05→03, EC-06→10, EC-07→09, EC-08→11, EC-09→08, EC-10→(no AC — future-scope, mechanism absent in MVP). **Rule/formula coverage:** INV-1→01; R4 add→01/02/11; R5 scrap→04/05/06/12; R6 decrement→07; R7 queries→05/08/12; R2 instance model→02/03/09; SCRAP_MAX→10; Drop/TBC/Save integration→13/14/15 (DEFERRED). **15 ACs: 12 BLOCKING (Unit) / 3 DEFERRED (Integration).** No ADVISORY, no untestable criteria — every BLOCKING AC has a discriminating fixture and every observable EC has a verifying AC (EC-10 excepted with stated rationale).
 
 ## Open Questions
 
-[To be designed]
+| # | Question | Owner | Impact |
+|---|----------|-------|--------|
+| OQ-INV-1 | **Tier-refund on scrap.** MVP yields flat `SCRAP_YIELD[rarity]`, tier ignored (total sink). When Part Upgrade (Alpha) defines upgrade costs, revisit whether scrapping an upgraded part refunds a fraction of invested Scrap. | Part Upgrade System (Alpha) | Economy feel; post-MVP |
+| OQ-INV-2 | **Batch-scrap UX + safety.** How the player bulk-scraps surplus (select-all-duplicates? scrap-all-below-rarity?) without ever nuking a wanted copy. | Inventory UI / ux-designer | Scrap ergonomics; set at UX design |
+| OQ-INV-3 | **`SCRAP_MAX` final value + part soft-cap.** The defensive `SCRAP_MAX` and the reserved `PART_INSTANCE_SOFT_CAP` depend on mobile save-size profiling. | Save/Load / performance-analyst | Only matters if saves grow large; revisit at Save/Load |
+| OQ-INV-4 | **Sort/filter defaults.** Which default ordering best serves the "what can I build?" fantasy (by slot? newest? rarity?). | ux-designer | First-open readability; playtest |

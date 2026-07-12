@@ -852,6 +852,27 @@ formulas:
     added: 2026-07-12
     revised: "2026-07-12 (/design-review: TACTICAL w_lethal 1.0->5.0; Example B/C re-derived, python3-verified)"
 
+  - name: INV-1
+    status: active
+    source: design/gdd/inventory.md
+    referenced_by:
+      - design/gdd/inventory.md
+      - design/gdd/consumable-database.md      # resolves EC-CD-12 overflow; un-blocks AC-CD-23 (stack model)
+    variables:
+      - "current (int [0, max_stack]) — count already in the stack before the add"
+      - "qty (int [0, inf)) — incoming quantity"
+      - "max_stack (int {5,10,20}) — per-rarity cap, read from Consumable DB"
+      - "accepted (int [0, max_stack]) — units written into the stack"
+      - "rejected (int [0, qty]) — excess surfaced as a stack-full notice"
+    output_range: "accepted, rejected both non-negative ints; invariant accepted + rejected == qty (no silent loss)"
+    expression: "accepted = min(qty, max_stack - current); rejected = qty - accepted"
+    notes: "Consumable overflow split (Inventory's only owned formula). Pure integer min/subtraction — NO floor/ceil, no
+      float, no epsilon, no python3 scan. Overflow policy = reject-with-notice (no Scrap conversion in MVP). max_stack-current
+      >= 0 always (current bounded by max_stack), so no negative output. Resolves Consumable EC-CD-12; un-blocks AC-CD-23.
+      Worked example (discriminating): current=14, qty=9, max_stack=20 -> accepted=6, rejected=3."
+    added: 2026-07-12
+    revised: ""
+
 # Example:
 #
 # formulas:
@@ -1281,6 +1302,36 @@ constants:
       (AC-EAI-18) or w_stat is dead weight. Felt difference is the #1 playtest tuning watch (OQ-EAI-3)."
     added: 2026-07-12
     revised: "2026-07-12 (/design-review: TACTICAL w_lethal 1.0->5.0, kill-securing invariant)"
+
+  - name: SCRAP_MAX
+    status: active
+    source: design/gdd/inventory.md
+    referenced_by:
+      - design/gdd/inventory.md
+    value: 999999
+    unit: Scrap (the game's sole currency); ceiling on the Inventory Scrap balance
+    notes: "Defensive ceiling on the Scrap balance (EC-INV-06). MVP whole-arc Scrap income is ~1,555-2,125 (Drop System),
+      far below this — the clamp never fires in normal play. Adding Scrap beyond SCRAP_MAX clamps at SCRAP_MAX (excess
+      discarded, no wrap). Lower only if a save-size/display constraint demands, and keep it well above the richest
+      plausible late-game balance. Reserved companion knob PART_INSTANCE_SOFT_CAP is unset in MVP (parts uncapped, Part DB EC-05)."
+    added: 2026-07-12
+    revised: ""
+
+  - name: SCRAP_YIELD
+    status: active
+    source: design/gdd/drop-system.md
+    referenced_by:
+      - design/gdd/drop-system.md              # owns the yield values (Rule 9 / Tuning Knobs)
+      - design/gdd/inventory.md                 # scrap() grants SCRAP_YIELD[rarity], tier-ignored (INV Rule 5 / AC-INV-06)
+    value: "{COMMON: 5, RARE: 20, PROTOTYPE: 35, BOSS_GRADE: 60}"
+    unit: Scrap granted when the player scraps one part instance of the given rarity
+    notes: "Owned by the Drop System (Rule 9, the source side of the scrap sink). Promoted to the registry 2026-07-12 when
+      Inventory began referencing it (scrap action). Invariant AC-DS-19: COMMON < RARE < PROTOTYPE < BOSS_GRADE (non-overlapping
+      safe ranges 3-8 / 15-24 / 25-45 / 50-100). Inventory REFERENCES these by name and must not redefine/shadow them
+      (would be a registry conflict). MVP: scrapping is tier-INDEPENDENT (a tiered part yields the flat per-rarity value; no
+      upgrade refund — OQ-INV-1 defers a possible tier refund to the Part Upgrade System / Alpha)."
+    added: 2026-07-12
+    revised: ""
 
 # Example:
 #

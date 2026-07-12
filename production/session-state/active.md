@@ -302,8 +302,8 @@ Ran full 5-agent adversarial sweep (game-designer + systems-designer + qa-lead +
 
 <!-- STATUS -->
 Epic: MVP Foundation GDDs
-Feature: Enemy AI System (#10) — APPROVED 2026-07-12 (full-panel /design-review; NEEDS REVISION → fixed same session). Next: Inventory System (#11)
-Task: /design-system inventory (#11) IN PROGRESS (lean). Sections A–G WRITTEN (Overview, Player Fantasy, Detailed Design C, Formulas D, Edge Cases E, Dependencies F, Tuning Knobs G). Decisions: parts uncapped instances/no-stack; consumables single-count capped at max_stack; overflow=REJECT-with-notice (resolves EC-CD-12, un-blocks AC-CD-23, resolves OQ-CD-5 overflow half); scrap equipped=BLOCKED (Inventory queries Workshop equipped set); scrap yield=REFERENCE Drop SCRAP_YIELD (5/20/35/60), tier IGNORED (OQ-INV-1 tier-refund→Alpha). INV-1 overflow split (accepted=min(qty,cap−current); rejected=qty−accepted; no float/floor). SCRAP_MAX 999999 defensive. Errata pending: Consumable DB EC-CD-12/AC-CD-23/OQ-CD-5. Next: Section H Acceptance Criteria (qa-lead consult), then optional VA/UI/OQ, then Phase 5.
+Feature: Inventory System (#11) — GDD COMPLETE → Designed (2026-07-12, /design-system lean). Next: fresh-session /design-review design/gdd/inventory.md
+Task: /clear then /design-review design/gdd/inventory.md (FRESH session). On approval apply 1 errata: Consumable DB EC-CD-12 RESOLVED + AC-CD-23 un-blocked/activated + OQ-CD-5 overflow-half resolved. Then #12 Zone & World Map or #15 Workshop.
 <!-- /STATUS -->
 
 ## Enemy AI System (#10) — APPROVED (2026-07-12, full-panel /design-review)
@@ -328,3 +328,5 @@ Task: /design-system inventory (#11) IN PROGRESS (lean). Sections A–G WRITTEN 
 <!-- CONSISTENCY-CHECK: 2026-07-11 | GDDs checked: 9 | Conflicts found: 0 (1 stale registry note synced: N_PROTO_PITY calibration) | Drop-owned constants N_PROTO_PITY/M_BOSS_PITY/MULTIPLIER_FLOOR all consistent across Part DB + Enemy DB -->
 <!-- CONSISTENCY-CHECK: 2026-07-11 (session 20 close) | GDDs checked: 10 | Conflicts found: 0 | Verified: BREAK_BIAS_MULTIPLIERS(1.25/0.55/0.70/1.40) + ENRAGE_PER_BREAK(0.12) + BREAK_SPILLOVER(0.20) + 4-arg hit_resolved across Passive DB/Part-Break/TBC/Move DB + Drop System OQ-DS-1 RESOLVED (deterministic break) | 38 registry entries all PASS -->
 <!-- CONSISTENCY-CHECK: 2026-07-12 | GDDs checked: 12 | Conflicts found: 0 | Verified: all 55 registry entries (8 consumable items + 10 CD constants + CD-1..CD-5 formulas + all prior constants/formulas/passives) across 12 GDDs — PASS. Noteworthy: CD-5 worked example uses 0.35×0.1 (non-exact in IEEE-754) as prose only; AC fixtures correctly use 0.15 (exact). All 3 errata (TBC/Drop/EZ) consistent. -->
+
+<!-- CONSISTENCY-CHECK: 2026-07-12 | GDDs checked: 14 | Conflicts found: 0 | Verified this session: EAI-1 + AI_PROFILE_WEIGHTS (TACTICAL w_lethal 5.0) + STATUS_BASE_VALUE (enemy-ai); INV-1 + SCRAP_MAX + SCRAP_YIELD (inventory). SCRAP_YIELD exact match Drop(owner 5/20/35/60) vs Inventory(referencer); invariant COMMON<RARE<PROTOTYPE<BOSS_GRADE holds. parts=instances / consumables=stackable model consistent w/ Part DB EC-05 + Consumable DB. 69 registry entries, YAML valid. -->
