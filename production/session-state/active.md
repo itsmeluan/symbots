@@ -303,7 +303,7 @@ Ran full 5-agent adversarial sweep (game-designer + systems-designer + qa-lead +
 <!-- STATUS -->
 Epic: MVP Foundation GDDs
 Feature: Enemy AI System (#10) — APPROVED 2026-07-12 (full-panel /design-review; NEEDS REVISION → fixed same session). Next: Inventory System (#11)
-Task: /design-system inventory (#11) IN PROGRESS (lean). Skeleton created design/gdd/inventory.md. Section A Overview WRITTEN (parts=instances/no-stack, consumables=stackable/max_stack, Scrap balance, workbench-not-trophy anti-pillar). Owns EC-CD-12 overflow + un-blocks AC-CD-23/OQ-CD-5. Next: Section B Player Fantasy.
+Task: /design-system inventory (#11) IN PROGRESS (lean). Sections A–G WRITTEN (Overview, Player Fantasy, Detailed Design C, Formulas D, Edge Cases E, Dependencies F, Tuning Knobs G). Decisions: parts uncapped instances/no-stack; consumables single-count capped at max_stack; overflow=REJECT-with-notice (resolves EC-CD-12, un-blocks AC-CD-23, resolves OQ-CD-5 overflow half); scrap equipped=BLOCKED (Inventory queries Workshop equipped set); scrap yield=REFERENCE Drop SCRAP_YIELD (5/20/35/60), tier IGNORED (OQ-INV-1 tier-refund→Alpha). INV-1 overflow split (accepted=min(qty,cap−current); rejected=qty−accepted; no float/floor). SCRAP_MAX 999999 defensive. Errata pending: Consumable DB EC-CD-12/AC-CD-23/OQ-CD-5. Next: Section H Acceptance Criteria (qa-lead consult), then optional VA/UI/OQ, then Phase 5.
 <!-- /STATUS -->
 
 ## Enemy AI System (#10) — APPROVED (2026-07-12, full-panel /design-review)

@@ -93,19 +93,115 @@ Scrapping an EQUIPPED instance is **blocked** (Rule 5) — the only guarded tran
 
 ## Formulas
 
-[To be designed]
+Inventory owns **exactly one formula** — the consumable overflow split (INV-1). The Scrap gained from scrapping a part is **not an Inventory formula**: it references the Drop System's `SCRAP_YIELD[rarity]` (owned there, Drop Rule 9). **No formula here uses `floor()`/`ceil()` or floats** — INV-1 is pure integer `min`/subtraction, so no epsilon nudge and no python3 float scan is required.
+
+### INV-1 — Consumable overflow split
+
+`accepted = min(qty, max_stack − current)`
+`rejected = qty − accepted`
+
+| Variable | Type | Range | Description |
+|----------|------|-------|-------------|
+| `current` | int | [0, max_stack] | Count already in the stack before this add |
+| `qty` | int | [0, ∞) | Incoming quantity being added |
+| `max_stack` | int | {5, 10, 20} | Per-rarity ceiling (Prototype 5 / Rare 10 / Common 20), read from Consumable DB |
+| `accepted` | int | [0, max_stack] | Units written into the stack |
+| `rejected` | int | [0, qty] | Units surfaced as excess ("stack full" notice) |
+
+**Output range:** both non-negative integers; **invariant `accepted + rejected = qty`** — no unit is ever silently lost. `max_stack − current ≥ 0` always (current is bounded by max_stack), so `accepted ≥ 0`; `accepted ≤ qty`, so `rejected ≥ 0`. No divide, no float, no degenerate output.
+
+**Boundary cases:**
+
+| Scenario | current | qty | max_stack | accepted | rejected |
+|----------|---------|-----|-----------|----------|----------|
+| Normal partial fill | 7 | 8 | 20 | 8 | 0 |
+| Already full, any qty | 20 | 5 | 20 | 0 | 5 |
+| qty = 0 (no-op) | 10 | 0 | 20 | 0 | 0 |
+| qty huge | 3 | 999 | 20 | 17 | 982 |
+| Exact fill (current+qty == cap) | 15 | 5 | 20 | 5 | 0 |
+| Empty stack, full drop | 0 | 20 | 20 | 20 | 0 |
+
+**Worked example (discriminating — `accepted ≠ qty`, `rejected > 0`):** `current = 14, qty = 9, max_stack = 20` → `accepted = min(9, 6) = 6`, `rejected = 3`. The stack lands at 20 and a "stack full (+3 lost)" notice fires.
+
+### Scrap yield (referenced — owned by Drop System)
+
+`scrap_value(part) = SCRAP_YIELD[part.rarity]` — **independent of `upgrade_tier`** in MVP.
+
+| Rarity | `SCRAP_YIELD` | Owner |
+|--------|--------------|-------|
+| COMMON | 5 | Drop System (Rule 9 / Tuning Knobs) |
+| RARE | 20 | Drop System |
+| PROTOTYPE | 35 | Drop System |
+| BOSS_GRADE | 60 | Drop System |
+
+Inventory **imports these by name; it does not define or shadow them** (redefining would conflict with the Drop System's owned tuning knobs + invariant `COMMON < RARE < PROTOTYPE < BOSS_GRADE`, AC-DS-19). Scrapping a *tiered* part yields the flat per-rarity value — the invested upgrade Scrap is **not** refunded in MVP (a total sink; upgrade costs are Alpha/undefined, so a partial-refund formula cannot be specified now). Whether a future tier refund exists is **OQ-INV-1**, deferred to the Part Upgrade System (Alpha), which would own any `calculate_scrap_value(part_instance)` refund logic Inventory then calls.
 
 ## Edge Cases
 
-[To be designed]
+- **EC-INV-01 — Consumable stack overflow (INV-1 reject).** Acquiring a consumable that would push a stack past `max_stack`: the count is clamped to `max_stack`, the excess is **rejected** (not stored, not converted), and `add` returns `{accepted, rejected}` so the caller fires a "stack full" notice. Sub-cases: **partial** (`current=14, qty=9, cap=20` → accepted 6, rejected 3); **already full** (`current=20` → accepted 0, all rejected). No silent loss — the reject is always reported. *Verified by AC-INV-01. Resolves Consumable EC-CD-12; un-blocks AC-CD-23.*
+- **EC-INV-02 — Scrap an equipped part (blocked).** A scrap request on an instance in Workshop's equipped set is **rejected**; the instance is untouched and no Scrap is granted (Rule 5 guard). The player must unequip first. *Verified by AC-INV-04.*
+- **EC-INV-03 — Scrap a missing/invalid `instance_id`.** A scrap request naming an id not in `part_instances` is a **no-op** — rejected, no Scrap granted, no crash. *Verified by AC-INV-05.*
+- **EC-INV-04 — Use/decrement a consumable at quantity 0.** A decrement when the id's count is 0 (or absent) does nothing — Inventory refuses to go below 0; the use is rejected upstream (Consumable EC-CD-04). No negative count, no crash. *Verified by AC-INV-06.*
+- **EC-INV-05 — Duplicate part instances never merged.** Holding N copies of the same `part_id` yields N distinct `PartInstance` records, each with its own `instance_id` and `upgrade_tier`; `get_parts` returns all N separately (Part DB EC-05). No dedup, no stacking, ever. *Verified by AC-INV-03.*
+- **EC-INV-06 — Scrap balance at `SCRAP_MAX` (defensive).** Adding Scrap beyond `SCRAP_MAX` clamps at `SCRAP_MAX`; the excess is not stored. In MVP the whole-arc faucet is ~1,555–2,125 Scrap (Drop System), far below any sane `SCRAP_MAX`, so this is a defensive guard that never fires in normal play. *Verified by AC-INV-07.*
+- **EC-INV-07 — `instance_id` never reused.** Ids come from a monotonic per-save counter; a scrapped instance's id is **never** reassigned to a future part. This prevents a dangling Workshop/UI reference from silently resolving to a different part. *Verified by AC-INV-08.*
+- **EC-INV-08 — Unknown `part_id` / `consumable_id` on `add` (referential guard).** An `add` naming an id absent from Part DB / Consumable DB is a **content/integrity error**: rejected and logged naming the bad id; never stored, never crashes. (In shipped play this can only arise from a data bug or a stale save after content removal.) *Verified by AC-INV-09.*
+- **EC-INV-09 — Absent consumable key ≡ 0.** `get_consumable_count(id)` for an id never acquired returns `0` (absent key is equivalent to zero — Rule 3), not null, no crash. *Verified by AC-INV-06.*
+- **EC-INV-10 — Future shop-sell loop (future-scope, no MVP AC).** If a post-MVP shop ever sells consumables *for Scrap*, the loop `earn Scrap → buy consumable → sell consumable → earn Scrap` could open. MVP's reject-with-no-conversion overflow policy breaks the consumable→Scrap half today, so no loop exists now. **No MVP AC** — the selling path does not exist in MVP (drops-only); flagged so the future Shop GDD runs a rate audit before enabling consumable sell. *(Surfaced by the systems-designer exploit scan.)*
 
 ## Dependencies
 
-[To be designed]
+### Upstream (Inventory reads from these)
+
+| System | What Inventory reads | Status | Hard/Soft |
+|--------|---------------------|--------|-----------|
+| **Part Database** | Part definitions (`id`, `display_name`, `rarity`, `slot_type`, `part_family`, `flavor_text`, `max_upgrade_tier`, `upgrade_effects`) to validate `part_id` and display instances | Approved | Hard |
+| **Consumable Database** | Consumable definitions (`id`, `display_name`, `rarity`, `max_stack`, use-context, effect metadata) — `max_stack` is the cap INV-1 enforces | Approved | Hard |
+
+### Downstream (these read from / write to Inventory)
+
+| System | Interface | Status |
+|--------|-----------|--------|
+| **Drop System** | Calls `add()` to deposit part instances, consumable increments, and Scrap; reads `{accepted, rejected}` for stack-full feedback. Owns `SCRAP_YIELD` (Inventory references it) | Approved |
+| **World Loot System** | Calls `add()` for overworld chests/pickups | Not Started |
+| **Workshop System** | Reads holdings; **owns the equipped-instance set Inventory queries** for the Rule 5 scrap guard; mutates a `PartInstance.upgrade_tier` when upgrading (spends Scrap); initiates the scrap action | Not Started |
+| **Turn-Based Combat** | Calls `decrement_consumable(id)` on a successful in-battle item use (TBC Rule 7a); rejected use decrements nothing | Approved (erratum) |
+| **Save/Load System** | Serializes/restores the three stores (flat records, stable `instance_id`s) | Not Started |
+| **Inventory UI / Combat UI** | Render/sort holdings, scrap-confirm flow, stack-full notices | Not Started |
+
+**Interface this GDD exposes:**
+- `add(item) → {accepted, rejected}` — parts always accepted (uncapped); consumables per INV-1; Scrap clamped at `SCRAP_MAX`
+- `scrap(instance_id) → {ok, scrap_gained}` — blocked if equipped or missing (EC-INV-02/03)
+- `decrement_consumable(id) → bool` — false if count is 0 (EC-INV-04)
+- `get_parts(filter?)` · `get_consumable_count(id)` · `get_scrap()` · `has_instance(id)` · `get_instance(id)` · `is_scrappable(id)`
+- **Requires from Workshop:** `equipped_instance_ids() → Set` (feeds the scrap guard)
+
+### Bidirectionality
+
+- **Part Database, Consumable Database, Drop System** already list Inventory in their Dependencies (verified) — bidirectionality confirmed. They currently tag it "Not Started"; a light touch updates those rows to "Designed/Approved" on approval.
+- **Workshop, World Loot, Save/Load, Inventory/Combat UI** (all Not Started) must list Inventory when authored.
+
+### Errata obligations this GDD creates on Approved docs
+
+1. **Consumable Database** — this GDD **resolves EC-CD-12** (overflow policy = reject-with-notice, owned here), **un-blocks/activates AC-CD-23** (the DEFERRED stacking test now has a model to assert against: single count per id, `add` returns `{accepted, rejected}`), and **resolves OQ-CD-5**'s overflow-policy half (reject; the `max_stack` values C20/R10/P5 stand as the caps INV-1 enforces). Light re-review touch.
+
+*(Part Database and Drop System are read-only/producer contracts — Inventory adds itself as a reader and a deposit target with no reciprocal rule change; Drop retains ownership of `SCRAP_YIELD`.)*
 
 ## Tuning Knobs
 
-[To be designed]
+### Inventory-owned knobs
+
+| Knob | Value | Safe Range | What Changing It Does |
+|------|-------|------------|----------------------|
+| `SCRAP_MAX` | 999,999 | ≥ 100,000 | The Scrap-balance ceiling (EC-INV-06). Purely **defensive** — MVP whole-arc income (~2,125 Scrap, Drop System) never approaches it. Lower only if a save-size or display constraint demands, and it must stay well above the richest plausible late-game balance or a player silently loses earned Scrap. |
+| `PART_INSTANCE_SOFT_CAP` *(reserved)* | unset (uncapped) | — | Reserved, not active in MVP: parts are uncapped (Part DB EC-05). If mobile save-size profiling later forces a soft cap, it lands here paired with a "scrap to make room" prompt — a post-MVP decision, not a knob to set now. |
+
+### Owned elsewhere — referenced, not duplicated
+
+- **`max_stack` per consumable** — Consumable DB (Common 20 / Rare 10 / Prototype 5); the cap INV-1 enforces.
+- **`SCRAP_YIELD` per rarity** — Drop System (Common 5 / Rare 20 / Prototype 35 / Boss-grade 60) + the invariant `COMMON < RARE < PROTOTYPE < BOSS_GRADE` (AC-DS-19); the value `scrap()` grants.
+- **Upgrade costs** — Part Upgrade System (Alpha, undefined); the Scrap *sink* `SCRAP_MAX` must accommodate.
+- **`upgrade_tier` caps** — Part DB (0–3 Common / 0–5 Rare+); the bound on the instance field.
 
 ## Visual/Audio Requirements
 
