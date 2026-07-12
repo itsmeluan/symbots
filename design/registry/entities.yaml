@@ -37,7 +37,7 @@
 #   Each entry: name, status, source, referenced_by[], attributes{}, added, revised
 
 version: 1
-last_updated: "2026-07-11"  # Part-Break design-review revision: ENRAGE_PER_BREAK retuned 0.15->0.12 (PB-F5 output_range 456->428, all enrage mults now epsilon-defensive). Earlier same day: Part-Break PB-F1..F5 formulas, BREAK_SPILLOVER/ENRAGE_PER_BREAK/BREAK_BIAS_MULTIPLIERS constants; referenced_by updated on EDB-1/BREAK_HP_MIN/DAMAGE_FLOOR/MOVE-F1/TBC-F5. Earlier: N_PROTO_PITY calibration re-sync; MULTIPLIER_FLOOR (Rule 5a); N_PROTO_PITY, M_BOSS_PITY; passives section (3 status riders)
+last_updated: "2026-07-11"  # Encounter Zone (#7) authored: added EZ-1 (per-step trigger) + EZ-2 (weighted enemy selection) formulas — both no-floor/no-epsilon (no scan needed); EZ-2 referenced_by TBC (enemy_id handoff). Density-band rates + gate constants held internal to encounter-zone.md until another system references them. Earlier same day: Part-Break design-review revision: ENRAGE_PER_BREAK retuned 0.15->0.12 (PB-F5 output_range 456->428, all enrage mults now epsilon-defensive); Part-Break PB-F1..F5 formulas, BREAK_SPILLOVER/ENRAGE_PER_BREAK/BREAK_BIAS_MULTIPLIERS constants; referenced_by updated on EDB-1/BREAK_HP_MIN/DAMAGE_FLOOR/MOVE-F1/TBC-F5. Earlier: N_PROTO_PITY calibration re-sync; MULTIPLIER_FLOOR (Rule 5a); N_PROTO_PITY, M_BOSS_PITY; passives section (3 status riders)
 
 # ─── ENTITIES ────────────────────────────────────────────────────────────────
 # Named game-world objects: enemies, NPCs, characters, factions, bosses.
@@ -546,6 +546,51 @@ formulas:
       damage. All multipliers {1.12, 1.24, 1.36} epsilon-DEFENSIVE (python3-scanned 2026-07-11 after retune from
       0.15; the former load-bearing 1.15 case existed only at the old 0.15 value). Multiplier range [1.00, 1.36].
       Re-run scan if ENRAGE_PER_BREAK retuned. Retuned 0.15->0.12 in design-review 2026-07-11."
+    added: 2026-07-11
+    revised: ""
+
+  - name: EZ-1
+    status: active
+    source: design/gdd/encounter-zone.md
+    referenced_by:
+      - design/gdd/encounter-zone.md
+    variables:
+      - encounter_rate (float [0.0, 1.0], per-step trigger probability; set by density_class)
+      - rng.randf() (seeded, half-open [0.0, 1.0) — never returns 1.0)
+    output_range: "boolean"
+    expression: "triggered = rng.randf() < encounter_rate"
+    notes: "Per-step encounter trigger. Strict < (matches Drop System DS-1). rate=0.0 never triggers; rate=1.0
+      always triggers (randf() half-open, so < 1.0 always true). NO floor/round/ceil — pure float comparison;
+      no epsilon, no python3 scan required (stated explicitly so reviewers don't flag the absence). Injected
+      seeded RNG mandatory (never global randf()) — required for the < vs <= boundary discriminator (AC-EZ-03).
+      Expected steps-to-encounter = 1/rate. Density bands: SPARSE 0.07 / STANDARD 0.15 / DENSE 0.35 (internal
+      tuning constants, not registered until another system references them)."
+    added: 2026-07-11
+    revised: ""
+
+  - name: EZ-2
+    status: active
+    source: design/gdd/encounter-zone.md
+    referenced_by:
+      - design/gdd/encounter-zone.md
+      - design/gdd/turn-based-combat.md      # EZ-2 output (enemy_id) is handed to TBC at encounter start
+    variables:
+      - subpool (Array[{enemy_id, spawn_weight}], size >= 1)
+      - spawn_weight (int >= 1, per entry; only ratios matter)
+      - total_weight (int, sum of weights)
+      - roll (int, rng.randi_range(1, total_weight), inclusive both ends)
+    output_range: "one enemy_id (StringName)"
+    expression: |
+      total_weight = sum(e.spawn_weight for e in subpool)
+      roll = rng.randi_range(1, total_weight)
+      cumulative = 0
+      for e in subpool: cumulative += e.spawn_weight; if roll <= cumulative: return e.enemy_id
+    notes: "Weighted enemy selection (cumulative-weight walk). Pure integer arithmetic — NO floor/epsilon, no
+      python3 scan required. randi_range(1, total_weight) + roll <= cumulative is the conventional form (a [0,..]
+      draw or < walk biases/misses entries — boundary rolls exactly at cumulative are the discriminators,
+      AC-EZ-05..07). Selected enemy_id handed to TBC at encounter start. Excludes missing/spawn_enabled=false/
+      wrong-class entries from total_weight (EC-EZ-02/03). Empty pool = content error → sentinel StringName('')
+      (EC-EZ-01), not guarded by the formula. Single-entry pool returns its member with no special case."
     added: 2026-07-11
     revised: ""
 

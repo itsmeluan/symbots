@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Created**: 2026-07-09
-> **Last Updated**: 2026-07-11 (Turn-Based Combat **APPROVED** — Part-Break erratum fix-confirmation re-review, 5 agents. 2 AC-integrity blockers found & fixed same session: AC-TBC-INT-01c ordering fixture was non-discriminating (both orderings → 48) → raw 55→50 (43 vs 44); AC-TBC-34 region `sub_target` promoted to required Fixture B. Erratum design confirmed correct across all 8 regions. Remaining errata obligations from Part-Break: Move DB + Drop System. Prior entry: Part-Break fix-confirmation re-review — 5-agent sweep verified 11 prior blockers fixed; 3 surgical fixes applied.)
+> **Last Updated**: 2026-07-11 (Encounter Zone (#7) **Designed** — lean, pending fresh-session /design-review. Terrain-keyed enemy sub-pools + extensible boss-gate taxonomy (gate_type = reward vector: OPEN/WIN_COUNT/WAVE authorable, REACH/DUNGEON_RUSH reserved) + orthogonal repeat_policy; EZ-1/EZ-2 formulas (no floor/epsilon) registered; 52 ACs. MVP designed 10→11/22. Prior: Turn-Based Combat **APPROVED** — Part-Break erratum fix-confirmation re-review, 2 AC-integrity blockers fixed; all 4 propagation/errata applied; /consistency-check PASS.)
 > **Source Concept**: design/gdd/game-concept.md
 
 ---
@@ -33,7 +33,7 @@ designed first.
 | 4 | Symbot Assembly System | Gameplay | MVP | Approved | design/gdd/symbot-assembly.md | Part Database |
 | 5 | Synergy System | Gameplay | MVP | Approved | design/gdd/synergy-system.md | Part Database, Symbot Assembly |
 | 6 | Turn-Based Combat System | Gameplay | MVP | Approved (2026-07-11, Part-Break erratum fix-confirmation re-review — 2 AC-integrity blockers fixed same session) | design/gdd/turn-based-combat.md | Damage Formula, Symbot Assembly, Enemy Database, Synergy, Part Database, Part-Break |
-| 7 | Encounter Zone System | World | MVP | Not Started | — | Enemy Database |
+| 7 | Encounter Zone System | World | MVP | Designed (2026-07-11, lean — pending fresh-session /design-review) | design/gdd/encounter-zone.md | Enemy Database |
 | 8 | Drop System | Economy | MVP | Approved (2026-07-11, re-review punch-list applied) | design/gdd/drop-system.md | Part Database, Enemy Database |
 | 9 | Part-Break System | Gameplay | MVP | Approved (2026-07-11, fix-confirmation re-review — 3 surgical fixes applied) | design/gdd/part-break.md | Turn-Based Combat, Drop System |
 | 10 | Enemy AI System | Gameplay | MVP | Not Started | — | Turn-Based Combat, Enemy Database |
@@ -198,10 +198,10 @@ layered structure. Part Database sits at the root with no cycles back from depen
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 30 |
-| Design docs started | 10 |
+| Design docs started | 11 |
 | Design docs reviewed | 9 |
 | Design docs approved | 9 |
-| MVP systems designed | 10 / 22 |
+| MVP systems designed | 11 / 22 |
 | Vertical Slice systems designed | 0 / 2 |
 | Alpha systems designed | 0 / 3 |
 | Full Vision systems designed | 0 / 1 |
