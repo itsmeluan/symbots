@@ -47,3 +47,29 @@ Prior verdict resolved: Yes — all 4 prior blockers (WAVE cut, Rule 8a, AC-EZ-2
 **AC count:** 56 → 58 (38 BLOCKING / 11 ADVISORY / 9 DEFERRED). Grep sweep = consistent.
 
 **Next:** fresh-session confirmation re-review (`/clear` → `/design-review design/gdd/encounter-zone.md`) to validate the delta-counter semantics, sequencing precondition, `is_farmable_target`, and AC-EZ-21/22/23/56/57 before marking Approved.
+
+---
+
+## Review — 2026-07-12 — Verdict: APPROVED (3rd round, confirmation; one minor revision applied same session)
+Scope signal: M (system) / S (the revision itself — one EC + one AC + two doc notes)
+Specialists: game-designer, systems-designer, economy-designer, level-designer, qa-lead, creative-director (senior synthesis)
+Blocking items: 0 | Required minor revision: 1 | Recommended (folded in): 2 | Nice-to-have (deferred, non-gating): ~6
+Prior verdict resolved: Yes — all 3 Round 2 blockers (delta re-gate, `is_farmable_target`, `requires_defeated` sequencing) confirmed correct at the discriminator level by all five specialists independently.
+
+**Key findings (confirmation panel — all five specialists returned ZERO blocking):**
+- **Delta re-gate CONFIRMED SOUND** (systems + economy, independent): the formula self-regulates (each defeat re-snapshots `wins_at_last_defeat`; cycle cost is always exactly `regate_params.required_wins` new WILD wins). AC-EZ-22 confirmed as the central discriminator catching BOTH the raw-counter bug AND the ignore-`defeated_once` bug with one fixture. Delta provably non-negative via Rule 8a monotonicity. The `LIGHTER_REGATE`→`ALWAYS_OPEN` collapse from Round 2 is genuinely closed. Economy Scenario 4 ("grinding-ahead") ruled acceptable — a one-time overpayment, not a perpetual bypass.
+- **`is_farmable_target` CONFIRMED** correctly scoped (local authoring signal, no Enemy DB errata); 20% farmable floor + 10% identity floor economically coherent and well-separated.
+- **`requires_defeated` sequencing CONFIRMED** justified (level-designer: spatial adjacency isn't guaranteed, so the threshold gap alone is insufficient — the precondition is the correct backstop). AC-EZ-56 discriminator sound.
+- **CD triage (mature-doc directive):** ran the RECOMMENDED slate through spec-wrong / spec-silent / test-stronger. File verification demoted most of it (G4 already covered by AC-EZ-57/EC-EZ-10; Q1/E1/L2/L1 test-stronger or tuning-guidance). Lone survivor = the fail-safe gap on the just-added `requires_defeated` field.
+
+**Two independent convergences:** re-gate × density coupling (economy + level); `requires_defeated` broken-reference EC (game + systems).
+
+**Resolution (all applied same session — user chose "apply punch-list now" via AskUserQuestion):**
+- **EC-EZ-12 + AC-EZ-58** (required — G3/S4): `requires_defeated` naming a non-existent `boss_id` → fail-safe `LOCKED`, never fail-open (a fail-open would silently void the sequencing precondition). AC-EZ-58 asserts LOCKED at win_count≥10 with an unresolvable prerequisite.
+- **Tuning Knob warning 5** (folded in — E1/L2): re-gate "viable friction" presumes STANDARD/SPARSE terrain; at DENSE, Boss 1's 2-win re-gate ≈ 6 steps = cosmetic. Raise re-gate or route re-fight paths through STANDARD/SPARSE.
+- **`is_farmable_target` authoring criterion** (folded in — L1, Rule 2a): mark true iff primary/sole source of a build-critical part; filler enemies always false, face no floor.
+- Deferred as non-gating (CD triage): G1 (readout-mode-per-state note), G2 (20% subsumes 10%), G4/Q1 (AC-EZ-57 expansion), S1 (AC-EZ-56 battle_ended fixture row), S2/S3 (state-table inline timing + explicit delta≥0 invariant).
+
+**AC count:** 58 → 59 (39 BLOCKING / 11 ADVISORY / 9 DEFERRED). Grep sweep = consistent. No Round 4 (CD directive: do not spawn a full panel for a fail-safe EC).
+
+**Tracking:** GDD header → APPROVED; systems-index #7 → Approved + Last-Updated + Progress Tracker (reviewed/approved → 11/11, all 11 authored MVP GDDs now Approved); this entry appended.

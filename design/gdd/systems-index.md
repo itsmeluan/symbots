@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Created**: 2026-07-09
-> **Last Updated**: 2026-07-12 (Encounter Zone (#7) **2nd-round re-review NEEDS REVISION → punch-list applied**, pending fresh-session confirmation re-review. Fresh-session full-panel /design-review (5 specialists + CD) caught a latent defect the WAVE→shared-counter revision had introduced: **LIGHTER_REGATE collapsed into ALWAYS_OPEN** (never-resetting counter trivially met the re-gate) → fixed with a **delta re-gate** (`win_count − wins_at_last_defeat >= regate`, per-boss snapshot on defeat). Also: **Boss-1-first sequencing** added (`gate_params.requires_defeated`) closing the Boss-1-bypass; **`is_farmable_target` field** added to SpawnEntry making Rule 2a's 20% floor enforceable. Recommended: EC-EZ-07 citation + new zone-level spawn_enabled AC. 56→58 ACs. Prior 2026-07-11: Full-panel /design-review (5 specialists + CD): 4 blockers + 4 recommended resolved same session. **WAVE gate cut to Reserved** (off-pillar + wave_pools undefined) → both MVP bosses now WIN_COUNT on a shared cumulative zone-win counter (Boss 1 @ 6, Boss 2 @ 10). WIN_COUNT semantic made normative (Rule 8a, cumulative/all-time/wins-only). AC-EZ-25 ADVISORY→BLOCKING; AC-EZ-40 split 40a/40b; terrain identity+weight-floor guardrail (Rule 2a). 52→56 ACs. gate_type taxonomy now: OPEN/WIN_COUNT authorable, WAVE/REACH/DUNGEON_RUSH reserved. Prior: Turn-Based Combat **APPROVED** — Part-Break erratum fix-confirmation re-review, 2 AC-integrity blockers fixed; all 4 propagation/errata applied; /consistency-check PASS.)
+> **Last Updated**: 2026-07-12 (Encounter Zone (#7) **APPROVED** — 3rd-round confirmation re-review, fresh-session full-panel /design-review (5 specialists + CD). **All five specialists returned ZERO blocking**; the Round 2 delta re-gate, `is_farmable_target`, and `requires_defeated` sequencing all verified correct at the discriminator level (LIGHTER_REGATE→ALWAYS_OPEN collapse genuinely closed; AC-EZ-22 central discriminator). CD verdict APPROVED WITH ONE MINOR REVISION — the lone survivor of the mature-doc triage, a spec-silent fail-safe gap on `requires_defeated` naming a non-existent boss, was closed same session: **EC-EZ-12 + AC-EZ-58** (broken-ref → fail-safe LOCKED, never fail-open). Two converged recommendations folded in: **Tuning Knob warning 5** (re-gate × density coupling) + **`is_farmable_target` authoring criterion**. 58→59 ACs (39 BLOCKING). No Round 4. **All 11 MVP GDDs authored so far are now Approved.** Prior 2026-07-12 (2nd round, NEEDS REVISION → punch-list): delta re-gate, Boss-1-first sequencing, is_farmable_target field. Prior 2026-07-11: Full-panel /design-review (5 specialists + CD): 4 blockers + 4 recommended resolved same session. **WAVE gate cut to Reserved** (off-pillar + wave_pools undefined) → both MVP bosses now WIN_COUNT on a shared cumulative zone-win counter (Boss 1 @ 6, Boss 2 @ 10). WIN_COUNT semantic made normative (Rule 8a, cumulative/all-time/wins-only). AC-EZ-25 ADVISORY→BLOCKING; AC-EZ-40 split 40a/40b; terrain identity+weight-floor guardrail (Rule 2a). 52→56 ACs. gate_type taxonomy now: OPEN/WIN_COUNT authorable, WAVE/REACH/DUNGEON_RUSH reserved. Prior: Turn-Based Combat **APPROVED** — Part-Break erratum fix-confirmation re-review, 2 AC-integrity blockers fixed; all 4 propagation/errata applied; /consistency-check PASS.)
 > **Source Concept**: design/gdd/game-concept.md
 
 ---
@@ -33,7 +33,7 @@ designed first.
 | 4 | Symbot Assembly System | Gameplay | MVP | Approved | design/gdd/symbot-assembly.md | Part Database |
 | 5 | Synergy System | Gameplay | MVP | Approved | design/gdd/synergy-system.md | Part Database, Symbot Assembly |
 | 6 | Turn-Based Combat System | Gameplay | MVP | Approved (2026-07-11, Part-Break erratum fix-confirmation re-review — 2 AC-integrity blockers fixed same session) | design/gdd/turn-based-combat.md | Damage Formula, Symbot Assembly, Enemy Database, Synergy, Part Database, Part-Break |
-| 7 | Encounter Zone System | World | MVP | NEEDS REVISION (2nd round) → punch-list applied (2026-07-12); pending fresh-session confirmation re-review | design/gdd/encounter-zone.md | Enemy Database |
+| 7 | Encounter Zone System | World | MVP | Approved (2026-07-12, 3rd-round confirmation re-review — zero blocking; one minor revision EC-EZ-12/AC-EZ-58 + 2 converged recommendations applied same session) | design/gdd/encounter-zone.md | Enemy Database |
 | 8 | Drop System | Economy | MVP | Approved (2026-07-11, re-review punch-list applied) | design/gdd/drop-system.md | Part Database, Enemy Database |
 | 9 | Part-Break System | Gameplay | MVP | Approved (2026-07-11, fix-confirmation re-review — 3 surgical fixes applied) | design/gdd/part-break.md | Turn-Based Combat, Drop System |
 | 10 | Enemy AI System | Gameplay | MVP | Not Started | — | Turn-Based Combat, Enemy Database |
@@ -199,8 +199,8 @@ layered structure. Part Database sits at the root with no cycles back from depen
 |--------|-------|
 | Total systems identified | 30 |
 | Design docs started | 11 |
-| Design docs reviewed | 9 |
-| Design docs approved | 9 |
+| Design docs reviewed | 11 |
+| Design docs approved | 11 |
 | MVP systems designed | 11 / 22 |
 | Vertical Slice systems designed | 0 / 2 |
 | Alpha systems designed | 0 / 3 |
