@@ -269,10 +269,21 @@ Ran full 5-agent adversarial sweep (game-designer + systems-designer + qa-lead +
 - **Shops** = tracked as post-MVP (NPC System #23 owns vendor buy/sell); NOT a new system row (decision) — will be an Open Question in the GDD.
 - **NEXT**: Section D Formulas (effect magnitudes per tier, Beacon multiplier, encounter-rate modifier math), lean mode (may spawn systems-designer for D/H as HIGH-risk). Then E/F/G/H + optional sections.
 
+## Consumable Database (#1c) — /design-system COMPLETE → Designed (2026-07-12)
+- **All 12 sections written** to design/gdd/consumable-database.md. Status → Designed, pending fresh-session /design-review. Lean mode; systems-designer + economy-designer + qa-lead consulted (Formulas/ACs); CD-GDD-ALIGN skipped (lean) — manual pillar check before production.
+- **24 ACs** (18 BLOCKING [15 Unit + 3 Content-Val] / 2 ADVISORY / 4 DEFERRED). qa-lead caught 2 IEEE-754 float-equality fixture bugs (use density 0.15/0.35, not 0.35×0.1 or 0.07×2.5) + added AC-CD-24 (valid-target positive path). CD-1..CD-5 all epsilon-exempt (no python3 scan).
+- **Registry updated + YAML-validated**: 8 consumable items, 5 formulas (CD-1..5), 10 constants. last_updated → 2026-07-12.
+- **Tracking done**: GDD header → Designed; systems-index #1c → Designed + tracker (started 11→12, MVP designed 11→12/23) + Last-Updated note.
+- **3 PENDING ERRATA (apply on approval, each needs re-review touch; update source GDD + registry together)**:
+  1. TBC — `use item` 4th action (Rule 3), target=living team Symbot, consumes turn/no Heat/Energy, applies CD-1/2/3, sets beacon flag (`beacon_used_this_battle`/`beacon_drop_multiplier_applied` observables).
+  2. Drop System — consumable level/rarity drop channel + Beacon injects BEACON_MULTIPLIER into effective_drop_rate (CD-4).
+  3. Encounter Zone — EZ-1 encounter_rate modifier hook (CD-5) + OQ-EZ-4 → RESOLVED; Overworld Nav counts down duration.
+- **NEXT**: `/clear` then `/design-review design/gdd/consumable-database.md` in a FRESH session. After approval: apply the 3 errata. Then #10 Enemy AI or #11 Inventory.
+
 <!-- STATUS -->
 Epic: MVP Foundation GDDs
-Feature: Consumable Database (#1c) — authoring GDD (A/B/C written; on Section D Formulas)
-Task: /design-system consumable-database — Sections D→H; then apply pending errata to TBC / Drop System / Encounter Zone (each needs re-review touch)
+Feature: Consumable Database (#1c) — Designed, pending fresh-session /design-review
+Task: /clear then /design-review design/gdd/consumable-database.md; on approval apply 3 errata (TBC/Drop/Encounter Zone); then #10 Enemy AI or #11 Inventory
 <!-- /STATUS -->
 
 <!-- CONSISTENCY-CHECK: 2026-07-11 | GDDs checked: 9 | Conflicts found: 0 (1 stale registry note synced: N_PROTO_PITY calibration) | Drop-owned constants N_PROTO_PITY/M_BOSS_PITY/MULTIPLIER_FLOOR all consistent across Part DB + Enemy DB -->

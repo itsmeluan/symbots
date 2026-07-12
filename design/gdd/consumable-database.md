@@ -1,6 +1,6 @@
 # Consumable Database
 
-> **Status**: In Design
+> **Status**: **Designed — pending fresh-session `/design-review`** (lean mode; specialists consulted for Formulas + Acceptance Criteria: systems-designer, economy-designer, qa-lead. CD-GDD-ALIGN skipped per lean — manual pillar check before production.)
 > **Author**: Luan + Claude Code Game Studios agents
 > **Last Updated**: 2026-07-12
 > **Implements Pillar**: Pillar 5 (The World Is a Workshop), Pillar 2 (Every Battle Has a Harvest Goal) — support layer under Pillar 1 (Engineer, Don't Collect)
@@ -53,7 +53,7 @@ Consumables also sharpen the hunt itself. A **Salvage Beacon** is the player dec
 
 **Rule 4 — Targeting.** `RESTORE_*` items target a **player-chosen living team Symbot** (`Structure > 0`), active *or* benched — using a Repair Kit on a benched Symbot does **not** switch it in. A **downed** Symbot (Structure 0) is **not a valid target**: consumables never revive (revive is out of MVP; loss-stakes unchanged — TBC Rule 12). `BOOST_DROP` targets `CURRENT_BATTLE`; `MODIFY_ENCOUNTER_RATE` targets `OVERWORLD` movement (neither picks a unit).
 
-**Rule 5 — Salvage Beacon (`BOOST_DROP`).** Used in battle, it sets a per-battle flag that multiplies that fight's effective drop rates by `multiplier` at resolution (`battle_ended VICTORY`), stacking multiplicatively with drop-condition multipliers (subject to the Drop System's clamp to [0, 1]). Consumed on use. On flee/loss it is spent with no effect (drops only on victory). **One Beacon per battle** — a second use while the boost is active is rejected (not wasted, not stacked).
+**Rule 5 — Salvage Beacon (`BOOST_DROP`).** Used in battle, it sets a per-battle flag that multiplies that fight's effective drop rates by `multiplier` at resolution (`battle_ended VICTORY`), stacking multiplicatively with drop-condition multipliers (subject to the Drop System's clamp to [0, 1]). Consumed on use. On flee/loss it is spent with no effect (drops only on victory). **One Beacon per battle** — a second use while the boost is active is rejected (not wasted, not stacked). **Observable contract (part of the TBC erratum):** the battle context exposes `beacon_used_this_battle: bool` (set true on use, cleared at battle end) and, at resolution, `beacon_drop_multiplier_applied: bool` (true only on VICTORY) — these are the queryable fields AC-CD-11/12 assert against.
 
 **Rule 6 — Encounter modifiers (Signal Jammer / Scrap Lure).** `WORLD` items that set a transient overworld modifier for `duration_steps`: Jammer `rate_multiplier < 1` (repel), Lure `> 1` (lure). Feeds the new Encounter Zone EZ-1 hook: `effective_rate = clamp(base_rate × active_modifier, 0, 1)`. Duration counts down per step and expires. **Only one modifier active at a time** — using a second **replaces** the active one (latest wins).
 
@@ -303,8 +303,84 @@ Obligations on Combat UI, World Map UI, and Inventory UI (all Not Started) — l
 
 ## Acceptance Criteria
 
-[To be designed]
+**Tags:** **BLOCKING** (automated unit/content test — gates story completion) · **ADVISORY** (content-validation linter) · **DEFERRED** (needs a Not-Started system or a pending erratum; write the stub now). **Test types:** Unit (GUT, injected seeded RNG + stub TBC/Drop/Inventory, no live scene) · Content Validation (offline data linter) · Integration (≥2 systems wired).
+
+**Implementation constraints:** (1) Any RNG is **injected**, never global `randf()`/`randi()`. (2) **IEEE-754 note:** the rate fixtures below deliberately use density base `0.15` (and DENSE `0.35`) because `0.15×0.1`, `0.15×2.5`, `0.35×2.5` are *exact* in doubles; `0.35×0.1` and `0.07×2.5` are NOT exact — do not use them for `==` assertions without `is_equal_approx`. (3) The Salvage Beacon assertions read `beacon_used_this_battle` / `beacon_drop_multiplier_applied` (Rule 5 observable contract). (4) In CD-4, `Π(cond_mults)` is the Drop System's existing drop-condition product (owned there); unit fixtures isolate the Beacon factor with `cond_mults=[]` (= 1.0), and the full product is exercised by AC-CD-21.
+
+### Effect formulas (CD-1…CD-5)
+
+**AC-CD-01** (BLOCKING, Unit): CD-1 RESTORE_STRUCTURE applies + caps. **A:** Weld Patch (25), `max_structure=60`, `current=50` → `current == 60` (clamped, not 75). **B:** Repair Kit (50), `max_structure=594`, `current=30` → `current == 80` (no clamp). Discriminator: an impl omitting `min()` returns 75 in A; both cases required so a wrong-formula-but-correct-clamp can't pass.
+
+**AC-CD-02** (BLOCKING, Unit): CD-2 REDUCE_HEAT applies + floors at 0. **A:** Coolant Flush (50), `current_heat=30` → `0` (floored, not −20). **B:** `current_heat=80` → `30`. Discriminator: an impl omitting `max(0,…)` returns −20 in A.
+
+**AC-CD-03** (BLOCKING, Unit): CD-3 RESTORE_ENERGY applies + caps. **A:** Power Cell (25), `max_energy=100`, `current=90` → `100` (clamped, not 115). **B:** `max_energy=80`, `current=50` → `75`. Discriminator: an impl omitting `min()` returns 115 in A.
+
+**AC-CD-04** (BLOCKING, Unit): CD-4 BOOST_DROP injects + clamps. Beacon `multiplier=2.0`, `cond_mults=[]`. **A:** `base_rate=0.25` (Rare) → `effective == 0.5` (exact). **B:** `base_rate=0.70` (Common) → `effective == 1.0` (clamped from 1.40). Discriminator: an impl omitting `clamp` returns 1.4 in B; an impl treating empty product as 0.0 returns 0.0 in A.
+
+**AC-CD-09** (BLOCKING, Unit): CD-5 Signal Jammer. Jammer (0.1, 20 steps), `base_encounter_rate=0.15` → `effective == 0.015` (exact), `steps_remaining == 20`; after 3 `on_overworld_step` → `steps_remaining == 17`. Discriminator: an impl using 0.5 returns 0.075; a non-decrementing impl leaves 20.
+
+**AC-CD-10** (BLOCKING, Unit): CD-5 Scrap Lure. Lure (2.5, 15 steps). **A:** `base=0.15` → `effective == 0.375` (exact, no clamp). **B:** `base=0.35` (DENSE) → `effective == 0.875` (exact, NOT clamped to 1.0). Discriminator: a `3.0×` impl gives `0.35×3.0 = 1.05 → 1.0` in B (≠ 0.875).
+
+### Use validation / rejections (EC-CD-01…07)
+
+**AC-CD-05** (BLOCKING, Unit): EC-CD-01 zero-net-effect rejected, not consumed; partial allowed. **A:** Weld Patch, `current==max==594`, `qty=1` → `USE_REJECTED`, structure 594, `qty==1`. **B:** Coolant Flush, `heat=0`, `qty=1` → `USE_REJECTED`, `qty==1`. **C:** Weld Patch, `max=594`, `current=580` (heals 14) → `USE_OK`, `current==594`, `qty==0`. Discriminator: always-consume impl drops qty in A/B; reject-any-clamped-heal impl rejects C.
+
+**AC-CD-06** (BLOCKING, Unit): EC-CD-02 downed target rejected. Repair Kit, target `structure=0`, `qty=1` → `USE_REJECTED`, structure 0, `qty==1`. (Positive path in AC-CD-24.)
+
+**AC-CD-07** (BLOCKING, Unit): EC-CD-03 wrong context rejected. **A:** Beacon (`BATTLE`) in world context → `USE_REJECTED`, `qty==1`. **B:** Jammer (`WORLD`) in battle → `USE_REJECTED`. **C:** Weld Patch (`BOTH`) in battle w/ valid target → `USE_OK`. Discriminator: a context-ignoring impl returns `USE_OK` in A/B; an always-reject-BATTLE impl fails C.
+
+**AC-CD-08** (BLOCKING, Unit): EC-CD-04 quantity 0 rejected. **A:** `qty=0`, valid target/context → `USE_REJECTED`, `qty==0` (no underflow to −1). **B:** `qty=1` → `USE_OK`, `qty==0`. Discriminator: a negative-allowing impl sets `qty=−1` in A.
+
+**AC-CD-11** (BLOCKING, Unit): EC-CD-05 second Beacon rejected. **A:** `beacon_used_this_battle=true`, second Beacon `qty=1` → `USE_REJECTED`, `qty==1`, flag still true. **B:** fresh battle `beacon_used_this_battle=false` → `USE_OK`, flag true, `qty==0`. Discriminator: a stacking impl consumes the second (qty→0) in A.
+
+**AC-CD-12** (BLOCKING, Unit): EC-CD-07 Beacon spent on flee/loss. **A:** `beacon_used_this_battle=true`, `on_battle_end(FLEE)` → `beacon_drop_multiplier_applied==false`, flag cleared. **B:** `on_battle_end(WIN)` → `beacon_drop_multiplier_applied==true`. Discriminator: an outcome-ignoring impl applies the multiplier in A.
+
+### Encounter modifier state (EC-CD-06/08)
+
+**AC-CD-13** (BLOCKING, Unit): EC-CD-06 second modifier replaces. Active Jammer (`steps_remaining=5`), use Scrap Lure (`base=0.35`) → `modifier_type==LURE`, `steps_remaining==15`, `effective==0.875` (exact), Lure `qty==0`, old Jammer gone. Discriminator: a stacking impl gives `0.35×0.1×2.5 = 0.0875`; a retain-old impl leaves JAMMER/5.
+
+**AC-CD-14** (BLOCKING, Unit): EC-CD-08 countdown frozen in battle, no crash. **A:** Jammer `steps=20`; 3 `on_overworld_step`, 4 `on_battle_turn`, 1 `on_overworld_step` → `steps_remaining==16` (battle turns don't count). **B:** 8 `on_overworld_step` → `12`. No-crash: `on_battle_turn` with no active modifier raises nothing. Discriminator: a battle-turns-count impl gives 12 in A.
+
+### Content validation (EC-CD-09/10/11)
+
+**AC-CD-15** (BLOCKING, Content-Val): EC-CD-09 malformed `effect_params`. **A:** RESTORE_STRUCTURE with `{}` (no `amount`) → error naming `consumable_id` + missing key `amount`, entry unusable. **B:** REDUCE_HEAT with `{"amount":"fifty"}` (wrong type) → error naming id + key. Discriminator: a generic-error impl fails the naming check; a silent-skip impl emits nothing.
+
+**AC-CD-16** (BLOCKING, Content-Val): EC-CD-10 `buy_price ≤ sell_price`. **A:** `buy=10, sell=10` (equal) → error. **B:** `buy=9, sell=10` → error. **C:** `buy=11, sell=10` → no error. Discriminator: a `<`-only impl passes the `buy==sell` case A silently — the equal case is the canonical discriminator for the strict invariant.
+
+**AC-CD-17** (BLOCKING, Content-Val): EC-CD-11 unknown `effect_type`. **A:** `"GRANT_XP"` → error naming id + type, unusable, runtime never applies it. **B:** `"RESTORE_STRUCTURE"` → no error. Discriminator: a permissive check passes A; an over-strict check rejects B.
+
+### Roster (Content Validation)
+
+**AC-CD-18** (ADVISORY, Content-Val): MVP roster. Exactly **8 entries** (7/9 → error); the 6 effect concepts present; **no `BOSS_GRADE`**; all `buy>sell`; all `effect_params` well-formed per type. Discriminator: count 7 or a BOSS_GRADE entry fails.
+
+**AC-CD-19** (ADVISORY, Content-Val): use_context + target coherence. Beacon `BATTLE`/`CURRENT_BATTLE`; Jammer & Lure `WORLD`/`OVERWORLD`; the 5 restoratives `BOTH`/`LIVING_TEAM_MEMBER`. No `BATTLE`-item with `target=OVERWORLD`; no `WORLD`-item with `target=LIVING_TEAM_MEMBER`. Discriminator: a Jammer set to `BATTLE` fails; incoherent pairings catch copy-paste errors.
+
+### Targeting positive path
+
+**AC-CD-24** (BLOCKING, Unit): valid living target accepted (affirmative path — closes the gap AC-CD-06 leaves). Repair Kit; `is_valid_target` for `structure ∈ {1, 45, 594}` → all `true`; `structure=0` → `false`. Discriminator: a reject-all impl fails `structure=1`; a `structure>=5` threshold fails the boundary `structure=1`.
+
+### Deferred integration (activate when the erratum / Not-Started system lands)
+
+**AC-CD-20** (DEFERRED, Integration): TBC use-item action — 4th action slot; Weld Patch on a living target → `+25` structure (clamped), **turn consumed**, no Heat, no Energy, `qty−1`. Discriminator: a no-turn-consume impl lets the actor act again; a Heat-generating impl shows a Heat delta. *Activate when the TBC erratum lands.*
+
+**AC-CD-21** (DEFERRED, Integration): Drop System consumable channel + Beacon end-to-end — battle WIN with Beacon, Rare enemy `base=0.25`, seeded RNG → effective 0.50 applied (not 0.25), `beacon_drop_multiplier_applied` set, Beacon `qty−1`. *Activate when the Drop System erratum lands.*
+
+**AC-CD-22** (DEFERRED, Integration): Encounter Zone hook + Overworld step countdown — Jammer active (`steps=20`), 5 steps → `steps_remaining==15`, each step's trigger used the modified rate, no crash at expiry. *Activate when the Encounter Zone erratum + Overworld Navigation land.*
+
+**AC-CD-23** (DEFERRED, Integration): Inventory stacking / `max_stack` overflow (EC-CD-12) — Weld Patch `max_stack=5`, slot at 5, `add_item` → overflow handled per Inventory spec (reject `INVENTORY_FULL` or new slot). *Activate when the Inventory GDD defines the stack model.*
+
+### Coverage
+
+Every core rule and formula (CD-1…5) and every edge case (EC-CD-01…12) has a verifying AC: CD-1→01, CD-2→02, CD-3→03, CD-4→04, CD-5→09/10; EC-01→05, EC-02→06/24, EC-03→07, EC-04→08, EC-05→11, EC-06→13, EC-07→12, EC-08→14, EC-09→15, EC-10→16, EC-11→17, EC-12→23(DEFERRED); roster→18/19; TBC/Drop/EZ integration→20/21/22. **24 ACs: 18 BLOCKING (15 Unit + 3 Content-Validation) / 2 ADVISORY (Content-Validation) / 4 DEFERRED (Integration).** Unit/content-testable now with stubs + injected RNG: AC-CD-01–19, 24. DEFERRED (await erratum / Not-Started): 20–23. No untestable ("feels-good") criteria.
 
 ## Open Questions
 
-[To be designed]
+| # | Question | Owner | Impact |
+|---|----------|-------|--------|
+| OQ-CD-1 | **Shop vendor economy (post-MVP).** `buy_price`/`sell_price` are authored but inert — the vendor UI, buy/sell flow, and live sell-faucet monitoring belong to the NPC System (#23) / a future Shop system. The 20%-of-arc-faucet sell ceiling (Tuning Knob warning 3) must be validated when shops ship. | NPC System / Economy | None in MVP; gates the shop feature |
+| OQ-CD-2 | **Consumable drop frequencies on the global level/rarity table.** How often consumables drop (and how enemy level/rarity scales it) is the Drop System erratum's to set — it feeds the sell-faucet model and how quickly the player accrues Beacons. | Drop System (erratum) | Balances the whole layer; set with the erratum |
+| OQ-CD-3 | **Beacon × pity interaction.** A Beacon-boosted *non-guaranteed* drop should reset/advance pity counters normally; a pity-*guaranteed* drop ignores the Beacon (already 100%). Confirm the exact ordering when the Drop System erratum lands. | Drop System | Correctness of the drop/pity interface |
+| OQ-CD-4 | **Encounter-modifier save/reload persistence.** Whether an active Jammer/Lure survives a save/reload (or is discarded, per EC-CD-08) is Overworld Navigation / Save-Load's call. | Overworld Nav / Save-Load | Minor QoL; deferred (AC-CD-22) |
+| OQ-CD-5 | **`max_stack` final values + overflow policy.** Proposed C20 / R10 / P5; the actual caps and the overflow behavior (reject / convert / discard, EC-CD-12) are coupled to the Inventory model. | Inventory GDD | Surplus-sell lever; set with Inventory |
+| OQ-CD-6 | **Stretch consumables (reserved).** Overclock Chip (temp buff) and Emergency Reboot (revive) are unauthored; **Reboot especially reshapes the deliberately low-stakes loss design** — needs a design pass before it enters scope. | game-designer | Post-MVP; loss-stakes risk |
+| OQ-CD-7 | **In-battle item stalling (playtest watch).** Each item-use costs a turn and enemies escalate (Part-Break enrage), so stall-with-consumables should be self-limiting — confirm at playtest that Repair/Coolant looping can't trivialize fights. | Playtest / balance | Balance watch, not a blocker |

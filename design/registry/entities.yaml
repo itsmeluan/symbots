@@ -37,7 +37,7 @@
 #   Each entry: name, status, source, referenced_by[], attributes{}, added, revised
 
 version: 1
-last_updated: "2026-07-11"  # Encounter Zone (#7) authored: added EZ-1 (per-step trigger) + EZ-2 (weighted enemy selection) formulas — both no-floor/no-epsilon (no scan needed); EZ-2 referenced_by TBC (enemy_id handoff). Density-band rates + gate constants held internal to encounter-zone.md until another system references them. Earlier same day: Part-Break design-review revision: ENRAGE_PER_BREAK retuned 0.15->0.12 (PB-F5 output_range 456->428, all enrage mults now epsilon-defensive); Part-Break PB-F1..F5 formulas, BREAK_SPILLOVER/ENRAGE_PER_BREAK/BREAK_BIAS_MULTIPLIERS constants; referenced_by updated on EDB-1/BREAK_HP_MIN/DAMAGE_FLOOR/MOVE-F1/TBC-F5. Earlier: N_PROTO_PITY calibration re-sync; MULTIPLIER_FLOOR (Rule 5a); N_PROTO_PITY, M_BOSS_PITY; passives section (3 status riders)
+last_updated: "2026-07-12"  # Consumable Database (#1c) authored: 8 consumable items (weld_patch/repair_kit/field_forge/coolant_flush/power_cell/salvage_beacon/signal_jammer/scrap_lure) + 5 formulas (CD-1..CD-5, all no-floor/no-epsilon) + 10 constants (WELD_PATCH_AMOUNT 25 / REPAIR_KIT_AMOUNT 50 / FIELD_FORGE_AMOUNT 120 / COOLANT_FLUSH_AMOUNT 50 / POWER_CELL_AMOUNT 25 / BEACON_MULTIPLIER 2.0 / JAMMER_RATE_MULTIPLIER 0.1 / JAMMER_DURATION_STEPS 20 / LURE_RATE_MULTIPLIER 2.5 / LURE_DURATION_STEPS 15). referenced_by points at pending TBC/Drop/Encounter-Zone errata (applied on approval — update source GDD + registry together). BASE_ENERGY_REGEN confirmed 10 (not 8). Earlier 2026-07-11: Encounter Zone (#7) authored: added EZ-1 (per-step trigger) + EZ-2 (weighted enemy selection) formulas — both no-floor/no-epsilon (no scan needed); EZ-2 referenced_by TBC (enemy_id handoff). Density-band rates + gate constants held internal to encounter-zone.md until another system references them. Earlier same day: Part-Break design-review revision: ENRAGE_PER_BREAK retuned 0.15->0.12 (PB-F5 output_range 456->428, all enrage mults now epsilon-defensive); Part-Break PB-F1..F5 formulas, BREAK_SPILLOVER/ENRAGE_PER_BREAK/BREAK_BIAS_MULTIPLIERS constants; referenced_by updated on EDB-1/BREAK_HP_MIN/DAMAGE_FLOOR/MOVE-F1/TBC-F5. Earlier: N_PROTO_PITY calibration re-sync; MULTIPLIER_FLOOR (Rule 5a); N_PROTO_PITY, M_BOSS_PITY; passives section (3 status riders)
 
 # ─── ENTITIES ────────────────────────────────────────────────────────────────
 # Named game-world objects: enemies, NPCs, characters, factions, bosses.
@@ -146,7 +146,151 @@ passives:
 # Attribute fields: value_gold, weight, stackable, category, and any stat
 #   modifiers that another system (e.g., economy, crafting) might reference.
 
-items: []
+items:
+  - name: weld_patch
+    status: active
+    source: design/gdd/consumable-database.md
+    referenced_by:
+      - design/gdd/consumable-database.md
+      - design/gdd/turn-based-combat.md      # use-item applies RESTORE_STRUCTURE (CD-1)
+    rarity: COMMON
+    effect: "RESTORE_STRUCTURE amount=25 (CD-1)"
+    use_context: BOTH
+    target: LIVING_TEAM_MEMBER
+    buy_price: 12
+    sell_price: 2
+    max_stack: 20
+    stackable: true
+    category: consumable
+    added: 2026-07-12
+    revised: ""
+
+  - name: repair_kit
+    status: active
+    source: design/gdd/consumable-database.md
+    referenced_by:
+      - design/gdd/consumable-database.md
+      - design/gdd/turn-based-combat.md      # use-item applies RESTORE_STRUCTURE (CD-1)
+    rarity: RARE
+    effect: "RESTORE_STRUCTURE amount=50 (CD-1) — exceeds REPAIR move ceiling (30)"
+    use_context: BOTH
+    target: LIVING_TEAM_MEMBER
+    buy_price: 36
+    sell_price: 8
+    max_stack: 10
+    stackable: true
+    category: consumable
+    added: 2026-07-12
+    revised: ""
+
+  - name: field_forge
+    status: active
+    source: design/gdd/consumable-database.md
+    referenced_by:
+      - design/gdd/consumable-database.md
+      - design/gdd/turn-based-combat.md      # use-item applies RESTORE_STRUCTURE (CD-1)
+    rarity: PROTOTYPE
+    effect: "RESTORE_STRUCTURE amount=120 (CD-1) — emergency heal"
+    use_context: BOTH
+    target: LIVING_TEAM_MEMBER
+    buy_price: 75
+    sell_price: 15
+    max_stack: 5
+    stackable: true
+    category: consumable
+    added: 2026-07-12
+    revised: ""
+
+  - name: coolant_flush
+    status: active
+    source: design/gdd/consumable-database.md
+    referenced_by:
+      - design/gdd/consumable-database.md
+      - design/gdd/turn-based-combat.md      # use-item applies REDUCE_HEAT (CD-2)
+    rarity: COMMON
+    effect: "REDUCE_HEAT amount=50 (CD-2) — near-Overheat rescue"
+    use_context: BOTH
+    target: LIVING_TEAM_MEMBER
+    buy_price: 12
+    sell_price: 2
+    max_stack: 20
+    stackable: true
+    category: consumable
+    added: 2026-07-12
+    revised: ""
+
+  - name: power_cell
+    status: active
+    source: design/gdd/consumable-database.md
+    referenced_by:
+      - design/gdd/consumable-database.md
+      - design/gdd/turn-based-combat.md      # use-item applies RESTORE_ENERGY (CD-3)
+    rarity: COMMON
+    effect: "RESTORE_ENERGY amount=25 (CD-3) — ~2 moves"
+    use_context: BOTH
+    target: LIVING_TEAM_MEMBER
+    buy_price: 12
+    sell_price: 2
+    max_stack: 20
+    stackable: true
+    category: consumable
+    added: 2026-07-12
+    revised: ""
+
+  - name: salvage_beacon
+    status: active
+    source: design/gdd/consumable-database.md
+    referenced_by:
+      - design/gdd/consumable-database.md
+      - design/gdd/turn-based-combat.md      # sets per-battle beacon flag on use
+      - design/gdd/drop-system.md            # Beacon injects BEACON_MULTIPLIER into effective_drop_rate (CD-4)
+    rarity: RARE
+    effect: "BOOST_DROP multiplier=2.0 (CD-4) — one per battle, spent on flee/loss"
+    use_context: BATTLE
+    target: CURRENT_BATTLE
+    buy_price: 48
+    sell_price: 10
+    max_stack: 10
+    stackable: true
+    category: consumable
+    added: 2026-07-12
+    revised: ""
+
+  - name: signal_jammer
+    status: active
+    source: design/gdd/consumable-database.md
+    referenced_by:
+      - design/gdd/consumable-database.md
+      - design/gdd/encounter-zone.md         # MODIFY_ENCOUNTER_RATE via EZ-1 modifier hook (CD-5)
+    rarity: RARE
+    effect: "MODIFY_ENCOUNTER_RATE rate_multiplier=0.1, duration_steps=20 (CD-5) — repel"
+    use_context: WORLD
+    target: OVERWORLD
+    buy_price: 45
+    sell_price: 10
+    max_stack: 10
+    stackable: true
+    category: consumable
+    added: 2026-07-12
+    revised: ""
+
+  - name: scrap_lure
+    status: active
+    source: design/gdd/consumable-database.md
+    referenced_by:
+      - design/gdd/consumable-database.md
+      - design/gdd/encounter-zone.md         # MODIFY_ENCOUNTER_RATE via EZ-1 modifier hook (CD-5)
+    rarity: COMMON
+    effect: "MODIFY_ENCOUNTER_RATE rate_multiplier=2.5, duration_steps=15 (CD-5) — lure"
+    use_context: WORLD
+    target: OVERWORLD
+    buy_price: 15
+    sell_price: 3
+    max_stack: 20
+    stackable: true
+    category: consumable
+    added: 2026-07-12
+    revised: ""
 
 # Example:
 #
@@ -594,6 +738,92 @@ formulas:
     added: 2026-07-11
     revised: ""
 
+  - name: CD-1
+    status: active
+    source: design/gdd/consumable-database.md
+    referenced_by:
+      - design/gdd/consumable-database.md
+      - design/gdd/turn-based-combat.md      # use-item applies RESTORE_STRUCTURE (erratum)
+    variables:
+      - current_structure (int [1, max_structure])
+      - max_structure (int [60, 594], SA-F1)
+      - amount (int; Weld Patch 25 / Repair Kit 50 / Field Forge 120)
+    output_range: "[1, max_structure]"
+    expression: "new_structure = min(max_structure, current_structure + amount)"
+    notes: "RESTORE_STRUCTURE. Flat (not %-of-max) — meaningful across the 10x Structure spread and scan-exempt
+      (a % model would add floor(pct*max) needing an epsilon scan). Pure int + min() clamp; NO floor/epsilon."
+    added: 2026-07-12
+    revised: ""
+
+  - name: CD-2
+    status: active
+    source: design/gdd/consumable-database.md
+    referenced_by:
+      - design/gdd/consumable-database.md
+      - design/gdd/turn-based-combat.md      # use-item applies REDUCE_HEAT (erratum)
+    variables:
+      - current_heat (int [0, 100]; Overheat at 100)
+      - amount (int; Coolant Flush 50)
+    output_range: "[0, current_heat]"
+    expression: "new_heat = max(0, current_heat - amount)"
+    notes: "REDUCE_HEAT. max(0,..) floor, never negative. NO floor()/epsilon. 50 rescues near-Overheat with margin
+      without deleting Heat tension (< 100)."
+    added: 2026-07-12
+    revised: ""
+
+  - name: CD-3
+    status: active
+    source: design/gdd/consumable-database.md
+    referenced_by:
+      - design/gdd/consumable-database.md
+      - design/gdd/turn-based-combat.md      # use-item applies RESTORE_ENERGY (erratum)
+    variables:
+      - current_energy (int [0, max_energy])
+      - max_energy (int [80, 120], SA-F1)
+      - amount (int; Power Cell 25)
+    output_range: "[0, max_energy]"
+    expression: "new_energy = min(max_energy, current_energy + amount)"
+    notes: "RESTORE_ENERGY. min() cap. NO floor/epsilon. 25 ~= 2.5 turns of BASE_ENERGY_REGEN (10) — a bridge, not a reset."
+    added: 2026-07-12
+    revised: ""
+
+  - name: CD-4
+    status: active
+    source: design/gdd/consumable-database.md
+    referenced_by:
+      - design/gdd/consumable-database.md
+      - design/gdd/drop-system.md            # Beacon injects BEACON_MULTIPLIER into effective_drop_rate
+    variables:
+      - base_rate (float {0.70, 0.25, 0.05, 0.001})
+      - "Pi(condition_multipliers) (float [1.0, inf), Drop System's existing drop-condition product)"
+      - beacon_multiplier (float 2.0)
+    output_range: "[0.0, 1.0]"
+    expression: "effective_drop_rate = clamp(base_rate * Pi(condition_multipliers) * beacon_multiplier, 0.0, 1.0)"
+    notes: "BOOST_DROP (Salvage Beacon). Injects one factor into the Drop System product; clamp caps at 1.0. Float
+      multiply into clamp feeding randf() < — NO floor/epsilon. beacon_multiplier safe range 1.5-2.5; >=3.0 degenerate
+      (self-replenish >= 0.75). One Beacon per battle; spent on flee/loss; drops only on victory."
+    added: 2026-07-12
+    revised: ""
+
+  - name: CD-5
+    status: active
+    source: design/gdd/consumable-database.md
+    referenced_by:
+      - design/gdd/consumable-database.md
+      - design/gdd/encounter-zone.md         # EZ-1 encounter_rate modifier hook (erratum, un-defers OQ-EZ-4)
+    variables:
+      - base_rate (float {0.07, 0.15, 0.35}, zone density encounter_rate)
+      - rate_multiplier (float > 0; Jammer 0.1 / Lure 2.5)
+      - duration_steps (int; Jammer 20 / Lure 15)
+    output_range: "[0.0, 1.0]"
+    expression: "effective_rate = clamp(base_rate * rate_multiplier, 0.0, 1.0)  # for duration_steps steps, then EZ-1"
+    notes: "MODIFY_ENCOUNTER_RATE (Signal Jammer repel / Scrap Lure). Same float-clamp-into-randf< pattern as EZ-1 —
+      NO floor/epsilon. IEEE-754: use base 0.15 (and 0.35) for == fixtures; 0.35*0.1 and 0.07*2.5 are NOT exact. Only
+      one modifier active; second replaces. Jammer 0.1x keeps zones threatening (not a blackout); Lure 2.5x stays
+      under the 1.0 clamp even at DENSE."
+    added: 2026-07-12
+    revised: ""
+
 # Example:
 #
 # formulas:
@@ -868,6 +1098,127 @@ constants:
       Balanced. structure_mult=0.70 and break_mult=1.40 are LOAD-BEARING epsilon coefficients (PB-F1/PB-F2) —
       re-run the scan if any value is retuned. Owned by Part-Break; break_bias field lives on the Move (Move DB)."
     added: 2026-07-11
+    revised: ""
+
+  - name: WELD_PATCH_AMOUNT
+    status: active
+    source: design/gdd/consumable-database.md
+    referenced_by:
+      - design/gdd/consumable-database.md    # CD-1
+      - design/gdd/turn-based-combat.md      # applied by use-item (erratum)
+    value: 25
+    unit: Structure points restored (flat, capped at max_structure)
+    notes: "Weld Patch (COMMON). Safe range 15-35. Keep meaningful vs the 60-Structure glass cannon."
+    added: 2026-07-12
+    revised: ""
+
+  - name: REPAIR_KIT_AMOUNT
+    status: active
+    source: design/gdd/consumable-database.md
+    referenced_by:
+      - design/gdd/consumable-database.md    # CD-1
+      - design/gdd/turn-based-combat.md
+    value: 50
+    unit: Structure points restored (flat, capped)
+    notes: "Repair Kit (RARE). Safe range 40-70. Keep > 30 (REPAIR move ceiling) so the item + turn is earned."
+    added: 2026-07-12
+    revised: ""
+
+  - name: FIELD_FORGE_AMOUNT
+    status: active
+    source: design/gdd/consumable-database.md
+    referenced_by:
+      - design/gdd/consumable-database.md    # CD-1
+      - design/gdd/turn-based-combat.md
+    value: 120
+    unit: Structure points restored (flat, capped)
+    notes: "Field Forge (PROTOTYPE). Safe range 90-160. Emergency heal (~4 REPAIR casts in one action)."
+    added: 2026-07-12
+    revised: ""
+
+  - name: COOLANT_FLUSH_AMOUNT
+    status: active
+    source: design/gdd/consumable-database.md
+    referenced_by:
+      - design/gdd/consumable-database.md    # CD-2
+      - design/gdd/turn-based-combat.md
+    value: 50
+    unit: Heat points removed (floored at 0)
+    notes: "Coolant Flush (COMMON). Safe range 40-70. Keep < 100 (a full wipe deletes Heat tension); >= 40 for margin."
+    added: 2026-07-12
+    revised: ""
+
+  - name: POWER_CELL_AMOUNT
+    status: active
+    source: design/gdd/consumable-database.md
+    referenced_by:
+      - design/gdd/consumable-database.md    # CD-3
+      - design/gdd/turn-based-combat.md
+    value: 25
+    unit: Energy restored (capped at max_energy)
+    notes: "Power Cell (COMMON). Safe range 15-40. ~2.5 turns of BASE_ENERGY_REGEN(10); keep < 50 or it's an energy reset."
+    added: 2026-07-12
+    revised: ""
+
+  - name: BEACON_MULTIPLIER
+    status: active
+    source: design/gdd/consumable-database.md
+    referenced_by:
+      - design/gdd/consumable-database.md    # CD-4
+      - design/gdd/drop-system.md            # injected into effective_drop_rate (erratum)
+    value: 2.0
+    unit: multiplier on effective_drop_rate for one battle (Salvage Beacon)
+    notes: "Safe range 1.5-2.5. >= 3.0 DEGENERATE — Beacon self-replenishes at RARE base (0.25*3.0=0.75), farm-loop
+      breaks. At 2.0 the player drains Beacons ~2:1. Guardrails: one per battle, spent on flee/loss, drops only on win."
+    added: 2026-07-12
+    revised: ""
+
+  - name: JAMMER_RATE_MULTIPLIER
+    status: active
+    source: design/gdd/consumable-database.md
+    referenced_by:
+      - design/gdd/consumable-database.md    # CD-5
+      - design/gdd/encounter-zone.md         # EZ-1 modifier hook (erratum)
+    value: 0.1
+    unit: multiplier on encounter_rate while a Signal Jammer is active (repel)
+    notes: "Safe range 0.05-0.2. Keep > 0 — 0.0 is a total blackout that trivializes zone tension. 90% reduction."
+    added: 2026-07-12
+    revised: ""
+
+  - name: JAMMER_DURATION_STEPS
+    status: active
+    source: design/gdd/consumable-database.md
+    referenced_by:
+      - design/gdd/consumable-database.md    # CD-5
+      - design/gdd/encounter-zone.md
+    value: 20
+    unit: overworld steps a Signal Jammer stays active
+    notes: "Safe range 15-30. ~one mid-zone traversal."
+    added: 2026-07-12
+    revised: ""
+
+  - name: LURE_RATE_MULTIPLIER
+    status: active
+    source: design/gdd/consumable-database.md
+    referenced_by:
+      - design/gdd/consumable-database.md    # CD-5
+      - design/gdd/encounter-zone.md         # EZ-1 modifier hook (erratum)
+    value: 2.5
+    unit: multiplier on encounter_rate while a Scrap Lure is active (lure)
+    notes: "Safe range 2.0-3.0. At >= 3.0 a DENSE zone (0.35) clamps to ~every-step forced combat. 2.5 stays under the 1.0 clamp."
+    added: 2026-07-12
+    revised: ""
+
+  - name: LURE_DURATION_STEPS
+    status: active
+    source: design/gdd/consumable-database.md
+    referenced_by:
+      - design/gdd/consumable-database.md    # CD-5
+      - design/gdd/encounter-zone.md
+    value: 15
+    unit: overworld steps a Scrap Lure stays active
+    notes: "Safe range 10-20. A concentrated farming burst, shorter than the Jammer."
+    added: 2026-07-12
     revised: ""
 
 # Example:
