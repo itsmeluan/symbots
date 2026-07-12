@@ -1,10 +1,17 @@
 # Active Session State
 
-## Current Task — Zone & World Map System (#12) /design-system COMPLETE → Designed (2026-07-12, lean)
-- **DONE**: all 8 required + Visual/Audio + UI + Open Questions (0 placeholders, ~4.7k words). systems-index #12 → Designed; docs started 14→15, MVP designed 14→15/24. CD-GDD-ALIGN skipped (lean). Registry: no changes (ZWM-F1/F2 + WorldMap schema held internal per EZ precedent until a consumer references them; no existing referenced_by bumps).
-- **Sections**: A/B / C (Rules 1-9 + States + Interactions) / D (ZWM-F1 edge predicate + ZWM-F2 reachability, graph/boolean, no float/scan) / E (11 edge cases, all AC-cited) / F Dependencies / G Tuning Knobs / H (15 ACs AC-ZWM-01..15, full EC coverage) / VA+UI (UX flag world-map.md) + OQ-ZWM-1..4.
-- **2 PENDING OBLIGATIONS from this session**: (1) **Encounter Zone light erratum** — add Zone & World Map as a downstream dependent (bidirectional touch, no behavioral change). (2) **Symbot Core Progression #10b** design pass still owed (see RESOLVED block below + project-core-progression.md).
-- **NEXT**: `/clear` then `/design-review design/gdd/zone-world-map.md` FRESH session. Then design **#10b Symbot Core Progression** (own pass) or continue MVP world layer (#13 World Loot / #14 Exploration Progress / #16 Overworld Navigation).
+## Current Task — Symbot Core Progression (#10b) /design-system IN PROGRESS (2026-07-12)
+- **File**: design/gdd/symbot-core-progression.md (skeleton created)
+- **Sections done**: none yet | **Review mode**: lean
+- **NEXT**: Section A — Overview
+
+## Prior Task — Zone & World Map System (#12) /design-review → APPROVED (2026-07-12)
+- **Full-panel /design-review** (game-designer + systems-designer + level-designer + qa-lead + CD synthesis). Verdict NEEDS REVISION → **8 surgical blockers fixed same session** → **APPROVED**.
+- **Blockers fixed**: (1) ZWM-F1 boss_progress scope: `source_zone.runtime.boss_progress` (not global); `source_zone` variable added. (2) Missing-key EC-ZWM-12/AC-ZWM-19: absent `boss_id` in condition_params → fail-safe false. (3) `zone_states_changed` upgraded to `zone_states_changed(transitions: Array[Dictionary])` diff payload — enables unlock fanfare vs cleared flourish; suppressed when no state changed. (4) LOCKED-origin outbound travel: EC-ZWM-05 extended (player can travel OUT of LOCKED zone) + AC-ZWM-20. (5) AC-ZWM-11 rewritten with concrete 2-node fixture. (6) AC-ZWM-17 added (signal NOT fired on no-change). (7) AC-ZWM-18 added (CLEARED zone enterable). (8) AC-ZWM-05 GIVEN: `wins_at_last_defeat = 0` initial value.
+- **Also applied**: Player Fantasy MVP-scope note · Rule 5 CLEARED-unreachable clarification · Rule 6 enter_zone validation authority · EC-ZWM-08 extended (empty zones = hard failure) · Tuning Knob bidirectional-edge warning · AC advisory fixes (01/02 GUT notes, 12 GIVEN, 13 split sub-cases) · AC-ZWM-16 signal-fires AC · OQ-ZWM-5 (EZ push/pull pending Vertical Slice erratum).
+- **Final counts**: 20 ACs (up from 15) / 12 ECs (up from 11). Registry: no changes. systems-index #12 → Approved; docs approved 14→15; MVP designed 15→16/24. Review log created.
+- **PENDING OBLIGATIONS** (pre-existing): (1) **Encounter Zone light erratum** — add Zone & World Map as downstream dependent. (2) **Symbot Core Progression #10b** design pass (see RESOLVED block below). (3) **OQ-ZWM-5** — EZ push/pull reconciliation (Vertical Slice, non-blocking now).
+- **NEXT**: Design **#10b Symbot Core Progression** (own pass; requires concept anti-pillar revision + CD sign-off + Assembly/Part DB errata) OR continue MVP world layer with #13 World Loot System or #14 Exploration Progress System.
 - **Scope decision**: GDD owns both world graph data AND traversal state (current-zone / accessible-zones). Overworld Navigation reads this system for movement context.
 - **Zone connection model LOCKED**: directed edges, each ZoneEdge = { to_zone_id, unlock_condition }; default condition OPEN (open-world free travel, enemy difficulty self-gates); optional STORY_FLAG / BOSS_DEFEATED hard-lock for story gates. MVP = 1 zone (single node); schema supports N. Open-world-by-difficulty model (Pokémon-like) confirmed by user.
 
@@ -367,3 +374,5 @@ Task: /clear then /design-review design/gdd/inventory.md (FRESH session). On app
 <!-- CONSISTENCY-CHECK: 2026-07-12 | GDDs checked: 12 | Conflicts found: 0 | Verified: all 55 registry entries (8 consumable items + 10 CD constants + CD-1..CD-5 formulas + all prior constants/formulas/passives) across 12 GDDs — PASS. Noteworthy: CD-5 worked example uses 0.35×0.1 (non-exact in IEEE-754) as prose only; AC fixtures correctly use 0.15 (exact). All 3 errata (TBC/Drop/EZ) consistent. -->
 
 <!-- CONSISTENCY-CHECK: 2026-07-12 | GDDs checked: 14 | Conflicts found: 0 | Verified this session: EAI-1 + AI_PROFILE_WEIGHTS (TACTICAL w_lethal 5.0) + STATUS_BASE_VALUE (enemy-ai); INV-1 + SCRAP_MAX + SCRAP_YIELD (inventory). SCRAP_YIELD exact match Drop(owner 5/20/35/60) vs Inventory(referencer); invariant COMMON<RARE<PROTOTYPE<BOSS_GRADE holds. parts=instances / consumables=stackable model consistent w/ Part DB EC-05 + Consumable DB. 69 registry entries, YAML valid. -->
+
+<!-- CONSISTENCY-CHECK: 2026-07-12 | GDDs checked: 15 | Conflicts found: 0 | Verified: zone-world-map.md (approved today); win thresholds (6/10) consistent ZWM↔EZ; win_count semantics consistent; wins_at_last_defeat field name consistent; all 69 registry entries PASS. Informational only: TBC result vocab VICTORY/DEFEAT/FLED vs ZWM WIN/LOSS/FLEE (Overworld Navigation relay mapping; non-blocking); push/pull ownership OQ-ZWM-5 (Vertical Slice erratum); EZ bidirectionality erratum pending (one-line, tracked). 15/15 MVP GDDs Approved. -->

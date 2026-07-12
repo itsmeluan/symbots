@@ -1,6 +1,6 @@
 # Zone & World Map System
 
-> **Status**: In Design
+> **Status**: **APPROVED — 2026-07-12 (full-panel /design-review — NEEDS REVISION → 8 blockers fixed same session: ZWM-F1 source_zone scope, EC-ZWM-12/AC-ZWM-19 missing-key, zone_states_changed diff payload, LOCKED-origin outbound travel, AC-ZWM-11 concrete fixture, AC-ZWM-17/18 signal contract, AC-ZWM-05 GIVEN completed. 15→20 ACs / 11→12 ECs)**
 > **Author**: Luan + Claude Code Game Studios agents
 > **Last Updated**: 2026-07-12
 > **Implements Pillar**: Pillar 5 (The World Is a Workshop), Pillar 2 (Every Battle Has a Harvest Goal)
@@ -20,6 +20,8 @@ The second is the **purposeful return**: the world map as a shopping list at a g
 The infrastructure beneath both moments — zone graph, state tracking, gate evaluation — is invisible when it works. The player never thinks about the zone-win counter. They think: *"I earned this."*
 
 That is the fantasy: the world map as a progress ledger where every milestone is built, not given.
+
+> **MVP scope:** In MVP (one zone, two bosses, no edges) the zone-unlock moment cannot occur — there is no greyed-out path to illuminate. What MVP validates is the intra-zone harvest loop and the boss-progression beat: the player proves readiness by clearing WILD fights, the gate opens, the boss is earned. The zone-unlock moment and multi-zone shopping-list experience are validated at Vertical Slice when the second zone and its connecting edge are authored.
 
 ## Detailed Design
 
@@ -71,7 +73,9 @@ Default is `OPEN`. The intended world shape is *mostly open* — the player trav
 
 Because most edges are `OPEN`, **many zones can be ACCESSIBLE at once** — the open-world feel. State is recomputed whenever a boss-defeat or story flag changes (see States and Transitions).
 
-**Rule 6 — Traversal.** Overworld Navigation asks this system whether a move from `current_zone_id` to a target zone is allowed. The move is permitted iff a traversable edge connects them and the target is `ACCESSIBLE` or `CLEARED`. On a permitted move, this system updates `current_zone_id` and emits `zone_entered(zone_id)`. This system validates and records the transition; Overworld Navigation owns the actual player movement and the tile-level detail.
+**CLEARED does not guarantee reachability.** A zone with `all_bosses_defeated == true` is assigned CLEARED by ZWM-F2 regardless of whether it is in the BFS's `reachable` set (e.g., after save drift per EC-ZWM-10 or a content update that removes inbound edges). Such a zone is CLEARED for display purposes but `can_travel(A, CLEARED_UNREACHABLE)` returns `false` — the "traversable edge" condition in Rule 6 fails even when the target-state condition passes. This is unusual but valid: the zone can become enterable again if its gate condition is later re-satisfied.
+
+**Rule 6 — Traversal.** Overworld Navigation asks this system whether a move from `current_zone_id` to a target zone is allowed. The move is permitted iff a traversable edge connects them and the target is `ACCESSIBLE` or `CLEARED`. On a permitted move, this system updates `current_zone_id` and emits `zone_entered(zone_id)`. **Validation authority:** `enter_zone(to)` re-validates traversability internally before committing — callers who skip `can_travel` are still protected against invalid transitions. This system validates and records the transition; Overworld Navigation owns the actual player movement and the tile-level detail.
 
 **Rule 7 — Zone-progression runtime state (this system is the authority).** Each `ZoneRuntimeState` holds the mutable progression data that drives gates and display:
 
@@ -97,7 +101,7 @@ Zone state is a pure function of progression data, recomputed on every relevant 
 | `ACCESSIBLE` | `CLEARED` | The zone's final un-defeated boss's `defeated_once` flips to `true` (all bosses now defeated) |
 | `CLEARED` | `CLEARED` | Terminal — re-entering a cleared zone to farm does not change state |
 
-Recomputation runs a reachability pass from `start_zone_id` across traversable edges, then overlays CLEARED for zones with all bosses defeated. Triggers: `battle_ended` (win-count/boss-defeat change), story-flag change, key-item acquisition, and load (after Exploration Progress restores state). The pass is deterministic and side-effect-free apart from emitting `zone_states_changed` when any state differs from the prior pass.
+Recomputation runs a reachability pass from `start_zone_id` across traversable edges, then overlays CLEARED for zones with all bosses defeated. Triggers: `battle_ended` (win-count/boss-defeat change), story-flag change, key-item acquisition, and load (after Exploration Progress restores state). The pass is deterministic and side-effect-free apart from emitting `zone_states_changed(transitions)` when any state differs from the prior pass — `transitions` is an `Array[Dictionary]`, each entry `{ zone_id: StringName, from_state: ZoneState, to_state: ZoneState }`. **The signal is suppressed entirely when no state changed** — prevents spurious UI re-renders and audio triggers on battles where no zone transitions occurred.
 
 ### Interactions with Other Systems
 
@@ -106,7 +110,7 @@ Recomputation runs a reachability pass from `start_zone_id` across traversable e
 | **Encounter Zone** (upstream) | This system reads `zone_id`, `boss_encounters` (boss_id, gate_params, regate_params, repeat_policy) and **calls** its gate-check, passing `win_count` + `boss_progress` as inputs | Encounter Zone owns spawn tables + gate *semantics*; this system owns the *runtime counter/flags* and never lets Encounter Zone read up |
 | **Overworld Navigation** (downstream) | Calls `can_travel(from, to)` and `enter_zone(to)`; reports `battle_ended(result, encounter_type)` for win-count increment | Owns tile movement + encounter triggering; this system owns zone-level transition validation and progression state |
 | **Exploration Progress** (downstream) | Serializes/restores every `ZoneRuntimeState` (`win_count`, `boss_progress`, derived `state` re-derived on load) | Persistence layer only — not the runtime owner |
-| **World Map UI** (downstream) | Reads `zones`, `current_zone_id`, each node's `state`, `display_name`, `map_position`, `difficulty_band`, and edge lock status for display | Read-only; renders locked/accessible/cleared and the difficulty read-out |
+| **World Map UI** (downstream) | Reads `zones`, `current_zone_id`, each node's `state`, `display_name`, `map_position`, `difficulty_band`, and edge lock status; receives `zone_states_changed(transitions)` diff | Read-only; renders locked/accessible/cleared and the difficulty read-out; uses `from_state`/`to_state` in `transitions` to select unlock fanfare vs. cleared flourish |
 | **Turn-Based Combat** (indirect) | Emits the `battle_ended` signal (result WIN/LOSS/FLEE) that Overworld Navigation relays for win-count increment | This system never reads combat state directly |
 
 ## Formulas
@@ -121,20 +125,22 @@ This system owns no balance math. Its logic is deterministic graph/boolean deriv
 |----------|------|-------|-------------|
 | `edge.unlock_condition` | Enum | OPEN / BOSS_DEFEATED / STORY_FLAG / KEY_ITEM | The gate on this edge |
 | `edge.condition_params` | Dictionary | — | Condition-specific args |
-| `boss_progress` | Array[BossProgress] | — | This system's runtime boss-defeat records (Rule 7) |
+| `source_zone` | ZoneNode | — | The node that **owns** this edge; its `runtime.boss_progress` is the authoritative scope for BOSS_DEFEATED lookup (not the destination zone, not all zones globally) |
 
 ```
 traversable(edge) =
   match edge.unlock_condition:
     OPEN           -> true
-    BOSS_DEFEATED  -> boss_progress.find(condition_params.boss_id).defeated_once == true
-    STORY_FLAG     -> story_flags.has(condition_params.flag)      # reserved; MVP: false if authored
-    KEY_ITEM       -> inventory.has_key_item(condition_params.item_id)  # reserved
+    BOSS_DEFEATED  -> let boss_id = condition_params.get("boss_id", null)           # missing key → null
+                         let record = source_zone.runtime.boss_progress.find(boss_id) # null/not-found → null (EC-ZWM-03, EC-ZWM-12)
+                         in record != null and record.defeated_once == true
+    STORY_FLAG     -> story_flags.has(condition_params.get("flag", null))            # reserved; MVP: false if authored
+    KEY_ITEM       -> inventory.has_key_item(condition_params.get("item_id", null))  # reserved
 ```
 
-**Output:** boolean. Pure discrete lookup — no arithmetic. Unknown/reserved conditions with no backing system resolve to `false` (fail-safe LOCKED, never fail-open — see EC-ZWM-04).
+**Output:** boolean. Pure discrete lookup — no arithmetic. Unknown/reserved conditions, missing `condition_params` keys, and unresolved boss_id references all resolve to `false` (fail-safe LOCKED, never fail-open — see EC-ZWM-03, EC-ZWM-04, EC-ZWM-12).
 
-**Example:** Edge `scrapfield → foundry`, `unlock_condition = BOSS_DEFEATED`, `boss_id = &"forge_titan"`. Before Forge Titan is beaten: `defeated_once == false` → `traversable == false`. After: `true`. An `OPEN` edge is `true` at all times regardless of any state.
+**Example:** Edge `scrapfield → foundry`, `unlock_condition = BOSS_DEFEATED`, `boss_id = &"forge_titan"`. `source_zone = scrapfield`. Before Forge Titan is beaten: `scrapfield.runtime.boss_progress.find(&"forge_titan").defeated_once == false` → `traversable == false`. After: `true`. An `OPEN` edge is `true` at all times regardless of any state.
 
 ### ZWM-F2 — Zone-state derivation (reachability pass)
 
@@ -179,19 +185,27 @@ The `win_count` increment is **not** a formula here — it is `win_count += 1` o
 
 **EC-ZWM-04 — Reserved unlock_condition with no backing system.** *If* an edge uses `STORY_FLAG` or `KEY_ITEM` in MVP (systems not yet implemented): `traversable` returns **`false`** (fail-safe LOCKED) and logs a warning that a reserved condition was authored. The edge is effectively closed until its backing system exists. *Verified by AC-ZWM-10.*
 
-**EC-ZWM-05 — Player is standing in a zone that recomputes to LOCKED.** *If* a state recompute (ZWM-F2) would mark `current_zone_id`'s zone LOCKED (e.g., an authoring change, or a hypothetical condition that revokes reachability): **current occupancy is never invalidated** — the player cannot be evicted from where they stand. LOCKED governs *future entry*, not present presence. `current_zone_id` is left unchanged; the recompute assigns the display state but Overworld Navigation does not force-exit the player. This prevents a traversal softlock. *Verified by AC-ZWM-11.*
+**EC-ZWM-05 — Player is standing in a zone that recomputes to LOCKED.** *If* a state recompute (ZWM-F2) would mark `current_zone_id`'s zone LOCKED: **current occupancy is never invalidated** — the player cannot be evicted from where they stand. LOCKED governs *future entry*, not present presence. `current_zone_id` is left unchanged; the recompute assigns the display state but Overworld Navigation does not force-exit the player. **Outbound travel from a LOCKED current zone is permitted:** `can_travel(current_zone_id, B)` evaluates the outbound edge to B normally regardless of the current zone's own state — the player is never blocked from *leaving* where they stand, only from *entering* a LOCKED zone from outside. This prevents a traversal softlock. *Verified by AC-ZWM-11, AC-ZWM-20.*
 
 **EC-ZWM-06 — Graph cycle.** *If* edges form a cycle (A→B→A, or longer): the ZWM-F2 BFS `reachable`/visited set guarantees each node is enqueued at most once — **no infinite loop**, deterministic termination. *Verified by AC-ZWM-12.*
 
 **EC-ZWM-07 — Boss victory does not increment win_count.** *If* a `battle_ended(WIN)` resolves from a **BOSS** encounter (not WILD): `win_count` is **not** incremented (Encounter Zone Rule 8a counts WILD wins only). The boss victory instead sets that boss's `defeated_once = true` and snapshots `wins_at_last_defeat`. A fled or lost battle changes nothing. *Verified by AC-ZWM-03, AC-ZWM-05.*
 
-**EC-ZWM-08 — start_zone_id references a non-existent zone.** *If* `start_zone_id` matches no node (unrecoverable content error): this is a **hard failure at load** — unlike the other fail-safe cases, the game cannot place the player anywhere, so it raises a loud content error rather than silently degrading. (Distinct from EC-ZWM-02/03/04, which are recoverable.) *Verified by AC-ZWM-13.*
+**EC-ZWM-08 — Unrecoverable world-graph content errors.** Two cases share a hard-failure-at-load disposition (distinct from the recoverable EC-ZWM-02/03/04 per-edge failures):
+
+  **(a)** *If* `start_zone_id` matches no node in `zones`: the game cannot place the player anywhere — **hard failure at load**, loud content error, no silent degradation.
+
+  **(b)** *If* `zones` is empty (size = 0), violating the `size ≥ 1` constraint: ZWM-F2 produces an empty reachable set and assigns no state to any zone. Same **hard failure at load** disposition as (a).
+
+  *Verified by AC-ZWM-13 (covers both sub-cases).*
 
 **EC-ZWM-09 — Duplicate zone_id in `zones`.** *If* two nodes share a `zone_id`: a content error is logged and the **first** occurrence is authoritative; subsequent duplicates are ignored (not merged). *Verified by AC-ZWM-14.*
 
 **EC-ZWM-10 — Load with drifted progression data.** *If* a save's `boss_progress` contains an entry for a boss no longer in content (removed boss): the orphaned entry is **ignored** on load; if a boss exists in content but has no saved entry, it defaults to `defeated_once = false, wins_at_last_defeat = 0`. State is always **re-derived** (ZWM-F2) on load, never trusted from the serialized `state` field. *Verified by AC-ZWM-15.*
 
 **EC-ZWM-11 — Travel to a LOCKED or non-adjacent zone.** *If* `can_travel(current, target)` is asked for a target with no traversable edge from `current`, or whose state is LOCKED: it returns **`false`**; `current_zone_id` is unchanged and no `zone_entered` signal fires. *Verified by AC-ZWM-02.*
+
+**EC-ZWM-12 — BOSS_DEFEATED edge with missing or null `boss_id` key in `condition_params`.** *If* a `BOSS_DEFEATED` edge's `condition_params` dictionary is missing the `boss_id` key entirely (malformed content — distinct from EC-ZWM-03, where the key is present but names a non-existent boss): `traversable` returns **`false` (fail-safe LOCKED)** and logs a content error. `condition_params.get("boss_id", null)` returns `null`; the `boss_progress.find(null)` lookup returns `null`; the null-guard in ZWM-F1 prevents the `defeated_once` access. *Verified by AC-ZWM-19.*
 
 ## Dependencies
 
@@ -236,14 +250,18 @@ This system is structural, not numeric — its "knobs" are mostly **content-auth
 
 **Warning — difficulty_band honesty.** Because zones are mostly `OPEN`, the *only* thing steering a player away from an over-tough zone is the `difficulty_band` read-out. If a band label understates a zone's real difficulty, a low-power player wanders into a wall with no hard gate to stop them. Author bands conservatively and revisit them whenever a zone's enemy roster changes.
 
+**Warning — bidirectional edges.** Bidirectional travel requires two `ZoneEdge` entries to be authored (Rule 3). A `BOSS_DEFEATED` gate on A→B with no corresponding B→A edge creates a one-way trap: the player enters B and cannot return to A to farm. Validate graph topology at content-authoring time: every reachable zone should have at least one traversable outbound edge, unless explicitly designed as a terminal zone (label it as such).
+
 ## Visual/Audio Requirements
 
 This system renders nothing directly — it owns no sprites. Its visual/audio footprint is the **signals it emits** for other systems to present:
 
 - `zone_entered(zone_id)` → World Map UI updates the "you are here" marker; Audio System plays a zone-enter stinger (character per `difficulty_band`).
-- `zone_states_changed` → World Map UI re-renders node states (LOCKED/ACCESSIBLE/CLEARED) and edge locks. Two beats matter most (Player Fantasy):
-  - **Zone unlock** (a node flips LOCKED → ACCESSIBLE): a distinct **unlock fanfare** — the "a new path just opened" moment. This is the single most important audio cue this system enables.
-  - **Zone cleared** (ACCESSIBLE → CLEARED): a quieter conquest flourish.
+- `zone_states_changed(transitions: Array[Dictionary])` — each dict: `{ zone_id: StringName, from_state: ZoneState, to_state: ZoneState }` → World Map UI re-renders node states and edge locks. Consumers use `from_state`/`to_state` directly to select the correct beat without caching prior state themselves. Two beats matter most (Player Fantasy):
+  - **Zone unlock** (`from_state == LOCKED, to_state == ACCESSIBLE`): a distinct **unlock fanfare** — the "a new path just opened" moment. This is the single most important audio cue this system enables.
+  - **Zone cleared** (`from_state == ACCESSIBLE, to_state == CLEARED`): a quieter conquest flourish.
+  - When multiple zones transition in one pass, the `transitions` array carries all simultaneous changes in a single emission. Priority for audio: unlock fanfare > cleared flourish when both appear in the same pass.
+  - **Not emitted when no state changed** — suppressed to prevent spurious re-renders.
 
 All actual art (node icons, locked/accessible/cleared visual states, difficulty-band color language, map layout) and mix parameters are specified in the **World Map UI GDD** and **Audio System GDD**. This section defines only the signal contract those systems subscribe to.
 
@@ -253,21 +271,21 @@ All actual art (node icons, locked/accessible/cleared visual states, difficulty-
 
 This system exposes **read APIs + signals**; it contributes **no screens of its own**. The World Map screen that visualizes this data is **World Map UI (#20)**. Interface surface for that consumer:
 - Reads: `zones`, `current_zone_id`, per-node `state` / `display_name` / `map_position` / `difficulty_band`, per-edge lock status (`traversable`).
-- Signals: `zone_entered`, `zone_states_changed`.
+- Signals: `zone_entered(zone_id: StringName)`, `zone_states_changed(transitions: Array[Dictionary])` — each dict: `{ zone_id: StringName, from_state: ZoneState, to_state: ZoneState }`.
 
 > **📌 UX Flag — Zone & World Map**: The World Map screen (locked/accessible/cleared rendering, difficulty read-out, travel interaction, the unlock moment) must get a UX spec in Pre-Production. Run `/ux-design` for `design/ux/world-map.md` before writing World Map UI stories. Touch-first: node tap-targets ≥ 44×44pt, no hover-only affordances (per technical-preferences).
 
 ## Acceptance Criteria
 
-**AC-ZWM-01 — Valid travel succeeds.** **GIVEN** `current_zone_id = A` and an `OPEN` edge A→B where B is ACCESSIBLE, **WHEN** `enter_zone(B)` is called, **THEN** it succeeds, `current_zone_id == B`, and exactly one `zone_entered(B)` signal fires. **Test:** Unit.
+**AC-ZWM-01 — Valid travel succeeds.** **GIVEN** `current_zone_id = A` and an `OPEN` edge A→B where B is ACCESSIBLE, **WHEN** `enter_zone(B)` is called, **THEN** it succeeds, `current_zone_id == B`, and exactly one `zone_entered(B)` signal fires. **Test:** Unit. *(Use `assert_signal_emit_count(world_map, "zone_entered", 1)` — `assert_signal_emitted` alone only checks at-least-one and misses double-fire bugs.)*
 
-**AC-ZWM-02 — Invalid travel rejected.** **GIVEN** `current_zone_id = A`, and target C that is either LOCKED or has no edge from A, **WHEN** `can_travel(A, C)` is evaluated, **THEN** it returns `false`, `current_zone_id` stays `A`, and no `zone_entered` fires. *(EC-ZWM-11)* **Test:** Unit.
+**AC-ZWM-02 — Invalid travel rejected.** **GIVEN** `current_zone_id = A`, and target C that is either LOCKED or has no edge from A, **WHEN** `can_travel(A, C)` is evaluated, **THEN** it returns `false`, `current_zone_id` stays `A`, and no `zone_entered` fires. *(EC-ZWM-11)* **Test:** Unit. *(Verify both sub-cases independently: (a) no edge from A to C, (b) edge exists but C is LOCKED via a non-traversable condition. Use `assert_signal_not_emitted(world_map, "zone_entered")`.)*
 
 **AC-ZWM-03 — WILD win increments the counter; flee/loss do not.** **GIVEN** zone A `win_count = 5`, **WHEN** `battle_ended(WIN, WILD)` fires for A, **THEN** `win_count == 6`; **AND** a subsequent `battle_ended(FLEE, WILD)` and `battle_ended(LOSS, WILD)` each leave it at `6`. *(Rule 7; EC-ZWM-07)* **Test:** Unit.
 
 **AC-ZWM-04 — MVP single-node lifecycle.** **GIVEN** the MVP world (1 node `scrapfield`, 2 bosses, no edges), **WHEN** state is derived before any boss is defeated, **THEN** `scrapfield.state == ACCESSIBLE`; **WHEN** both bosses' `defeated_once == true`, **THEN** `scrapfield.state == CLEARED`; with exactly one boss defeated it is still `ACCESSIBLE` (not CLEARED). *(ZWM-F2; Rule 9)* **Test:** Unit.
 
-**AC-ZWM-05 — Boss victory flips defeat flag, snapshots delta, and does NOT increment win_count.** **GIVEN** zone A `win_count = 8`, boss `forge_titan.defeated_once = false`, **WHEN** `battle_ended(WIN, BOSS=forge_titan)` fires, **THEN** `forge_titan.defeated_once == true`, `forge_titan.wins_at_last_defeat == 8`, **AND** `win_count` remains `8` (a boss win is not a WILD win). *(Rule 8; EC-ZWM-07)* **Test:** Unit.
+**AC-ZWM-05 — Boss victory flips defeat flag, snapshots delta, and does NOT increment win_count.** **GIVEN** zone A `win_count = 8`, boss `forge_titan.defeated_once = false`, **and** `forge_titan.wins_at_last_defeat = 0`, **WHEN** `battle_ended(WIN, BOSS=forge_titan)` fires, **THEN** `forge_titan.defeated_once == true`, `forge_titan.wins_at_last_defeat == 8`, **AND** `win_count` remains `8` (a boss win is not a WILD win). *(Rule 8; EC-ZWM-07)* **Test:** Unit.
 
 **AC-ZWM-06 — Reachability discriminates a gated edge.** **GIVEN** 2 nodes: `scrapfield` (start) with a single `BOSS_DEFEATED(forge_titan)` edge to `foundry`, and `foundry` has no other inbound edge, **WHEN** state is derived with `forge_titan.defeated_once = false`, **THEN** `foundry.state == LOCKED`; **WHEN** derived with `forge_titan.defeated_once = true`, **THEN** `foundry.state == ACCESSIBLE`. An implementation that ignores `traversable()` (treats all edges as open) fails the first assertion. *(ZWM-F1, ZWM-F2)* **Test:** Unit.
 
@@ -279,17 +297,33 @@ This system exposes **read APIs + signals**; it contributes **no screens of its 
 
 **AC-ZWM-10 — Reserved condition is closed in MVP.** **GIVEN** an edge with `unlock_condition = STORY_FLAG` (or `KEY_ITEM`) authored in MVP, **WHEN** `traversable(edge)` is evaluated, **THEN** it returns `false` and logs a reserved-condition warning. *(EC-ZWM-04)* **Test:** Unit.
 
-**AC-ZWM-11 — Current zone is never revoked from under the player.** **GIVEN** `current_zone_id = A` and A is ACCESSIBLE, **WHEN** a state recompute would classify A as LOCKED (e.g., its only inbound edge became non-traversable), **THEN** `current_zone_id` remains `A`, no forced exit occurs, and A's derived `state` may read LOCKED for display without affecting the player's presence. *(EC-ZWM-05)* **Test:** Unit.
+**AC-ZWM-11 — Current zone is never revoked from under the player.** **GIVEN** a 2-node graph: node Z (`start_zone_id`) with a single `BOSS_DEFEATED(titan)` edge to node A; `titan.defeated_once = true` (making A `ACCESSIBLE`); `current_zone_id = "A"`, **WHEN** `titan.defeated_once` is set to `false` and `derive_zone_states()` is called, **THEN** `current_zone_id` remains `"A"`, no forced-exit signal fires, and `get_zone_state("A") == LOCKED` for display only. *(EC-ZWM-05)* **Test:** Unit.
 
-**AC-ZWM-12 — Cyclic graph terminates deterministically.** **GIVEN** nodes with a cycle A→B→A (all `OPEN`), **WHEN** state is derived, **THEN** the pass terminates, and A and B are both `ACCESSIBLE` (assuming A is start); running the derivation twice yields identical states. *(EC-ZWM-06)* **Test:** Unit.
+**AC-ZWM-12 — Cyclic graph terminates deterministically.** **GIVEN** node A (`start_zone_id`) and node B, with edges A→B and B→A (all `OPEN`), **WHEN** state is derived, **THEN** the pass terminates, both A and B are `ACCESSIBLE`, and running the derivation a second time with no state change produces identical results. *(EC-ZWM-06)* **Test:** Unit.
 
-**AC-ZWM-13 — Missing start zone is a loud failure.** **GIVEN** a `WorldMap` whose `start_zone_id` matches no node, **WHEN** the world loads, **THEN** a fatal content error is raised (not silently degraded to any default). This is distinct from the recoverable EC-ZWM-02/03/04 cases. *(EC-ZWM-08)* **Test:** Unit.
+**AC-ZWM-13 — Unrecoverable content errors are loud failures.** Two sub-cases, both verified by this AC:
+
+  **(a)** **GIVEN** a `WorldMap` whose `start_zone_id` matches no node in `zones`, **WHEN** the world loads, **THEN** a fatal content error is raised (i.e., `push_error` is logged and initialization aborts — the world is not silently placed in any default state).
+
+  **(b)** **GIVEN** a `WorldMap` whose `zones` array is empty (size = 0), **WHEN** the world loads, **THEN** the same fatal content error is raised.
+
+  *(EC-ZWM-08)* **Test:** Unit. (Use GUT's `assert_error_count > 0` or equivalent to verify `push_error` was called.)
 
 **AC-ZWM-14 — Duplicate zone_id: first wins.** **GIVEN** two nodes sharing `zone_id = X`, **WHEN** the world loads, **THEN** a content error is logged, the first node is authoritative, and the second is ignored (no merge). *(EC-ZWM-09)* **Test:** Unit.
 
 **AC-ZWM-15 — Save drift is tolerated; state is always re-derived.** **GIVEN** a save whose `boss_progress` has (a) an entry for a boss absent from content and (b) no entry for a boss present in content, **WHEN** the game loads, **THEN** the orphan entry is ignored, the missing boss defaults to `defeated_once = false, wins_at_last_defeat = 0`, and every zone's `state` is recomputed via ZWM-F2 rather than read from the serialized `state` field. *(EC-ZWM-10)* **Test:** Integration.
 
-**Coverage check:** every core rule (1–9) and both formulas (ZWM-F1/F2) have ≥1 AC; every edge case EC-ZWM-01…11 cites a listed AC. Positive paths (AC-01/03/04) and failure/boundary paths (AC-02/06/08/09/10/11/13) are both represented.
+**AC-ZWM-16 — zone_states_changed fires with correct diff when a state transitions.** **GIVEN** a 2-node graph where `foundry.state == LOCKED`, **WHEN** `forge_titan.defeated_once` is set to `true` and `derive_zone_states()` is called, **THEN** exactly one `zone_states_changed` signal fires and its `transitions` array contains `{ zone_id: "foundry", from_state: LOCKED, to_state: ACCESSIBLE }`. *(States and Transitions)* **Test:** Unit.
+
+**AC-ZWM-17 — zone_states_changed does NOT fire when states are unchanged.** **GIVEN** a world map whose zone states match the result of the most recent derivation pass, **WHEN** `derive_zone_states()` is called again with no progression change, **THEN** `zone_states_changed` is not emitted. An implementation that emits the signal on every recompute fails this assertion. *(States and Transitions)* **Test:** Unit.
+
+**AC-ZWM-18 — CLEARED zone remains enterable.** **GIVEN** a 2-node graph: `scrapfield` (`start_zone_id`) with an `OPEN` edge to `foundry`; both of `foundry`'s bosses have `defeated_once == true` → `foundry.state == CLEARED`, **WHEN** `enter_zone("foundry")` is called, **THEN** it succeeds, `current_zone_id == "foundry"`, and exactly one `zone_entered("foundry")` signal fires. CLEARED is not a lockout. *(Rule 5, Rule 6)* **Test:** Unit.
+
+**AC-ZWM-19 — BOSS_DEFEATED edge with missing boss_id key fails safe.** **GIVEN** a `BOSS_DEFEATED` edge whose `condition_params` dictionary has no `"boss_id"` key (e.g., `{}`), **WHEN** `traversable(edge)` is evaluated, **THEN** it returns `false` and logs a content error (never `true`). *(EC-ZWM-12)* **Test:** Unit.
+
+**AC-ZWM-20 — Outbound travel from a LOCKED current zone is permitted.** **GIVEN** the EC-ZWM-11 scenario: `current_zone_id = "A"` where A's derived state is LOCKED, **AND** there exists an `OPEN` edge from A to B where B is `ACCESSIBLE`, **WHEN** `can_travel("A", "B")` is evaluated, **THEN** it returns `true` — the player is never blocked from leaving where they stand. *(EC-ZWM-05)* **Test:** Unit.
+
+**Coverage check:** every core rule (1–9) and both formulas (ZWM-F1/F2) have ≥1 AC; every edge case EC-ZWM-01…12 cites a listed AC. Positive paths (AC-01/03/04/18/20) and failure/boundary paths (AC-02/06/08/09/10/11/13/17/19) are both represented. Signal contract is verified in both directions: fires-when-changed (AC-16) and suppressed-when-unchanged (AC-17).
 
 ## Open Questions
 
@@ -297,3 +331,4 @@ This system exposes **read APIs + signals**; it contributes **no screens of its 
 - **OQ-ZWM-2 — Soft warning on entering a far-above-power zone.** Because travel is mostly `OPEN`, a low-power player can wander into an ENDGAME zone. Should the World Map UI show an "are you sure?" confirmation keyed on `difficulty_band` vs the player's build/core levels? *Owner: World Map UI / playtest.*
 - **OQ-ZWM-3 — Fast-travel between ACCESSIBLE/CLEARED zones.** Jump directly vs. walk the overworld. Moot in MVP (1 zone). *Owner: Overworld Navigation, Vertical Slice.*
 - **OQ-ZWM-4 — Post-clear escalation.** Should a CLEARED zone's spawn table or difficulty shift (harder post-boss variants)? Interacts with Encounter Zone. *Owner: Encounter Zone, deferred to Vertical Slice+.*
+- **OQ-ZWM-5 — Encounter Zone gate-check push/pull model.** Rule 8 describes this system pushing `win_count + boss_progress` into Encounter Zone's gate-check. Encounter Zone's own interactions table currently implies a pull model (EZ reads from Exploration Progress). No observable difference in MVP (1 zone, 1 call site). Reconcile as a light erratum on Encounter Zone's interactions table before Vertical Slice authoring adds a second call site. *Owner: Encounter Zone + this system, at Vertical Slice.*

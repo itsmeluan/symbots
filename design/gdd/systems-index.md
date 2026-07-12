@@ -40,7 +40,7 @@ designed first.
 | 10 | Enemy AI System | Gameplay | MVP | Approved (2026-07-12, **2nd full-panel /design-review** reopened the 1st-pass approval — NEEDS REVISION → 5 blockers fixed & fix-confirmed same session. Two spec-wrong gaps in the flagship fix: B1 df1_preview += MOVE-F1 power-tier; B2 kill-securing invariant += STATUS_BASE_VALUE coeff, SBV range 2.0→1.5. +RNG int-seed contract, AC-EAI-04 split, GDScript AC traps. 18→19 ACs) | design/gdd/enemy-ai.md | Turn-Based Combat, Enemy Database |
 | 10b | Symbot Core Progression (Leveling) | Gameplay | MVP | Not Started | — | Symbot Assembly, Part Database, Turn-Based Combat |
 | 11 | Inventory System | Economy | MVP | Approved (2026-07-12, full-panel /design-review — NEEDS REVISION → 5 surgical blockers fixed same session: `next_instance_id` counter persisted (EC-INV-07 save/load), `instance_id` retyped plain int, INV-1 negative-qty/retune-down guards (EC-INV-11), Scrap-add `{accepted,rejected}` contract, OQ-INV-1 tier-refund LOCKED 0%. CD approve-on-fix-confirmation) | design/gdd/inventory.md | Part Database |
-| 12 | Zone & World Map System | World | MVP | Designed (2026-07-12, lean; pending fresh-session /design-review) | design/gdd/zone-world-map.md | Encounter Zone |
+| 12 | Zone & World Map System | World | MVP | Approved (2026-07-12, full-panel /design-review — NEEDS REVISION → 8 blockers fixed same session: ZWM-F1 boss_progress scope, missing-key EC-ZWM-12/AC-ZWM-19, zone_states_changed diff payload, LOCKED-origin outbound travel EC-ZWM-05/AC-ZWM-20, AC-ZWM-11 concrete fixture, AC-ZWM-17/18 signal contract, AC-ZWM-05 fixture gap. 15→20 ACs / 11→12 ECs) | design/gdd/zone-world-map.md | Encounter Zone |
 | 13 | World Loot System (inferred) | World | MVP | Not Started | — | Part Database, Zone & World Map |
 | 14 | Exploration Progress System (inferred) | World | MVP | Not Started | — | Zone & World Map |
 | 15 | Workshop System | Economy | MVP | Not Started | — | Symbot Assembly, Inventory |
@@ -212,8 +212,8 @@ layered structure. Part Database sits at the root with no cycles back from depen
 | Total systems identified | 34 |
 | Design docs started | 15 |
 | Design docs reviewed | 14 |
-| Design docs approved | 14 |
-| MVP systems designed | 15 / 24 |
+| Design docs approved | 15 |
+| MVP systems designed | 16 / 24 |
 | Vertical Slice systems designed | 0 / 3 |
 | Alpha systems designed | 0 / 3 |
 | Full Vision systems designed | 0 / 2 |
