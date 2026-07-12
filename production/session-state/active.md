@@ -302,9 +302,19 @@ Ran full 5-agent adversarial sweep (game-designer + systems-designer + qa-lead +
 
 <!-- STATUS -->
 Epic: MVP Foundation GDDs
-Feature: Enemy AI System (#10) — /design-system COMPLETE → Designed (pending fresh-session /design-review)
-Task: Next — /clear then /design-review design/gdd/enemy-ai.md (fresh session). On approval apply 2 errata (TBC un-defer AC-TBC-INT-02; Enemy DB un-block AC-ED-01d via has_profile). Then #11 Inventory or set OQ-DS-7
+Feature: Enemy AI System (#10) — APPROVED 2026-07-12 (full-panel /design-review; NEEDS REVISION → fixed same session). Next: Inventory System (#11)
+Task: /design-system inventory (#11) IN PROGRESS (lean). Skeleton created design/gdd/inventory.md. Section A Overview WRITTEN (parts=instances/no-stack, consumables=stackable/max_stack, Scrap balance, workbench-not-trophy anti-pillar). Owns EC-CD-12 overflow + un-blocks AC-CD-23/OQ-CD-5. Next: Section B Player Fantasy.
 <!-- /STATUS -->
+
+## Enemy AI System (#10) — APPROVED (2026-07-12, full-panel /design-review)
+- **Verdict**: NEEDS REVISION → 5 blockers + 6 recommended applied same session (CD commit-to-Approve on fix-confirmation, no re-review). 5 specialists (game-designer/systems-designer/ai-programmer/qa-lead + creative-director).
+- **Key change — TACTICAL w_lethal 1.0→5.0**: kill-securing invariant `w_lethal ≥ w_type+w_stat` (every profile now takes a securable kill). Old 1.0 was a Pillar-2 harvest exploit (bait low Structure → farm Part-Break) + contradicted "goes for the kill" fantasy. Example B: TACTICAL now picks X kill (6.0>4.905). Example C reworked → non-lethal reapplication-discount PICK-FLIP at H_cur=80 (Yn neutral+SHOCK; df1_Yn=25). All python3-verified.
+- **H_cur normalization KEPT** (not max_structure) — saturation documented outcome-neutral (EC-EAI-10): saturated ⟺ lethal ⟺ kills either way.
+- **+4 ACs (14→18)**: AC-15 DF-1 single-call spy, AC-16 unit no-cost-filter, AC-17 duplicate phase_threshold content-val, AC-18 TACTICAL≥1 status move. Rule 2 data-driven profile storage (ai_profiles Resource/.tres). 16 BLOCKING/1 ADV/1 DEFERRED.
+- **Errata APPLIED**: TBC AC-TBC-INT-02 un-deferred + Enemy AI downstream rows → Approved; Enemy DB AC-ED-01(d) un-blocked via has_profile + ED4 discharged. Registry AI_PROFILE_WEIGHTS (TACTICAL→5.0) + EAI-1 synced, YAML valid. systems-index #10→Approved, reviewed/approved 12→13. Review log created.
+- **Deferred/nice-to-have**: profile-identity legibility → Combat UI GDD; Part-Break→max_structure/phase-threshold interaction → log for TBC/Part-Break; OQ-EAI-3 feel watch (phase menace, TACTICAL setup feel) at playtest.
+
+## Enemy AI System (#10) — /design-system IN PROGRESS (2026-07-12, lean) [superseded — see APPROVED block above]
 
 ## Enemy AI System (#10) — /design-system IN PROGRESS (2026-07-12, lean)
 - **Decisions locked**: scored-heuristic AI (not priority-list/random). 3 profiles: AGGRESSIVE (damage-max) / TACTICAL (type+status exploiter) / OPPORTUNIST (lethal-spike closer). Stateless core + optional per-profile phase_threshold (Structure-% swap to phase_profile). 4 scoring factors: damage/type/status/lethal. request_move(battle_state) at enemy ACTION_PENDING, returns 1 legal move, deterministic w/ injected seed. Player has no break regions → no enemy sub-target. Type effectiveness = move element vs player Core-slot element (DF-1/Part DB Rule 6 triangle Volt>Thermal>Kinetic).

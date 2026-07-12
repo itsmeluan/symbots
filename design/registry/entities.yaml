@@ -845,10 +845,12 @@ formulas:
       no epsilon, no python3 scan (the only floor() is inside the DF-1 preview call, already registered/scanned). df1_preview
       reuses DF-1 (crit_mult=1.0, no MOVE-F1 tier). Deterministic pure function of (battle_state, profile, seed); injected
       seeded RNG only, never global randf(). Discharges TBC AC-TBC-INT-02 + Enemy DB ED4. Worked examples python3-verified
-      2026-07-12 (df1_X=53 from 70^2/92, df1_Y=38 from 40^2/62*1.5). Example C corrected during authoring (SHOCK-active
-      TACTICAL still picks Y at 2.91 vs 2.0, not X)."
+      2026-07-12 (df1_X=53 from 70^2/92, df1_Y=38 from 40^2/62*1.5, df1_Yn=25 from 40^2/62*1.0). /design-review 2026-07-12
+      raised TACTICAL w_lethal 1.0->5.0 (kill-securing invariant): Example B TACTICAL now takes the kill (X=6.0 > Y=4.905);
+      Example C reworked to a non-lethal reapplication-discount PICK-FLIP at H_cur=80 (Yn neutral+SHOCK: no-discount picks
+      Yn=2.3125 > X=0.6625; SHOCK-active discount flips to X=0.6625 > Yn=0.3125)."
     added: 2026-07-12
-    revised: ""
+    revised: "2026-07-12 (/design-review: TACTICAL w_lethal 1.0->5.0; Example B/C re-derived, python3-verified)"
 
 # Example:
 #
@@ -1266,15 +1268,19 @@ constants:
     referenced_by:
       - design/gdd/enemy-ai.md               # EAI-1 / Rule 5 profile presets
       - design/gdd/enemy-database.md          # ai_profile field resolves to one of these keys
-    value: "{AGGRESSIVE: [3.0, 0.2, 0.0, 1.0], TACTICAL: [1.0, 2.0, 2.0, 1.0], OPPORTUNIST: [2.0, 0.5, 0.0, 4.0]}"
+    value: "{AGGRESSIVE: [3.0, 0.2, 0.0, 1.0], TACTICAL: [1.0, 2.0, 2.0, 5.0], OPPORTUNIST: [2.0, 0.5, 0.0, 4.0]}"
     unit: (w_dmg, w_type, w_stat, w_lethal) weight vector per ai_profile, consumed by EAI-1
     notes: "The three MVP Enemy AI profiles. AGGRESSIVE = damage-max bruiser (default fallback for unknown ai_profile).
-      TACTICAL = type+status exploiter. OPPORTUNIST = lethal-spike closer (w_lethal 4.0 must exceed its max non-lethal
-      score 2.5 or it stops securing kills). Enemy DB validates ai_profile against these keys via EnemyAI.has_profile(id).
-      Optional per-profile phase_threshold (Structure fraction, strict <) swaps to a phase_profile. First-pass values —
-      felt difference is the #1 playtest tuning watch (OQ-EAI-3)."
+      TACTICAL = type+status exploiter that still finishes. OPPORTUNIST = lethal-spike closer. KILL-SECURING INVARIANT:
+      w_lethal >= w_type + w_stat for every profile, else it silently walks past lethal moves. AGGRESSIVE (1.0>=0.2)
+      and OPPORTUNIST (4.0>=0.5) clear it; TACTICAL w_lethal RAISED 1.0->5.0 in the 2026-07-12 /design-review (old 1.0 <
+      4.0 violated the invariant — TACTICAL declined securable kills to set up status, a Pillar-2 harvest exploit). Data-driven:
+      authored in an ai_profiles Resource/.tres, loaded at startup (no hardcoded weights). Enemy DB validates ai_profile
+      against these keys via EnemyAI.has_profile(id). Optional per-profile phase_threshold (Structure fraction, strict <;
+      at most one per profile, AC-EAI-17) swaps to a phase_profile. TACTICAL enemies must carry >=1 status-proc move
+      (AC-EAI-18) or w_stat is dead weight. Felt difference is the #1 playtest tuning watch (OQ-EAI-3)."
     added: 2026-07-12
-    revised: ""
+    revised: "2026-07-12 (/design-review: TACTICAL w_lethal 1.0->5.0, kill-securing invariant)"
 
 # Example:
 #

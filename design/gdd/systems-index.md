@@ -37,7 +37,7 @@ designed first.
 | 7 | Encounter Zone System | World | MVP | Approved (2026-07-12, 3rd-round confirmation re-review — zero blocking; one minor revision EC-EZ-12/AC-EZ-58 + 2 converged recommendations applied same session) | design/gdd/encounter-zone.md | Enemy Database |
 | 8 | Drop System | Economy | MVP | Approved (2026-07-11, re-review punch-list applied) | design/gdd/drop-system.md | Part Database, Enemy Database |
 | 9 | Part-Break System | Gameplay | MVP | Approved (2026-07-11, fix-confirmation re-review — 3 surgical fixes applied) | design/gdd/part-break.md | Turn-Based Combat, Drop System |
-| 10 | Enemy AI System | Gameplay | MVP | Designed (2026-07-12, pending fresh-session /design-review) | design/gdd/enemy-ai.md | Turn-Based Combat, Enemy Database |
+| 10 | Enemy AI System | Gameplay | MVP | Approved (2026-07-12, full-panel /design-review — NEEDS REVISION → 5 blockers + recommended applied same session; TACTICAL w_lethal 1.0→5.0 kill-securing invariant; 14→18 ACs) | design/gdd/enemy-ai.md | Turn-Based Combat, Enemy Database |
 | 11 | Inventory System | Economy | MVP | Not Started | — | Part Database |
 | 12 | Zone & World Map System | World | MVP | Not Started | — | Encounter Zone |
 | 13 | World Loot System (inferred) | World | MVP | Not Started | — | Part Database, Zone & World Map |
@@ -205,8 +205,8 @@ layered structure. Part Database sits at the root with no cycles back from depen
 |--------|-------|
 | Total systems identified | 32 |
 | Design docs started | 13 |
-| Design docs reviewed | 12 |
-| Design docs approved | 12 |
+| Design docs reviewed | 13 |
+| Design docs approved | 13 |
 | MVP systems designed | 13 / 23 |
 | Vertical Slice systems designed | 0 / 3 |
 | Alpha systems designed | 0 / 3 |
