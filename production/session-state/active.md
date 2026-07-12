@@ -229,12 +229,22 @@ Ran full 5-agent adversarial sweep (game-designer + systems-designer + qa-lead +
 - AC-EZ-25 ADVISORY→BLOCKING (+regate=0/≥first guards); AC-EZ-40 split 40a(BLOCKING now)/40b(DEFERRED); AC discriminator fixes (03/04/15/35/39/52) + new 53(FULL_REGATE)/55(wins-only). 1.3×/1.6× text fixed; EZ-2 pre-filter+sentinel noted. **52→56 ACs** (36 BLOCKING/11 ADV/9 DEFERRED).
 - Routed OUT (not this read-only layer's job): OQ-EZ-6 (spatial tile/boss contract→Zone&Map), OQ-EZ-7 (enemy-terrain discovery→World Map UI), OQ-EZ-8 (inter-encounter HP recovery→TBC).
 - **Tracking done**: GDD header→Reviewed/revised; systems-index #7 row + Last-Updated updated; review-log CREATED (design/gdd/reviews/encounter-zone-review-log.md). grep sweep = consistent.
-- **User chose: RE-REVIEW in a new session.** → `/clear` then `/design-review design/gdd/encounter-zone.md` (validate WAVE-cut consistency, shared-counter dual gate, Rule 2a/8a, renumbered AC coverage) BEFORE marking Approved.
+- **User chose: RE-REVIEW in a new session.** → done 2026-07-12 (see below).
+
+## Encounter Zone (#7) — 2nd-round RE-REVIEW DONE, punch-list APPLIED (2026-07-12)
+- **Verdict**: NEEDS REVISION (2nd round, fresh-session full panel: game/systems/economy/level + qa-lead + CD). All 4 prior blockers confirmed correctly fixed. **3 new blockers + 2 recommended — ALL applied same session** (user chose all 3 recommended fix options via AskUserQuestion).
+- **B1 — LIGHTER_REGATE was silently broken** (economy + systems, independent): never-resetting shared counter is already ≥6 at defeat, so re-gate (2/3) was permanently met → collapsed into ALWAYS_OPEN. **FIX: delta re-gate** `win_count − wins_at_last_defeat >= regate_params.required_wins`; per-boss `wins_at_last_defeat` snapshot taken on each defeat (Rule 9/8a + Exploration Progress storage). AC-EZ-21/22/23 rewritten; **AC-EZ-22 = central discriminator** (boss re-locks at moment of defeat). DEFEATED now a real resting state.
+- **B2 — Rule 2a/AC-EZ-54B unenforceable** (4 of 5 specialists): no schema field for "farmable" host. **FIX: `is_farmable_target: bool` added to SpawnEntry** (authoring signal, no Enemy DB errata). AC-EZ-54 gains A2 (identity-enemy 10% weight floor, closes token-exclusive loophole).
+- **B3 — Boss-1 bypass / simultaneous dual-unlock** (game + level): **FIX: `gate_params.requires_defeated`** — Boss 2 needs win_count≥10 AND Boss 1 defeated_once (Rule 8). New AC-EZ-56; Rule 7/8a/11 + AC-EZ-19/20/49 updated.
+- **Recommended**: EC-EZ-07 citation → AC-EZ-35 added (systems+qa); new **AC-EZ-57** zone-level spawn_enabled + EC-EZ-10 re-cite; gate-eval timing → battle_ended/approach (Rule 8); DENSE tuning flagged provisional on OQ-EZ-8; Tuning Knob warning 4 (required_wins × density); AC-EZ-49 tilde hardened (Boss2−Boss1≥3); UI Req 3 sequencing + wins-only feedback.
+- **56 → 58 ACs** (38 BLOCKING / 11 ADV / 9 DEFERRED). grep sweep = consistent.
+- **Tracking done**: GDD header→2nd-round revised (Last Updated 2026-07-12); systems-index #7 row + header updated; review-log 2026-07-12 entry appended.
+- **User chose: CONFIRMATION RE-REVIEW in a new session.** → `/clear` then `/design-review design/gdd/encounter-zone.md` (validate delta-counter semantics, sequencing precondition, is_farmable_target, AC-EZ-21/22/23/56/57) BEFORE marking Approved.
 
 <!-- STATUS -->
 Epic: MVP Core GDDs
-Feature: Encounter Zone (#7) — revised, pending fresh-session RE-REVIEW
-Task: /clear then /design-review design/gdd/encounter-zone.md (re-review); then #10 Enemy AI or #11 Inventory
+Feature: Encounter Zone (#7) — 2nd-round revised, pending fresh-session CONFIRMATION re-review
+Task: /clear then /design-review design/gdd/encounter-zone.md (confirm delta re-gate + sequencing + is_farmable_target); then #10 Enemy AI or #11 Inventory
 <!-- /STATUS -->
 
 <!-- CONSISTENCY-CHECK: 2026-07-11 | GDDs checked: 9 | Conflicts found: 0 (1 stale registry note synced: N_PROTO_PITY calibration) | Drop-owned constants N_PROTO_PITY/M_BOSS_PITY/MULTIPLIER_FLOOR all consistent across Part DB + Enemy DB -->
