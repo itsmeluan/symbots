@@ -37,7 +37,7 @@ designed first.
 | 7 | Encounter Zone System | World | MVP | Approved (2026-07-12, 3rd-round confirmation re-review — zero blocking; one minor revision EC-EZ-12/AC-EZ-58 + 2 converged recommendations applied same session) | design/gdd/encounter-zone.md | Enemy Database |
 | 8 | Drop System | Economy | MVP | Approved (2026-07-11, re-review punch-list applied) | design/gdd/drop-system.md | Part Database, Enemy Database |
 | 9 | Part-Break System | Gameplay | MVP | Approved (2026-07-11, fix-confirmation re-review — 3 surgical fixes applied) | design/gdd/part-break.md | Turn-Based Combat, Drop System |
-| 10 | Enemy AI System | Gameplay | MVP | Approved (2026-07-12, full-panel /design-review — NEEDS REVISION → 5 blockers + recommended applied same session; TACTICAL w_lethal 1.0→5.0 kill-securing invariant; 14→18 ACs) | design/gdd/enemy-ai.md | Turn-Based Combat, Enemy Database |
+| 10 | Enemy AI System | Gameplay | MVP | Approved (2026-07-12, **2nd full-panel /design-review** reopened the 1st-pass approval — NEEDS REVISION → 5 blockers fixed & fix-confirmed same session. Two spec-wrong gaps in the flagship fix: B1 df1_preview += MOVE-F1 power-tier; B2 kill-securing invariant += STATUS_BASE_VALUE coeff, SBV range 2.0→1.5. +RNG int-seed contract, AC-EAI-04 split, GDScript AC traps. 18→19 ACs) | design/gdd/enemy-ai.md | Turn-Based Combat, Enemy Database |
 | 11 | Inventory System | Economy | MVP | Designed (2026-07-12, /design-system lean — pending fresh-session /design-review) | design/gdd/inventory.md | Part Database |
 | 12 | Zone & World Map System | World | MVP | Not Started | — | Encounter Zone |
 | 13 | World Loot System (inferred) | World | MVP | Not Started | — | Part Database, Zone & World Map |

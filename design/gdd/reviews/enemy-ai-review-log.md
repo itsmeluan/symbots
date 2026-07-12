@@ -1,5 +1,21 @@
 # Enemy AI System — Review Log
 
+## Review — 2026-07-12 (2nd, fresh session) — Verdict: NEEDS REVISION → APPROVED (fixed & fix-confirmed same session)
+Scope signal: S (surgical)
+Specialists: game-designer, systems-designer, ai-programmer, qa-lead, creative-director (senior)
+Blocking items: 5 | Recommended: many (1 folded, rest carry-forward)
+Summary: Fresh-session re-review **reopened the 1st-pass approval** — the adversarial panel found two confirmed *spec-wrong* gaps in the flagship kill-securing fix itself, both verifiable against source docs that existed at the time of the 1st approval. **(B1)** `df1_preview` previewed DF-1 alone, skipping **MOVE-F1** (the power-tier multiply TBC applies) — so the kill-securing invariant silently failed for any non-STANDARD move: TACTICAL would decline a SIGNATURE/HEAVY kill that was under-previewed by up to 40%. Fixed: `df1_preview = floor(DF-1 × power_mult + ε)`, range [1,225]→[1,315]; new Example D + AC-EAI-19 pin a HEAVY-tier (×1.20, 53→63) lethal-flip at H_cur=60. Both flagged findings were **independently verified by the main reviewer** (MOVE-F1 against move-database.md; the invariant math via python3). **(B2)** The invariant `w_lethal ≥ w_type + w_stat` holds only at STATUS_BASE_VALUE=1.0; corrected to `w_lethal ≥ w_type + w_stat · STATUS_BASE_VALUE` and the SBV safe range narrowed [0.5,2.0]→[0.5,1.5] (SBV>1.5 re-opened the exact Pillar-2 harvest exploit). Main reviewer corrected the systems-designer's derived ceiling (1.25→**1.5** — type_factor is not scaled by SBV). Three further blockers were GDScript-specific: **(B3)** RNG contract bound to an injected int seed + fresh per-call RandomNumberGenerator (was ambiguous "injected RNG"; Godot RNG algo changed 4.4–4.6); AC-EAI-06 now mandates pre-computed hard-coded seeds. **(B4)** AC-EAI-04 split into 4 independent guard sub-cases (conflated A=0/H_cur=1; energy path + A+D=0 divide were untested). **(B5)** AC-EAI-09 float phase-division (int/int truncated to 0, boundary test fired vacuously); AC-EAI-12 mandatory write-intercepting mock (shallow duplicate() shared nested Array refs).
+
+CD synthesis: flagship kill-securing *decision* was right; its *specification* was incomplete on three counts (preview composition, invariant coefficient, and enforcement). Verdict NEEDS REVISION with commit-to-Approve on fix-confirmation. game-designer's two BLOCKING items (Player-Fantasy-overstates-adaptivity; invariant-flattens-harvest-tension) downgraded to RECOMMENDED prose — the kill-seeking decision *relocates* rather than removes Pillar-2 tension (to Part-Break/heal/escape timing). Of ~24 claimed-serious items across the panel, 5 were real blockers, and two of those were load-bearing (confirmed against source).
+
+ACs: 18 → 19 (17 BLOCKING [14 Unit + 3 Content-Validation] / 1 ADVISORY / 1 DEFERRED). +AC-EAI-19 (MOVE-F1 lethal-flip). Registry synced (EAI-1 df1_preview [1,315] + MOVE-F1 composition + int-seed RNG; STATUS_BASE_VALUE range 0.5-1.5; AI_PROFILE_WEIGHTS invariant; MOVE-F1↔enemy-ai cross-refs), YAML validated. All 5 worked examples python3-verified.
+
+Recommended, deferred (not applied this pass — user chose blockers-only): standing content-validation AC enforcing the invariant for ALL profiles (carry-forward 6, CD strongly endorsed — auto-catches B1/B2-class regressions); harvest-tension trade-off paragraph; Player-Fantasy honesty pass; per-status status_factor (OQ-EAI-1); OPPORTUNIST/AGGRESSIVE mid-fight differentiation; phase-shift legibility interface contract for Combat UI (VA-2 binding for bosses).
+
+Prior verdict resolved: Yes — superseded the 1st-pass 2026-07-12 "Approved" (which shipped a silently-failing invariant).
+
+---
+
 ## Review — 2026-07-12 — Verdict: APPROVED (NEEDS REVISION → fixed same session)
 Scope signal: M
 Specialists: game-designer, systems-designer, ai-programmer, qa-lead, creative-director (senior)

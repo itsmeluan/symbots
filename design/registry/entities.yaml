@@ -533,6 +533,7 @@ formulas:
       - design/gdd/move-database.md
       - design/gdd/turn-based-combat.md
       - design/gdd/part-break.md             # move_damage (MOVE-F1 output via TBC-F5) is the input to PB-F1/F2/F3
+      - design/gdd/enemy-ai.md               # EAI-1 df1_preview composes MOVE-F1 over DF-1 (damage/lethal factors)
     variables:
       - df1_output (DF-1 output, 1-225 — DF-1's own range unchanged)
       - power_mult (from power_tier enum: BASIC 0.70, LIGHT 0.80, STANDARD 1.00, HEAVY 1.20, SIGNATURE 1.40)
@@ -832,25 +833,31 @@ formulas:
       - design/gdd/enemy-ai.md
       - design/gdd/turn-based-combat.md      # request_move(battle_state) at enemy ACTION_PENDING (discharges AC-TBC-INT-02)
       - design/gdd/enemy-database.md          # ai_profile resolves to the profile weights this formula consumes
+      - design/gdd/move-database.md           # df1_preview composes MOVE-F1 (power_tier -> power_mult) over DF-1
     variables:
       - "m (candidate move from enemy skills, 2-4)"
       - "w_dmg / w_type / w_stat / w_lethal (float >= 0, profile weights from AI_PROFILE_WEIGHTS)"
       - "damage_factor (float [0,1] = clamp(df1_preview / current_structure, 0, 1))"
       - "type_factor (float {-0.5, 0.0, 1.0} from T {0.75,1.0,1.5})"
-      - "status_factor (float {0.0, 1.0}; 0 if no proc or status already active; else STATUS_BASE_VALUE)"
+      - "status_factor (float {0.0, STATUS_BASE_VALUE}; 0 if no proc or status already active; else STATUS_BASE_VALUE)"
       - "lethal_factor (int {0,1}; 1 if df1_preview >= current_structure)"
+      - "df1_preview (int [1,315] = MOVE-F1(DF-1(...)) = max(1, floor(df1_raw * power_mult + EPSILON)); df1_raw in [1,225])"
     output_range: "score(m): float, unbounded above, min -0.5*w_type; selection = argmax, seeded-RNG tiebreak then lowest index"
     expression: "score(m) = w_dmg*damage_factor + w_type*type_factor + w_stat*status_factor + w_lethal*lethal_factor"
     notes: "Enemy move-selection heuristic. Pure weighted sum + clamp + discrete lookups — NO floor/ceil in EAI-1 itself,
-      no epsilon, no python3 scan (the only floor() is inside the DF-1 preview call, already registered/scanned). df1_preview
-      reuses DF-1 (crit_mult=1.0, no MOVE-F1 tier). Deterministic pure function of (battle_state, profile, seed); injected
-      seeded RNG only, never global randf(). Discharges TBC AC-TBC-INT-02 + Enemy DB ED4. Worked examples python3-verified
-      2026-07-12 (df1_X=53 from 70^2/92, df1_Y=38 from 40^2/62*1.5, df1_Yn=25 from 40^2/62*1.0). /design-review 2026-07-12
-      raised TACTICAL w_lethal 1.0->5.0 (kill-securing invariant): Example B TACTICAL now takes the kill (X=6.0 > Y=4.905);
-      Example C reworked to a non-lethal reapplication-discount PICK-FLIP at H_cur=80 (Yn neutral+SHOCK: no-discount picks
-      Yn=2.3125 > X=0.6625; SHOCK-active discount flips to X=0.6625 > Yn=0.3125)."
+      no epsilon on the scoring layer. The floor()s live inside df1_preview, which COMPOSES DF-1 (crit_mult=1.0) WITH MOVE-F1
+      (power_mult from the move's power_tier) — both epsilon load-bearing, scanned 2026-07-10; df1_preview range [1,315] (was
+      wrongly [1,225] pre-MOVE-F1). Uses effective post-SYN-F4 defense (same as the real hit). Deterministic pure function of
+      (battle_state, profile, seed); receives an injected INTEGER seed and builds a fresh RandomNumberGenerator per call
+      (randi_range on the tie), never global randf(). Discharges TBC AC-TBC-INT-02 + Enemy DB ED4. Worked examples
+      python3-verified 2026-07-12 (df1_X=53, df1_Y=38, df1_Yn=25; all STANDARD tier so df1_preview=df1_raw). 2nd /design-review
+      2026-07-12 (fresh session) reopened the 1st-pass approval and fixed two spec-wrong gaps in the flagship fix: B1 df1_preview
+      now applies MOVE-F1 (else kill-securing failed for non-STANDARD tiers — new Example D + AC-EAI-19 pin the HEAVY-tier
+      lethal flip, Z x1.20: 53->63 floor, TACTICAL takes kill Z=6.0 > Y=4.633 at H_cur=60); B2 kill-securing invariant corrected
+      to w_lethal >= w_type + w_stat*STATUS_BASE_VALUE (see AI_PROFILE_WEIGHTS/STATUS_BASE_VALUE). 1st-pass retained: TACTICAL
+      w_lethal 1.0->5.0; Example B kill (X=6.0>Y=4.905); Example C non-lethal reapplication-discount PICK-FLIP at H_cur=80."
     added: 2026-07-12
-    revised: "2026-07-12 (/design-review: TACTICAL w_lethal 1.0->5.0; Example B/C re-derived, python3-verified)"
+    revised: "2026-07-12 (2nd /design-review: B1 df1_preview += MOVE-F1 [range 1->315]; B2 invariant += STATUS_BASE_VALUE coeff; RNG = injected int seed + fresh per-call RNG; +AC-EAI-19)"
 
   - name: INV-1
     status: active
@@ -1278,10 +1285,13 @@ constants:
     value: 1.0
     unit: base score value for an Enemy AI applying a new status (Burn/Shock/Stagger)
     notes: "EAI-1c. Discounted to 0.0 if the target already carries that status (reapplication wasteful). Effective status
-      pull = STATUS_BASE_VALUE * w_stat (the profile's status weight) — tune this OR w_stat, not both. Safe range 0.5-2.0.
-      MVP treats all three statuses as equal value; per-status differentiation is post-MVP (OQ-EAI-1)."
+      pull = STATUS_BASE_VALUE * w_stat (the profile's status weight) — tune this OR w_stat, not both. Safe range 0.5-1.5
+      (NARROWED from 0.5-2.0 in the 2nd 2026-07-12 /design-review, B2 fix): above 1.5 the TACTICAL kill-securing invariant
+      w_lethal >= w_type + w_stat*STATUS_BASE_VALUE breaks (5.0 < 2.0 + 2.0*1.75) and the Pillar-2 harvest exploit re-opens.
+      0.0 is a global kill-switch (zeroes status scoring for every profile), NOT a low tune. MVP treats all three statuses
+      as equal value; per-status differentiation is post-MVP (OQ-EAI-1)."
     added: 2026-07-12
-    revised: ""
+    revised: "2026-07-12 (2nd /design-review B2: safe range 0.5-2.0 -> 0.5-1.5; it is a coefficient in the kill-securing invariant)"
 
   - name: AI_PROFILE_WEIGHTS
     status: active
@@ -1292,14 +1302,18 @@ constants:
     value: "{AGGRESSIVE: [3.0, 0.2, 0.0, 1.0], TACTICAL: [1.0, 2.0, 2.0, 5.0], OPPORTUNIST: [2.0, 0.5, 0.0, 4.0]}"
     unit: (w_dmg, w_type, w_stat, w_lethal) weight vector per ai_profile, consumed by EAI-1
     notes: "The three MVP Enemy AI profiles. AGGRESSIVE = damage-max bruiser (default fallback for unknown ai_profile).
-      TACTICAL = type+status exploiter that still finishes. OPPORTUNIST = lethal-spike closer. KILL-SECURING INVARIANT:
-      w_lethal >= w_type + w_stat for every profile, else it silently walks past lethal moves. AGGRESSIVE (1.0>=0.2)
-      and OPPORTUNIST (4.0>=0.5) clear it; TACTICAL w_lethal RAISED 1.0->5.0 in the 2026-07-12 /design-review (old 1.0 <
-      4.0 violated the invariant — TACTICAL declined securable kills to set up status, a Pillar-2 harvest exploit). Data-driven:
-      authored in an ai_profiles Resource/.tres, loaded at startup (no hardcoded weights). Enemy DB validates ai_profile
-      against these keys via EnemyAI.has_profile(id). Optional per-profile phase_threshold (Structure fraction, strict <;
-      at most one per profile, AC-EAI-17) swaps to a phase_profile. TACTICAL enemies must carry >=1 status-proc move
-      (AC-EAI-18) or w_stat is dead weight. Felt difference is the #1 playtest tuning watch (OQ-EAI-3)."
+      TACTICAL = type+status exploiter that still finishes. OPPORTUNIST = lethal-spike closer. KILL-SECURING INVARIANT
+      (CORRECTED, 2nd 2026-07-12 /design-review B2): w_lethal >= w_type + w_stat*STATUS_BASE_VALUE for every profile, else it
+      silently walks past lethal moves. The STATUS_BASE_VALUE coefficient was MISSING from the 1st-pass invariant (w_lethal >=
+      w_type + w_stat) — that simplified form only holds at STATUS_BASE_VALUE=1.0 and looked satisfied at the old 2.0 ceiling
+      when it actually fails. AGGRESSIVE (1.0>=0.2) and OPPORTUNIST (4.0>=0.5) clear it at any STATUS_BASE_VALUE (both w_stat=0);
+      TACTICAL clears it only while STATUS_BASE_VALUE <= (w_lethal-w_type)/w_stat = 1.5 (hence the STATUS_BASE_VALUE cap 0.5-1.5).
+      TACTICAL w_lethal RAISED 1.0->5.0 in the 1st 2026-07-12 review (old 1.0 declined securable kills, a Pillar-2 harvest
+      exploit). Data-driven: authored in an ai_profiles Resource/.tres, loaded at startup (no hardcoded weights). Enemy DB
+      validates ai_profile against these keys via EnemyAI.has_profile(id). Optional per-profile phase_threshold (Structure
+      fraction, strict <; at most one per profile, AC-EAI-17) swaps to a phase_profile. TACTICAL enemies must carry >=1
+      status-proc move (AC-EAI-18) or w_stat is dead weight. RECOMMENDED follow-up: a standing content-validation AC asserting
+      this invariant for ALL profiles (would auto-catch B1/B2-class regressions). Felt difference is the #1 playtest watch (OQ-EAI-3)."
     added: 2026-07-12
     revised: "2026-07-12 (/design-review: TACTICAL w_lethal 1.0->5.0, kill-securing invariant)"
 
