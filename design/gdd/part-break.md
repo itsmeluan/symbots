@@ -72,7 +72,7 @@ Part-Break has **no state machine of its own** — it is a passive accumulator h
 
 | System | Direction | Interface |
 |--------|-----------|-----------|
-| **Turn-Based Combat** | ← subscribes / ↔ writes | Subscribes to `hit_resolved(move, damage, target)`; initializes region pools from Enemy DB at `BATTLE_INIT`; applies region-pool reductions; writes `<region>_broken` / `all_boss_parts_broken` into TBC's `fired_break_events` set. **Requires TBC erratum** for target-routed damage application (Rule 4), the 20% spillover, `break_bias` multipliers, and the enrage damage modifier (Rule 7) |
+| **Turn-Based Combat** | ← subscribes / ↔ writes | Subscribes to `hit_resolved(move, damage, target, sub_target)` (**4-arg — widened by the TBC erratum 2026-07-11**; Part-Break reads `sub_target` to identify the region vs. STRUCTURE route); initializes region pools from Enemy DB at `BATTLE_INIT`; applies region-pool reductions; writes `<region>_broken` / `all_boss_parts_broken` into TBC's `fired_break_events` set. **TBC erratum applied** (Approved 2026-07-11) for target-routed damage application (Rule 4), the 20% spillover, `break_bias` multipliers, and the enrage damage modifier (Rule 7) |
 | **Enemy Database** | ← reads | `break_regions` (region ids/keys) and each region's `EDB-1`-derived `break_hp`; the enemy defense stat (consumed via TBC/DF-1) |
 | **Move Database** | ← reads | `break_bias` per move — **requires Move DB erratum** to add the field + the `BREAK_BIAS_MULTIPLIERS` table |
 | **Damage Formula** | ← indirect | Region damage is DF-1 output (via TBC Rule 10) before the `break_mult` split — no direct call |
@@ -260,7 +260,7 @@ Applied by TBC to the **enemy's** outgoing hit (Rule 7), after the enemy's own D
 
 | System | What Part-Break reads | Status | Hard/Soft |
 |--------|----------------------|--------|-----------|
-| **Turn-Based Combat** | `hit_resolved(move, damage, target)` per-hit hook; battle lifecycle (`BATTLE_INIT` to init pools, `BATTLE_END` to discard); the `fired_break_events` set it writes into | Approved | Hard |
+| **Turn-Based Combat** | `hit_resolved(move, damage, target, sub_target)` per-hit hook (**4-arg** — `sub_target` routes STRUCTURE vs. region; widened by the TBC erratum 2026-07-11); battle lifecycle (`BATTLE_INIT` to init pools, `BATTLE_END` to discard); the `fired_break_events` set it writes into | Approved | Hard |
 | **Enemy Database** | `break_regions` (region ids + `region_fraction`) and each region's `EDB-1`-derived `break_hp` | Approved | Hard |
 | **Move Database** | `break_bias` per DAMAGE move (and reserved `target_profile`, Rule 11) | Approved | Hard (via TBC erratum) |
 | **Damage Formula** | Indirect — region damage is DF-1 output (via TBC Rule 10) before the `break_mult` split | Approved | Soft (no direct call) |

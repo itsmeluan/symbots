@@ -35,7 +35,7 @@ This fantasy is delivered downstream — the player *feels* it on the victory/lo
 
 > **Note — Boss-grade persistence floor:** The 0.001 base rate is a **deliberate persistence floor**, not a zero gate. A patient player who never fires the qualifying break can still acquire Boss-grade parts over hundreds of fights (~39% cumulative at 500 no-break fights). The qualifying break improves odds by ×500 and earns DS-3 pity progress — mastery is strongly rewarded, but not hard-required.
 
-**Rule 5 — Canonical drop-condition vocabulary (owned here per Part DB Rule 9).** The Drop System defines the closed set of condition keys. **These keys must match Part-Break's emitted event vocabulary exactly** (provisional Part-Break contract — Part-Break GDD Not Started). MVP categories:
+**Rule 5 — Canonical drop-condition vocabulary (owned here per Part DB Rule 9).** The Drop System defines the closed set of condition keys. **These keys must match Part-Break's emitted event vocabulary exactly** (**ratified contract — Part-Break Approved 2026-07-11**; Part-Break writes `<region>_broken` / `all_boss_parts_broken` into TBC's `fired_break_events` set, and those keys are exactly this list — the former "provisional, GDD Not Started" caveat is discharged). MVP categories:
 - **Break events** (from Part-Break): `<region>_broken` (e.g. `arm_broken`, `head_broken`, `core_broken`), `all_boss_parts_broken`.
 - **Finish damage type:** `defeated_by_physical`, `defeated_by_energy`; element variants `defeated_by_thermal` / `_volt` / `_kinetic`.
 - **Style/state:** `targeting_active`, `zero_defeats` (no player Symbot downed), `no_repairs_used`, `flawless` (no player Structure lost).
@@ -51,7 +51,7 @@ This is the functional teeth Enemy DB ED3-OQ7 asked for: `loot_connected` verifi
 
 **Rule 6 — Prototype gradient pity (discharges Part DB DB2).** A per-Prototype-ID **credit counter** accumulates progress toward a guaranteed drop, earning credit **proportional to how many of that part's `drop_conditions` fired** on each failed attempt. An attempt is **qualifying** if at least one of the part's conditions fired; a qualifying-but-failed attempt adds `c` credit points (where `c` = conditions fired that attempt), and the counter resets to 0 on any drop. When the counter reaches the part's threshold (`N_PROTO_PITY × C`, where `C` = the part's total condition count), the next qualifying attempt is a **guaranteed** drop. **Fully-optimal play (all conditions fired every attempt) guarantees the drop by the `(N_PROTO_PITY + 1)`th optimal attempt worst case** — credit reaches the threshold after `N_PROTO_PITY` failed attempts, and the *next* qualifying attempt is the guarantee — unchanged by this credit model; partial play (some conditions fired) still converges, just more slowly (e.g. 2-of-3 conditions → guaranteed by the 39th attempt). A **non-qualifying** attempt (none of *this part's* conditions fired) earns no credit — anti-exploit: a victory that fires none of the part's own conditions banks nothing (the enemy need not be the part's host; what matters is whether the part's conditions fired). (Exact model + calibration in Formulas.)
 
-**Rule 7 — Boss-grade deterministic floor (discharges Part DB EC-16).** A per-Boss-grade-ID counter tracks consecutive **qualifying breaks** (the required break fired, the part was eligible) that failed the drop roll. After **M** such breaks, the next qualifying break **guarantees** the Boss-grade drop. This bounds the *drop-RNG* tail only; it does **not** address repeated break *failure* — that soft-lock path is Part-Break's DB3 obligation. (Exact M in Formulas.)
+**Rule 7 — Boss-grade deterministic floor (discharges Part DB EC-16).** A per-Boss-grade-ID counter tracks consecutive **qualifying breaks** (the required break fired, the part was eligible) that failed the drop roll. After **M** such breaks, the next qualifying break **guarantees** the Boss-grade drop. This bounds the *drop-RNG* tail only. **There is no break-*failure* tail to bound: Part-Break is deterministic (Approved 2026-07-11) — a region breaks the instant its `break_hp` pool depletes (PB-F4), there is no `P(break fires)` probability and no break-failure soft-lock** (Part-Break DB3 dissolved; DAMAGE_FLOOR guarantees each hit makes progress). DS-3's counter therefore tracks only *qualifying breaks that failed the drop roll* — the break itself never fails. (Exact M in Formulas.)
 
 **Rule 8 — Drop output is a part instance.** Each successful roll instantiates a **new part instance** (HOLISM-01: parts are instances) of the part definition at initial state (`upgrade_tier = 0`) and hands it to the Inventory System. Multiple successful rolls of the same definition in one fight produce multiple instances — all kept; the player scraps later by choice. The Drop System emits instances; it does not store them.
 
@@ -82,7 +82,7 @@ The Drop System has **no runtime state machine** — resolution is a single sync
 | **Turn-Based Combat** | ← consumes | `battle_ended(VICTORY, enemy_id, fired_break_events: Set)` (Rule 12) is the sole trigger |
 | **Enemy Database** | ← reads | The enemy's **loot pool** (candidate part IDs) — resolves Enemy DB OQ-5 via Rule 2 |
 | **Part Database** | ← reads | Formula 3 + per-rarity base rates; each part's `drop_conditions`, `rarity`, `drop_enabled`; part-instance schema (Rule 8) |
-| **Part-Break System** *(Not Started)* | ↔ provisional | Break events → fired conditions (Rule 3). **Provisional contract:** Part-Break emits exactly the Rule 5 break-event keys and owns `P(break fires)` + break-failure pity (its DB3), separate from our drop-RNG pity (Rule 7) |
+| **Part-Break System** *(Approved 2026-07-11)* | ↔ ratified | Break events → fired conditions (Rule 3). **Ratified contract:** Part-Break emits exactly the Rule 5 break-event keys into TBC's `fired_break_events` set. **Break is deterministic** — there is no `P(break fires)` probability and no break-failure pity (Part-Break DB3 dissolved: pool depletion is guaranteed, DAMAGE_FLOOR ensures progress). Our **drop-RNG pity (DS-3 / Rule 7) is separate and unaffected** — it bounds only the drop roll after a qualifying break |
 | **Inventory System** *(Not Started)* | → emits | Receives new part instances (Rule 8); stores Scrap currency; hosts the player-initiated scrap action (Rule 9) |
 | **Part Upgrade / Workshop** *(Not Started)* | → feeds | Scrap is consumed by material-gated upgrading (the sink; Rule 9) |
 | **Save/Load** *(Not Started)* | ↔ persists | Pity counters (Rule 6/7) serialized across sessions |
@@ -155,7 +155,7 @@ On resolution of a QUALIFYING-BREAK battle for boss-grade part p:
       drop = guaranteed (skip roll);  break_pity_counter[p] = 0
   else:
       roll DS-1;  if drop: break_pity_counter[p] = 0  else: break_pity_counter[p] += 1
-Break did NOT fire this battle: break_pity_counter[p] unchanged (break-failure is Part-Break's DB3, not this counter).
+Break did NOT fire this battle: break_pity_counter[p] unchanged (the player simply didn't target/deplete the region — breaks are deterministic, so there is no "break failure" here; Part-Break DB3 dissolved).
 ```
 
 | Variable | Symbol | Type | Range | Description |
@@ -207,7 +207,7 @@ Both pity thresholds are calibrated to a **minimum content strength**. If conten
 | **Turn-Based Combat** | `battle_ended(VICTORY, enemy_id, fired_break_events: Set)` — the sole resolution trigger (Rule 1) | Approved | Hard |
 | **Part Database** | Formula 3 + per-rarity base rates; each part's `drop_conditions`, `rarity`, `drop_enabled`; the part-instance schema (Rule 8) | Approved | Hard |
 | **Enemy Database** | The enemy's loot pool (candidate part IDs) — Rule 2 | Approved | Hard |
-| **Part-Break System** | Break-event keys → fired conditions (Rule 3); `P(break fires)` for the full Boss-grade acquisition rate | **Not Started** | Hard (provisional contract — Rule 5/7) |
+| **Part-Break System** | Break-event keys → fired conditions (Rule 3). Break is **deterministic** — no `P(break fires)` term enters the Boss-grade acquisition math; the only randomness is the drop roll (DS-1) and its DS-3 pity | **Approved (2026-07-11)** | Hard (ratified contract — Rule 5/7) |
 
 ### Downstream (these read from Drop System)
 
@@ -223,7 +223,7 @@ Both pity thresholds are calibrated to a **minimum content strength**. If conten
 - **Turn-Based Combat** already references Drop System (Rule 12 emits `fired_break_events` "for the Drop System") ✓
 - **Part Database** already references Drop System (Downstream Dependents table; DB2/DB5; Formula 3 "evaluated by the Drop System") ✓
 - **Enemy Database** already references Drop System (OQ-4/OQ-5 deferred here; loot pools) ✓ — **this GDD resolves both** (see obligations below)
-- **Part-Break System** (Not Started) will reference Drop System when authored (provisional contract, Rule 5/7)
+- **Part-Break System** (Approved 2026-07-11) — contract ratified: Part-Break emits the Rule 5 break-event keys deterministically into TBC's `fired_break_events` set; Rule 5/7 are no longer provisional
 
 ### Upstream obligations this GDD discharges
 
@@ -409,7 +409,7 @@ All BLOCKING ACs are Logic-type automated unit tests in `tests/unit/drop_system/
 - **AD-2 — Pity persistence** (R6/R7): **promoted to the numbered gated AC-DS-28** (release-blocker). See "Gated (numbered)" above — no longer a loose deferred footnote.
 - **AD-3 — Loot-screen report** (Phase 6): *unblocks when Combat UI is designed. Note: Drop System's output list contract is now covered by AC-DS-27; this tests UI rendering.*
 - **AD-4 — Player scrap action** (R9): *unblocks when Inventory is designed.*
-- **AD-5 — Part-Break contract** (R5/R7, OQ-DS-1): validate break-event keys match exactly. *Unblocks when Part-Break is designed. Until resolved, a vocabulary mismatch between Part-Break and Rule 5 produces silent multiplier loss (EC-DS-03 behavior), not a crash.*
+- **AD-5 — Part-Break contract** (R5/R7, OQ-DS-1): validate break-event keys match exactly. **Part-Break Approved 2026-07-11 — contract ratified (deterministic break, no `P(break fires)`).** This AC is now authorable against Part-Break's emitted vocabulary; it stays *gated* only on both systems being implemented so the key-match can be integration-tested. A vocabulary mismatch still produces silent multiplier loss (EC-DS-03 behavior), not a crash — which is exactly why the key-match AC exists.*
 
 ### EC↔AC Cross-Check
 
@@ -431,7 +431,7 @@ EC-DS-01→AC-DS-05 · EC-DS-02→AC-DS-06 · EC-DS-03→AC-DS-07 · EC-DS-04→
 
 | # | Question | Owner | Impact |
 |---|----------|-------|--------|
-| OQ-DS-1 | **Part-Break contract binding.** The Rule 5 break-event vocabulary and `P(break fires)` must be ratified by the Part-Break GDD; condition keys must match this catalog exactly. | Part-Break GDD | Blocks full Boss-grade acquisition-rate math (Part DB DB3); Rule 5/7 are provisional until then |
+| OQ-DS-1 | ✅ **RESOLVED 2026-07-11.** Part-Break (Approved) ratified the contract: break is **deterministic** (no `P(break fires)` term — pool depletion guarantees the break, DB3 dissolved), and it emits `<region>_broken` / `all_boss_parts_broken` into TBC's `fired_break_events`. Rule 5/7 are no longer provisional. Boss-grade acquisition math simplifies — the only randomness is DS-1's drop roll (bounded by DS-3 pity); the break is a certainty the player controls. Residual work: the key-match validation (AD-5) is an integration test gated on both systems shipping. | Part-Break GDD | Closed |
 | OQ-DS-2 | **"Outcome fact" conditions provenance.** The non-break conditions (`defeated_by_thermal`, `zero_defeats`, `no_repairs_used`, `flawless`) need a computed source — TBC must expose them to the Drop System via the `battle_ended` payload or a companion interface. **TBC GDD needs errata** to add this interface obligation. The Drop System unit test for multiplier application is already covered (AC-DS-25, BLOCKING); what is deferred is TBC's end of the wire. | TBC GDD (errata needed) + TBC ↔ Drop interface | Rule 3 condition assembly is incomplete for non-break conditions until the interface is defined; flawless/zero-defeat style conditions can't fire |
 | OQ-DS-3 | **Designs (Alpha).** The `Design` drop type + fabrication economy (currency + materials) is reserved (Rule 11) but unspecified. | Blueprint Crafting GDD (Alpha) | None in MVP — reserved only |
 | OQ-DS-4 | **Inventory cap / batch-scrap UX.** Parts inventory is unbounded in MVP (EC-DS-09); a future cap/overflow policy and the scrap UX are Inventory's. | Inventory GDD | Low in MVP — unbounded is acceptable at 2-boss scope |

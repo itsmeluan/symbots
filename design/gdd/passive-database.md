@@ -50,7 +50,7 @@ This system's fantasy is delivered entirely through Turn-Based Combat (where pas
 
 | `trigger_category` | When it fires |
 |--------------------|--------------|
-| `ON_HIT` | The carrying Symbot's DAMAGE move lands a hit (`hit_resolved` emitted by TBC). The `scope` field narrows this: `ANY_DAMAGE` fires on any DAMAGE move; `WEAPON_ONLY` fires only on WEAPON-slot DAMAGE moves. |
+| `ON_HIT` | The carrying Symbot's DAMAGE move lands a hit (`hit_resolved(move, damage, target, sub_target)` emitted by TBC — **4-arg since the 2026-07-11 TBC erratum**). The `scope` field narrows this: `ANY_DAMAGE` fires on any DAMAGE move; `WEAPON_ONLY` fires only on WEAPON-slot DAMAGE moves. **ON_HIT riders ignore the 4th `sub_target` arg** — the seed riders (`volt_shock_on_hit`, `thermal_burn_on_weapon`, `kinetic_stagger_on_hit`) apply their status per-hit regardless of whether the hit routed to STRUCTURE or a region; `sub_target` is Part-Break's routing concern, not the rider's. |
 | `ON_TURN_START` | The start of the carrying Symbot's turn (TBC Rule 4 turn-start phase). No MVP content; listed for TBC-enum parity. |
 | `ON_BATTLE_START` | Once per battle, during TBC's BATTLE_INIT phase before the first turn |
 | `ON_OVERHEAT` | The carrying Symbot triggers Overheat — the Heat-reaches-100 transition (Part DB Formula 5). Fires **once on the transition**, not every turn spent in the OVERHEATED carry-in state. TBC fires the passive *before* applying the Overheat consequence (self-damage + skip); see Rule 2a. |

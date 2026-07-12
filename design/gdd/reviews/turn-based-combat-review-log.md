@@ -1,5 +1,17 @@
 # Review Log — Turn-Based Combat System
 
+## Review — 2026-07-11 — Verdict: NEEDS REVISION → APPROVED (fix-confirmation of the Part-Break erratum; 2 blockers fixed same session)
+Scope signal: S
+Specialists: game-designer, systems-designer, qa-lead, creative-director (senior synthesis)
+Blocking items: 2 | Recommended: 2 (of ~10 raised; CD downgraded the rest under the mature-doc directive)
+Summary: Fix-confirmation re-review of the 8 Part-Break erratum regions applied the previous session. Erratum **design confirmed correct across all 8 regions** (sub-target routing, enemy pipeline, TBC-F7, 4-arg `hit_resolved` — no residual 3-arg refs, all boundary math verified). Two AC-*integrity* defects found — guards that failed to guard, not design flaws:
+- **BLOCKING 1 — AC-TBC-INT-01c ordering fixture non-discriminating.** systems-designer AND qa-lead independently proved the fixture (enemy_raw=55, pct=21, count=1) yields 48 under BOTH orderings — floor(55×0.79)=43→floor(43×1.12)=48 vs floor(55×1.12)=61→floor(61×0.79)=48 — so an enrage-before-Stagger bug passed the only test of the ratified POST-Stagger ordering. Fixed: raw 55→50 (correct −43 vs wrong −44; verified divergent). Numeric fix (systems-designer) chosen over qa-lead's pipeline-spy — qa-lead's "structurally impossible" claim was falsified by systems-designer's working counterexample.
+- **BLOCKING 2 — AC-TBC-34 region case parenthetical.** The `sub_target == region_id` path had no required GIVEN/THEN/FAIL — a hardcoded-STRUCTURE `hit_resolved` passed. Fixed: promoted to required Fixture B (`sub_target == "left_arm"` ≠ STRUCTURE) + FAIL condition.
+- **Recommended (applied):** multiplier source-of-truth note on INT-01 umbrella (BREAK_BIAS/ENRAGE/SPILLOVER owned by Part-Break — retune → re-derive); inline EC↔AC citations for the already-broken redirect (→INT-01e) and floor-collision note (→INT-01f); TBC-F7 post-Stagger *rationale* + calibration-ownership pointer.
+Specialist disagreements adjudicated by CD: (1) INT-01c IS broken — game-designer called it "well-constructed/PASS" but did not run the wrong-order path; systems-designer + qa-lead + main reviewer confirmed the 48=48 collision. (2) Fix method = numeric (55→50), not a spy. Downgraded: enrage-calibration argument (real gap, but `ENRAGE_PER_BREAK` is Part-Break-owned → tracked on Part-Break §D, not a TBC gate); BREAK_BIAS cross-reference (maintenance hazard, not a current defect).
+No design/formula/coefficient changed; epsilon scans remain valid. Marked APPROVED — the two fixtures now demonstrably diverge, confirmable by inspection without a fresh sweep.
+Prior verdict resolved: Yes — the NEEDS REVISION (Part-Break erratum) below is fully addressed and confirmed.
+
 ## Review — 2026-07-11 — Verdict: NEEDS REVISION (Part-Break erratum) → erratum applied same session
 Scope signal: L
 Specialists: game-designer, systems-designer, qa-lead, creative-director (senior synthesis)

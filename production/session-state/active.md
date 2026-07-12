@@ -198,19 +198,33 @@ Ran full 5-agent adversarial sweep (game-designer + systems-designer + qa-lead +
 - CD adjudication: 6 of 7 ux "blockers" are Combat-UI *rendering* reqs → deferred to Pre-Production /ux-design (Part-Break owns no UI). Only VA-1 element (data) gated.
 - Tracking done: part-break.md Status → Approved; systems-index #9 → Approved + Progress Tracker 8→9 reviewed/approved; review log appended (APPROVED fix-confirmation entry). **No re-review #3.**
 
+## Session 20 — TBC fix-confirmation re-review (full, 5 agents) → NEEDS REVISION → 2 blockers fixed same session → APPROVED
+`/design-review turn-based-combat.md` ran (game-designer, systems-designer, qa-lead, creative-director synthesis). Erratum **design confirmed correct across all 8 regions** — the only findings were 2 AC-*integrity* defects (guards that failed to guard). User chose revise-now + accept-as-Approved.
+- **BLOCKING 1 — AC-TBC-INT-01c ordering fixture non-discriminating** (systems-designer + qa-lead independently; main reviewer verified): raw=55/pct=21/count=1 → 48 under BOTH orderings (floor compresses 43→48 and 61→48). The only test of the ratified POST-Stagger ordering didn't test it. **Fixed: raw 55→50** → correct −43 vs wrong −44 (divergent). Chose numeric fix over qa-lead's pipeline-spy (qa-lead's "structurally impossible" claim falsified by SD's counterexample).
+- **BLOCKING 2 — AC-TBC-34 region case parenthetical**: `sub_target==region_id` had no required FAIL; hardcoded-STRUCTURE passed. **Fixed: promoted to required Fixture B** (`sub_target=="left_arm"` ≠ STRUCTURE).
+- **Recommended applied**: INT-01 umbrella multiplier source-of-truth note (BREAK_BIAS/ENRAGE/SPILLOVER = Part-Break-owned, retune→re-derive); inline EC↔AC citations (already-broken redirect→INT-01e, floor-collision→INT-01f); TBC-F7 post-Stagger *rationale* + calibration-ownership pointer.
+- **Disagreement of record**: game-designer called INT-01c "well-constructed/PASS" — WRONG (didn't run wrong-order path). SD+QA+CD confirmed the collision. Logged.
+- **Downgraded (CD, mature-doc directive)**: enrage-calibration argument (real, but `ENRAGE_PER_BREAK` Part-Break-owned → tracked on **Part-Break §D**, not a TBC gate); BREAK_BIAS cross-ref (hazard not defect).
+- Tracking: GDD header → APPROVED; systems-index #6 → Approved + Last-Updated line; review-log appended (NEEDS REVISION→APPROVED entry). No design/formula/coefficient changed; epsilon scans valid.
+
+## Propagation / errata APPLIED (Session 20, 2026-07-11 — all four docs)
+- **✅ Passive DB** — ON_HIT trigger row (Rule 2) now shows 4-arg `hit_resolved(move,damage,target,sub_target)` + explicit note that the three seed riders IGNORE `sub_target` (Part-Break's routing concern, not the rider's).
+- **✅ Part-Break** — its own Interactions table (line 75) + upstream Dependencies table (line 263) updated 3-arg → 4-arg (game-designer Finding 6.1 closed); TBC-erratum "Requires" → "applied".
+- **✅ Move DB** — Rule 1 schema gained `break_bias` enum (default BALANCED, DAMAGE+ENEMY only) + reserved/nullable `target_profile` (Part-Break Rule 11 hook); BREAK_BIAS_MULTIPLIERS referenced (Part-Break-owned, not re-tuned); Basic Attack template = BALANCED; Part-Break downstream row → Approved + erratum-applied; bidirectionality synced.
+- **✅ Drop System** — Rule 5 (vocab) + Rule 7 (Boss-grade floor) + Interactions (line 85) + downstream dep (210) + bidirectionality (226) + AD-5 (412) + OQ-DS-1 (434, → RESOLVED): break is **deterministic**, no `P(break fires)`, no break-failure pity (Part-Break DB3 dissolved); DS-3 drop-RNG pity unaffected. Provisional caveats discharged.
+
 ## Next
-- **✅ TBC ERRATUM APPLIED (this session, 2026-07-11) — all 8 blockers.** `/design-review turn-based-combat.md` ran (5 agents: game-designer, systems-designer, qa-lead, creative-director) → verdict NEEDS REVISION; erratum applied same session with user approval. Two design decisions ratified: **Stagger×enrage = POST-Stagger**; **floor-collision @ move_damage=1 = accepted degenerate** (no Part-Break cascade).
-  - Applied: Rule 10 sub-target routing (STRUCTURE→PB-F1 by TBC / region→PB-F2 by Part-Break + PB-F3 20% spillover by TBC / already-broken redirect) + enemy damage pipeline w/ enrage insertion; new **TBC-F7** enrage slot; Rule 9 Move Contract +`break_bias`(Basic Attack=BALANCED)+runtime `sub_target`; **`hit_resolved` widened to 4-arg `(move,damage,target,sub_target)`**; Dependencies Part-Break→Approved + BINDING DISCHARGED; AC-TBC-INT-01 un-DEFERRED→01a–01f (6 BLOCKING) + AC-TBC-34 widened; Player Fantasy enrage/spillover-kill beat. Systems-index #6 → "erratum applied, awaiting re-review"; review-log appended.
-- **▶ IMMEDIATE NEXT: `/clear` then `/design-review turn-based-combat.md`** — fix-confirmation re-review (CD guidance: confirm the 8 blocker regions, NOT a fresh sweep). Verify: enemy pipeline coherent, TBC-F7 examples discriminating, 4-arg signature consistent, 6 INT-01 ACs testable.
-- **⚠ OPEN PROPAGATION:** the 4-arg `hit_resolved` change touches **Passive DB** ON_HIT subscribers (`volt_shock_on_hit`, `kinetic_stagger_on_hit`) — annotate they tolerate/ignore the new `sub_target` arg in passive-database.md.
+- **Part-Break §D** — track the "does +12%/break carry decision weight?" enrage-calibration question (CD routed it here at TBC re-review; TBC-F7 now points to it). NOT a blocker — a balance-watch owned by the enrage knob's home doc.
+- **/consistency-check** — verify MULTIPLIER_FLOOR + all the accumulated errata (BREAK_BIAS_MULTIPLIERS, break_bias field, deterministic-break contract) are registry-coherent across the 4 just-edited docs + registry.
+- Next NEW MVP system in design order: **#7 Encounter Zone** (Not Started) or **#10 Enemy AI** (Not Started, unblocks TBC AC-TBC-INT-02).
 - Other pending ERRATA from Part-Break: **Move DB** (add break_bias enum default BALANCED + BREAK_BIAS_MULTIPLIERS table + reserved/nullable target_profile + list Part-Break as referencer) — "Small"; **Drop System** (redefine provisional Rule 5/7: break deterministic, no P(break fires), no break-failure pity; DS-3 drop-RNG pity unaffected) — "Small".
 - Still pending from Session 17: /consistency-check (MULTIPLIER_FLOOR + errata). NOTE: systems-index shows Drop already "Approved (2026-07-11, re-review punch-list applied)".
 - Next MVP system in design order: #7 Encounter Zone (Not Started) or #10 Enemy AI.
 
 <!-- STATUS -->
 Epic: MVP Core GDDs
-Feature: TBC Part-Break erratum → APPLIED (8 blockers, this session); awaiting fix-confirmation re-review
-Task: NEXT — /clear then /design-review turn-based-combat.md (fix-confirmation). Then propagate 4-arg hit_resolved to Passive DB; apply Move DB + Drop System errata.
+Feature: TBC APPROVED (fix-confirmation, 2 blockers fixed) + all 4 propagation/errata applied (Passive DB, Part-Break, Move DB, Drop System)
+Task: NEXT — /consistency-check (verify errata registry-coherent), then /design-system #7 Encounter Zone or #10 Enemy AI.
 <!-- /STATUS -->
 
 <!-- CONSISTENCY-CHECK: 2026-07-11 | GDDs checked: 9 | Conflicts found: 0 (1 stale registry note synced: N_PROTO_PITY calibration) | Drop-owned constants N_PROTO_PITY/M_BOSS_PITY/MULTIPLIER_FLOOR all consistent across Part DB + Enemy DB -->

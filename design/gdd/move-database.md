@@ -37,10 +37,12 @@ The player *feels* this fantasy in Turn-Based Combat, which owns the moment-to-m
 | `energy_cost` | int | 0–40, must fall in the `power_tier`'s band (Rule 3) |
 | `status_proc` | Dictionary/null | `{ status_id, duration }` — `STATUS` moves apply it guaranteed on hit; `DAMAGE` moves carry riders only via passives, never innately (Rule 5) |
 | `targeting` | Enum | `ENEMY`, `SELF` — region sub-targeting within `ENEMY` is the Part-Break System's layer |
+| `break_bias` | Enum | `STRUCTURE_HEAVY` / `BALANCED` / `BREAK_HEAVY` — **default `BALANCED`**; `DAMAGE`+`ENEMY` moves only (`null`/ignored otherwise). Maps to a `(structure_mult, break_mult)` pair via **Part-Break's `BREAK_BIAS_MULTIPLIERS`** table (Part-Break Rule 3) — TBC applies it when routing the hit by `sub_target` (TBC Rule 10). The Basic Attack template (Rule 4) authors `BALANCED`. Added by the Part-Break erratum (2026-07-11). |
 | `scan_payload` | Enum/null | `BREAK_REGIONS` for `SCAN` moves (Rule 6); `null` otherwise |
 | `vent_amount` | int/null | Heat removed for `UTILITY` Vent (Rule 8); `null` otherwise |
+| `target_profile` | Array/null (**reserved**) | **Reserved, nullable — no MVP move authors it.** Part-Break Rule 11's multi-hit extension hook: an ordered list of `(target, damage_mult)` sub-hits. When present it **replaces** `break_bias` for that move (a move is single-bias OR profiled, never both). Schema reserved here per the Part-Break erratum (2026-07-11); MVP content leaves it `null`. |
 
-`heat_generation` and `ammo_cost` remain on the **part** (Part DB schema), never the move — ratified unchanged from MOVE-CONTRACT-1.
+`heat_generation` and `ammo_cost` remain on the **part** (Part DB schema), never the move — ratified unchanged from MOVE-CONTRACT-1. The `BREAK_BIAS_MULTIPLIERS` values themselves are **owned by Part-Break** (Rule 3) — Move DB references the enum, never re-tunes the multipliers.
 
 **Rule 2 — Behavior classes.** A move's `behavior` selects its resolution path; the runtime resolution itself is owned by Turn-Based Combat (this GDD defines the contract each obeys):
 
@@ -62,7 +64,7 @@ The player *feels* this fantasy in Turn-Based Combat, which owns the moment-to-m
 
 The Energy/Heat bands are the **same tiers Part DB Formula 5/6 already define** — this table binds them to a damage multiplier. Content validation enforces that a `DAMAGE` move's `energy_cost` falls in its tier's band, and warns when the owning part's `heat_generation` falls outside it (cross-schema, so a warning not a hard fail). `power_mult` is applied post-DF-1 (§Formulas MOVE-F1) — DF-1 itself is untouched.
 
-**Rule 4 — The Basic Attack (built-in template).** The Move Database registers one canonical Basic Attack template: `behavior = DAMAGE`, `power_tier` = Basic Attack (mult 0.70), `energy_cost = 0`, `status_proc = null`, `targeting = ENEMY`. Turn-Based Combat instantiates it at battle start, filling `damage_type` and `element` from the equipped WEAPON (TBC Rule 9). It is always available (cost 0) and is the weakest damage option by design — the free fallback, never the optimal hit.
+**Rule 4 — The Basic Attack (built-in template).** The Move Database registers one canonical Basic Attack template: `behavior = DAMAGE`, `power_tier` = Basic Attack (mult 0.70), `energy_cost = 0`, `status_proc = null`, `targeting = ENEMY`, **`break_bias = BALANCED`** (TBC owns this value for the built-in — Part-Break Rule 2 / TBC AC-TBC-INT-01d). Turn-Based Combat instantiates it at battle start, filling `damage_type` and `element` from the equipped WEAPON (TBC Rule 9). It is always available (cost 0) and is the weakest damage option by design — the free fallback, never the optimal hit.
 
 **Rule 5 — Status moves.** A `STATUS` move applies its `status_proc` `{ status_id, duration }` guaranteed on hit. Status **identity** is fixed by element — Volt→Shock, Thermal→Burn, Kinetic→Stagger (TBC Rule 11) — so `status_id` must match the move's `element`. Status **potency** is never a move field: it scales with the applier's `processing` at application time (TBC-F3/F4/F5). `duration` defaults to 2 (TBC Rule 11); the field exists so specific moves or `SKILL_ENHANCE` unlocks can extend it. `DAMAGE` moves never carry an innate status rider — riders come only from passive effects through TBC's Rule 13 registry, keeping base moves legible.
 
@@ -210,7 +212,7 @@ Heat remains a real constraint on **sustained/repeated** SIGNATURE use — a lon
 |--------|---------------|--------|------------------------|
 | **Turn-Based Combat** | MOVE-CONTRACT-1 (Rule 1) incl. the new `power_tier`; resolves every move | Approved | **Errata (see below)**: apply MOVE-F1 to the damage pipeline; widen TBC-F5 `final_damage` + `hit_resolved` to `[1,315]`; mark OQ-TBC-1 (ratified), OQ-TBC-3 (SCAN=reveal break regions), OQ-TBC-4 (UTILITY=Vent) resolved |
 | **Enemy Database** | Enemy `skills` reference Move DB entries; SCAN's `BREAK_REGIONS` payload reads `break_regions`/drop hints (ED6) | Approved | Acknowledge SCAN as the ED6 drop-hint delivery mechanism; enemy skill entries conform to MOVE-CONTRACT-1 |
-| **Part-Break System** | Break-relevant moves flow through TBC's `hit_resolved`; drop-condition keywords matched by move `id` | Not Started | Match its break/drop keyword vocabulary to move `id`s; consume `hit_resolved` (range now `[1,315]`) |
+| **Part-Break System** | Reads each `DAMAGE`+`ENEMY` move's `break_bias` (→ `BREAK_BIAS_MULTIPLIERS`, Part-Break-owned) and the reserved `target_profile`; break-relevant moves flow through TBC's `hit_resolved`; drop-condition keywords matched by move `id` | **Approved (2026-07-11)** | **Erratum applied 2026-07-11**: `break_bias` enum (default BALANCED) + reserved/nullable `target_profile` added to Rule 1 schema; `BREAK_BIAS_MULTIPLIERS` referenced (owned by Part-Break, not re-tuned here) |
 | **Passive Database** | `DAMAGE`-move status riders are passives via TBC Rule 13, not move fields | Not Started | Author status riders as passives; must list Move DB as a sibling dependency |
 | **Enemy AI System** | Enemy move entries (behavior, cost, tier) for move selection | Not Started | Respect that enemies ignore Energy/Heat gating (TBC Rule 8) |
 | **Combat UI** | `display_name`, tier, cost, affordable/greyed state, the SCAN reveal readout | Not Started | Decide where/how the SCAN break-region reveal renders (with Enemy DB ED6) |
@@ -229,7 +231,7 @@ Heat remains a real constraint on **sustained/repeated** SIGNATURE use — a lon
 - **Part Database** already references the Move Database (Rule 10: upgrade skill effects "specified in the Move Database GDD"; Interactions: "Active skills reference valid Move Database entries") ✓
 - **Turn-Based Combat** already lists Move Database as an upstream dependency (provisional, MOVE-CONTRACT-1) — this GDD ratifies it, converting "provisional" to "ratified" ✓
 - **Enemy Database, Damage Formula** — reference is one-directional today; each must list Move Database when its next revision lands (Enemy DB for skill entries + ED6; the registry link for DF-1↔MOVE-F1 composition).
-- **Part-Break, Passive DB, Enemy AI, Combat UI, Drop System** (all Not Started) must list Move DB when authored.
+- **Part-Break (Approved 2026-07-11)** now lists Move DB — its erratum added `break_bias` + reserved `target_profile` to the Rule 1 schema (bidirectionality confirmed). **Passive DB (Approved)** lists Move DB as a sibling (status riders). **Enemy AI, Combat UI, Drop System** (Not Started) must list Move DB when authored.
 
 ## Tuning Knobs
 
