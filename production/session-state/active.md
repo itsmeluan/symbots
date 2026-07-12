@@ -290,11 +290,26 @@ Ran full 5-agent adversarial sweep (game-designer + systems-designer + qa-lead +
 - **OQ-DS-7 OPEN (Part B)**: consumable drop-channel *frequencies* not yet set — an economy decision (per-rarity consumable drop rates + level/rarity scaling) feeding the sell-faucet + Beacon accrual. Scoped in Drop System; tackle via focused pass / economy-designer + Consumable OQ-CD-2.
 - **NEXT**: `/consistency-check` (new CD constants + 3 errata) OR `/review-all-gdds` (12 GDDs) OR `/design-system enemy-ai` (#10, next in design order) OR set OQ-DS-7 (consumable drop frequencies).
 
+## Session Extract — /consistency-check + /review-all-gdds (2026-07-12)
+- **/consistency-check**: PASS — 0 conflicts across 12 GDDs / all 55 registry entries. (CONSISTENCY-CHECK marker appended below.)
+- **/review-all-gdds**: **CONCERNS** (0 blocking). 12 GDDs, parallel Phase 2 (consistency) + Phase 3 (design-theory) + Phase 4 scenario walkthrough. Report: design/gdd/gdd-cross-review-2026-07-12.md.
+  - **C-1 (APPLIED)**: consumable-database.md Overview "six items" → "eight items across six effect concepts" (matches Rules 1/10 + AC-CD-18).
+  - **D-1 (watch → Combat UI GDD)**: combat active-tracking demands 4→5 with consumables (elective, mitigated by pre-action reject + grey-out). Recommend consumables as a collapsible/secondary combat affordance.
+  - **D-2 (watch → OQ-DS-7 + playtest)**: consumable economy contingent — Beacon 2:1 drain unverified until OQ-DS-7 frequencies set; accumulation bounded only by max_stack (overflow policy deferred to Inventory EC-CD-12). **OQ-DS-7 = highest-value balance number to lock at playtest.**
+  - Flagged for revision: consumable-database.md (C-1 only, already applied). No GDD needs re-review.
+  - Prior 2026-07-10 review (8 GDDs) items all confirmed resolved; not re-flagged.
+- **Recommended next**: /design-system enemy-ai (#10, next in design order) — architecture still gated on completing the MVP GDD set (10 of 22 undesigned).
+
 <!-- STATUS -->
 Epic: MVP Foundation GDDs
-Feature: Consumable Database (#1c) — APPROVED (2026-07-12); 3 errata applied (TBC/Drop/Encounter Zone)
-Task: Next — /consistency-check or /review-all-gdds or /design-system enemy-ai (#10); OQ-DS-7 (consumable drop frequencies) open
+Feature: Enemy AI System (#10) — /design-system IN PROGRESS (lean). Sections A/B/C written; on Section D (Formulas)
+Task: Scored-heuristic AI (3 profiles AGGRESSIVE/TACTICAL/OPPORTUNIST + optional phase threshold). request_move(battle_state) at enemy ACTION_PENDING; discharges TBC AC-TBC-INT-02 + Enemy DB ED4. Next: EAI-1 scoring formula + profile weights (systems-designer)
 <!-- /STATUS -->
+
+## Enemy AI System (#10) — /design-system IN PROGRESS (2026-07-12, lean)
+- **Decisions locked**: scored-heuristic AI (not priority-list/random). 3 profiles: AGGRESSIVE (damage-max) / TACTICAL (type+status exploiter) / OPPORTUNIST (lethal-spike closer). Stateless core + optional per-profile phase_threshold (Structure-% swap to phase_profile). 4 scoring factors: damage/type/status/lethal. request_move(battle_state) at enemy ACTION_PENDING, returns 1 legal move, deterministic w/ injected seed. Player has no break regions → no enemy sub-target. Type effectiveness = move element vs player Core-slot element (DF-1/Part DB Rule 6 triangle Volt>Thermal>Kinetic).
+- **Sections written**: A Overview, B Player Fantasy, C Detailed Design (Rules 1-8 + States + Interactions). Discharges TBC AC-TBC-INT-02 + Enemy DB ED4.
+- **NEXT**: Section D Formulas (EAI-1 score + factor normalizations + profile weight numbers — systems-designer), then E/F/G/H.
 
 <!-- CONSISTENCY-CHECK: 2026-07-11 | GDDs checked: 9 | Conflicts found: 0 (1 stale registry note synced: N_PROTO_PITY calibration) | Drop-owned constants N_PROTO_PITY/M_BOSS_PITY/MULTIPLIER_FLOOR all consistent across Part DB + Enemy DB -->
 <!-- CONSISTENCY-CHECK: 2026-07-11 (session 20 close) | GDDs checked: 10 | Conflicts found: 0 | Verified: BREAK_BIAS_MULTIPLIERS(1.25/0.55/0.70/1.40) + ENRAGE_PER_BREAK(0.12) + BREAK_SPILLOVER(0.20) + 4-arg hit_resolved across Passive DB/Part-Break/TBC/Move DB + Drop System OQ-DS-1 RESOLVED (deterministic break) | 38 registry entries all PASS -->
