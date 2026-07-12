@@ -303,15 +303,18 @@ The world looks like nature, but built from gears, circuits, and alloys. Wild Sy
 6. 2 boss encounters with unique drops unavailable from wild encounters
 7. 1 starter zone with enough map to feel like a world worth exploring
 8. Basic inventory and part management UI designed for touch from day one
+9. A small consumable-item layer — salvage-tech items that drop from enemies (scaled by level/rarity) and are used during and between fights: **Repair Kit** (restore Structure), **Coolant Flush** (dump Heat), **Power Cell** (restore Energy), **Salvage Beacon** (boost drop odds), **Signal Jammer** (repel encounters), **Scrap Lure** (draw encounters). Consumables are a *support* layer — a REPAIR *move* remains the primary in-build heal, so healing stays a build choice (Pillar 1), and enemies are still harvested for parts, never captured.
 
 **Explicitly NOT in MVP** (defer to later):
 - Story, dialogue, or narrative content
 - More than 1 zone or 2 bosses
-- Blueprint crafting (direct part drops are enough for MVP)
+- Blueprint crafting / Designs (direct part drops are enough for MVP — designs remain Alpha per HOLISM-01)
 - Online features of any kind
 - iOS release (test export pipeline early, but don't optimize for it until after MVP validation)
 
 > *Scope revision 2026-07-10: Synergy System moved from Vertical Slice → MVP. Rationale: Part DB hard constraint DB1 requires synergy defined before TBC is designable, and Pillar 4 ("Synergy Is the Endgame") is untestable without some synergy in the first playable.*
+>
+> *Scope revision 2026-07-12: Small consumable-item layer added to MVP (item 9) — new Foundation system #1c Consumable Database. Drop taxonomy becomes parts + scrap + consumables (designs stay Alpha). Rationale: user decision — consumables (heal/cool/energy/repel/lure/drop-boost) deepen the moment-to-moment hunt loop while staying inside the pillars (support layer, not a capture mechanic; healing remains build-relevant via REPAIR moves). Creates errata on TBC (use-item action), Drop System (consumable drop class), and Encounter Zone (encounter-rate modifier, un-defers OQ-EZ-4).*
 
 ### Scope Tiers
 

@@ -241,10 +241,29 @@ Ran full 5-agent adversarial sweep (game-designer + systems-designer + qa-lead +
 - **Tracking done**: GDD header→2nd-round revised (Last Updated 2026-07-12); systems-index #7 row + header updated; review-log 2026-07-12 entry appended.
 - **User chose: CONFIRMATION RE-REVIEW in a new session.** → `/clear` then `/design-review design/gdd/encounter-zone.md` (validate delta-counter semantics, sequencing precondition, is_farmable_target, AC-EZ-21/22/23/56/57) BEFORE marking Approved.
 
+## Encounter Zone (#7) — CONFIRMATION RE-REVIEW DONE → APPROVED (2026-07-12)
+- **Verdict**: APPROVED (3rd round, fresh-session full panel: game/systems/economy/level + qa-lead + CD). **All five specialists ZERO blocking.** Round 2 fixes (delta re-gate, is_farmable_target, requires_defeated sequencing) confirmed correct at discriminator level; LIGHTER_REGATE→ALWAYS_OPEN collapse genuinely closed; delta provably non-negative (Rule 8a monotonicity). CD verdict **APPROVED WITH ONE MINOR REVISION** — applied same session (user chose "apply punch-list now"):
+  - **EC-EZ-12 + AC-EZ-58** (required, game+systems converged): `requires_defeated` naming a non-existent boss_id → fail-safe LOCKED, never fail-open.
+  - **Tuning Knob warning 5** (economy+level converged): re-gate × density coupling.
+  - **Rule 2a `is_farmable_target` authoring criterion** (level): "primary/sole source of a build-critical part."
+- 58 → 59 ACs (39 BLOCKING / 11 ADV / 9 DEFERRED). No Round 4 (CD directive: no full panel for a fail-safe EC).
+- **Tracking done**: GDD header → APPROVED; systems-index #7 → Approved + tracker (reviewed/approved → 11/11, **all 11 authored MVP GDDs now Approved**); review-log 2026-07-12 APPROVED entry appended.
+
+## SCOPE ADDITION — Consumable items → MVP (2026-07-12, user decision)
+- **Decision**: add a small consumable-item layer to MVP. MVP drop taxonomy = **parts + scrap + consumables** (designs/blueprints stay Alpha per HOLISM-01). Drop source = **global level/rarity-scaled table** (NO Enemy DB errata). Revive/Overclock held as stretch (out of MVP). Item-use consumes the turn, no Heat/Energy cost.
+- **New system #1c — Consumable Database** (Foundation, standalone, no Part DB dependency; design-order slot 10a, BEFORE Inventory #11). Added to systems-index (main table, categories, dependency map, design-order, tracker 30→31 / MVP denom 22→23) + game-concept.md MVP list item 9 + 2026-07-12 scope-revision note.
+- **Initial roster (6, world-themed salvage-tech)**: Repair Kit (Structure heal, tiered Weld Patch/Repair Kit/Field Forge) · Coolant Flush (Heat dump) · Power Cell (Energy restore) · Salvage Beacon (drop-odds boost → Drop System conditions) · Signal Jammer (repel) · Scrap Lure (lure).
+- **PENDING ERRATA (author these IN the Consumable DB GDD, then light re-review touch on each Approved doc):**
+  1. **TBC** — add `use item` to battle action set (Rule 3: move/switch/flee → +use-item; consumes turn, no Heat/Energy) + AC.
+  2. **Drop System** — consumables as level/rarity-scaled drop output class + Salvage Beacon → drop-condition multiplier feedback.
+  3. **Encounter Zone** — un-defer OQ-EZ-4: add `encounter_rate` modifier hook to EZ-1 (Signal Jammer / Scrap Lure) + ACs.
+  4. Enemy DB — NONE (global-table drop source chosen).
+- **NEXT ACTION**: author the Consumable Database GDD via `/design-system` (schema authority first; errata reference its IDs). Enemy AI (#10) remains independent and can be sequenced whenever.
+
 <!-- STATUS -->
-Epic: MVP Core GDDs
-Feature: Encounter Zone (#7) — 2nd-round revised, pending fresh-session CONFIRMATION re-review
-Task: /clear then /design-review design/gdd/encounter-zone.md (confirm delta re-gate + sequencing + is_farmable_target); then #10 Enemy AI or #11 Inventory
+Epic: MVP Foundation GDDs
+Feature: Consumable Database (#1c) — new MVP system, consumables scope added
+Task: /design-system consumable-database (author schema authority + 6-item roster); then apply pending errata to TBC / Drop System / Encounter Zone
 <!-- /STATUS -->
 
 <!-- CONSISTENCY-CHECK: 2026-07-11 | GDDs checked: 9 | Conflicts found: 0 (1 stale registry note synced: N_PROTO_PITY calibration) | Drop-owned constants N_PROTO_PITY/M_BOSS_PITY/MULTIPLIER_FLOOR all consistent across Part DB + Enemy DB -->
