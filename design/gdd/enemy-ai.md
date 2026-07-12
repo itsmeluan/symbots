@@ -1,7 +1,7 @@
 # Enemy AI System
 
-> **Status**: In Design
-> **Author**: Luan + Claude Code Game Studios agents
+> **Status**: **Designed — pending fresh-session `/design-review`** (lean mode; specialists consulted for Formulas + Acceptance Criteria: systems-designer, qa-lead. CD-GDD-ALIGN skipped per lean — manual pillar check before production.)
+> **Author**: Luan + Claude Code Game Studios agents (systems-designer: EAI-1 scoring; qa-lead: Acceptance Criteria)
 > **Last Updated**: 2026-07-12
 > **Implements Pillar**: Pillar 2 (Every Battle Has a Harvest Goal), Pillar 1 (Engineer, Don't Collect)
 
@@ -242,16 +242,69 @@ Each errata'd doc needs a light re-review touch; source GDD + registry updated t
 
 ## Visual/Audio Requirements
 
-[To be designed]
+> **Ownership note**: The Enemy AI is a decision layer — it owns no assets. The requirements below are obligations on the presentation systems (Combat UI, Audio System, Art Bible) so the enemy's reasoning is legible (Player Fantasy).
+
+**VA-1 — Move telegraph (binding).** When the enemy acts, Combat UI must clearly show *which move* it used (name/icon) and the **type-effectiveness result** of that move against the player's active Symbot ("Super effective!" / neutral / "Not very effective"), matching DF-1's readout. This is what lets the player reconstruct *why* the enemy chose it — the legibility the Player Fantasy depends on. *(Combat UI / Audio System.)*
+
+**VA-2 — Phase-shift tell (advisory).** When a boss crosses its `phase_threshold` and swaps to its `phase_profile` (Rule 6), a legible beat — audio sting + a visual "desperate/enraged" state change — should mark it so the behavior shift reads as intentional, not random. *(Combat UI / Audio System / Art Bible.)*
+
+**Audio intent:** a distinct enemy-move-use cue per element (Volt / Thermal / Kinetic) reusing the shared combat SFX palette; a super-effective hit already carries its emphasis from the damage layer.
 
 ## UI Requirements
 
-[To be designed]
+Obligations on Combat UI (Not Started) — layout and interaction belong to that GDD.
+
+1. **Enemy action readout.** After `request_move` resolves, show the enemy's chosen move (name/icon) and its type-effectiveness vs the player active Symbot. The Player Fantasy's legibility promise ("of course it used Volt — I'm Thermal") lives here (mirrors VA-1).
+2. **Boss phase indicator.** When a boss is below its `phase_threshold`, a persistent "desperate/enraged" state marker communicates the behavior shift (mirrors VA-2).
+3. **No internal-score exposure.** The AI's numeric scores, weights, and profile id are **not** shown — legibility comes from the observable move + matchup, not from surfacing the heuristic (mirrors the Drop System hiding pity counters).
+
+> **📌 UX Flag — Enemy AI**: this system places enemy-action-readout, type-effectiveness feedback, and boss-phase-indicator requirements on Combat UI. In Pre-Production, run `/ux-design` for the Combat UI **before** writing epics; stories should cite the resulting `design/ux/` spec, not this GDD directly.
 
 ## Acceptance Criteria
 
-[To be designed]
+**Tags:** BLOCKING (automated test, gates story completion) · ADVISORY · DEFERRED (needs a Not-Started system / integration). **Test types:** Unit (GUT, `tests/unit/enemy_ai/`) · Content-Validation (offline linter) · Integration. All RNG is **injected** (a seeded `RandomNumberGenerator` parameter), never global `randf()`; "no-RNG" = that parameter is `null`. Fixtures use the shared enemy (`physical_power=70`, `energy_power=40`; player `armor=22`, `resistance=22`) unless stated. All fixture numbers are python3-verified.
+
+**AC-EAI-01** (BLOCKING, Unit): **Profile discrimination on the same move-set (Example A).** GIVEN Move X (PHYSICAL, T=1.0, no status), Move Y (ENERGY, T=1.5, SHOCK proc), `H_cur=80`, no active statuses, no-RNG. WHEN `request_move` runs with AGGRESSIVE, then TACTICAL. THEN AGGRESSIVE → **X** (X=1.99, Y=1.63); TACTICAL → **Y** (X=0.66, Y=4.48). FAIL: either returns the opposite move or null. Discriminator: same two moves, opposite picks — an always-highest-damage impl passes AGGRESSIVE but fails TACTICAL; an always-super-effective impl fails AGGRESSIVE.
+
+**AC-EAI-02** (BLOCKING, Unit): **OPPORTUNIST takes the kill; TACTICAL declines it (Example B).** GIVEN `H_cur=42`, no active statuses, no-RNG. WHEN OPPORTUNIST, then TACTICAL. THEN OPPORTUNIST → **X** (6.0 vs 2.31; `lethal_factor=1` since df1(X)=53 ≥ 42); TACTICAL → **Y** (4.91 vs 2.0; X is lethal but `w_lethal=1.0` can't overcome Y's type+status). FAIL: OPPORTUNIST skips the kill, or TACTICAL takes it. Discriminator: an always-take-lethal impl passes OPPORTUNIST but fails TACTICAL.
+
+**AC-EAI-03** (BLOCKING, Unit): **Factor arithmetic + floor-not-ceil preview (Example A intermediates).** THEN Move X: `df1_preview=53` (floor, not ceil 54), `damage_factor=53/80=0.6625`, `type_factor=0.0`, `status_factor=0.0`, `lethal_factor=0`. Move Y: `df1_preview=38` (floor, not round/ceil 39), `damage_factor=0.475`, `type_factor=1.0`, `status_factor=1.0`, `lethal_factor=0`. FAIL: df1(X)=54, df1(Y)=39, or integer-division truncation of `damage_factor`. Discriminator: catches ceil-instead-of-floor in the DF-1 call path and GDScript int/int truncation.
+
+**AC-EAI-04** (BLOCKING, Unit): **A=0 and H_cur=1 guards (EC-EAI-06, EC-EAI-07).** GIVEN enemy `physical_power=0`, player `armor=10`, `H_cur=1`, T=1.0, no-RNG. THEN `df1_preview = DAMAGE_FLOOR = 1` (no crash/zero/negative); `damage_factor = clamp(1/1) = 1.0` (float divide, no div-by-zero); `lethal_factor = 1`; a legal non-null move returns. FAIL: divide-by-zero, `df1_preview=0`, or `damage_factor` NaN/inf. Discriminator: two independent guards (A=0 in DF-1, H_cur floor-at-1) — either absent faults.
+
+**AC-EAI-05** (BLOCKING, Unit): **Null player Core element (EC-EAI-05).** GIVEN player Core element = null, Moves X/Y, `H_cur=80`, no-RNG. THEN `type_factor = 0.0` for every move (T=1.0 fallback, DF-1 EC-04); no crash/null-deref; AGGRESSIVE returns the higher-damage move (X, df1 53 > 38). FAIL: any non-zero `type_factor`, an exception on null Core access, or wrong pick. Discriminator: catches null-deref and the nonsense "exploit a null type" result.
+
+**AC-EAI-06** (BLOCKING, Unit): **Tie-breaking (EC-EAI-02).** GIVEN two moves that score identically. (a) With the same seeded RNG (reset between calls) → both calls return the same move; across ≥2 distinct seeds, picks may differ (proves the RNG is consulted). (b) With no-RNG → the **lowest skill index** returns. FAIL: same seed → different moves; the tiebreak calls global `randf()`; no-RNG returns a higher-index move. Discriminator: catches global-RNG usage, missing seed injection, and descending-index tiebreak.
+
+**AC-EAI-07** (BLOCKING, Unit): **Single-skill & all-zero paths (EC-EAI-03, EC-EAI-04).** (a) `skills.size()==1` → that move returns, **RNG call count = 0** (fast path, no tie branch). (b) every move scores ≤ 0 → a non-null move in `skills` returns. FAIL: null returned, a move outside `skills`, or RNG consumed in the single-skill case. Discriminator: catches null-on-degenerate and needless RNG consumption.
+
+**AC-EAI-08** (BLOCKING, Unit): **Unknown `ai_profile` → AGGRESSIVE fallback (EC-EAI-01).** GIVEN `ai_profile="BERSERKER"`. THEN the move matches AGGRESSIVE's pick for the same inputs; **exactly one** content error logged containing the enemy id + `"BERSERKER"`; no other error/warning; no exception. FAIL: no error (silent), two errors (per-invocation spam), error omits an id, or a crash. Discriminator: catches silent fallback, noisy fallback, and crash-on-unknown.
+
+**AC-EAI-09** (BLOCKING, Unit): **Phase shift — strict `<` boundary + malformed fallback (EC-EAI-08).** GIVEN a boss: base TACTICAL, `phase_threshold=0.40`, `phase_profile=OPPORTUNIST`. (a) `current/max == 0.40` exactly → **base TACTICAL** used (strict `<` not satisfied) — verify the pick matches TACTICAL's argmax, not OPPORTUNIST's. (b) `= 0.39` → **OPPORTUNIST** used. (c) `phase_profile="UNDEFINED_PROFILE"` at 0.39 → base TACTICAL used, one content error naming the bad id, no crash. FAIL: phase active at equality (`≤` bug), base active below threshold, or crash on malformed phase. Discriminator: the one-character `≤`-vs-`<` boundary bug.
+
+**AC-EAI-10** (ADVISORY, Unit): **SELF move deprioritized (EC-EAI-09).** GIVEN one SELF-behavior move + one DAMAGE move (A>0), any profile, any `H_cur>0`. THEN the DAMAGE move is selected (SELF scores 0 on all four factors; DAMAGE scores >0 on `damage_factor`). FAIL: the SELF move is selected over a positive-scoring DAMAGE move. Discriminator: catches a SELF move inadvertently receiving a `type_factor` boost. (Advisory — SELF content is not MVP-authored.)
+
+**AC-EAI-11** (BLOCKING, Unit): **Reapplication discount (Example C — corrected).** GIVEN `H_cur=42`, **SHOCK already active** on the player, no-RNG, TACTICAL. THEN Move Y `status_factor = 0.0` (discounted); Y score `= 0.905 + 2.0 + 0.0 + 0 = 2.91`; X score `= 1.0 + 0 + 0 + 1.0 = 2.0`; TACTICAL returns **Y** (2.91 > 2.0). FAIL: Y's `status_factor = 1.0` when SHOCK is active (discount missing); or TACTICAL returns X (Y still wins on its type edge — X only wins if the status were Y's *sole* advantage). Discriminator: an impl that discounts *and* mis-scores type passes the discount check but fails the final pick. *(Fixture corrected during authoring from a mis-scored specialist draft — do not revert.)*
+
+**AC-EAI-12** (BLOCKING, Unit): **Determinism (Rule 3).** GIVEN any fixed `(battle_state, profile, seed)`. WHEN `request_move` runs twice, state unmutated. THEN both return the same skill index. FAIL: call-internal random state bleeds across invocations, or same seed → different result. Discriminator: catches shared global RNG state and hidden mutable state — load-bearing for replay/save/deterministic tests.
+
+**AC-EAI-13** (DEFERRED, Integration): **TBC hook end-to-end (discharges TBC AC-TBC-INT-02).** GIVEN a live battle at enemy `ACTION_PENDING`. WHEN TBC calls `request_move(battle_state)`. THEN exactly one move returns, resolved through TBC's normal pipeline, with **no Heat/Energy gating** applied to selection. FAIL: null, a move outside `skills`, or energy-cost filtering. *Activate when: TBC's `ACTION_PENDING` state is implemented.*
+
+**AC-EAI-14** (BLOCKING, Content-Validation): **`has_profile(id)` (unblocks Enemy DB AC-ED-01d).** THEN `has_profile` → true for `"AGGRESSIVE"`/`"TACTICAL"`/`"OPPORTUNIST"`; false for `"BERSERKER"`, `""`, and `null` (no crash). FAIL: an MVP profile returns false, an unknown returns true, or null crashes. Discriminator: an always-true stub passes positives, fails negatives; an always-false stub fails all.
+
+### EC ↔ AC Coverage
+
+EC-01→08, EC-02→06, EC-03→07, EC-04→07, EC-05→05, EC-06→04, EC-07→04, EC-08→09, EC-09→10(ADVISORY). **Rule/formula coverage:** EAI-1→03; damage_factor→03/04; type_factor→03/05; status_factor→11; lethal_factor→02; profile weights→01/02; argmax+tiebreak→06/07; determinism→12; phase→09; fallback→08; `has_profile`→14; TBC integration→13(DEFERRED). **14 ACs: 12 BLOCKING (11 Unit + 1 Content-Validation) / 1 ADVISORY / 1 DEFERRED.** No untestable ("feels-smart") criteria — every AC has a discriminating fixture.
+
+**QA carry-forwards:** (1) AC-EAI-03's floor-discrimination overlaps Damage Formula's own DF-1 tests — belt-and-suspenders if those enforce 53/38, sole guard otherwise. (2) AC-EAI-11 must keep the corrected THEN clause (TACTICAL picks Y). (3) AC-EAI-06 requires a ≥2-seed variability check to prove the RNG is actually consulted, not bypassed.
 
 ## Open Questions
 
-[To be designed]
+| # | Question | Owner | Impact |
+|---|----------|-------|--------|
+| OQ-EAI-1 | **Per-status `status_factor` differentiation.** MVP treats Burn/Shock/Stagger as equal value (`STATUS_BASE_VALUE = 1.0`). Playtest may show one status is strictly stronger for the enemy (e.g. Shock's initiative denial), warranting per-status values. | systems-designer / balance | TACTICAL move-choice nuance; post-MVP |
+| OQ-EAI-2 | **Multi-phase bosses.** MVP allows one `phase_threshold` per profile. A boss might want two shifts (e.g. 60% and 30%). Extend the schema if desired. | game-designer | Boss identity depth; post-MVP schema extension |
+| OQ-EAI-3 | **Weight tuning at playtest.** The profile weights are first-pass values chosen to satisfy the discriminating examples. Does TACTICAL *declining a kill* to set up status feel smart or exploitable? Does OPPORTUNIST's phase shift read as menacing? **The #1 feel watch.** | playtest / balance | The core feel of every enemy encounter |
+| OQ-EAI-4 | **WILD phases?** MVP restricts the phase mechanic to bosses (WILD omit it). Confirm at content authoring whether any WILD enemy should have a phase. | game-designer | WILD variety vs. simplicity |
+| OQ-EAI-5 | **SELF-move scoring value model (reserved).** If post-MVP enemies get self-repair/buff moves, the SELF scoring path (currently ≈ 0) needs a real model (e.g. score self-repair by missing Structure). | systems-designer | Post-MVP enemy variety |
+| OQ-EAI-6 | **Lookahead depth.** MVP AI is single-turn — it does not model the player's likely response. A smarter boss could weight setup moves by expected follow-up. **Deliberately out of MVP scope** (legibility > depth — an unpredictable enemy teaches nothing, per Player Fantasy). | game-designer / ai-programmer | Post-MVP boss sophistication |

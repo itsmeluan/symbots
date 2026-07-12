@@ -37,7 +37,7 @@
 #   Each entry: name, status, source, referenced_by[], attributes{}, added, revised
 
 version: 1
-last_updated: "2026-07-12"  # Consumable Database (#1c) authored: 8 consumable items (weld_patch/repair_kit/field_forge/coolant_flush/power_cell/salvage_beacon/signal_jammer/scrap_lure) + 5 formulas (CD-1..CD-5, all no-floor/no-epsilon) + 10 constants (WELD_PATCH_AMOUNT 25 / REPAIR_KIT_AMOUNT 50 / FIELD_FORGE_AMOUNT 120 / COOLANT_FLUSH_AMOUNT 50 / POWER_CELL_AMOUNT 25 / BEACON_MULTIPLIER 2.0 / JAMMER_RATE_MULTIPLIER 0.1 / JAMMER_DURATION_STEPS 20 / LURE_RATE_MULTIPLIER 2.5 / LURE_DURATION_STEPS 15). Consumable Database APPROVED 2026-07-12 (full-panel /design-review; 5 surgical blockers fixed; systems-designer IEEE-754 blocker refuted by python3 scan). All 3 errata now APPLIED to the Approved source GDDs (registry + GDD together): TBC Rule 7a use-item action + AC-TBC-41 (preventive-only Overheat, no-turn-on-reject); Drop Rule 12 consumable channel + Beacon injection into effective_drop_rate + AC-DS-31 (Part B consumable drop frequencies scoped as OPEN OQ-DS-7); Encounter Zone EZ-1 modifier hook + AC-EZ-59 + OQ-EZ-4 RESOLVED. referenced_by lists already point at TBC/Drop/Encounter-Zone. BASE_ENERGY_REGEN confirmed 10 (not 8). Earlier 2026-07-11: Encounter Zone (#7) authored: added EZ-1 (per-step trigger) + EZ-2 (weighted enemy selection) formulas — both no-floor/no-epsilon (no scan needed); EZ-2 referenced_by TBC (enemy_id handoff). Density-band rates + gate constants held internal to encounter-zone.md until another system references them. Earlier same day: Part-Break design-review revision: ENRAGE_PER_BREAK retuned 0.15->0.12 (PB-F5 output_range 456->428, all enrage mults now epsilon-defensive); Part-Break PB-F1..F5 formulas, BREAK_SPILLOVER/ENRAGE_PER_BREAK/BREAK_BIAS_MULTIPLIERS constants; referenced_by updated on EDB-1/BREAK_HP_MIN/DAMAGE_FLOOR/MOVE-F1/TBC-F5. Earlier: N_PROTO_PITY calibration re-sync; MULTIPLIER_FLOOR (Rule 5a); N_PROTO_PITY, M_BOSS_PITY; passives section (3 status riders)
+last_updated: "2026-07-12"  # Enemy AI System (#10) authored (Designed, pending /design-review): formula EAI-1 (move-scoring heuristic, no floor/ceil — only DF-1 preview floors) + constants STATUS_BASE_VALUE 1.0 + AI_PROFILE_WEIGHTS (AGGRESSIVE/TACTICAL/OPPORTUNIST). Discharges TBC AC-TBC-INT-02 + Enemy DB ED4 (2 light errata pending: TBC un-defer AC-TBC-INT-02; Enemy DB un-block AC-ED-01d via has_profile). DF-1 referenced_by += enemy-ai.md. Prior same day — Consumable Database (#1c) authored: 8 consumable items (weld_patch/repair_kit/field_forge/coolant_flush/power_cell/salvage_beacon/signal_jammer/scrap_lure) + 5 formulas (CD-1..CD-5, all no-floor/no-epsilon) + 10 constants (WELD_PATCH_AMOUNT 25 / REPAIR_KIT_AMOUNT 50 / FIELD_FORGE_AMOUNT 120 / COOLANT_FLUSH_AMOUNT 50 / POWER_CELL_AMOUNT 25 / BEACON_MULTIPLIER 2.0 / JAMMER_RATE_MULTIPLIER 0.1 / JAMMER_DURATION_STEPS 20 / LURE_RATE_MULTIPLIER 2.5 / LURE_DURATION_STEPS 15). Consumable Database APPROVED 2026-07-12 (full-panel /design-review; 5 surgical blockers fixed; systems-designer IEEE-754 blocker refuted by python3 scan). All 3 errata now APPLIED to the Approved source GDDs (registry + GDD together): TBC Rule 7a use-item action + AC-TBC-41 (preventive-only Overheat, no-turn-on-reject); Drop Rule 12 consumable channel + Beacon injection into effective_drop_rate + AC-DS-31 (Part B consumable drop frequencies scoped as OPEN OQ-DS-7); Encounter Zone EZ-1 modifier hook + AC-EZ-59 + OQ-EZ-4 RESOLVED. referenced_by lists already point at TBC/Drop/Encounter-Zone. BASE_ENERGY_REGEN confirmed 10 (not 8). Earlier 2026-07-11: Encounter Zone (#7) authored: added EZ-1 (per-step trigger) + EZ-2 (weighted enemy selection) formulas — both no-floor/no-epsilon (no scan needed); EZ-2 referenced_by TBC (enemy_id handoff). Density-band rates + gate constants held internal to encounter-zone.md until another system references them. Earlier same day: Part-Break design-review revision: ENRAGE_PER_BREAK retuned 0.15->0.12 (PB-F5 output_range 456->428, all enrage mults now epsilon-defensive); Part-Break PB-F1..F5 formulas, BREAK_SPILLOVER/ENRAGE_PER_BREAK/BREAK_BIAS_MULTIPLIERS constants; referenced_by updated on EDB-1/BREAK_HP_MIN/DAMAGE_FLOOR/MOVE-F1/TBC-F5. Earlier: N_PROTO_PITY calibration re-sync; MULTIPLIER_FLOOR (Rule 5a); N_PROTO_PITY, M_BOSS_PITY; passives section (3 status riders)
 
 # ─── ENTITIES ────────────────────────────────────────────────────────────────
 # Named game-world objects: enemies, NPCs, characters, factions, bosses.
@@ -577,6 +577,7 @@ formulas:
       - design/gdd/enemy-database.md
       - design/gdd/turn-based-combat.md
       - design/gdd/move-database.md
+      - design/gdd/enemy-ai.md                # EAI-1 previews DF-1 (read-only) for damage/type/lethal factors
     variables:
       - A (attacker power stat — effective via SYN-F4, max 150 under SYNERGY_POWER_BUDGET)
       - D (target defense stat — effective via SYN-F4, max 182 under SYNERGY_DEFENSE_BUDGET)
@@ -821,6 +822,31 @@ formulas:
       NO floor/epsilon. IEEE-754: use base 0.15 (and 0.35) for == fixtures; 0.35*0.1 and 0.07*2.5 are NOT exact. Only
       one modifier active; second replaces. Jammer 0.1x keeps zones threatening (not a blackout); Lure 2.5x stays
       under the 1.0 clamp even at DENSE."
+    added: 2026-07-12
+    revised: ""
+
+  - name: EAI-1
+    status: active
+    source: design/gdd/enemy-ai.md
+    referenced_by:
+      - design/gdd/enemy-ai.md
+      - design/gdd/turn-based-combat.md      # request_move(battle_state) at enemy ACTION_PENDING (discharges AC-TBC-INT-02)
+      - design/gdd/enemy-database.md          # ai_profile resolves to the profile weights this formula consumes
+    variables:
+      - "m (candidate move from enemy skills, 2-4)"
+      - "w_dmg / w_type / w_stat / w_lethal (float >= 0, profile weights from AI_PROFILE_WEIGHTS)"
+      - "damage_factor (float [0,1] = clamp(df1_preview / current_structure, 0, 1))"
+      - "type_factor (float {-0.5, 0.0, 1.0} from T {0.75,1.0,1.5})"
+      - "status_factor (float {0.0, 1.0}; 0 if no proc or status already active; else STATUS_BASE_VALUE)"
+      - "lethal_factor (int {0,1}; 1 if df1_preview >= current_structure)"
+    output_range: "score(m): float, unbounded above, min -0.5*w_type; selection = argmax, seeded-RNG tiebreak then lowest index"
+    expression: "score(m) = w_dmg*damage_factor + w_type*type_factor + w_stat*status_factor + w_lethal*lethal_factor"
+    notes: "Enemy move-selection heuristic. Pure weighted sum + clamp + discrete lookups — NO floor/ceil in EAI-1 itself,
+      no epsilon, no python3 scan (the only floor() is inside the DF-1 preview call, already registered/scanned). df1_preview
+      reuses DF-1 (crit_mult=1.0, no MOVE-F1 tier). Deterministic pure function of (battle_state, profile, seed); injected
+      seeded RNG only, never global randf(). Discharges TBC AC-TBC-INT-02 + Enemy DB ED4. Worked examples python3-verified
+      2026-07-12 (df1_X=53 from 70^2/92, df1_Y=38 from 40^2/62*1.5). Example C corrected during authoring (SHOCK-active
+      TACTICAL still picks Y at 2.91 vs 2.0, not X)."
     added: 2026-07-12
     revised: ""
 
@@ -1218,6 +1244,35 @@ constants:
     value: 15
     unit: overworld steps a Scrap Lure stays active
     notes: "Safe range 10-20. A concentrated farming burst, shorter than the Jammer."
+    added: 2026-07-12
+    revised: ""
+
+  - name: STATUS_BASE_VALUE
+    status: active
+    source: design/gdd/enemy-ai.md
+    referenced_by:
+      - design/gdd/enemy-ai.md               # EAI-1c status_factor
+    value: 1.0
+    unit: base score value for an Enemy AI applying a new status (Burn/Shock/Stagger)
+    notes: "EAI-1c. Discounted to 0.0 if the target already carries that status (reapplication wasteful). Effective status
+      pull = STATUS_BASE_VALUE * w_stat (the profile's status weight) — tune this OR w_stat, not both. Safe range 0.5-2.0.
+      MVP treats all three statuses as equal value; per-status differentiation is post-MVP (OQ-EAI-1)."
+    added: 2026-07-12
+    revised: ""
+
+  - name: AI_PROFILE_WEIGHTS
+    status: active
+    source: design/gdd/enemy-ai.md
+    referenced_by:
+      - design/gdd/enemy-ai.md               # EAI-1 / Rule 5 profile presets
+      - design/gdd/enemy-database.md          # ai_profile field resolves to one of these keys
+    value: "{AGGRESSIVE: [3.0, 0.2, 0.0, 1.0], TACTICAL: [1.0, 2.0, 2.0, 1.0], OPPORTUNIST: [2.0, 0.5, 0.0, 4.0]}"
+    unit: (w_dmg, w_type, w_stat, w_lethal) weight vector per ai_profile, consumed by EAI-1
+    notes: "The three MVP Enemy AI profiles. AGGRESSIVE = damage-max bruiser (default fallback for unknown ai_profile).
+      TACTICAL = type+status exploiter. OPPORTUNIST = lethal-spike closer (w_lethal 4.0 must exceed its max non-lethal
+      score 2.5 or it stops securing kills). Enemy DB validates ai_profile against these keys via EnemyAI.has_profile(id).
+      Optional per-profile phase_threshold (Structure fraction, strict <) swaps to a phase_profile. First-pass values —
+      felt difference is the #1 playtest tuning watch (OQ-EAI-3)."
     added: 2026-07-12
     revised: ""
 

@@ -302,15 +302,18 @@ Ran full 5-agent adversarial sweep (game-designer + systems-designer + qa-lead +
 
 <!-- STATUS -->
 Epic: MVP Foundation GDDs
-Feature: Enemy AI System (#10) — /design-system IN PROGRESS (lean). Sections A/B/C written; on Section D (Formulas)
-Task: Scored-heuristic AI (3 profiles AGGRESSIVE/TACTICAL/OPPORTUNIST + optional phase threshold). request_move(battle_state) at enemy ACTION_PENDING; discharges TBC AC-TBC-INT-02 + Enemy DB ED4. Next: EAI-1 scoring formula + profile weights (systems-designer)
+Feature: Enemy AI System (#10) — /design-system COMPLETE → Designed (pending fresh-session /design-review)
+Task: Next — /clear then /design-review design/gdd/enemy-ai.md (fresh session). On approval apply 2 errata (TBC un-defer AC-TBC-INT-02; Enemy DB un-block AC-ED-01d via has_profile). Then #11 Inventory or set OQ-DS-7
 <!-- /STATUS -->
 
 ## Enemy AI System (#10) — /design-system IN PROGRESS (2026-07-12, lean)
 - **Decisions locked**: scored-heuristic AI (not priority-list/random). 3 profiles: AGGRESSIVE (damage-max) / TACTICAL (type+status exploiter) / OPPORTUNIST (lethal-spike closer). Stateless core + optional per-profile phase_threshold (Structure-% swap to phase_profile). 4 scoring factors: damage/type/status/lethal. request_move(battle_state) at enemy ACTION_PENDING, returns 1 legal move, deterministic w/ injected seed. Player has no break regions → no enemy sub-target. Type effectiveness = move element vs player Core-slot element (DF-1/Part DB Rule 6 triangle Volt>Thermal>Kinetic).
 - **Sections written**: A Overview, B Player Fantasy, C Detailed Design (Rules 1-8 + States + Interactions). Discharges TBC AC-TBC-INT-02 + Enemy DB ED4.
-- **Sections A-G written**: A/B/C/D(EAI-1)/E(9 ECs)/F(deps+2 errata on TBC AC-TBC-INT-02 + Enemy DB AC-ED-01d)/G(tuning). EAI-1 python3-verified; caught+fixed a systems-designer Example C mis-score (SHOCK-active TACTICAL still picks Y, not X). Profile weights: AGG(3.0,0.2,0.0,1.0)/TAC(1.0,2.0,2.0,1.0)/OPP(2.0,0.5,0.0,4.0). STATUS_BASE_VALUE=1.0. No floor/ceil in EAI-1 (only inside DF-1 preview).
-- **NEXT**: Section H Acceptance Criteria (qa-lead), then optional VA/UI/OQ, then Phase 5 (self-check, registry: add EAI-1 + STATUS_BASE_VALUE + 3 profile-weight vectors, systems-index, fresh-session /design-review).
+- **COMPLETE → Designed** (2026-07-12, lean). All 8 required + VA/UI/OQ written (0 placeholders, ~5.8k words). systems-index #10 → Designed; docs started 12→13, MVP designed 12→13/23.
+- **EAI-1 python3-verified**; caught+fixed a systems-designer Example C mis-score (SHOCK-active TACTICAL still picks Y=2.91 vs X=2.0, NOT X). Profile weights: AGG(3.0,0.2,0.0,1.0)/TAC(1.0,2.0,2.0,1.0)/OPP(2.0,0.5,0.0,4.0). STATUS_BASE_VALUE=1.0. No floor/ceil in EAI-1 (only the DF-1 preview floors). 9 ECs, 14 ACs (12 BLOCKING/1 ADV/1 DEFERRED), full EC↔AC coverage.
+- **Registry updated + YAML-validated**: EAI-1 formula + STATUS_BASE_VALUE + AI_PROFILE_WEIGHTS added; DF-1 referenced_by += enemy-ai.md. 26 formulas / 29 constants.
+- **2 ERRATA PENDING (apply on approval)**: (1) TBC un-defer AC-TBC-INT-02 (Enemy AI hook request_move now defined) + Downstream row → Designed; (2) Enemy DB un-block AC-ED-01d referential check via EnemyAI.has_profile(id) over {AGGRESSIVE/TACTICAL/OPPORTUNIST}.
+- **NEXT**: `/clear` then `/design-review design/gdd/enemy-ai.md` FRESH session. On approval apply the 2 errata. Then #11 Inventory (owns EC-CD-12 overflow, D-2 watch) or set OQ-DS-7 (consumable drop frequencies). **Feel watch OQ-EAI-3**: profile weights are first-pass — confirm TACTICAL-declines-kill feels smart at playtest.
 
 <!-- CONSISTENCY-CHECK: 2026-07-11 | GDDs checked: 9 | Conflicts found: 0 (1 stale registry note synced: N_PROTO_PITY calibration) | Drop-owned constants N_PROTO_PITY/M_BOSS_PITY/MULTIPLIER_FLOOR all consistent across Part DB + Enemy DB -->
 <!-- CONSISTENCY-CHECK: 2026-07-11 (session 20 close) | GDDs checked: 10 | Conflicts found: 0 | Verified: BREAK_BIAS_MULTIPLIERS(1.25/0.55/0.70/1.40) + ENRAGE_PER_BREAK(0.12) + BREAK_SPILLOVER(0.20) + 4-arg hit_resolved across Passive DB/Part-Break/TBC/Move DB + Drop System OQ-DS-1 RESOLVED (deterministic break) | 38 registry entries all PASS -->
