@@ -224,7 +224,7 @@ Ran full 5-agent adversarial sweep (game-designer + systems-designer + qa-lead +
 <!-- STATUS -->
 Epic: MVP Core GDDs
 Feature: TBC APPROVED (fix-confirmation, 2 blockers fixed) + 4 propagation/errata applied + /consistency-check PASS (0 conflicts, 38 entries, 10 GDDs)
-Task: Designing #7 Encounter Zone GDD — skeleton created, starting Section A (Overview)
+Task: Designing #7 Encounter Zone GDD — Sections A–G + Visual/UI written; Section H (ACs) in progress (qa-lead spawned). Key decisions: terrain-keyed sub-pools; 5-value gate_type taxonomy (OPEN/WIN_COUNT/WAVE authorable, REACH/DUNGEON_RUSH reserved); repeat_policy LIGHTER_REGATE; EZ-1/EZ-2 formulas (no floor/epsilon); density SPARSE 0.07/STANDARD 0.15/DENSE 0.35. Memory saved: project-encounter-zone-model.
 <!-- /STATUS -->
 
 <!-- CONSISTENCY-CHECK: 2026-07-11 | GDDs checked: 9 | Conflicts found: 0 (1 stale registry note synced: N_PROTO_PITY calibration) | Drop-owned constants N_PROTO_PITY/M_BOSS_PITY/MULTIPLIER_FLOOR all consistent across Part DB + Enemy DB -->
