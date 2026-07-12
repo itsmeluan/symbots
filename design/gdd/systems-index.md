@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Created**: 2026-07-09
-> **Last Updated**: 2026-07-11 (Encounter Zone (#7) **Designed** — lean, pending fresh-session /design-review. Terrain-keyed enemy sub-pools + extensible boss-gate taxonomy (gate_type = reward vector: OPEN/WIN_COUNT/WAVE authorable, REACH/DUNGEON_RUSH reserved) + orthogonal repeat_policy; EZ-1/EZ-2 formulas (no floor/epsilon) registered; 52 ACs. MVP designed 10→11/22. Prior: Turn-Based Combat **APPROVED** — Part-Break erratum fix-confirmation re-review, 2 AC-integrity blockers fixed; all 4 propagation/errata applied; /consistency-check PASS.)
+> **Last Updated**: 2026-07-11 (Encounter Zone (#7) **NEEDS REVISION → punch-list applied**, pending fresh-session re-review. Full-panel /design-review (5 specialists + CD): 4 blockers + 4 recommended resolved same session. **WAVE gate cut to Reserved** (off-pillar + wave_pools undefined) → both MVP bosses now WIN_COUNT on a shared cumulative zone-win counter (Boss 1 @ 6, Boss 2 @ 10). WIN_COUNT semantic made normative (Rule 8a, cumulative/all-time/wins-only). AC-EZ-25 ADVISORY→BLOCKING; AC-EZ-40 split 40a/40b; terrain identity+weight-floor guardrail (Rule 2a). 52→56 ACs. gate_type taxonomy now: OPEN/WIN_COUNT authorable, WAVE/REACH/DUNGEON_RUSH reserved. Prior: Turn-Based Combat **APPROVED** — Part-Break erratum fix-confirmation re-review, 2 AC-integrity blockers fixed; all 4 propagation/errata applied; /consistency-check PASS.)
 > **Source Concept**: design/gdd/game-concept.md
 
 ---
@@ -33,7 +33,7 @@ designed first.
 | 4 | Symbot Assembly System | Gameplay | MVP | Approved | design/gdd/symbot-assembly.md | Part Database |
 | 5 | Synergy System | Gameplay | MVP | Approved | design/gdd/synergy-system.md | Part Database, Symbot Assembly |
 | 6 | Turn-Based Combat System | Gameplay | MVP | Approved (2026-07-11, Part-Break erratum fix-confirmation re-review — 2 AC-integrity blockers fixed same session) | design/gdd/turn-based-combat.md | Damage Formula, Symbot Assembly, Enemy Database, Synergy, Part Database, Part-Break |
-| 7 | Encounter Zone System | World | MVP | Designed (2026-07-11, lean — pending fresh-session /design-review) | design/gdd/encounter-zone.md | Enemy Database |
+| 7 | Encounter Zone System | World | MVP | NEEDS REVISION → punch-list applied (2026-07-11); pending fresh-session re-review | design/gdd/encounter-zone.md | Enemy Database |
 | 8 | Drop System | Economy | MVP | Approved (2026-07-11, re-review punch-list applied) | design/gdd/drop-system.md | Part Database, Enemy Database |
 | 9 | Part-Break System | Gameplay | MVP | Approved (2026-07-11, fix-confirmation re-review — 3 surgical fixes applied) | design/gdd/part-break.md | Turn-Based Combat, Drop System |
 | 10 | Enemy AI System | Gameplay | MVP | Not Started | — | Turn-Based Combat, Enemy Database |

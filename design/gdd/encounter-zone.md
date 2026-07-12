@@ -1,10 +1,15 @@
 # Encounter Zone System
 
-> **Status**: **Designed — pending fresh-session /design-review**
+> **Status**: **Reviewed — NEEDS REVISION punch-list applied (2026-07-11)**
 > **Author**: Luan + Claude Code Game Studios agents (systems-designer: Formulas; qa-lead: Acceptance Criteria)
 > **Last Updated**: 2026-07-11
 > **Implements Pillar**: Pillar 2 (Every Battle Has a Harvest Goal), Pillar 5 (The World Is a Workshop)
-> **Review Notes**: Authored in lean mode — CD-GDD-ALIGN gate skipped (perform a manual pillar check before production). systems-designer consulted for Formulas (EZ-1/EZ-2, no floor/epsilon — no python3 scan required); qa-lead for the 52 ACs (full rule + EC coverage). Two schema amendments applied from qa-lead flags: `regate_params` added to the BossEncounter schema (WAVE re-gate data source); AC-EZ-52 added for `ALWAYS_OPEN`.
+> **Review Notes**: Authored in lean mode, then full-panel `/design-review` (game/systems/economy/level designers + qa-lead + creative-director synthesis). NEEDS REVISION verdict — 4 blockers + 4 recommended applied same session:
+> - **WAVE gate cut to Reserved** (CD verdict: largest cost concentration + off-pillar). Both MVP bosses are now `OVERWORLD`/`WIN_COUNT`/`LIGHTER_REGATE` on a **shared cumulative zone-win counter** (Boss 1 opens at 6, Boss 2 the deeper apex at 10). WAVE keeps its enum value alongside REACH/DUNGEON_RUSH; `wave_pools` deferred until WAVE is authored.
+> - **WIN_COUNT counter semantic made normative** here (Rule 8a): cumulative, all-time, zone-wide, no reset; fled/lost never count. No longer deferred to Exploration Progress.
+> - **AC-EZ-25 promoted ADVISORY → BLOCKING** (strictly-lighter regate is a MUST invariant; silent violation kills the harvest loop).
+> - **AC-EZ-40 split** into 40a (BLOCKING, testable now — no-crash provisional fallback) and 40b (DEFERRED, live integration).
+> - AC discriminator fixes (positive cases + boundary seeds), 1.3×/1.6× ratio text fixed, EZ-2 pre-filter note, terrain identity-enemy + 20% weight-floor guardrail (Rule 2a + AC-EZ-54).
 
 ## Overview
 
@@ -49,6 +54,10 @@ The boss gate reinforces the same feeling from another direction: the boss doesn
 
 A `SpawnEntry` = `{ enemy_id: StringName, spawn_weight: int }`. `enemy_id` must reference an Enemy DB entry whose `enemy_class == WILD` and `spawn_enabled == true`.
 
+**Rule 2a — Terrain-identity authoring invariant (makes the targeting lever real).** "Terrain = targeting lever" (Rule 2, Player Fantasy) is a content promise the schema must enforce, not merely encourage — otherwise a content author can silently collapse terrain into a cosmetic reskin by fully overlapping the sub-pools. Two authoring constraints, validated as content (AC-EZ-54):
+- **Identity enemy.** Every terrain patch must contain **at least one `enemy_id` that appears in no other patch in the zone** — the patch's identity enemy. This guarantees each terrain is a distinct destination ("go to the pylon field for Pylon Crushers"), not a re-weighted copy of another.
+- **Farmable-target weight floor.** Any enemy the player is expected to *farm* for a needed (non-Boss-grade) part must be **≥ 20% of its patch's `total_weight`**. Below that, the compounded scarcity (spawn rarity × the Drop System's conditional/pity rates) pushes farming time past the point where a deliberate hunt reads as a hunt rather than a slot machine. The 5–20% band is reserved for optional/bonus enemies, not for hosts of build-critical parts.
+
 **Rule 3 — Encounter trigger (per-step roll).** While the player moves within a terrain patch, each step rolls against that patch's `encounter_rate` (Formula EZ-1). On success, an encounter is triggered from *that patch's* `enemy_subpool` (Rule 4). Steps on non-terrain tiles (paths, safe ground) never trigger. The trigger is owned by Overworld Navigation calling into this system; Encounter Zone owns the *resolution* (which enemy), not the movement detection.
 
 **Rule 4 — Weighted enemy selection.** On a triggered encounter, select one `enemy_id` from the patch's `enemy_subpool` by weighted random draw (Formula EZ-2): each entry's probability = its `spawn_weight` ÷ the sum of all weights in that patch. The selected `enemy_id` is handed to Turn-Based Combat, which instantiates the enemy from Enemy DB. WILD encounters are fleeable (TBC Rule 7).
@@ -67,26 +76,35 @@ The exact rate per band is a Tuning Knob (Section G). Density is a *label*; the 
 | `boss_id` | StringName | References an Enemy DB entry with `enemy_class == BOSS` |
 | `placement` | Enum | `OVERWORLD` / `DUNGEON` / `HIDDEN` — where the boss lives (MVP: `OVERWORLD` only) |
 | `gate_type` | Enum | How first-access is earned — see Rule 7 |
-| `gate_params` | Dictionary | First-access gate parameters (e.g. `{ required_wins: 6 }` or `{ wave_count: 3, wave_pools: [...] }`) |
-| `regate_params` | Dictionary | Re-access (post-first-defeat) gate parameters, parallel to `gate_params` (e.g. `{ required_wins: 2 }` or `{ wave_count: 1 }`). Read only when `repeat_policy = LIGHTER_REGATE` and the boss is defeated-once. Values must be strictly lighter than `gate_params` (Rule 9 / Tuning Knobs). |
+| `gate_params` | Dictionary | First-access gate parameters (MVP: `{ required_wins: N }` for `WIN_COUNT`; `OPEN` uses `{}`). Reserved gate types carry their own shapes when authored — e.g. WAVE's `{ wave_count, wave_pools }` is defined only when WAVE is un-reserved (Rule 7). |
+| `regate_params` | Dictionary | Re-access (post-first-defeat) gate parameters, parallel to `gate_params` (MVP: `{ required_wins: N }`). Read only when `repeat_policy = LIGHTER_REGATE` and the boss is defeated-once. Values must be strictly lighter than `gate_params` (Rule 9 / Tuning Knobs). |
 | `repeat_policy` | Enum | Re-access model after first defeat — see Rule 9 |
 
-**Rule 7 — Gate-type taxonomy (extensible; MVP fills three).** `gate_type` is one enum; each value is a *reward vector*:
+**Rule 7 — Gate-type taxonomy (extensible; MVP fills two).** `gate_type` is one enum; each value is a *reward vector*:
 
 | `gate_type` | Reward vector | First-access condition | MVP |
 |-------------|---------------|------------------------|-----|
 | `OPEN` | (baseline) | Always accessible — no gate | Authorable |
-| `WIN_COUNT` | Grinding | Win `gate_params.required_wins` WILD encounters in this zone | **Boss 1** |
-| `WAVE` | Fighting | Enter the boss arena and defeat `gate_params.wave_count` consecutive enemy waves; the boss appears after the final wave | **Boss 2** |
+| `WIN_COUNT` | Grinding | Win `gate_params.required_wins` WILD encounters in this zone (shared cumulative counter — Rule 8a) | **Boss 1 & Boss 2** |
+| `WAVE` | Fighting | Enter the boss arena and defeat `gate_params.wave_count` consecutive enemy waves; the boss appears after the final wave | **Reserved** |
 | `REACH` | Exploration | Player reaches a specific (hard-to-reach / hidden) map location | **Reserved** |
 | `DUNGEON_RUSH` | Luck / skill | Boss sits deep in a dungeon; the player clears its mobs *or* rushes past them to reach it | **Reserved** |
 
-`REACH` and `DUNGEON_RUSH` require spatial systems that do not exist yet (Zone & World Map #12, Overworld Navigation #16). Their enum values and `gate_params` shape are reserved here so the schema never changes when those systems ship; **no MVP content authors them**, and their spatial fulfillment is a provisional contract (Dependencies).
+**Both MVP bosses use `WIN_COUNT`** on one shared cumulative zone-win counter (Rule 8a), at escalating thresholds: Boss 1 opens at 6 wins, Boss 2 (the zone's deeper apex) at 10. This makes "the more you know the zone, the deeper you go" the single, coherent arrival fantasy for the whole zone — the escalating threshold *is* the progression, with no second gate mechanic to learn.
 
-**Rule 8 — Gate evaluation (first access).** A boss's gate is evaluated against persistent player state (owned by Exploration Progress #14). Until the gate condition is met, the boss encounter is not offerable. `WIN_COUNT` reads a per-zone win counter; `WAVE` is evaluated live when the player enters the arena; `OPEN` is always met. When the condition is met, the boss becomes accessible (its overworld presence / entry becomes active).
+**`WAVE`, `REACH`, and `DUNGEON_RUSH` are reserved.** `REACH`/`DUNGEON_RUSH` require spatial systems that do not exist yet (Zone & World Map #12, Overworld Navigation #16). `WAVE` was cut from MVP content by design-review verdict (off-pillar — an arena-gauntlet fantasy distinct from the zone's "earned by familiarity" arrival — and its `wave_pools` authoring schema is deliberately deferred). All three keep their enum values so the schema never changes when they ship; **no MVP content authors any of them**, and each carries a provisional contract (Dependencies / Open Questions). WAVE's `gate_params` shape (`{ wave_count, wave_pools }`) and abort/reset semantics are defined only when WAVE is un-reserved.
+
+**Rule 8 — Gate evaluation (first access).** A boss's gate is evaluated against persistent player state (owned by Exploration Progress #14). Until the gate condition is met, the boss encounter is not offerable. `WIN_COUNT` reads the shared per-zone win counter (Rule 8a) and compares it to that boss's `gate_params.required_wins`; `OPEN` is always met. When the condition is met, the boss becomes accessible (its overworld presence / entry becomes active). (`WAVE`'s live-arena evaluation is defined only when WAVE is un-reserved — Rule 7.)
+
+**Rule 8a — WIN_COUNT counter semantic (normative — this system owns the definition).** Encounter Zone is the *gating authority*, so the meaning of the win counter is fixed here; Exploration Progress (#14) only *stores* it to this contract. The counter is:
+- **Cumulative and all-time.** It counts total WILD encounters *won* in the zone across the game's entire history. It **never resets** — not on zone-exit, not per session, not after a boss is defeated.
+- **Zone-wide and shared.** One counter per zone, read by every `WIN_COUNT` boss in that zone at its own threshold. In MVP: `win_count >= 6` opens Boss 1; `win_count >= 10` opens Boss 2. A player who reaches 10 wins has both bosses unlocked; a player at 7 has Boss 1 unlocked and Boss 2 still locked.
+- **Wins only.** A **fled** encounter (TBC flee) and a **lost** encounter do **not** increment it. Only a victory counts. (This is why it is a *win* count, not an *encounter* count — the "earned arrival" fantasy requires the player to have actually beaten the zone's enemies, not merely met them.)
+
+This semantic resolves the former OQ-EZ-5 as a normative rule; Exploration Progress must implement its increment hook to advance only on a WILD victory in the zone.
 
 **Rule 9 — Repeat policy (re-access for grinding).** After a boss's *first* defeat, its `repeat_policy` governs re-access so farming its parts stays viable but never free:
-- `LIGHTER_REGATE` (MVP default) — the boss becomes repeatable behind a **reduced** gate read from `regate_params` (Rule 6): `WIN_COUNT` re-access uses `regate_params.required_wins` (< first-access); `WAVE` re-access uses `regate_params.wave_count` (< first-access); a persistent map icon marks it. The specific reduction is a Tuning Knob. Re-access values MUST be strictly lighter than first-access (validated — AC-EZ-25).
+- `LIGHTER_REGATE` (MVP default) — the boss becomes repeatable behind a **reduced** gate read from `regate_params` (Rule 6): `WIN_COUNT` re-access uses `regate_params.required_wins` (< first-access); a persistent map icon marks it. The specific reduction is a Tuning Knob. Re-access values MUST be strictly lighter than first-access, and MUST be ≥ 1 (a re-gate of 0 silently degenerates into `ALWAYS_OPEN`) — both validated as BLOCKING (AC-EZ-25). (`WAVE` re-access via `regate_params.wave_count` is defined only when WAVE is un-reserved — Rule 7.)
 - `ALWAYS_OPEN` — after first clear the boss is permanently accessible (no re-gate).
 - `FULL_REGATE` — the original gate must be re-paid every time (reserved for special/limited bosses; no MVP content).
 
@@ -94,7 +112,7 @@ The "boss defeated at least once" flag is owned by Exploration Progress; this sy
 
 **Rule 10 — Enemy DB is the source of truth.** Encounter Zone stores no enemy stats, elements, regions, or loot — only `enemy_id` references. It reads `enemy_class` (to validate WILD-in-patches / BOSS-in-boss-slots), `spawn_enabled` (excluded when false), and respects `tier` (always 1 in MVP; no tier logic). An `enemy_id` in a spawn pool that is missing, `spawn_enabled == false`, or the wrong class is a content error (Edge Cases).
 
-**Rule 11 — MVP content scope.** One zone; 3–4 terrain patch types drawn from ~8 WILD enemy types; 2 bosses (Boss 1 = `OVERWORLD`/`WIN_COUNT`, Boss 2 = `OVERWORLD`/`WAVE`), both `repeat_policy = LIGHTER_REGATE`. `REACH`, `DUNGEON_RUSH`, `DUNGEON`, and `HIDDEN` are reserved and unauthored.
+**Rule 11 — MVP content scope.** One zone; 3–4 terrain patch types drawn from ~8 WILD enemy types (each patch honoring the Rule 2a identity-enemy + weight-floor invariants); 2 bosses, both `OVERWORLD`/`WIN_COUNT`/`LIGHTER_REGATE` on the shared zone-win counter (Boss 1 `required_wins = 6`, Boss 2 `required_wins = 10`; regate 2 and 3 respectively). `WAVE`, `REACH`, `DUNGEON_RUSH`, `DUNGEON`, and `HIDDEN` are reserved and unauthored.
 
 ### States and Transitions
 
@@ -107,7 +125,9 @@ WILD encounters are stateless — each is an independent per-step roll with no m
 | `DEFEATED` | Boss defeated at least once | `RE_ACCESSIBLE` per `repeat_policy` (Rule 9) |
 | `RE_ACCESSIBLE` | Post-defeat, re-access gate (lighter) available | Re-entered on each subsequent clear; stays available for grinding |
 
-`OPEN` gates begin already `UNLOCKED`. For `WAVE` bosses, entering the arena runs a transient sub-sequence — `WAVE_IN_PROGRESS(n)` cycling through `wave_count` battles; a defeat or flee during the waves aborts the attempt (arena resets, no boss), and completing the final wave transitions the boss to an immediately-offered encounter. This wave sub-sequence is transient runtime state, not persisted.
+The `DEFEATED → RE_ACCESSIBLE` edge branches on `repeat_policy`: `LIGHTER_REGATE` enters `RE_ACCESSIBLE` behind the reduced `regate_params` gate (MVP default); `ALWAYS_OPEN` enters a permanently-`UNLOCKED` `RE_ACCESSIBLE` with no re-gate evaluation; `FULL_REGATE` (reserved) re-imposes the original first-access gate. `OPEN` gates begin already `UNLOCKED`.
+
+*(Reserved — activated when WAVE is un-reserved, Rule 7: a `WAVE` boss would run a transient `WAVE_IN_PROGRESS(n)` sub-sequence on arena entry — cycling `wave_count` battles, aborting to arena-reset on any defeat/flee, offering the boss after the final wave, and never persisting mid-sequence progress. No MVP content exercises this path.)*
 
 The per-encounter transient flow (WILD): `EXPLORING` (player moving in a patch) → `ENCOUNTER_TRIGGERED` (EZ-1 roll succeeds) → enemy resolved (EZ-2) and handed to TBC → on `battle_ended`, return to `EXPLORING`. Encounter Zone holds none of this between steps — the movement/step state is Overworld Navigation's.
 
@@ -118,7 +138,7 @@ The per-encounter transient flow (WILD): `EXPLORING` (player moving in a patch) 
 | **Enemy Database** | ← reads | `enemy_id` references resolve to entries; reads `enemy_class` (WILD/BOSS validation), `spawn_enabled` (exclude if false), `tier` (respected, always 1 in MVP). Stores no enemy data itself. |
 | **Turn-Based Combat** | → hands off | On a resolved encounter, passes the selected `enemy_id` (and boss/wild context so TBC applies the correct flee rule — WILD fleeable, BOSS not, TBC Rule 7). TBC instantiates the enemy and owns the battle. |
 | **Overworld Navigation** *(Not Started)* | ← triggered by | Calls into Encounter Zone with the player's current `terrain_type` on each step; Encounter Zone runs EZ-1 and, on success, EZ-2. Movement detection and step counting belong to Overworld Navigation. |
-| **Zone & World Map** *(Not Started)* | ↔ provisional | Owns the spatial realization of terrain patches, boss placement, and — for reserved `REACH`/`DUNGEON_RUSH` gates + `DUNGEON`/`HIDDEN` placement — the actual map geometry. This GDD defines *what a gate requires*; Zone & World Map defines *where it physically is*. |
+| **Zone & World Map** *(Not Started)* | ↔ provisional | Owns the spatial realization of terrain patches, boss placement, and — for the reserved `WAVE` arena + `REACH`/`DUNGEON_RUSH` gates + `DUNGEON`/`HIDDEN` placement — the actual map geometry. This GDD defines *what a gate requires*; Zone & World Map defines *where it physically is*. **Three spatial contracts this GDD imposes** (see OQ-EZ-6): (1) tiles are single-tagged with exactly one `terrain_type` **or** the `PATH` tag — encounters resolve against the tile stepped *onto*, and `PATH`/non-terrain tiles never roll EZ-1; (2) an `OVERWORLD` boss is a static, non-encounter map entity (its tile must not also be a forced-encounter terrain tile, so boss re-access is never gated behind an unwanted WILD gauntlet); (3) if `WAVE` is un-reserved later, it requires a dedicated arena entry point distinct from open-terrain encounters. |
 | **Exploration Progress** *(Not Started)* | ↔ reads/writes | Owns the persistent per-boss gate state (win counters, "defeated once" flag). Encounter Zone reads it to evaluate gates (Rule 8) and select first-vs-re-access (Rule 9); it does not store this itself. |
 | **Drop System** | (indirect) | No direct interface — drops flow TBC → Drop System on `battle_ended`. Encounter Zone's only contribution is selecting *which* enemy is fought, which determines the loot pool in play. |
 
@@ -142,22 +162,26 @@ Both formulas use the project's **deterministic seeded RNG** convention: an inje
 - `encounter_rate = 0.0` → `randf() < 0.0` is always false → never triggers.
 - `encounter_rate = 1.0` → `randf() < 1.0` is always true (randf never reaches 1.0) → triggers every step.
 
-**Expected steps to encounter:** `E[steps] = 1 / encounter_rate`.
+**Expected steps to encounter:** `E[steps] = 1 / encounter_rate` (defined only for `encounter_rate > 0`; at `encounter_rate = 0.0` the expectation is infinite — never triggers — so any tooling that displays `E[steps]` must special-case rate 0 rather than dividing).
 
 **Worked example:** `encounter_rate = 0.15`; draw `0.09` → `0.09 < 0.15` → **true** (encounter). Draw `0.22` → **false** (no encounter). Expected gap = 1/0.15 ≈ **6.7 steps**.
 
 ### EZ-2 — Weighted Enemy Selection
 
-Cumulative-weight walk against a single integer draw:
+Cumulative-weight walk against a single integer draw. **`subpool` here is the *filtered* pool** — entries that are missing, `spawn_enabled == false`, wrong-class, or `spawn_weight <= 0` are excluded *before* this runs (EC-EZ-02/03/04), and `total_weight` is recomputed from the survivors. The walk operates only on clean, positive-weight entries:
 
 ```
+subpool = filter_valid(raw_subpool)              # EC-EZ-02/03/04 exclusions applied first
 total_weight = sum(e.spawn_weight for e in subpool)
+if total_weight == 0:                            # empty after filtering — EC-EZ-01
+    return StringName("")
 roll = rng.randi_range(1, total_weight)          # inclusive both ends
 cumulative = 0
 for e in subpool:
     cumulative += e.spawn_weight
     if roll <= cumulative:
         return e.enemy_id
+return StringName("")                             # defensive: unreachable with valid input, but required for a typed return
 ```
 
 **Variables:**
@@ -190,7 +214,7 @@ for e in subpool:
 | `STANDARD` | 0.15 | ~6.7 | The baseline farming anchor (≈ classic tall-grass feel) |
 | `DENSE` | 0.35 | ~2.9 | Fast-farm biome — **2.3× STANDARD's throughput**, the reason to seek it out |
 
-DENSE/STANDARD = 2.3× more encounters per step justifies the fast-farm role; below ~1.3× players wouldn't bother, above 0.45 it becomes mobile combat-spam.
+DENSE/STANDARD = 2.3× more encounters per step justifies the fast-farm role; below ~1.6× players wouldn't bother (the floor enforced by AC-EZ-13 and Tuning Knob warning 2), above 0.45 it becomes mobile combat-spam.
 
 ## Edge Cases
 
@@ -204,17 +228,17 @@ DENSE/STANDARD = 2.3× more encounters per step justifies the fast-farm role; be
 
 **EC-EZ-05 — `encounter_rate` at 0.0 or 1.0.** Both are legal, not errors: 0.0 = a terrain patch that never triggers (a safe "walk-through" band); 1.0 = triggers every step (extreme DENSE). These are the documented EZ-1 boundary behaviors, exposed as tuning extremes. Values outside [0.0, 1.0] are a content error (clamped to range). *Verified by AC-EZ-02.*
 
-**EC-EZ-06 — WAVE gate aborted mid-sequence.** During a `WAVE` boss gate, if the player is defeated or flees before the final wave, the wave attempt aborts: the arena resets, no boss appears, and no gate progress is banked (the wave sequence is transient, all-or-nothing). Re-entering the arena restarts from wave 1. A won wave sequence immediately offers the boss. *Verified by AC-EZ-20 (defeat) / AC-EZ-21 (flee); the won-sequence path by AC-EZ-19.*
+**EC-EZ-06 — WAVE gate aborted mid-sequence *(RESERVED — WAVE cut from MVP, Rule 7)*.** When `WAVE` is un-reserved: during a `WAVE` boss gate, if the player is defeated or flees before the final wave, the wave attempt aborts — arena resets, no boss appears, no gate progress banked (transient, all-or-nothing); re-entering restarts from wave 1; a won sequence immediately offers the boss; a mid-sequence crash/reload discards wave progress (re-enter at wave 1). *No MVP content exercises this. Verifying ACs (WAVE win / defeat-abort / flee-abort / reload-discard) are authored when WAVE is un-reserved — see OQ-EZ-3.*
 
-**EC-EZ-07 — Missing or malformed `gate_params`.** A `gate_type` whose required `gate_params` key is absent (e.g. `WIN_COUNT` with no `required_wins`, or `WAVE` with no `wave_count`): content error at load; the boss defaults to `LOCKED` and unofferable (fail-safe — never accidentally `OPEN`). Validation names the boss and the missing key. *Verified by AC-EZ-34 (WIN_COUNT) / AC-EZ-35 (WAVE); AC-EZ-36 confirms OPEN legitimately needs no params.*
+**EC-EZ-07 — Missing or malformed `gate_params`.** A `gate_type` whose required `gate_params` key is absent (e.g. `WIN_COUNT` with no `required_wins`): content error at load; the boss defaults to `LOCKED` and unofferable (fail-safe — never accidentally `OPEN`). Validation names the boss and the missing key. Conversely, an `OPEN` boss carrying spurious params (e.g. `{ required_wins: 3 }`) ignores them and evaluates `UNLOCKED`, with a content *warning* (not error) so the author cleans it up. *Verified by AC-EZ-34 (WIN_COUNT missing key) / AC-EZ-36 (OPEN needs no params; ignores spurious ones).*
 
-**EC-EZ-08 — Reserved `gate_type` authored in MVP content.** A boss authored with `REACH` or `DUNGEON_RUSH` while their spatial systems (Zone & World Map, Overworld Navigation) do not exist: content error — the reserved values are not yet fulfillable. The boss is `LOCKED` and unofferable. This guards against content outrunning the systems that realize it. *Verified by AC-EZ-37 (REACH) / AC-EZ-38 (DUNGEON_RUSH).*
+**EC-EZ-08 — Reserved `gate_type` authored in MVP content.** A boss authored with `WAVE`, `REACH`, or `DUNGEON_RUSH` while those are reserved (WAVE cut from MVP; REACH/DUNGEON_RUSH awaiting their spatial systems): content error — the reserved values are not yet fulfillable. The boss is `LOCKED` and unofferable. This guards against content outrunning the systems (or design decisions) that realize it. *Verified by AC-EZ-37 (REACH) / AC-EZ-38 (DUNGEON_RUSH) / AC-EZ-24 (WAVE).*
 
 **EC-EZ-09 — Re-access before first defeat.** `repeat_policy` only takes effect after the "defeated once" flag is set. Querying re-access on a never-defeated boss returns the *first-access* gate (Rule 8), never the lighter re-gate. A boss cannot skip its first-access gate via the re-access path. *Verified by AC-EZ-39.*
 
 **EC-EZ-10 — Zone or enemy retired mid-progression.** A zone with `spawn_enabled == false` offers no encounters (its patches are inert). An enemy set `spawn_enabled == false` after the player has already been farming it: it simply stops appearing (EC-EZ-02 exclusion) — no error, no retroactive effect on already-owned parts. Retirement is graceful. *Verified by AC-EZ-27 (shared enemy-exclusion fixture).*
 
-**EC-EZ-11 — Exploration Progress unavailable (provisional dependency).** Exploration Progress (#14) does not exist yet. Until it does, gate state is read through a provisional interface; if the progress store is absent at runtime, gates default to their first-access `LOCKED`/`OPEN` authored state and win counters read 0 (no crash). This is a provisional-dependency safeguard, not a shipping behavior. *Verified by AC-EZ-40 (provisional, deferred).*
+**EC-EZ-11 — Exploration Progress unavailable (provisional dependency).** Exploration Progress (#14) does not exist yet. Until it does, gate state is read through a provisional interface; if the progress store is absent at runtime, gates default to their first-access `LOCKED`/`OPEN` authored state and win counters read 0 (no crash). This is a provisional-dependency safeguard, not a shipping behavior. *Verified by AC-EZ-40a (BLOCKING, testable now — no-crash + safe defaults); live integration by AC-EZ-40b (deferred).*
 
 ## Dependencies
 
@@ -223,7 +247,7 @@ DENSE/STANDARD = 2.3× more encounters per step justifies the fast-farm role; be
 | System | What Encounter Zone reads | Status | Hard/Soft |
 |--------|---------------------------|--------|-----------|
 | **Enemy Database** | `enemy_id` → entry resolution; `enemy_class` (WILD/BOSS slot validation), `spawn_enabled` (exclude if false), `tier` (respected, always 1 in MVP) | Approved | Hard |
-| **Exploration Progress** *(Not Started)* | Persistent per-boss gate state: per-zone win counters, "defeated once" flag — read to evaluate first-access gates (Rule 8) and select re-access (Rule 9) | Not Started | Soft (provisional interface; EC-EZ-11 fallback until it exists) |
+| **Exploration Progress** *(Not Started)* | Persistent gate state: the shared cumulative zone-win counter and the per-boss "defeated once" flag — read to evaluate first-access gates (Rule 8) and select re-access (Rule 9). **Storage contract fixed by Rule 8a**: one cumulative, never-resetting, zone-wide counter incremented only on a WILD victory (fled/lost never increment). Encounter Zone owns this semantic; Exploration Progress implements the increment hook to it. | Not Started | Soft (provisional interface; EC-EZ-11 fallback until it exists) |
 
 ### Downstream (these systems read from / realize this one)
 
@@ -250,14 +274,15 @@ None. Encounter Zone reads Enemy DB through its existing, already-documented int
 | `encounter_rate[SPARSE]` | 0.07 | 0.04–0.10 | Transitional-terrain trigger chance (~14 steps/encounter at default). Below 0.04, SPARSE is functionally "no encounters" and the terrain loses navigational meaning; above 0.10 it blurs into a slow STANDARD. |
 | `encounter_rate[STANDARD]` | 0.15 | 0.12–0.20 | The baseline farming rate (~6.7 steps/encounter). This is the anchor — the default farming feel. At 0.20 (~5 steps) it starts to feel busy; below 0.12 it collapses toward SPARSE. |
 | `encounter_rate[DENSE]` | 0.35 | 0.25–0.45 | Fast-farm biome rate (~2.9 steps/encounter). Must stay meaningfully above STANDARD (≥ ~1.6×) to justify the biome; above 0.45 (~2.2 steps) it becomes mobile combat-spam. First fatigue adjustment: pull toward 0.28–0.30, not a redesign. |
-| `WIN_COUNT.required_wins` (first access) | 6 | 4–12 | WILD wins to open a `WIN_COUNT` boss (Boss 1). At 4, the boss opens before zone familiarity builds; above 12, first access feels like a grind wall. |
-| `regate_params.required_wins` (re-access) | 2 | 1–4 | Lighter re-gate after first defeat (`LIGHTER_REGATE`), read from `regate_params`. Keeps boss-part farming viable without being free. Must stay < the first-access value or the "lighter" promise breaks (AC-EZ-25). |
-| `WAVE.wave_count` (first access) | 3 | 2–5 | Consecutive waves before a `WAVE` boss appears (Boss 2). At 2 the gate is trivial; above 5, mobile session length and attrition (no between-wave recovery guarantee) make it punishing. |
-| `regate_params.wave_count` (re-access) | 1 | 1–3 | Lighter re-gate wave count, read from `regate_params`. Must stay < first-access count (AC-EZ-25). |
+| `WIN_COUNT.required_wins` — Boss 1 (first access) | 6 | 4–12 | Shared-counter threshold to open Boss 1. At 4, the boss opens before zone familiarity builds; above 12, first access feels like a grind wall. |
+| `WIN_COUNT.required_wins` — Boss 2 (first access) | 10 | 8–16 | Shared-counter threshold to open Boss 2, the zone's deeper apex. MUST stay meaningfully above Boss 1's (a ≥ ~1.5× gap, default 6→10) or the two bosses unlock too close together and the escalation reads as one gate. Above 16 the apex feels like a grind wall for a single-zone MVP. |
+| `regate_params.required_wins` — Boss 1 (re-access) | 2 | 1–4 | Lighter re-gate after first defeat (`LIGHTER_REGATE`). Keeps boss-part farming viable without being free. Must stay ≥ 1 and < Boss 1's first-access value (AC-EZ-25). |
+| `regate_params.required_wins` — Boss 2 (re-access) | 3 | 1–6 | Lighter re-gate for the apex boss. Scaled up from Boss 1's re-gate because its parts are the zone's scarcest; still must stay ≥ 1 and < Boss 2's first-access value (AC-EZ-25). |
+| `WAVE.*` (reserved) | — | — | `wave_count` / `wave_pools` and their re-gate counterparts are defined only if `WAVE` is un-reserved (Rule 7). No MVP tuning. |
 | `spawn_weight` (authoring guidance) | — | 1–100 typical | Relative enemy frequency within a patch. Only ratios matter (weight 10 vs 5 = 2:1). Guidance: keep the spread readable (a "rare" target at ~1/5 of a "common" filler's weight reads as noticeably rarer without being unfarmable). |
 
 **Knob interaction warnings:**
-1. **Re-access knobs must stay strictly below their first-access counterparts** (`WIN_COUNT` 2 < 6; `WAVE` 1 < 3) or `LIGHTER_REGATE` provides no actual relief — the "grinding stays viable" design intent (Rule 9) fails silently.
+1. **Re-access knobs must stay strictly below their first-access counterparts, and ≥ 1** (Boss 1: 1 ≤ 2 < 6; Boss 2: 1 ≤ 3 < 10) or `LIGHTER_REGATE` provides no actual relief — a re-gate ≥ first-access silently becomes `FULL_REGATE`, and a re-gate of 0 silently becomes `ALWAYS_OPEN`. Either way the "grinding stays viable" design intent (Rule 9) fails silently. This is now a BLOCKING content check (AC-EZ-25).
 2. **`DENSE`/`STANDARD` ratio is the load-bearing pacing lever**, not the absolute DENSE value. Tuning both up together preserves the ratio but raises baseline combat frequency across the whole zone — check the ratio (target ≥ 1.6×, default 2.3×) before shipping a rate change.
 3. **`required_wins` (first access) is coupled to the zone's WILD variety** — a high win count in a zone with few enemy types means repetitive farming to open the boss; raise variety or lower the count together.
 
@@ -275,7 +300,7 @@ None. Encounter Zone reads Enemy DB through its existing, already-documented int
 
 **VA-4 — Boss map presence and gate state.** An accessible boss needs unambiguous map presence (icon/landmark). Gate state must read: locked (gate visible or boss hidden per placement), unlocked/available, and defeated→re-accessible. *(Owned by World Map UI.)*
 
-**VA-5 — WAVE arena framing.** A `WAVE` gate needs an "arena" framing on entry and a wave-progress readout (wave *n* of *N*) between fights. *(Owned by Combat UI + World Map UI.)*
+**VA-5 — WAVE arena framing *(RESERVED — WAVE cut from MVP, Rule 7)*.** If `WAVE` is un-reserved: a `WAVE` gate needs an "arena" framing on entry and a wave-progress readout (wave *n* of *N*) between fights. No MVP presentation obligation. *(Owned by Combat UI + World Map UI when authored.)*
 
 **Audio intent:** distinct per-terrain ambience reinforces VA-1 (a second, non-visual readability channel — you can *hear* which biome you're in); encounter-trigger sting for VA-2; boss-available cue when a gate opens. *(Owned by Audio System.)*
 
@@ -285,9 +310,11 @@ Obligations on World Map UI, Overworld Navigation, and Combat UI (Not Started) �
 
 1. **Terrain legibility** (World Map UI / Art Bible): terrain types must be distinguishable on the map — the UI side of VA-1.
 2. **Encounter transition** (Overworld Navigation / Combat UI): the trigger→battle handoff must be visually clear; a sentinel `enemy_id` (EC-EZ-01) must *not* start a transition.
-3. **Boss gate status readout** (World Map UI): show a boss's gate state and — for `WIN_COUNT` — **the progress toward it (e.g. "3 / 6 wins")**. *Design decision: `WIN_COUNT` progress is **shown**, not hidden.* Rationale: unlike the Drop System's hidden surprise-rescue pity, a boss gate is a **goal** — the player should see a clear objective and its progress. Hiding it would make the boss's appearance feel arbitrary.
-4. **WAVE progress** (Combat UI): during a `WAVE` gate, show the current wave and total (e.g. "Wave 2 / 3").
+3. **Boss gate status readout** (World Map UI): show each boss's gate state and — for `WIN_COUNT` — **the progress toward it against the shared counter (e.g. "3 / 6 wins" for Boss 1, "3 / 10 wins" for Boss 2)**. *Design decision: `WIN_COUNT` progress is **shown**, not hidden.* Rationale: unlike the Drop System's hidden surprise-rescue pity, a boss gate is a **goal** — the player should see a clear objective and its progress. Hiding it would make the boss's appearance feel arbitrary. Because both bosses read one shared counter, the readout also communicates the escalation (crossing 6 unlocks Boss 1 while Boss 2 still shows locked progress toward 10).
+4. **Enemy-terrain discovery** (World Map UI / field guide — obligation, owner TBD): the "there are Crawlers past the scrap dunes" fantasy requires the player to *learn which enemies live in which terrain*. This GDD does not own the surface, but it flags the obligation: a first-encounter-reveals-it roster (or static zone guide) must exist so the player can form a harvest goal rather than grind the wrong terrain blind. Tracked as OQ-EZ-7.
 5. **Re-access indication** (World Map UI): a defeated, re-accessible boss should read as "cleared, repeatable" — distinct from a never-defeated locked boss.
+
+*(Former UI Requirement 4 "WAVE progress" is reserved with the WAVE gate — Rule 7 / VA-5.)*
 
 > **📌 UX Flag — Encounter Zone**: this system places map/overworld UI requirements (terrain legibility, boss-gate readouts, wave progress). In Pre-Production, run `/ux-design` for the World Map / overworld screens before writing epics; stories should cite the resulting `design/ux/` spec, not this GDD directly.
 
@@ -303,13 +330,13 @@ Obligations on World Map UI, Overworld Navigation, and Combat UI (Not Started) �
 
 **AC-EZ-02** (BLOCKING, Unit): legal rate boundaries + out-of-range clamping. *(Verifies EC-EZ-05)* **A:** rate 1.0, 10,000 steps → triggers every step (`randf()` is `[0,1)`, so `< 1.0` always true). **B:** rate 1.5 (content error) → error logged, effective rate clamped to 1.0. **C:** rate −0.3 → error logged, clamped to 0.0, never triggers. The content-error log is the observable proving clamping.
 
-**AC-EZ-03** (BLOCKING, Unit): mid-rate seeded determinism + `<` operator. GIVEN rate 0.15, seed 1234, 20 steps, THEN the `triggered` sequence matches a hard-coded reference sequence (embedded constant, NOT recomputed from `randf()` at test time). Discriminator: inject a draw equal to exactly `0.15` → with `< 0.15` it is `false` (with `<=` it would be `true`); assert `false`.
+**AC-EZ-03** (BLOCKING, Unit): `<` operator discrimination via injected draws (not a pre-generated seed sequence — a seed-derived sequence is circular if the tester generates it from their own impl, and `randf()` output is Godot-version-dependent). GIVEN a mock RNG returning a scripted draw list `[0.14, 0.15, 0.16]` at rate 0.15, THEN `triggered == [true, false, false]`. The `0.15` draw is the discriminator: strict `< 0.15` yields `false` (a `<=` impl would yield `true`) — assert `false`. Determinism is proven by the mock RNG being deterministic; no seed-1234 reference array is needed.
 
 ### EZ-2 — Weighted Enemy Selection
 
 Canonical fixture (all EZ-2 ACs): `iron_crawler`(w10, cum 10), `volt_drone`(w6, cum 16), `rust_hulk`(w4, cum 20); `total_weight = 20`; all WILD + `spawn_enabled` in stub Enemy DB.
 
-**AC-EZ-04** (BLOCKING, Unit): distribution. GIVEN the fixture, seed 99, 10,000 draws, THEN counts fall in iron_crawler 4750–5250 (50%), volt_drone 2750–3250 (30%), rust_hulk 1750–2250 (20%). Discriminator: a uniform (weight-ignoring) impl gives ~3333 each → fails all bands.
+**AC-EZ-04** (BLOCKING, Unit): distribution. GIVEN the fixture and a **freshly-seeded RNG (seed 99) created within this test** (not shared state carried from AC-EZ-03), 10,000 draws, THEN counts fall in iron_crawler 4750–5250 (50%), volt_drone 2750–3250 (30%), rust_hulk 1750–2250 (20%). Bands are ±5–6σ, so a correct impl effectively never fails spuriously. Discriminator: a uniform (weight-ignoring) impl gives ~3333 each → fails all three bands.
 
 **AC-EZ-05** (BLOCKING, Unit): boundary roll = **10** → `iron_crawler` (`<=` lower boundary). `10 <= 10` true. Discriminator: a `roll < cumulative` impl falls through to `volt_drone` — assert `iron_crawler`.
 
@@ -331,26 +358,28 @@ Canonical fixture (all EZ-2 ACs): `iron_crawler`(w10, cum 10), `volt_drone`(w6, 
 
 ### WILD Handoff to TBC
 
-**AC-EZ-15** (BLOCKING, Integration): correct handoff. GIVEN pool `{bolt_skitter w8, iron_crawler w2}`, a stub TBC recording `(enemy_id, is_boss, fleeable)`, seed where EZ-1 fires and EZ-2 picks `bolt_skitter`, THEN TBC receives `("bolt_skitter", false, true)` (WILD is fleeable, TBC Rule 7). Stub caller invokes resolution directly with a `terrain_type` — upgrade to full integration when Overworld Navigation ships.
+**AC-EZ-15** (BLOCKING, Integration): correct handoff — both classes. Stub TBC records `(enemy_id, is_boss, fleeable)`. **Scenario A (WILD):** GIVEN pool `{bolt_skitter w8, iron_crawler w2}`, a **stub EZ-1 forced to `triggered = true`** (removes seed ambiguity — a seed where EZ-1 never fires would vacuously pass) and EZ-2 seeded to pick `bolt_skitter`, THEN stub TBC receives exactly one call `("bolt_skitter", false, true)` (WILD is fleeable, TBC Rule 7). **Scenario B (BOSS):** GIVEN an `OPEN` boss `boss_id = "zone_boss"`, player initiates the boss encounter, THEN stub TBC receives `("zone_boss", true, false)` (boss is not fleeable). Scenario B guards against a `return true` fleeable flag that Scenario A alone cannot catch. Upgrade trigger: replace stub EZ-1 with live terrain-step driving when Overworld Navigation ships.
 
-### Boss Gate — WIN_COUNT (Boss 1, `required_wins = 6`)
+### Boss Gate — WIN_COUNT (shared cumulative counter: Boss 1 @ 6, Boss 2 @ 10)
 
-**AC-EZ-16** (BLOCKING, Unit): 5 wins = `LOCKED`. GIVEN `zone_win_count = 5`, `defeated_once = false`, THEN `LOCKED`.
-**AC-EZ-17** (BLOCKING, Unit): exactly 6 wins = `UNLOCKED` (threshold `>=` discriminator). GIVEN win_count 6, THEN `UNLOCKED` — a `> 6` impl stays LOCKED; assert `UNLOCKED`.
-**AC-EZ-18** (BLOCKING, Unit): 7 wins = `UNLOCKED` (no upper-bound "window" regression).
+Both bosses read one shared `zone_win_count` (Rule 8a) at their own `required_wins` threshold.
 
-### Boss Gate — WAVE (Boss 2, `wave_count = 3`)
+**AC-EZ-16** (BLOCKING, Unit): Boss 1 — 5 wins = `LOCKED`. GIVEN `zone_win_count = 5`, `defeated_once = false`, THEN `LOCKED`.
+**AC-EZ-17** (BLOCKING, Unit): Boss 1 — exactly 6 wins = `UNLOCKED` (threshold `>=` discriminator). GIVEN win_count 6, THEN `UNLOCKED` — a `> 6` impl stays LOCKED; assert `UNLOCKED`.
+**AC-EZ-18** (BLOCKING, Unit): Boss 1 — 7 wins = `UNLOCKED` (no upper-bound "window" regression).
 
-**AC-EZ-19** (BLOCKING, Integration): win all 3 waves → boss offered. GIVEN a stub arena resolving each wave as WIN, WHEN waves 1–3 won in sequence, THEN boss offered (state → `UNLOCKED`). Stub arena emits `wave_won`; upgrade when Arena/Combat UI ships.
-**AC-EZ-20** (BLOCKING, Integration): abort on defeat. *(Verifies EC-EZ-06)* wave 1 won, wave 2 lost → sequence resets to 0, boss not offered, re-entry restarts at wave 1.
-**AC-EZ-21** (BLOCKING, Integration): abort on flee. *(Verifies EC-EZ-06 — flee variant)* wave 1 won, wave 2 fled → same reset. Both modalities tested because TBC emits distinct `battle_lost` vs `battle_fled` signals.
+**AC-EZ-19** (BLOCKING, Unit): Boss 2 — threshold at 10. GIVEN `zone_win_count = 9`, THEN Boss 2 `LOCKED`; GIVEN `zone_win_count = 10`, THEN Boss 2 `UNLOCKED` (`>= 10` discriminator — a `> 10` impl stays LOCKED at 10; assert `UNLOCKED`).
+
+**AC-EZ-20** (BLOCKING, Unit): shared-counter dual gate — the two thresholds are read independently off one counter. GIVEN `zone_win_count = 6`, THEN Boss 1 `UNLOCKED` **and** Boss 2 `LOCKED` (6 ≥ 6 but 6 < 10). GIVEN `zone_win_count = 10`, THEN **both** `UNLOCKED`. Discriminator: an impl using one flag for "any boss unlocked" opens Boss 2 at 6; assert Boss 2 `LOCKED` at 6.
+
+**AC-EZ-21** (BLOCKING, Unit): Boss 2 `LIGHTER_REGATE` re-gate at 3. GIVEN Boss 2, `defeated_once = true`, `regate_params.required_wins = 3`, `zone_win_count = 3`, THEN `UNLOCKED` (`3 >= 3`). GIVEN `zone_win_count = 2`, THEN `LOCKED`. Confirms Boss 2 re-access uses its own regate value (3), not Boss 1's (2) and not its first-access value (10).
 
 ### Repeat Policy (LIGHTER_REGATE)
 
 **AC-EZ-22** (BLOCKING, Unit): re-gate applies after defeat. GIVEN Boss 1, `defeated_once = true`, `zone_win_count = 2`, `regate_params.required_wins = 2`, THEN `UNLOCKED` (`2 >= 2`). Discriminator: an impl ignoring `defeated_once` applies first-access (`2 < 6`) → LOCKED; assert `UNLOCKED`.
 **AC-EZ-23** (BLOCKING, Unit): re-gate not met = `LOCKED`. GIVEN `defeated_once = true`, win_count 1, re-gate 2, THEN `LOCKED`. Discriminator: an `ALWAYS_OPEN`-after-defeat impl returns UNLOCKED; assert `LOCKED`.
-**AC-EZ-24** (BLOCKING, Integration): WAVE lighter re-gate. GIVEN Boss 2, `defeated_once = true`, first-access `wave_count = 3`, `regate_params.wave_count = 1`, WHEN 1 wave won, THEN boss offered after wave 1.
-**AC-EZ-25** (ADVISORY, Content Val): re-access strictly < first-access. For Boss 1 `regate_params.required_wins < gate_params.required_wins`; for Boss 2 `regate_params.wave_count < gate_params.wave_count`. Defaults (2<6, 1<3) pass. Enforces Tuning Knob warning 1.
+**AC-EZ-24** (BLOCKING, Unit): reserved `WAVE` gate is fail-safe. *(Verifies EC-EZ-08 — WAVE variant)* GIVEN a boss authored `gate_type = WAVE` in MVP content, THEN content error logged naming the boss + gate_type, boss `LOCKED` and unofferable (no crash, no fall-through to OPEN). Confirms WAVE's reserved enum value is defined but not activatable in MVP.
+**AC-EZ-25** (BLOCKING, Content Val): re-access strictly lighter **and ≥ 1** — promoted from ADVISORY because a silent violation removes a design pillar with no runtime symptom. **A:** `regate_params.required_wins >= gate_params.required_wins` (e.g. Boss 1 regate 6 vs first-access 6) → content error naming the boss + both values; the "lighter" promise is broken (degenerates to `FULL_REGATE`). **B:** `regate_params.required_wins == 0` → content error (degenerates to `ALWAYS_OPEN`). **C:** valid defaults (Boss 1 `1 ≤ 2 < 6`, Boss 2 `1 ≤ 3 < 10`) → no error. Enforces Tuning Knob warning 1.
 
 ### Empty / Invalid Pool (EC-EZ-01/02/03/04)
 
@@ -366,18 +395,19 @@ Canonical fixture (all EZ-2 ACs): `iron_crawler`(w10, cum 10), `volt_drone`(w6, 
 ### Gate Params / Reserved Gates (EC-EZ-07/08)
 
 **AC-EZ-34** (BLOCKING, Unit): WIN_COUNT missing `required_wins`. *(Verifies EC-EZ-07)* `gate_params = {}` → error naming boss + missing key, boss `LOCKED`, never offerable. A `required_wins=0` default would wrongly open it — this catches that.
-**AC-EZ-35** (BLOCKING, Unit): WAVE missing `wave_count` → error, `LOCKED`.
-**AC-EZ-36** (BLOCKING, Unit): OPEN with empty `gate_params` is valid — no error, evaluates `UNLOCKED` immediately. Confirms OPEN is the one type needing no params.
+**AC-EZ-35** (BLOCKING, Unit): OPEN with spurious params. *(Verifies EC-EZ-07 — spurious-params half)* GIVEN `gate_type = OPEN`, `gate_params = { required_wins: 3 }`, THEN evaluates `UNLOCKED` (params ignored, NOT interpreted as a WIN_COUNT gate) with a content *warning* (not error). Discriminator: an impl that reads `required_wins` off any gate would treat this as a 3-win gate and LOCK it below 3; assert `UNLOCKED`.
+**AC-EZ-36** (BLOCKING, Unit): OPEN with empty `gate_params` is valid — no error, no warning, evaluates `UNLOCKED` immediately. Confirms OPEN is the one type needing no params.
 **AC-EZ-37** (BLOCKING, Unit): `REACH` in MVP → content error naming boss + gate_type, `LOCKED`. *(Verifies EC-EZ-08)*
 **AC-EZ-38** (BLOCKING, Unit): `DUNGEON_RUSH` in MVP → content error, `LOCKED`. (37/38 confirm reserved enum values are defined but fail-safe — no crash, no fall-through to OPEN.)
 
 ### Re-access Before Defeat (EC-EZ-09)
 
-**AC-EZ-39** (BLOCKING, Unit): re-access path gated on `defeated_once`. *(Verifies EC-EZ-09)* GIVEN Boss 1, `defeated_once = false`, win_count 3, first-access 6, re-gate 2, THEN `LOCKED` (first-access applies; 3 < 6). Minimum fixture discriminating the flag: win_count 3 PASSES the re-gate (≥2) but FAILS first-access (<6) — an impl ignoring `defeated_once` returns UNLOCKED.
+**AC-EZ-39** (BLOCKING, Unit): re-access path gated on `defeated_once`. *(Verifies EC-EZ-09)* **A (negative):** GIVEN Boss 1, `defeated_once = false`, win_count 3, first-access 6, re-gate 2, THEN `LOCKED` (first-access applies; 3 < 6). Minimum fixture discriminating the flag: win_count 3 PASSES the re-gate (≥2) but FAILS first-access (<6) — an impl ignoring `defeated_once` returns UNLOCKED. **B (positive, guards against all-LOCKED impl):** GIVEN `defeated_once = false`, win_count 6, first-access 6, THEN `UNLOCKED` (first-access path returns UNLOCKED when met — an impl that never unlocks pre-defeat fails this).
 
 ### Provisional / Deferred Integration
 
-**AC-EZ-40** (DEFERRED, Integration): Exploration Progress unavailable. *(Verifies EC-EZ-11)* GIVEN a not-connected progress stub, WIN_COUNT gate → win counter reads 0, `LOCKED`, provisional **warning** (not error) logged, no crash; OPEN gate → `UNLOCKED`. Activate when Exploration Progress ships.
+**AC-EZ-40a** (BLOCKING, Unit): Exploration Progress absent — no crash, safe defaults (testable NOW; this fallback is live for the whole MVP dev period). *(Verifies EC-EZ-11)* GIVEN a null/not-connected progress stub, WIN_COUNT gate → win counter reads 0, state `LOCKED`, provisional **warning** (not error) logged, no crash; OPEN gate → `UNLOCKED`. Uses a null stub — no live Exploration Progress needed.
+**AC-EZ-40b** (DEFERRED, Integration): Exploration Progress connected — live counter reads correctly and drives the real gate. Activate when Exploration Progress ships.
 **AC-EZ-41** (DEFERRED, Integration): Overworld Navigation runs EZ-1 only on terrain tiles, never path tiles (100 terrain + 50 path steps → 100 evaluations).
 **AC-EZ-42** (DEFERRED, Integration): sentinel `enemy_id` → no battle transition, no TBC call.
 **AC-EZ-43** (DEFERRED, Integration): WIN_COUNT counter persists across save/reload (4 wins → reload → reads 4, LOCKED).
@@ -389,17 +419,27 @@ Canonical fixture (all EZ-2 ACs): `iron_crawler`(w10, cum 10), `volt_drone`(w6, 
 
 **AC-EZ-47** (ADVISORY, Content Val): exactly 1 zone entry, `spawn_enabled = true`, valid `zone_id`.
 **AC-EZ-48** (ADVISORY, Content Val): zone has 3–4 terrain patches; every patch `enemy_subpool.size() >= 1`; every entry `spawn_weight >= 1`.
-**AC-EZ-49** (ADVISORY, Content Val): exactly 2 boss entries — Boss1 `WIN_COUNT`/`required_wins=6`/`LIGHTER_REGATE`, Boss2 `WAVE`/`wave_count=3`/`LIGHTER_REGATE`, both `OVERWORLD`.
+**AC-EZ-49** (ADVISORY, Content Val): exactly 2 boss entries — Boss1 `WIN_COUNT`/`required_wins=6`/`regate 2`/`LIGHTER_REGATE`, Boss2 `WIN_COUNT`/`required_wins=10`/`regate 3`/`LIGHTER_REGATE`, both `OVERWORLD`. Also assert Boss2's first-access threshold is meaningfully above Boss1's (≥ ~1.5×) so the shared-counter escalation reads as two distinct gates. No MVP boss uses `WAVE`/`REACH`/`DUNGEON_RUSH`.
 **AC-EZ-50** (ADVISORY, Content Val): de-duplicated WILD enemy count across all patches ∈ [6, 10] (target ~8).
 **AC-EZ-51** (ADVISORY, Content Val): every `boss_id` resolves to a `BOSS`-class, `spawn_enabled` Enemy DB entry.
 
 ### ALWAYS_OPEN Policy
 
-**AC-EZ-52** (BLOCKING, Unit): `repeat_policy = ALWAYS_OPEN`. GIVEN a boss with `ALWAYS_OPEN`, `defeated_once = true`, and its first-access gate unmet (e.g. win_count 0 vs required 6), THEN `UNLOCKED` (permanently accessible after first clear, no re-gate). GIVEN the same boss `defeated_once = false`, THEN the first-access gate still applies (`LOCKED`) — ALWAYS_OPEN only takes effect post-first-defeat.
+**AC-EZ-52** (BLOCKING, Unit): `repeat_policy = ALWAYS_OPEN`. GIVEN a boss with **first-access `gate_type = WIN_COUNT`, `required_wins = 6`**, `repeat_policy = ALWAYS_OPEN`, `defeated_once = true`, `win_count = 0` (first-access unmet), THEN `UNLOCKED` (permanently accessible after first clear, no re-gate). GIVEN the same boss `defeated_once = false`, `win_count = 0`, THEN the first-access gate still applies (`LOCKED`) — ALWAYS_OPEN only takes effect post-first-defeat. (Gate_type is pinned to WIN_COUNT so Scenario B does not pass spuriously against an OPEN first-access gate, which is always UNLOCKED regardless — that path is AC-EZ-36.)
+
+### Reserved / New Guardrails
+
+**AC-EZ-53** (DEFERRED, Unit): `FULL_REGATE` (reserved). GIVEN a boss with `repeat_policy = FULL_REGATE`, `defeated_once = true`, first-access gate met (win_count ≥ required), THEN `UNLOCKED` (the original full gate re-applies each cycle — not permanently open, not lighter). Reserved; no MVP content authors `FULL_REGATE`. Activate when FULL_REGATE content is authored. The enum value being live without a specified behavior is the latent gap this AC closes.
+
+**AC-EZ-54** (ADVISORY, Content Val): terrain-identity invariants (Rule 2a). **A (identity enemy):** every terrain patch contains ≥ 1 `enemy_id` present in no other patch in the zone → content error naming any patch that fails. Discriminator: a zone where all patches share one pool (cosmetic terrain) fails. **B (weight floor):** any `enemy_id` tagged as a farmable/needed-part host has `spawn_weight >= 0.20 * patch.total_weight` → content warning below the floor. Enforces the targeting-lever promise mechanically instead of by author discipline.
+
+**AC-EZ-55** (DEFERRED, Integration): WIN_COUNT is wins-only (Rule 8a). GIVEN a WIN_COUNT boss, WHEN the player **flees** a zone WILD encounter, THEN `zone_win_count` is unchanged; WHEN the player **loses**, unchanged; WHEN the player **wins**, `+1`. Discriminator: an "any-encounter-ended" increment opens the gate early — assert no increment on flee/loss. Activate when Exploration Progress ships its increment hook (ratifies Rule 8a storage contract).
 
 ### Coverage
 
-Every Core Rule (1–11) and every Edge Case (EC-EZ-01…11) has a verifying AC (see the *Verified by* citations in Edge Cases and the rule-mapping: R1→47, R2→48/30, R3→01–03/41, R4→04–09/15, R5→10–14, R6→49/51, R7→16–21/36–38, R8→16–19/34–35, R9→22–25/39/52, R10→27–31, R11→47–51). **52 ACs**: 30 BLOCKING (Unit/Integration), 15 ADVISORY (Content Validation), 7 DEFERRED (Integration, Not-Started systems). Unit-testable now with stub Enemy DB + injected seeded RNG: AC-EZ-01–09, 16–18, 22–23, 26–39, 52.
+Every Core Rule (1–11, plus 2a/8a) and every Edge Case (EC-EZ-01…11) has a verifying AC (see the *Verified by* citations in Edge Cases and the rule-mapping: R1→47, R2→48/30, R2a→54, R3→01–03/41, R4→04–09/15, R5→10–14, R6→49/51, R7→16–21/24/36–38, R8→16–21/34–35, R8a→20/55, R9→22–25/39/52/53, R10→27–31, R11→47–51). **56 ACs**: 36 BLOCKING (Unit/Integration), 11 ADVISORY (Content Validation), 9 DEFERRED (Integration, Not-Started systems). Unit-testable now with stub Enemy DB + injected seeded RNG: AC-EZ-01–09, 16–24, 26–39, 40a, 52; offline content-validation linters (10–14, 25, 47–51, 54) also run now. DEFERRED (await Not-Started systems): 40b, 41–46, 53, 55.
+
+> **Note on the cut WAVE gate:** the former WAVE integration ACs (win-all-waves, defeat-abort, flee-abort, lighter-wave-regate) are intentionally *not* present — WAVE is reserved (Rule 7). AC-EZ-24 verifies it is fail-safe (LOCKED) if authored; its full behavioral ACs are authored when WAVE is un-reserved (OQ-EZ-3). AC slots 19–21/24 were repurposed to Boss 2's WIN_COUNT + shared-counter coverage.
 
 ## Open Questions
 
@@ -407,6 +447,9 @@ Every Core Rule (1–11) and every Edge Case (EC-EZ-01…11) has a verifying AC 
 |---|----------|-------|--------|
 | OQ-EZ-1 | **Terrain-type enum finalization.** The MVP terrain types (`MECHANICAL_GRASS`, `JUNKYARD`, `PYLON_FIELD`, `MACHINE_CAVERN`) are provisional placeholders. The final list depends on the Art Bible (visual distinctness per VA-1) and the ~8 WILD enemy roster's element/faction identities (which enemies group into which biome). | Art Bible + content authoring | Terrain readability (VA-1) and the targeting-lever design; not a schema change |
 | OQ-EZ-2 | **Reserved-gate spatial contract (`REACH`/`DUNGEON_RUSH`).** The exact `gate_params` shape and the spatial fulfillment (where a hidden boss physically is, how a dungeon's mobs are laid out and "rushed") are owned by Zone & World Map (#12) and Overworld Navigation (#16) when authored. This GDD reserves the enum values only. | Zone & World Map + Overworld Navigation GDDs | Blocks nothing in MVP; the contract is defined when those systems are designed |
-| OQ-EZ-3 | **WAVE arena context.** Is the wave arena a distinct scene/encounter context, and does it reuse the combat screen with a wave-progress overlay, or its own framing? The `wave_pools` structure (how each wave's enemies are authored) needs definition jointly with Combat UI. | Combat UI + this system (content) | WAVE gate (Boss 2) polish; the runtime abort/reset logic (Rule 9, AC-EZ-20/21) is already specified |
-| OQ-EZ-4 | **Encounter-rate modifiers (repel / anti-frustration).** MVP uses a fixed per-terrain `encounter_rate`. Should later tiers add player-state modifiers — a "repel" consumable, or a decaying rate after many consecutive encounters (anti-grind-fatigue)? Deferred; the fixed-rate EZ-1 is the MVP baseline. | Playtest / balance / Economy (if item-based) | None for MVP; a Vertical Slice+ enhancement |
-| OQ-EZ-5 | **WIN_COUNT counter semantics.** Confirm the counter is *cumulative WILD victories in the zone* (not distinct enemy types, not since-last-visit). Fled and lost encounters do not count (it is a *win* count). This is Exploration Progress's storage contract — ratify when that GDD is authored. | Exploration Progress GDD | WIN_COUNT gate behavior (Boss 1); provisional until Exploration Progress ratifies |
+| OQ-EZ-3 | **WAVE gate un-reserval (deferred by design-review verdict).** WAVE is cut from MVP (Rule 7). If a future tier re-introduces it, this OQ owns the deferred design: the `wave_pools` schema (structure, per-wave selection, `wave_pools.size()` vs `wave_count`, re-gate wave pools), the arena scene/context, and reactivating EC-EZ-06 + its behavioral ACs. | Future tier + Combat UI | None for MVP — WAVE is reserved; no Boss 2 dependency (Boss 2 is now WIN_COUNT) |
+| OQ-EZ-4 | **Encounter-rate modifiers (repel / anti-frustration).** MVP uses a fixed per-terrain `encounter_rate`. Should later tiers add player-state modifiers — a "repel" consumable, or a decaying rate after many consecutive encounters (anti-grind-fatigue)? Deferred; the fixed-rate EZ-1 is the MVP baseline. Also the natural home for **traversal relief** through DENSE terrain (a depleted player crossing a fast-farm biome to reach a boss). | Playtest / balance / Economy (if item-based) | None for MVP; a Vertical Slice+ enhancement |
+| OQ-EZ-5 | **WIN_COUNT counter semantics — RESOLVED (2026-07-11).** Now normative in **Rule 8a**: cumulative, all-time, zone-wide, never resets, wins-only (fled/lost never count). Exploration Progress *implements* this contract; it no longer *ratifies* it. Verified by AC-EZ-20 (shared counter) + AC-EZ-55 (wins-only). | *(resolved — Rule 8a)* | Closed |
+| OQ-EZ-6 | **Boss/terrain spatial contract (routed to Zone & World Map #12).** Three obligations this GDD imposes (see Interactions): (1) single-tagged tiles with one `terrain_type` or `PATH`, encounters resolve on the tile stepped onto, `PATH` never rolls EZ-1; (2) an `OVERWORLD` boss is a static non-encounter entity, never gated behind a forced-encounter gauntlet; (3) reserved WAVE needs a dedicated arena entry point. | Zone & World Map GDD | Blocks nothing in MVP; must be honored when #12 is authored (else Overworld Nav + Zone&Map invent conflicting tile semantics) |
+| OQ-EZ-7 | **Enemy-to-terrain discovery surface (routed to World Map UI #20).** The "Crawlers past the scrap dunes" fantasy needs the player to *learn* which enemies live where — a first-encounter-reveals-it roster or static zone field guide. Encounter Zone owns the data (Rule 2a identity enemies); it does not own the surface. | World Map UI / UX | Not an Encounter Zone code blocker, but a Pillar-2 loop blocker if no downstream system provides it — flagged so it can't be lost |
+| OQ-EZ-8 | **Inter-encounter Structure/HP recovery (routed to Turn-Based Combat).** Rule 5's "resource attrition between fights" in DENSE (and any future WAVE waves) presumes a recovery model — full heal, no heal, or partial — that TBC/combat-loop owns, not this system. This GDD does not author it; it only notes DENSE's throughput is only a *cost* trade-off if attrition is real. | Turn-Based Combat / balance | Encounter Zone stays correct under any choice; the choice affects DENSE's economic role and must be pinned before DENSE tuning is finalized |

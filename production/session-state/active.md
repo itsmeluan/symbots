@@ -221,10 +221,20 @@ Ran full 5-agent adversarial sweep (game-designer + systems-designer + qa-lead +
 - Still pending from Session 17: /consistency-check (MULTIPLIER_FLOOR + errata). NOTE: systems-index shows Drop already "Approved (2026-07-11, re-review punch-list applied)".
 - Next MVP system in design order: #7 Encounter Zone (Not Started) or #10 Enemy AI.
 
+## Encounter Zone (#7) — design-review DONE, punch-list APPLIED (2026-07-11)
+- **Verdict**: NEEDS REVISION (first review, full panel: game/systems/economy/level designers + qa-lead + CD synthesis). 4 blockers + 4 recommended — ALL applied same session.
+- **BIG CHANGE — WAVE gate CUT to Reserved** (CD verdict: off-pillar gauntlet + `wave_pools` undefined). Both MVP bosses now `WIN_COUNT` on a **shared cumulative zone-win counter**: Boss 1 @ 6, Boss 2 @ 10 (regate 2 / 3). WAVE keeps enum value alongside REACH/DUNGEON_RUSH.
+- **Rule 8a** added — WIN_COUNT semantic NORMATIVE (cumulative, all-time, zone-wide, never resets, wins-only; fled/lost don't count). OQ-EZ-5 → RESOLVED. Exploration Progress now *implements* this, doesn't ratify.
+- **Rule 2a** added — terrain identity-enemy + 20% weight-floor invariant (AC-EZ-54) enforcing the targeting-lever promise.
+- AC-EZ-25 ADVISORY→BLOCKING (+regate=0/≥first guards); AC-EZ-40 split 40a(BLOCKING now)/40b(DEFERRED); AC discriminator fixes (03/04/15/35/39/52) + new 53(FULL_REGATE)/55(wins-only). 1.3×/1.6× text fixed; EZ-2 pre-filter+sentinel noted. **52→56 ACs** (36 BLOCKING/11 ADV/9 DEFERRED).
+- Routed OUT (not this read-only layer's job): OQ-EZ-6 (spatial tile/boss contract→Zone&Map), OQ-EZ-7 (enemy-terrain discovery→World Map UI), OQ-EZ-8 (inter-encounter HP recovery→TBC).
+- **Tracking done**: GDD header→Reviewed/revised; systems-index #7 row + Last-Updated updated; review-log CREATED (design/gdd/reviews/encounter-zone-review-log.md). grep sweep = consistent.
+- **User chose: RE-REVIEW in a new session.** → `/clear` then `/design-review design/gdd/encounter-zone.md` (validate WAVE-cut consistency, shared-counter dual gate, Rule 2a/8a, renumbered AC coverage) BEFORE marking Approved.
+
 <!-- STATUS -->
 Epic: MVP Core GDDs
-Feature: Encounter Zone (#7) Designed — pending fresh-session /design-review
-Task: /clear then /design-review design/gdd/encounter-zone.md; then #10 Enemy AI or #11 Inventory
+Feature: Encounter Zone (#7) — revised, pending fresh-session RE-REVIEW
+Task: /clear then /design-review design/gdd/encounter-zone.md (re-review); then #10 Enemy AI or #11 Inventory
 <!-- /STATUS -->
 
 <!-- CONSISTENCY-CHECK: 2026-07-11 | GDDs checked: 9 | Conflicts found: 0 (1 stale registry note synced: N_PROTO_PITY calibration) | Drop-owned constants N_PROTO_PITY/M_BOSS_PITY/MULTIPLIER_FLOOR all consistent across Part DB + Enemy DB -->
