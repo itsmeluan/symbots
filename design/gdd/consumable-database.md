@@ -89,27 +89,217 @@ A single **use** is an atomic transaction: validate (item in inventory, valid ta
 
 ## Formulas
 
-[To be designed]
+**No formula in this section uses `floor()`/`ceil()`.** CD-1/2/3 are pure integer clamps (`min`/`max`); CD-4/5 are float-multiply-into-`clamp()` feeding a `randf() <` comparison (identical in structure to the already-approved EZ-1 and DS-1). No epsilon nudge is needed and **no python3 float scan is required** — stated explicitly so a reviewer does not flag the absence. All effect magnitudes are per-entry constants (Tuning Knobs, Section G). Combat resource ranges are owned by upstream systems: `max_structure` ∈ [60, 594] (SA-F1), Heat ∈ [0, 100] (Overheat at 100), `max_energy` ∈ [80, 120] (SA-F1), `BASE_ENERGY_REGEN = 10`/turn (TBC-F2).
+
+### CD-1 — RESTORE_STRUCTURE (Weld Patch / Repair Kit / Field Forge)
+
+`new_structure = min(max_structure, current_structure + amount)`
+
+| Variable | Symbol | Type | Range | Description |
+|----------|--------|------|-------|-------------|
+| Current Structure | `current_structure` | int | [1, max_structure] | Target's Structure at use (> 0 enforced by living-target rule) |
+| Max Structure | `max_structure` | int | [60, 594] | Target's max Structure (SA-F1, build-dependent) |
+| Restore amount | `amount` | int | tier constant | **Weld Patch 25 / Repair Kit 50 / Field Forge 120** |
+| Output | `new_structure` | int | [1, max_structure] | Structure after application; overheal clamped, never exceeds max |
+
+**Output range:** [1, max_structure]. Pure integer arithmetic + `min()` clamp. **Design choice — flat, not %-of-max:** a percentage heal would make a consumable trivial for a 60-Structure glass cannon (the build that most needs the rescue) and introduce a `floor(pct × max)` requiring an epsilon scan. Flat healing is meaningful across the 10× spread (25 = 42% of a glass cannon, real absolute HP for a tank) and scan-exempt.
+
+**Worked example:** current 37, max 60, Repair Kit (50) → `min(60, 87) = 60` (glass-cannon full restore, 27 overheal discarded — the clamp-fires case). Non-clamp: current 150, max 300, Repair Kit → `min(300, 200) = 200` (heals exactly 50). Repair Kit's 50 exceeds the REPAIR *move*'s absolute ceiling (30 at max energy_power), justifying the item + turn cost without eclipsing a dedicated REPAIR build (which heals every turn).
+
+### CD-2 — REDUCE_HEAT (Coolant Flush)
+
+`new_heat = max(0, current_heat − amount)`
+
+| Variable | Symbol | Type | Range | Description |
+|----------|--------|------|-------|-------------|
+| Current Heat | `current_heat` | int | [0, 100] | Target's Heat gauge at use |
+| Reduce amount | `amount` | int | constant **50** | Heat removed by a Coolant Flush |
+| Output | `new_heat` | int | [0, current_heat] | Heat after application; floored at 0, never negative |
+
+**Output range:** [0, current_heat]. `max(0, …)` clamp prevents negative Heat; if the result drops below the Overheat threshold the Symbot exits Overheat via TBC's normal Heat logic (no special flag). **50 rescues a near-Overheat state with margin** (90 → 40) while leaving Heat management meaningful (not a full reset — a full 100→0 wipe would delete the Heat tension entirely).
+
+**Worked example:** current 90 → `max(0, 40) = 40` (near-Overheat rescue, no clamp). current 30 → `max(0, −20) = 0` (clamp fires, floors at 0 — the `amount > current_heat` case).
+
+### CD-3 — RESTORE_ENERGY (Power Cell)
+
+`new_energy = min(max_energy, current_energy + amount)`
+
+| Variable | Symbol | Type | Range | Description |
+|----------|--------|------|-------|-------------|
+| Current Energy | `current_energy` | int | [0, max_energy] | Target's Energy at use |
+| Max Energy | `max_energy` | int | [80, 120] | Target's energy capacity (SA-F1) |
+| Restore amount | `amount` | int | constant **25** | Energy restored by a Power Cell |
+| Output | `new_energy` | int | [0, max_energy] | Energy after application; capped at max_energy |
+
+**Output range:** [0, max_energy]. `min()` clamp prevents over-cap. **25 ≈ 2.5 turns of regen** (BASE_ENERGY_REGEN 10) — buys roughly two moves (Move DB Rule 7: move cost > 10), a "one more big move" bridge, not an engine reset (which +50 on an 80-cap pool would be).
+
+**Worked example:** current 5, max 80 → `min(80, 30) = 30` (no clamp). current 100, max 120 → `min(120, 125) = 120` (clamp fires, 5 discarded).
+
+### CD-4 — BOOST_DROP (Salvage Beacon)
+
+`effective_drop_rate = clamp(base_rate × Π(condition_multipliers) × beacon_multiplier, 0.0, 1.0)`
+
+| Variable | Symbol | Type | Range | Description |
+|----------|--------|------|-------|-------------|
+| Base rate | `base_rate` | float | {0.70, 0.25, 0.05, 0.001} | Per-rarity base drop rate (Drop System / Part DB Formula 3) |
+| Condition product | `Π(condition_multipliers)` | float | [1.0, ∞) | Product of fired drop-condition multipliers this fight |
+| Beacon multiplier | `beacon_multiplier` | float | constant **2.0** | Salvage Beacon's factor, injected into the Drop System product |
+| Output | `effective_drop_rate` | float | [0.0, 1.0] | Final per-roll drop probability; clamped, fed to `randf() <` |
+
+**Output range:** [0.0, 1.0]. Float multiply into `clamp()` — no `floor()`. **beacon_multiplier = 2.0** is the economy-validated value: a Beacon self-replenishes at RARE base 0.25 × 2.0 = 0.50, so the player *drains* Beacons ~2:1 (sustainable, no runaway farm-Beacons-to-farm-Beacons loop; ×3.0+ is where that breaks — see Tuning Knobs safe range 1.5–2.5). Guardrails: one Beacon per battle, spent on flee/loss, drops only on victory (Rule 5).
+
+**Worked example:** Rare, no conditions, Beacon → `clamp(0.25 × 1.0 × 2.0) = 0.50` (a coin-flip Rare — meaningful lift, still a real miss chance). Prototype, floor-compliant conditions (×4.5), Beacon → `clamp(0.05 × 4.5 × 2.0) = 0.45` (vs 0.225 without). Common at conditioned ceiling → `clamp(0.70 × … × 2.0) = 1.0` (already-guaranteed Commons gain nothing — acceptable; a Rare item guaranteeing a 5-Scrap Common is a fair trade).
+
+### CD-5 — MODIFY_ENCOUNTER_RATE (Signal Jammer / Scrap Lure)
+
+`effective_rate = clamp(base_rate × rate_multiplier, 0.0, 1.0)` — applied for `duration_steps` steps; then `triggered = rng.randf() < effective_rate` (EZ-1).
+
+| Variable | Symbol | Type | Range | Description |
+|----------|--------|------|-------|-------------|
+| Base rate | `base_rate` | float | {0.07, 0.15, 0.35} | Zone's density encounter_rate (EZ-1) |
+| Rate multiplier | `rate_multiplier` | float | > 0.0 | < 1 = repel, > 1 = lure |
+| Duration | `duration_steps` | int | > 0 | Steps the modifier stays active |
+| Output | `effective_rate` | float | [0.0, 1.0] | Clamped per-step rate; replaces base_rate in EZ-1 |
+
+**Constants:** Signal Jammer `rate_multiplier = 0.1`, `duration_steps = 20` (90% reduction — a heavy but not total suppression, so a DENSE zone still threatens rather than becoming free transit). Scrap Lure `rate_multiplier = 2.5`, `duration_steps = 15` (stays under the 1.0 clamp even at DENSE 0.35 × 2.5 = 0.875, so movement isn't reduced to every-step forced combat).
+
+**Output range:** [0.0, 1.0]. Same clean float-clamp-into-`randf()<` as EZ-1 — no `floor()`. **Worked example:** DENSE 0.35 × Jammer 0.1 = `clamp(0.035) = 0.035` (~1 encounter/29 steps, down from 1/2.9). SPARSE 0.07 × Lure 2.5 = `clamp(0.175) = 0.175` (~1/5.7 steps, up from 1/14.3). Only one modifier active at a time; a second use replaces it (Rule 6).
 
 ## Edge Cases
 
-[To be designed]
+**EC-CD-01 — Zero-net-effect use (overheal / already-full / already-cool).** A `RESTORE_STRUCTURE` on a full-Structure target, `RESTORE_ENERGY` on a full-Energy target, or `REDUCE_HEAT` on a target at Heat 0 would change nothing: the use is **rejected before consumption** — the item is NOT consumed and feedback tells the player it would have no effect. A *partial* effect (e.g. current 55 / max 60, Weld Patch heals 5 then clamps) is **allowed and consumed** — only an exactly-zero net change is rejected. Prevents accidental waste. *Verified by AC-CD-05.*
+
+**EC-CD-02 — Use on a downed Symbot.** A `RESTORE_*` item targeting a Symbot at `Structure == 0` is **rejected**, item not consumed — consumables never revive (Rule 4). *Verified by AC-CD-06.*
+
+**EC-CD-03 — Wrong use context.** A `BATTLE`-only item used in the overworld, or a `WORLD`-only item used in battle, is **rejected**, not consumed (Rule 3). `BOTH` items are valid in either context. *Verified by AC-CD-07.*
+
+**EC-CD-04 — None in inventory.** A use requested for a consumable at quantity 0 is **rejected** — nothing is consumed. Quantity is owned by Inventory; the use action validates `quantity > 0` before applying. *Verified by AC-CD-08.*
+
+**EC-CD-05 — Second Salvage Beacon in one battle.** With a Beacon boost already active this battle, a second Beacon use is **rejected**, not consumed (Rule 5 — no stacking, no waste). *Verified by AC-CD-11.*
+
+**EC-CD-06 — Second encounter modifier while one is active.** Using a Signal Jammer or Scrap Lure while a modifier is active **replaces** the active modifier with the new one — the new item is consumed and the prior flag is discarded (Rule 6, latest wins). This is a replacement, not a rejection. *Verified by AC-CD-13.*
+
+**EC-CD-07 — Beacon used but battle not won.** If a battle with an active Beacon ends in flee or loss, the Beacon is **already spent** (consumed on use) and has no effect — drops only on victory (Drop System Rule 1). *Verified by AC-CD-12.*
+
+**EC-CD-08 — Encounter modifier across battles / persistence.** The encounter modifier counts down **per overworld step only** — it is frozen during a battle (no steps occur) and resumes after, persisting until `steps_remaining` reaches 0. Survival across save/reload is owned by Overworld Navigation (provisional; if discarded on reload, that is an acceptable minor loss, never a crash). *No-crash verified by AC-CD-14; persistence deferred (Overworld Navigation / Save-Load).*
+
+**EC-CD-09 — Malformed `effect_params`.** A consumable whose `effect_params` is missing a key its `effect_type` requires (e.g. `RESTORE_STRUCTURE` with no `amount`) is a **content error at load**: the item is flagged invalid and unusable (fail-safe — never applies an undefined effect); validation names the consumable and the missing key. *Verified by AC-CD-15.*
+
+**EC-CD-10 — `buy_price ≤ sell_price` (economy invariant violation).** A consumable authored with `buy_price <= sell_price` is a **BLOCKING content error** (Rule 8 invariant); validation names the item and both values. Fail-safe: the item still functions in MVP (prices are inert), but the check blocks it from shipping to a shop-enabled build. *Verified by AC-CD-16.*
+
+**EC-CD-11 — Unknown `effect_type`.** A consumable with an `effect_type` outside the defined enum is a **content error**; the item is unusable (fail-safe), validation names it. *Verified by AC-CD-17.*
+
+**EC-CD-12 — `max_stack` overflow.** Acquiring a consumable already at `max_stack` — the overflow policy (reject pickup / convert to Scrap / discard) is **owned by Inventory** (Not Started). The DB declares `max_stack`; this EC flags the boundary for the Inventory GDD. *Deferred to Inventory.*
 
 ## Dependencies
 
-[To be designed]
+### Upstream (Consumable Database reads from these)
+
+**None hard.** The Consumable Database is a standalone schema authority (like Part DB) — it is read-only at runtime and reads no other GDD. It *aligns with shared vocabulary it does not own*: the `rarity` enum (Part DB / Drop System), combat-resource semantics (Turn-Based Combat: Structure / Heat / Energy and their ranges), the drop formula (Drop System Formula 3 / DS-1), and the encounter formula (Encounter Zone EZ-1). It **declares** data those systems interpret; if any of that shared vocabulary changes, this GDD's effect model must be re-checked (soft/vocabulary coupling, not a runtime dependency).
+
+### Downstream (these systems read from / realize this one)
+
+| System | Direction | Interface | Status |
+|--------|-----------|-----------|--------|
+| **Turn-Based Combat** | → read by *(ERRATUM)* | `use item` action; applies CD-1/2/3 to a chosen living team Symbot; sets the per-battle Salvage Beacon flag | Approved |
+| **Drop System** | → read by *(ERRATUM)* | consumables as a level/rarity-scaled drop channel; reads the Beacon flag to inject `beacon_multiplier` (CD-4) | Approved |
+| **Encounter Zone** | → read by *(ERRATUM)* | EZ-1 `encounter_rate` modifier hook (CD-5); un-defers OQ-EZ-4 | Approved |
+| **Inventory** *(Not Started)* | ↔ stored by | per-save quantities, stacking, `max_stack` | Not Started |
+| **Overworld Navigation** *(Not Started)* | ← used by | decrements the encounter-modifier `steps_remaining` per step | Not Started |
+| **NPC System / future Shop** *(Not Started)* | → read by | `buy_price` / `sell_price` for vendor buy/sell in Scrap (post-MVP) | Not Started |
+| **Combat UI / World Map UI** *(Not Started)* | → read by | item menus, the battle target-picker, Beacon + encounter-modifier active indicators | Not Started |
+
+### Errata obligations this GDD creates on Approved documents
+
+Each errata'd doc needs a light re-review touch. Per the project's consistency-failure lesson (`docs/consistency-failures.md`), **the source GDD and the registry are updated together**, never one without the other.
+
+1. **Turn-Based Combat** — add **use item** as a 4th action in Rule 3's action set (alongside move / switch / flee), taking a target arg (a living team Symbot, `Structure > 0`); it consumes the turn, generates no Heat, costs no Energy; applies `RESTORE_STRUCTURE / REDUCE_HEAT / RESTORE_ENERGY` (CD-1/2/3) to the target; sets the per-battle Salvage Beacon flag. New AC. References the CD effect constants.
+2. **Drop System** — add consumables as a **level/rarity-scaled drop output class**, a channel separate from the part loot pool; read the Beacon per-battle flag to inject `beacon_multiplier` into `effective_drop_rate` (CD-4, `clamp` [0,1]). New rule + AC. Consumable drop frequency owned here.
+3. **Encounter Zone** — add the **EZ-1 `encounter_rate` modifier hook** (`effective_rate = clamp(base_rate × active_modifier, 0, 1)`, CD-5); Overworld Navigation counts down `duration_steps`. New rule/AC, and **OQ-EZ-4 → RESOLVED** (repel/lure consumables are now designed).
+
+*(Enemy Database needs no change — the global level/rarity drop table means there are no per-enemy consumable pools.)*
+
+### Bidirectionality
+
+- **Turn-Based Combat, Drop System, Encounter Zone** will each list Consumable Database as an upstream dependency once their errata land (applied when this GDD is approved).
+- **Inventory, Overworld Navigation, NPC System / Shop, Combat UI, World Map UI** (all Not Started) must list Consumable Database when authored.
 
 ## Tuning Knobs
 
-[To be designed]
+### Effect magnitudes
+
+| Knob | Value | Safe Range | What Changing It Does |
+|------|-------|------------|----------------------|
+| `WELD_PATCH_AMOUNT` | 25 | 15–35 | Common heal — meaningful for a glass cannon (42% of a 60 pool), modest for a tank |
+| `REPAIR_KIT_AMOUNT` | 50 | 40–70 | Standard heal — keep **> 30** (the REPAIR move's absolute ceiling) so the item + turn cost is earned |
+| `FIELD_FORGE_AMOUNT` | 120 | 90–160 | Prototype emergency heal (≈ four REPAIR casts in one action) |
+| `COOLANT_FLUSH_AMOUNT` | 50 | 40–70 | Keep **< 100** — a full wipe deletes Heat-management tension; **≥ 40** for genuine near-Overheat margin |
+| `POWER_CELL_AMOUNT` | 25 | 15–40 | ≈ 2 moves' worth (regen 10/turn); keep **< 50** or it becomes a full energy reset on an 80-cap pool |
+| `BEACON_MULTIPLIER` | 2.0 | 1.5–2.5 | Drop-rate boost. **≥ 3.0 = degenerate** — the Beacon self-replenishes at RARE base (0.25 × 3.0 = 0.75) and the farm-Beacons-to-farm loop breaks |
+| `JAMMER_RATE_MULTIPLIER` | 0.1 | 0.05–0.2 | Repel strength. Keep **> 0** — 0.0 is a total blackout that trivializes zone tension |
+| `JAMMER_DURATION_STEPS` | 20 | 15–30 | How long a repel lasts (~one mid-zone traversal) |
+| `LURE_RATE_MULTIPLIER` | 2.5 | 2.0–3.0 | Lure strength. At **≥ 3.0** a DENSE zone (0.35) clamps to ~every-step forced combat |
+| `LURE_DURATION_STEPS` | 15 | 10–20 | Length of a lure farming burst |
+
+### Buy / sell prices (Scrap; reserved for post-MVP shops — inert in MVP)
+
+`buy_price > sell_price` **strictly, for every entry** (Rule 8 invariant — BLOCKING, AC).
+
+| Item | Rarity | `buy_price` | `sell_price` | Spread |
+|------|--------|-------------|--------------|--------|
+| Weld Patch | COMMON | 12 | 2 | 6× |
+| Coolant Flush | COMMON | 12 | 2 | 6× |
+| Power Cell | COMMON | 12 | 2 | 6× |
+| Scrap Lure | COMMON | 15 | 3 | 5× |
+| Repair Kit | RARE | 36 | 8 | 4.5× |
+| Signal Jammer | RARE | 45 | 10 | 4.5× |
+| Salvage Beacon | RARE | 48 | 10 | 4.8× |
+| Field Forge | PROTOTYPE | 75 | 15 | 5× |
+
+Anchored to part-scrap yields (Common 5 / Rare 20 / Prototype 35): each consumable's `sell_price` sits *below* the same-rarity part yield (a single-use utility is less extractable than a raw part). Utility items (Beacon, Jammer, Lure) price above restoratives of the same rarity — proactive, build-shaping power.
+
+### Stack caps
+
+| `max_stack` | Value | Note |
+|-------------|-------|------|
+| Common | 20 | The primary post-MVP surplus-sell lever — a physical bound on hoarding |
+| Rare | 10 | |
+| Prototype | 5 | Field Forge — scarce emergency item |
+
+### Knob interaction warnings
+
+1. **`buy_price > sell_price` strictly, every entry** — a vendor must always buy back for less than it sells, or buy/sell becomes an arbitrage faucet. BLOCKING content check (AC).
+2. **`BEACON_MULTIPLIER ≥ 3.0` breaks the economy** — self-replenishment ≥ 0.75 (farm-Beacons-to-farm-Beacons). Stay in 1.5–2.5; the authored 2.0 drains Beacons ~2:1.
+3. **Post-MVP sell-faucet ceiling** — keep maximum plausible surplus-sell income **below ~20% of the arc part-faucet (~368 Scrap)**. Primary levers, in order of impact: Common `sell_price`, `max_stack` caps, Rare `sell_price`. If playtest shows Common consumable surplus flooding Scrap, pull Common `sell_price` first.
+4. **`LURE_RATE_MULTIPLIER` × `density_class` coupling** — the Lure's felt strength depends on the zone's base rate; at DENSE (0.35) a multiplier ≥ 3.0 clamps to near-every-step. Tune the Lure against the zone's densest farming terrain, not SPARSE.
+
+**Owned elsewhere — referenced, not duplicated:** the combat resources these restore (TBC: Structure/Heat/Energy); the drop rates the Beacon multiplies (Drop System); the encounter rates the modifiers scale (Encounter Zone); Scrap yields and the economy target (Drop System / HOLISM-01); inventory stacking storage (Inventory).
 
 ## Visual/Audio Requirements
 
-[To be designed]
+> **Ownership note**: The Consumable Database is a data-schema layer — it owns no assets. The requirements below are obligations on the presentation systems (Combat UI, World Map UI, Audio System) and the Art Bible.
+
+**VA-1 — Use-effect feedback (binding).** Each `effect_type` needs a clear feedback beat when used: `RESTORE_STRUCTURE` = a weld/nanite heal flash on the target Symbot; `REDUCE_HEAT` = venting steam / cooldown shimmer; `RESTORE_ENERGY` = a charge-up pulse; `BOOST_DROP` (Salvage Beacon) = a targeting "ping" that reads as *this fight matters*; `MODIFY_ENCOUNTER_RATE` = an overworld status pulse (repel vs lure visually distinct). *(Combat UI / Audio System / Art Bible.)*
+
+**VA-2 — Rarity readability.** Consumable icons must read rarity at a glance, sharing the rarity color language used for parts (COMMON / RARE / PROTOTYPE). *(Art Bible.)*
+
+**VA-3 — Active-modifier indicator.** A Beacon-active state reads in battle; a Signal Jammer / Scrap Lure active state **and its remaining steps** read in the overworld. *(Combat UI / World Map UI.)*
+
+**Audio intent:** a distinct use-sound per effect family (heal / vent / charge / ping / field-modifier), plus a soft "rejected / no-effect" cue for the EC-CD-01/02/03 rejections so a blocked tap does not feel like a bug. *(Audio System.)*
+
+> **📌 Asset Spec** — after the Art Bible is approved, run `/asset-spec system:consumable-database` to produce per-item icon specs and use-effect VFX descriptions from this section.
 
 ## UI Requirements
 
-[To be designed]
+Obligations on Combat UI, World Map UI, and Inventory UI (all Not Started) — layout and interaction belong to those GDDs.
+
+1. **Item menu** (battle + overworld): list consumables usable *in the current context* with name / icon / quantity; grey out wrong-context items (a `WORLD`-only item is not selectable in battle, and vice-versa — EC-CD-03).
+2. **Battle target-picker**: for `RESTORE_*` items the player picks a **living team Symbot**, and the picker must show each Symbot's current/max resource so the choice is informed; **downed Symbots are not selectable** (EC-CD-02).
+3. **Rejection feedback**: EC-CD-01…05 rejections need clear, non-punishing messages — "already full", "can't revive a downed Symbot", "can't use here", "none left", "beacon already active" — so a rejected tap reads as a rule, not a bug.
+4. **Active-effect indicators**: a Beacon-active marker in battle; an encounter-modifier marker **with steps-remaining** in the overworld (mirrors VA-3).
+5. **Shop UI** *(post-MVP)*: buy/sell in Scrap against `buy_price`/`sell_price`; deferred with shops (NPC System #23 / a future Shop system).
+
+> **📌 UX Flag — Consumable Database**: this system places item-menu, target-picker, and active-effect-indicator requirements on the UI. In Pre-Production, run `/ux-design` for the consumable menu + battle target-picker + overworld effect indicators **before** writing epics; stories should cite the resulting `design/ux/` spec, not this GDD directly.
 
 ## Acceptance Criteria
 
