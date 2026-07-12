@@ -223,8 +223,9 @@ Ran full 5-agent adversarial sweep (game-designer + systems-designer + qa-lead +
 
 <!-- STATUS -->
 Epic: MVP Core GDDs
-Feature: TBC APPROVED (fix-confirmation, 2 blockers fixed) + all 4 propagation/errata applied (Passive DB, Part-Break, Move DB, Drop System)
-Task: NEXT — /consistency-check (verify errata registry-coherent), then /design-system #7 Encounter Zone or #10 Enemy AI.
+Feature: TBC APPROVED (fix-confirmation, 2 blockers fixed) + 4 propagation/errata applied + /consistency-check PASS (0 conflicts, 38 entries, 10 GDDs)
+Task: Designing #7 Encounter Zone GDD — skeleton created, starting Section A (Overview)
 <!-- /STATUS -->
 
 <!-- CONSISTENCY-CHECK: 2026-07-11 | GDDs checked: 9 | Conflicts found: 0 (1 stale registry note synced: N_PROTO_PITY calibration) | Drop-owned constants N_PROTO_PITY/M_BOSS_PITY/MULTIPLIER_FLOOR all consistent across Part DB + Enemy DB -->
+<!-- CONSISTENCY-CHECK: 2026-07-11 (session 20 close) | GDDs checked: 10 | Conflicts found: 0 | Verified: BREAK_BIAS_MULTIPLIERS(1.25/0.55/0.70/1.40) + ENRAGE_PER_BREAK(0.12) + BREAK_SPILLOVER(0.20) + 4-arg hit_resolved across Passive DB/Part-Break/TBC/Move DB + Drop System OQ-DS-1 RESOLVED (deterministic break) | 38 registry entries all PASS -->
