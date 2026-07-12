@@ -866,19 +866,21 @@ formulas:
       - design/gdd/inventory.md
       - design/gdd/consumable-database.md      # resolves EC-CD-12 overflow; un-blocks AC-CD-23 (stack model)
     variables:
-      - "current (int [0, max_stack]) — count already in the stack before the add"
-      - "qty (int [0, inf)) — incoming quantity"
+      - "current (int [0, max_stack] nominal) — count already in the stack before the add; a stale save post-retune-down may present current > max_stack (guarded)"
+      - "qty (int; negative clamped to 0 by guard) — incoming quantity"
       - "max_stack (int {5,10,20}) — per-rarity cap, read from Consumable DB"
       - "accepted (int [0, max_stack]) — units written into the stack"
-      - "rejected (int [0, qty]) — excess surfaced as a stack-full notice"
-    output_range: "accepted, rejected both non-negative ints; invariant accepted + rejected == qty (no silent loss)"
-    expression: "accepted = min(qty, max_stack - current); rejected = qty - accepted"
+      - "rejected (int [0, qty']) — excess surfaced as a stack-full notice (qty' = max(qty,0))"
+    output_range: "accepted, rejected both non-negative ints; invariant accepted + rejected == max(qty,0) (no silent loss)"
+    expression: "qty' = max(qty, 0); capacity = max(max_stack - current, 0); accepted = min(qty', capacity); rejected = qty' - accepted"
     notes: "Consumable overflow split (Inventory's only owned formula). Pure integer min/subtraction — NO floor/ceil, no
-      float, no epsilon, no python3 scan. Overflow policy = reject-with-notice (no Scrap conversion in MVP). max_stack-current
-      >= 0 always (current bounded by max_stack), so no negative output. Resolves Consumable EC-CD-12; un-blocks AC-CD-23.
+      float, no epsilon, no python3 scan. Overflow policy = reject-with-notice (no Scrap conversion in MVP). GUARDS (added on
+      2026-07-12 review): qty clamped to >=0 (negative caller-bug -> {0,0} no-op, never subtracts); capacity floored at 0 so a
+      stale current > max_stack (post-retune-down save, EC-INV-11) yields accepted=0 not a negative — the earlier 'current
+      always bounded by max_stack' assumption is NOT relied on. Resolves Consumable EC-CD-12; un-blocks AC-CD-23.
       Worked example (discriminating): current=14, qty=9, max_stack=20 -> accepted=6, rejected=3."
     added: 2026-07-12
-    revised: ""
+    revised: 2026-07-12
 
 # Example:
 #
@@ -1343,7 +1345,8 @@ constants:
       Inventory began referencing it (scrap action). Invariant AC-DS-19: COMMON < RARE < PROTOTYPE < BOSS_GRADE (non-overlapping
       safe ranges 3-8 / 15-24 / 25-45 / 50-100). Inventory REFERENCES these by name and must not redefine/shadow them
       (would be a registry conflict). MVP: scrapping is tier-INDEPENDENT (a tiered part yields the flat per-rarity value; no
-      upgrade refund — OQ-INV-1 defers a possible tier refund to the Part Upgrade System / Alpha)."
+      upgrade refund). MVP tier-refund stance LOCKED 0% (total sink) on 2026-07-12 review — NOT an open question; OQ-INV-1 is
+      retained only as a FORWARD hook for an ADDITIVE, NON-RETROACTIVE refund the Part Upgrade System (Alpha) may layer later."
     added: 2026-07-12
     revised: ""
 

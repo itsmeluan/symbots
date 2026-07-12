@@ -80,12 +80,12 @@ A single **use** is an atomic transaction: validate (item in inventory, valid ta
 | **Turn-Based Combat** | → read by *(ERRATUM)* | Action set gains **use item** (4th action alongside move/switch/flee). Reads `effect_type`/`effect_params` for BATTLE/BOTH items; applies restores to the chosen living team Symbot (target arg); consumes the turn, no Heat/Energy; sets the Salvage Beacon per-battle flag. TBC owns the resources (Structure/Heat/Energy). |
 | **Drop System** | → read by *(ERRATUM)* | Reads `rarity` to place consumables in a level/rarity-scaled drop channel (separate from part loot pools); reads the Beacon flag to multiply the fight's effective drop rates (clamp [0, 1]). Consumable drop frequency owned by Drop System. Scrap currency (used by `buy_price`/`sell_price`) is owned by the Drop System economy (HOLISM-01). |
 | **Encounter Zone** | → read by *(ERRATUM)* | Reads `MODIFY_ENCOUNTER_RATE` via a new EZ-1 modifier hook (un-defers OQ-EZ-4): `effective_rate = clamp(base_rate × active_modifier, 0, 1)`. |
-| **Inventory** *(Not Started)* | ↔ stored by | Stores per-save consumable quantities as a **stackable** class (vs per-instance parts); reads `max_stack`, `display_name`, metadata. The DB declares stack behavior; Inventory owns the counts. |
+| **Inventory** *(Approved)* | ↔ stored by | Stores per-save consumable quantities as a **stackable** class (vs per-instance parts); reads `max_stack`, `display_name`, metadata. The DB declares stack behavior; Inventory owns the counts + the reject-with-notice overflow (INV-1). |
 | **Overworld Navigation** *(Not Started)* | ← used by | Decrements the encounter-modifier `steps_remaining` per step; applies the active modifier when calling EZ-1. |
 | **NPC System / future Shop** *(Not Started)* | → read by | Post-MVP: reads `buy_price`/`sell_price` to run vendor buy/sell in Scrap. Inert in MVP (no shops). |
 | **Combat UI / World Map UI** *(Not Started)* | → read by | Item menus (name/icon/use_context), the battle **target-picker** (living team member), and the Beacon + encounter-modifier active indicators. |
 
-*The TBC / Drop System / Encounter Zone errata are **APPLIED** (2026-07-12, on approval — TBC Rule 7a + AC-TBC-41; Drop Rule 12 + AC-DS-31; Encounter Zone EZ-1 hook + AC-EZ-59 / OQ-EZ-4 RESOLVED; registry + GDDs updated together). Inventory / Overworld Navigation / NPC-Shop interfaces remain provisional (Not Started).*
+*The TBC / Drop System / Encounter Zone errata are **APPLIED** (2026-07-12, on approval — TBC Rule 7a + AC-TBC-41; Drop Rule 12 + AC-DS-31; Encounter Zone EZ-1 hook + AC-EZ-59 / OQ-EZ-4 RESOLVED; registry + GDDs updated together). Inventory interface now **Approved** (2026-07-12 — EC-CD-12 resolved / AC-CD-23 activated / OQ-CD-5 overflow-half resolved). Overworld Navigation / NPC-Shop interfaces remain provisional (Not Started).*
 
 ## Formulas
 
@@ -191,7 +191,7 @@ A single **use** is an atomic transaction: validate (item in inventory, valid ta
 
 **EC-CD-11 — Unknown `effect_type`.** A consumable with an `effect_type` outside the defined enum is a **content error**; the item is unusable (fail-safe), validation names it. *Verified by AC-CD-17.*
 
-**EC-CD-12 — `max_stack` overflow.** Acquiring a consumable already at `max_stack` — the overflow policy (reject pickup / convert to Scrap / discard) is **owned by Inventory** (Not Started). The DB declares `max_stack`; this EC flags the boundary for the Inventory GDD. *Deferred to Inventory.*
+**EC-CD-12 — `max_stack` overflow.** Acquiring a consumable already at `max_stack`. **RESOLVED by Inventory (Approved 2026-07-12):** the policy is **reject-with-notice** — the count clamps to `max_stack`, the excess is rejected (not stored, not converted to Scrap), and `add` returns `{accepted, rejected}` so the caller fires a "stack full" notice (Inventory Rule 4 / INV-1). The DB declares `max_stack`; Inventory owns the count and the overflow split. *Verified by AC-CD-23 (integration) + Inventory AC-INV-01 (unit).*
 
 ## Dependencies
 
@@ -206,7 +206,7 @@ A single **use** is an atomic transaction: validate (item in inventory, valid ta
 | **Turn-Based Combat** | → read by *(ERRATUM)* | `use item` action; applies CD-1/2/3 to a chosen living team Symbot; sets the per-battle Salvage Beacon flag | Approved |
 | **Drop System** | → read by *(ERRATUM)* | consumables as a level/rarity-scaled drop channel; reads the Beacon flag to inject `beacon_multiplier` (CD-4) | Approved |
 | **Encounter Zone** | → read by *(ERRATUM)* | EZ-1 `encounter_rate` modifier hook (CD-5); un-defers OQ-EZ-4 | Approved |
-| **Inventory** *(Not Started)* | ↔ stored by | per-save quantities, stacking, `max_stack` | Not Started |
+| **Inventory** *(Approved)* | ↔ stored by | per-save quantities, stacking, `max_stack`, reject-with-notice overflow (INV-1) | Approved |
 | **Overworld Navigation** *(Not Started)* | ← used by | decrements the encounter-modifier `steps_remaining` per step | Not Started |
 | **NPC System / future Shop** *(Not Started)* | → read by | `buy_price` / `sell_price` for vendor buy/sell in Scrap (post-MVP) | Not Started |
 | **Combat UI / World Map UI** *(Not Started)* | → read by | item menus, the battle target-picker, Beacon + encounter-modifier active indicators | Not Started |
@@ -373,7 +373,7 @@ Obligations on Combat UI, World Map UI, and Inventory UI (all Not Started) — l
 
 **AC-CD-22** (DEFERRED, Integration): Encounter Zone hook + Overworld step countdown — Jammer active (`steps=20`), 5 steps → `steps_remaining==15`, each step's trigger used the modified rate, no crash at expiry. *Activate when the Encounter Zone erratum + Overworld Navigation land.*
 
-**AC-CD-23** (DEFERRED, Integration): Inventory stacking / `max_stack` overflow (EC-CD-12) — Weld Patch `max_stack=5`, slot at 5, `add_item` → overflow handled per Inventory spec (reject `INVENTORY_FULL` or new slot). *Activate when the Inventory GDD defines the stack model.*
+**AC-CD-23** (DEFERRED-until-wired, Integration — **model now defined**): Inventory stacking / `max_stack` overflow (EC-CD-12). Weld Patch (COMMON, `max_stack=20`), count at 20, `add(qty=5)` → Inventory returns `{accepted:0, rejected:5}`, the stored count stays 20, a "stack full" notice fires, and **no** Scrap conversion occurs (reject-with-notice per Inventory Rule 4 / INV-1). FAIL: count exceeds 20, excess silently lost with no `rejected`, or overflow converted to Scrap. *Stack model **defined by Inventory (Approved 2026-07-12)** — the prior "activate when the Inventory GDD defines the stack model" trigger is discharged; activate the live assertion when Inventory + Drop are wired. The pure split is already unit-covered by Inventory AC-INV-01.* (Prior fixture said `max_stack=5`, which mis-stated the COMMON cap — corrected to 20 to match the `max_stack` table.)
 
 ### Coverage
 
@@ -387,6 +387,6 @@ Every core rule and formula (CD-1…5) and every edge case (EC-CD-01…12) has a
 | OQ-CD-2 | **Consumable drop frequencies on the global level/rarity table.** How often consumables drop (and how enemy level/rarity scales it) is the Drop System erratum's to set — it feeds the sell-faucet model and how quickly the player accrues Beacons. | Drop System (erratum) | Balances the whole layer; set with the erratum |
 | OQ-CD-3 | **Beacon × pity interaction.** A Beacon-boosted *non-guaranteed* drop should reset/advance pity counters normally; a pity-*guaranteed* drop ignores the Beacon (already 100%). Confirm the exact ordering when the Drop System erratum lands. | Drop System | Correctness of the drop/pity interface |
 | OQ-CD-4 | **Encounter-modifier save/reload persistence.** Whether an active Jammer/Lure survives a save/reload (or is discarded, per EC-CD-08) is Overworld Navigation / Save-Load's call. | Overworld Nav / Save-Load | Minor QoL; deferred (AC-CD-22) |
-| OQ-CD-5 | **`max_stack` final values + overflow policy.** Proposed C20 / R10 / P5; the actual caps and the overflow behavior (reject / convert / discard, EC-CD-12) are coupled to the Inventory model. | Inventory GDD | Surplus-sell lever; set with Inventory |
+| OQ-CD-5 | **`max_stack` final values + overflow policy.** **Overflow half RESOLVED (Inventory Approved 2026-07-12): reject-with-notice, no conversion** (EC-CD-12 / INV-1); caps **C20 / R10 / P5 stand** as the values INV-1 enforces. Remaining-open half is only the *final surplus-sell tuning* of the caps, a post-MVP shop lever (no shops in MVP). | Inventory GDD (overflow ✓) / future Shop (sell-tuning) | Surplus-sell lever; overflow set |
 | OQ-CD-6 | **Stretch consumables (reserved).** Overclock Chip (temp buff) and Emergency Reboot (revive) are unauthored; **Reboot especially reshapes the deliberately low-stakes loss design** — needs a design pass before it enters scope. | game-designer | Post-MVP; loss-stakes risk |
 | OQ-CD-7 | **In-battle item stalling (playtest watch).** Each item-use costs a turn and enemies escalate (Part-Break enrage), so stall-with-consumables should be self-limiting — confirm at playtest that Repair/Coolant looping can't trivialize fights. | Playtest / balance | Balance watch, not a blocker |

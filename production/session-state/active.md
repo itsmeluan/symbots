@@ -1,7 +1,25 @@
 # Active Session State
 
-## Current Task
-Session 17: **Part-Break System GDD `/design-system part-break`** (lean mode). Skeleton created at `design/gdd/part-break.md`. Starting Section A (Overview).
+## Current Task — Inventory System (#11) /design-review → APPROVED (2026-07-12)
+- **Full-panel /design-review** (economy/systems/qa/game-designer + CD). Verdict NEEDS REVISION → **5 surgical blockers fixed same session** → **APPROVED** (CD approve-on-fix-confirmation; no further full re-review).
+- **Blockers fixed** (all in design/gdd/inventory.md): (1) `next_instance_id` counter now a 4th **persisted** field (Rule 1) — fixes EC-INV-07 "never reused" across save/load; AC-INV-09 hardened vs `max(live)+1`, AC-INV-15 asserts counter round-trip. (2) `instance_id` retyped plain **int** (was "int StringName-safe"). (3) INV-1 input guards: `qty←max(qty,0)`, `capacity=max(max_stack−current,0)`, load-time current clamp → new **EC-INV-11**, AC-INV-01 +3 sub-cases +per-field FAIL. (4) `add(Scrap)` now returns `{accepted,rejected}` at SCRAP_MAX (AC-INV-10). (5) **OQ-INV-1 tier-refund LOCKED 0% total sink** (user decision) — future refund additive/non-retroactive only.
+- **Tracking updated**: inventory.md header→Approved; systems-index #11→Approved + reviewed/approved 13→14; review log created (design/gdd/reviews/inventory-review-log.md).
+- **Consumable DB errata APPLIED** (discharged by Inventory): EC-CD-12 RESOLVED (reject-with-notice), AC-CD-23 activated + fixed stale `max_stack=5`→20 (Weld Patch is COMMON), OQ-CD-5 overflow-half resolved, Inventory dependency rows→Approved.
+- **Registry synced + YAML valid**: INV-1 entry updated with guards (revised 2026-07-12); SCRAP_YIELD note updated with locked-0% stance. Consistency PASS (max_stack/SCRAP_YIELD/SCRAP_MAX aligned across 3 docs; no new constants).
+- **Deferred (not blocking)**: flat-list grouping seam → Inventory UX pass; AC-INV-06 per-rarity tier fixtures + AC-INV-13 unit/integration split + get_parts AND/OR semantics → story/test-authoring; Alpha economy modeling → Part Upgrade/Blueprint GDDs.
+- **NEXT in design order**: #12 **Zone & World Map System** — user chose to author it in a **FRESH session** (this session already carried the Inventory review; clean context wanted). Run `/design-system zone-world-map` fresh. All 14 authored MVP GDDs now Approved; 14/23 MVP designed.
+
+### Context brief for #12 Zone & World Map (gathered 2026-07-12 — so the fresh session arrives informed)
+- **Priority/Layer/Effort**: MVP / World / M (2–3 sessions). Review mode = **lean** (specialists spawn only for Sections D Formulas + H ACs).
+- **Upstream dep**: Encounter Zone (#7, **Approved**) — owns `gate_type` taxonomy: **OPEN / WIN_COUNT authorable; WAVE / REACH / DUNGEON_RUSH reserved**. Both MVP bosses gate on **WIN_COUNT** against a **shared cumulative (all-time, wins-only) zone-win counter**: **Boss 1 @ 6 wins, Boss 2 @ 10**. Zone & World Map must model the world graph (zones, connections, boss gates) that reads Encounter Zone's gate model — do NOT redefine gate_type here; consume it.
+- **Downstream deps (all Not Started)**: World Loot (#13), Exploration Progress (#14), Overworld Navigation (#16), World Map UI (#20). This GDD defines the world-graph contract they consume (zone nodes, edges/connections, gate references, cleared/locked/accessible state).
+- **Engine**: Godot 4.6; domain Core/Scripting (world-graph data + navigation). `docs/engine-reference/godot/modules/navigation.md` available if needed.
+- **Registry**: no zone/world-graph entries yet — this GDD will likely register the world-graph schema + any boss-gate constants. `M_BOSS_PITY` is the only boss-adjacent entry (Drop-owned; don't shadow).
+- **MVP scope reminder**: 1 zone, 2 bosses (per game-concept + systems-index Overview). Keep the world graph minimal — no multi-zone content sprawl in MVP.
+
+---
+
+## Prior Task (Session 17) — Part-Break System GDD `/design-system part-break` (lean mode). Skeleton created at `design/gdd/part-break.md`. Starting Section A (Overview).
 **File**: design/gdd/part-break.md
 **STATUS: Part-Break GDD COMPLETE** (design/gdd/part-break.md — all 8 required + Visual/Audio + UI + Open Questions). Status: Designed, pending fresh-session /design-review.
 **Phase 5 done**: self-check (0 placeholders); registry updated (PB-F1..F5 + BREAK_SPILLOVER/ENRAGE_PER_BREAK/BREAK_BIAS_MULTIPLIERS + referenced_by on EDB-1/BREAK_HP_MIN/DAMAGE_FLOOR/MOVE-F1/TBC-F5; YAML valid); systems index updated (10/22 MVP designed). CD-GDD-ALIGN skipped (lean).
