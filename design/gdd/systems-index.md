@@ -213,7 +213,7 @@ layered structure. Part Database sits at the root with no cycles back from depen
 | Total systems identified | 35 |
 | Design docs started | 18 |
 | Design docs reviewed | 14 |
-| Design docs approved | 16 |
+| Design docs approved | 17 |
 | MVP systems designed | 20 / 25 |
 | Vertical Slice systems designed | 0 / 3 |
 | Alpha systems designed | 0 / 3 |
