@@ -43,13 +43,13 @@ designed first.
 | 11 | Inventory System | Economy | MVP | Approved (2026-07-12, full-panel /design-review — NEEDS REVISION → 5 surgical blockers fixed same session: `next_instance_id` counter persisted (EC-INV-07 save/load), `instance_id` retyped plain int, INV-1 negative-qty/retune-down guards (EC-INV-11), Scrap-add `{accepted,rejected}` contract, OQ-INV-1 tier-refund LOCKED 0%. CD approve-on-fix-confirmation) | design/gdd/inventory.md | Part Database |
 | 12 | Zone & World Map System | World | MVP | Approved (2026-07-12, full-panel /design-review — NEEDS REVISION → 8 blockers fixed same session: ZWM-F1 boss_progress scope, missing-key EC-ZWM-12/AC-ZWM-19, zone_states_changed diff payload, LOCKED-origin outbound travel EC-ZWM-05/AC-ZWM-20, AC-ZWM-11 concrete fixture, AC-ZWM-17/18 signal contract, AC-ZWM-05 fixture gap. 15→20 ACs / 11→12 ECs) | design/gdd/zone-world-map.md | Encounter Zone |
 | 13 | World Loot System (inferred) | World | MVP | Not Started | — | Part Database, Zone & World Map |
-| 14 | Exploration Progress System (inferred) | World | MVP | Not Started | — | Zone & World Map |
+| 14 | Exploration Progress System | World | MVP | Designed (2026-07-13, /design-system lean — systems-designer + qa-lead consulted; pending fresh-session /design-review. Domain-registry persistence model: pull-at-save, two-phase restore, source-facts-only re-derivation, drift tolerance. 17 ECs / 15 BLOCKING + 2 DEFERRED ACs. Resolves EZ↔ZWM increment-ownership tension in ZWM's favor — 1 light EZ erratum owed on approval: Rule 8a hook wording) | design/gdd/exploration-progress.md | Zone & World Map, Symbot Core Progression; provisional: World Loot (#13 domain contract defined here) |
 | 15 | Workshop System | Economy | MVP | Not Started | — | Symbot Assembly, Inventory |
 | 16 | Overworld Navigation (inferred) | World | MVP | Not Started | — | Zone & World Map, Encounter Zone |
 | 17 | Save/Load System | Persistence | MVP | Not Started | — | Inventory, Workshop, Exploration Progress |
 | 18 | Workshop UI | UI | MVP | Not Started | — | Workshop System, Synergy System |
 | 19 | Combat UI | UI | MVP | Not Started | — | Turn-Based Combat, Part-Break System |
-| 20 | World Map UI (inferred) | UI | MVP | Not Started | — | Zone & World Map, Exploration Progress |
+| 20 | World Map UI (inferred) | UI | MVP | Not Started | — | Zone & World Map (the former Exploration Progress dep resolves to ZWM at runtime — EP has no queryable runtime state under its pull model; see exploration-progress.md Interactions) |
 | 21 | Audio System | Audio | MVP (basic SFX) → Alpha (full) | Not Started | — | Turn-Based Combat, Part-Break System |
 | 22 | Main Menu & Settings (inferred) | UI | MVP | Not Started | — | Save/Load |
 | 23 | NPC System (inferred) | Meta | Vertical Slice | Not Started | — | Turn-Based Combat, Zone & World Map |
@@ -211,10 +211,10 @@ layered structure. Part Database sits at the root with no cycles back from depen
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 35 |
-| Design docs started | 17 |
+| Design docs started | 18 |
 | Design docs reviewed | 14 |
 | Design docs approved | 16 |
-| MVP systems designed | 19 / 25 |
+| MVP systems designed | 20 / 25 |
 | Vertical Slice systems designed | 0 / 3 |
 | Alpha systems designed | 0 / 3 |
 | Full Vision systems designed | 0 / 2 |

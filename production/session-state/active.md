@@ -1,6 +1,26 @@
 # Active Session State
 
-## Current Task — COMPLETE: Enemy Level & Zone Scaling (#10c) APPROVED + 4 Errata Applied (2026-07-13)
+## Current Task — Exploration Progress (#14) GDD COMPLETE → Designed (2026-07-13, lean)
+- **All 12 sections written** (~5.3k words, 0 placeholders). CD-GDD-ALIGN skipped (lean) — review Section B manually before production.
+- **AC section**: 15 BLOCKING unit + 2 DEFERRED integration (Save/Load #17) + 2 delegated + 1 advisory-only. qa-lead consulted; main session corrected one fixture technique (AC-EP-08B: JSON.parse_string does NOT preserve duplicate keys — inject collision at domain-restore API level, Array-of-records form). AC-EP-14 kept as structural Phase-1 isolation test (injectable seam requirement flagged for lead programmer).
+- **Registry updated + YAML-validated**: EP-PRED-1 + EP-INV-1 formulas, CURRENT_FORMAT_VERSION + EP_DOMAIN_KEYS constants; CP-F1 referenced_by += exploration-progress.md. 34 formulas / 47 constants.
+- **systems-index**: #14 → Designed; #20 World Map UI dep note (EP → ZWM); docs started 18, MVP designed 20/25.
+- **1 ERRATUM PENDING (apply on approval)**: EZ Rule 8a hook wording → "ZWM implements the increment; Exploration Progress persists the counter" (increment-ownership resolved in ZWM's favor, EP Rule 2).
+- **NEXT**: `/clear` then `/design-review design/gdd/exploration-progress.md` FRESH session. On approval: apply the EZ erratum. Then #13 World Loot (its &"world_loot" domain contract is now defined in EP Rule 1/3) or #15 Workshop.
+
+## Prior — Designing session notes (2026-07-13)
+- **File**: design/gdd/exploration-progress.md
+- **Sections written**: A Overview ✓, B Player Fantasy ✓, C Detailed Rules ✓ (9 rules: domain registry, pull model, 3-op domain contract, source-facts-only, two-phase restore, drift tolerance, unknown-key preserve, Save/Load split, format version). Decisions: ZWM owns increments (EZ Rule 8a erratum owed), pull-at-save, flat global loot set.
+- **Sections written (cont.)**: D Formulas ✓ (EP-PRED-1 version predicate + EP-INV-1 well-formedness invariant + re-derivation obligations; both scan-exempt pure-int), E Edge Cases ✓ (17 ECs from systems-designer's 18 findings; 5 Section-C hole patches applied: Rule 2 opaque-store carve-out, Rule 1 world_loot serialized form, Rule 3 snapshot validation + replacement semantics, Rule 6 d/e corruption pass, Rule 9 missing-key REFUSE + state-unchanged), F Dependencies ✓, G Tuning Knobs ✓ (no gameplay knobs; CURRENT_FORMAT_VERSION=1), Visual/Audio ✓ N/A, UI ✓ none, OQ ✓ (OQ-EP-1 re-added boss re-gate, parked)
+- **Current section**: H Acceptance Criteria — qa-lead consult running (AC-EP-01..15 numbering pre-assigned by E's forward refs)
+- **Errata created so far**: (1) EZ Rule 8a hook wording → ZWM implements increment; (2) systems-index note: World Map UI dep resolves to ZWM
+- **Registry candidates (Phase 5b)**: EP-PRED-1, EP-INV-1, CURRENT_FORMAT_VERSION, domain keys (&"zones"/&"cores"/&"world_loot"/&"key_items" reserved)
+- **Mode**: lean. User redirected from World Loot (#13) → Exploration Progress (#14) first (EP owns the persistence contract World Loot needs).
+- **Pre-fixed contracts**: EZ Rule 8a/9 (win_count semantics, defeated_once, wins_at_last_defeat; EC-EZ-11 fallback; AC-EZ-40b/55 deferred→activate); ZWM Rule 7/8 (ZWM = runtime authority, EP = persistence-only; state re-derived on load, EC-ZWM-10 drift rules); Core Progression (CoreProgressionRecord serialization, EC-CP-06 level re-derived); index scope "zones cleared, bosses defeated, hidden items found" (World Loot ledger TBD).
+- **Known tension to resolve (Section C)**: EZ says "EP implements the increment + snapshot hooks"; ZWM (approved later) says ZWM performs increments/snapshots, EP is persistence-only. Likely resolution: ZWM's model + light EZ erratum.
+- **Scope boundary**: EP = which progression state exists + round-trip semantics; Save/Load (#17) = file format/disk I/O/save timing. Pity maps + next_instance_id are contracted directly to Save/Load (bypass EP).
+
+## Prior Task — COMPLETE: Enemy Level & Zone Scaling (#10c) APPROVED + 4 Errata Applied (2026-07-13)
 
 ### ELZS #10c — Status: APPROVED
 - **Round 4 (confirmation pass, fresh session)** — full-panel /design-review (systems-designer, game-designer, economy-designer, qa-lead, creative-director).
@@ -37,3 +57,4 @@
 <!-- CONSISTENCY-CHECK: 2026-07-12 | GDDs checked: 15 | Conflicts found: 0 | Verified: zone-world-map.md (approved today); win thresholds (6/10) consistent ZWM↔EZ; win_count semantics consistent; wins_at_last_defeat field name consistent; all 69 registry entries PASS. Informational only: TBC result vocab VICTORY/DEFEAT/FLED vs ZWM WIN/LOSS/FLEE (Overworld Navigation relay mapping; non-blocking); push/pull ownership OQ-ZWM-5 (Vertical Slice erratum); EZ bidirectionality erratum pending (one-line, tracked). 15/15 MVP GDDs Approved. -->
 <!-- CONSISTENCY-CHECK: 2026-07-12 | GDDs checked: 17 | Conflicts found: 0 | Verified this session: EAI-1 + AI_PROFILE_WEIGHTS + STATUS_BASE_VALUE (enemy-ai); INV-1 + SCRAP_MAX + SCRAP_YIELD (inventory). 69 registry entries PASS. -->
 <!-- ERRATA APPLIED: 2026-07-13 | 4 GDDs amended | Enemy DB (level/xp_value fields) | Encounter Zone (level band fields) | Drop System (DS-F-LEVEL canonical DS-1 + AC-DS-31 + economy re-annotation) | ZWM (difficulty_band level range table) | ELZS pre-gate ✅ -->
+<!-- CONSISTENCY-CHECK: 2026-07-13 | GDDs checked: 17 | Conflicts found: 0 | PASS. Verified the full ELZS Level Backbone chain post-errata: CP-F4 constants (35/10/2) + xp_value fixtures (45/65/170/190/130) consistent ELZS↔EnemyDB↔CoreProgression; band floors (3/6) + LEVEL_RARITY_MULTS (0.5/1.0/1.5 Rare-only) + canonical DS-1 + discriminating fixtures (0.1875/0.375/0.5625; AC-DS-31 0.75/0.60) consistent ELZS↔DropSystem; MVP zone [1,6] consistent ELZS↔EncounterZone↔ZWM; difficulty_band ranges (1-3/3-6/6-9/8-10) consistent ELZS↔ZWM; economy re-annotation (0.95/~0.34/~1,800/floor 1,556/ESTIMATED) consistent; battle_ended payload (xp_value+enemy_level+deployed_symbot_ids) confirmed in TBC Rule 12. Registry synced: 10 stale "(erratum pending)" comments discharged (4 ELZS errata 07-13 + 3 CP errata 07-12); LEVEL_RARITY_MULTS HIGH safe range corrected 1.2-2.0→1.2-1.6 (source ELZS); NEW constant DIFFICULTY_BAND_LEVEL_RANGES (table duplicated ELZS Rule 4 + ZWM Tuning Knobs — retunes must change both). Registry: 88 entries, YAML valid. -->

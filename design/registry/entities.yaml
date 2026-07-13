@@ -37,7 +37,7 @@
 #   Each entry: name, status, source, referenced_by[], attributes{}, added, revised
 
 version: 1
-last_updated: "2026-07-12"  # Enemy Level & Zone Scaling (#10c) authored (Designed, pending /design-review): the Level Backbone enemy/zone side. NEW formula DS-F-LEVEL (level_rarity_mult into DS-1 product, float-clamp no-epsilon, referenced_by drop-system erratum pending). NEW constants: MAX_ENEMY_LEVEL 10, LEVEL_BAND_MID_FLOOR 3, LEVEL_BAND_HIGH_FLOOR 6, LEVEL_RARITY_MULTS (only Rare scaled: EARLY 0.5/MID 1.0/HIGH 1.5), MVP_ZONE_LEVEL_BAND [1,6]. UPDATES: CP-F4 + XP_BASE + XP_PER_ENEMY_LEVEL provisional->CONFIRMED (OQ-CP-1 RESOLVED; pacing L3 ~4-5 fights, L5 ~10-12); BENCH_LEVEL_LEAD_CAP note (OQ-CP-7 RESOLVED, bench 80% arc coverage); referenced_by += #10c on CP-F4/XP_BASE/XP_PER_ENEMY_LEVEL/BOSS_XP_MULTIPLIER/BENCH_LEVEL_LEAD_CAP/MAX_CORE_LEVEL. Label/anchor model (OQ-CP-2 RESOLVED); OQ-CP-3 rarity-half resolved via DS-F-LEVEL (stat-roll half deferred OQ-ELZS-2). 4 errata owed on approval: Enemy DB (level+xp_value) / Encounter Zone (floor/roof) / Drop (DS-F-LEVEL) / ZWM (band mapping). Prior — Symbot Core Progression (#10b) authored (Designed, pending /design-review): the LEVEL BACKBONE. Formulas CP-F1 (XP->level table, MAX_CORE_LEVEL=10) + CP-F2 (bench floor, epsilon-safe 0.5) + CP-F3 (level_growth stat contrib, post-SA-F1/pre-SYN-F4, referenced_by symbot-assembly erratum) + CP-F4 (xp_value from enemy_level, referenced_by enemy-database + turn-based-combat errata). Constants: MAX_CORE_LEVEL 10, XP_PER_LEVEL_BASE 100, LEVEL_COST_RAMP 1.20, XP_BASE 35*, XP_PER_ENEMY_LEVEL 10*, BOSS_XP_MULTIPLIER 2, BENCH_XP_SHARE 0.5, BENCH_LEVEL_LEAD_CAP 3 (*=provisional pending MVP zone level range, OQ-CP-1). game-concept anti-pillar #3 revised (level-matching, CD sign-off pending). New system #10c Enemy Level & Zone Scaling added to index. 2 errata passes owed (Part DB/Assembly/TBC + the #10c enemy/zone pass). Prior — Enemy AI System (#10) authored (Designed, pending /design-review): formula EAI-1 (move-scoring heuristic, no floor/ceil — only DF-1 preview floors) + constants STATUS_BASE_VALUE 1.0 + AI_PROFILE_WEIGHTS (AGGRESSIVE/TACTICAL/OPPORTUNIST). Discharges TBC AC-TBC-INT-02 + Enemy DB ED4 (2 light errata pending: TBC un-defer AC-TBC-INT-02; Enemy DB un-block AC-ED-01d via has_profile). DF-1 referenced_by += enemy-ai.md. Prior same day — Consumable Database (#1c) authored: 8 consumable items (weld_patch/repair_kit/field_forge/coolant_flush/power_cell/salvage_beacon/signal_jammer/scrap_lure) + 5 formulas (CD-1..CD-5, all no-floor/no-epsilon) + 10 constants (WELD_PATCH_AMOUNT 25 / REPAIR_KIT_AMOUNT 50 / FIELD_FORGE_AMOUNT 120 / COOLANT_FLUSH_AMOUNT 50 / POWER_CELL_AMOUNT 25 / BEACON_MULTIPLIER 2.0 / JAMMER_RATE_MULTIPLIER 0.1 / JAMMER_DURATION_STEPS 20 / LURE_RATE_MULTIPLIER 2.5 / LURE_DURATION_STEPS 15). Consumable Database APPROVED 2026-07-12 (full-panel /design-review; 5 surgical blockers fixed; systems-designer IEEE-754 blocker refuted by python3 scan). All 3 errata now APPLIED to the Approved source GDDs (registry + GDD together): TBC Rule 7a use-item action + AC-TBC-41 (preventive-only Overheat, no-turn-on-reject); Drop Rule 12 consumable channel + Beacon injection into effective_drop_rate + AC-DS-31 (Part B consumable drop frequencies scoped as OPEN OQ-DS-7); Encounter Zone EZ-1 modifier hook + AC-EZ-59 + OQ-EZ-4 RESOLVED. referenced_by lists already point at TBC/Drop/Encounter-Zone. BASE_ENERGY_REGEN confirmed 10 (not 8). Earlier 2026-07-11: Encounter Zone (#7) authored: added EZ-1 (per-step trigger) + EZ-2 (weighted enemy selection) formulas — both no-floor/no-epsilon (no scan needed); EZ-2 referenced_by TBC (enemy_id handoff). Density-band rates + gate constants held internal to encounter-zone.md until another system references them. Earlier same day: Part-Break design-review revision: ENRAGE_PER_BREAK retuned 0.15->0.12 (PB-F5 output_range 456->428, all enrage mults now epsilon-defensive); Part-Break PB-F1..F5 formulas, BREAK_SPILLOVER/ENRAGE_PER_BREAK/BREAK_BIAS_MULTIPLIERS constants; referenced_by updated on EDB-1/BREAK_HP_MIN/DAMAGE_FLOOR/MOVE-F1/TBC-F5. Earlier: N_PROTO_PITY calibration re-sync; MULTIPLIER_FLOOR (Rule 5a); N_PROTO_PITY, M_BOSS_PITY; passives section (3 status riders)
+last_updated: "2026-07-13"  # ELZS (#10c) APPROVED (round-4 confirmation, 2026-07-13) + ALL 4 ERRATA APPLIED same day: Enemy DB (level+xp_value schema fields), Encounter Zone (enemy_level_floor/roof + in-band validation), Drop System (canonical DS-1 + DS-F-LEVEL section + AC-DS-31 A2 fixture + economy re-annotation ~1,800 ESTIMATED + tuning knobs), ZWM (difficulty_band level-range guideline table). /consistency-check 2026-07-13: PASS, 0 conflicts, 69 entries verified; registry synced (10 stale erratum-pending comments discharged; LEVEL_RARITY_MULTS HIGH safe range corrected 1.2-2.0 -> 1.2-1.6 per source ELZS; NEW constant DIFFICULTY_BAND_LEVEL_RANGES registered — table now lives in both ELZS Rule 4 and ZWM Tuning Knobs). Prior 2026-07-12 — Enemy Level & Zone Scaling (#10c) authored: the Level Backbone enemy/zone side. NEW formula DS-F-LEVEL (level_rarity_mult into DS-1 product, float-clamp no-epsilon, referenced_by drop-system erratum pending). NEW constants: MAX_ENEMY_LEVEL 10, LEVEL_BAND_MID_FLOOR 3, LEVEL_BAND_HIGH_FLOOR 6, LEVEL_RARITY_MULTS (only Rare scaled: EARLY 0.5/MID 1.0/HIGH 1.5), MVP_ZONE_LEVEL_BAND [1,6]. UPDATES: CP-F4 + XP_BASE + XP_PER_ENEMY_LEVEL provisional->CONFIRMED (OQ-CP-1 RESOLVED; pacing L3 ~4-5 fights, L5 ~10-12); BENCH_LEVEL_LEAD_CAP note (OQ-CP-7 RESOLVED, bench 80% arc coverage); referenced_by += #10c on CP-F4/XP_BASE/XP_PER_ENEMY_LEVEL/BOSS_XP_MULTIPLIER/BENCH_LEVEL_LEAD_CAP/MAX_CORE_LEVEL. Label/anchor model (OQ-CP-2 RESOLVED); OQ-CP-3 rarity-half resolved via DS-F-LEVEL (stat-roll half deferred OQ-ELZS-2). 4 errata owed on approval: Enemy DB (level+xp_value) / Encounter Zone (floor/roof) / Drop (DS-F-LEVEL) / ZWM (band mapping). Prior — Symbot Core Progression (#10b) authored (Designed, pending /design-review): the LEVEL BACKBONE. Formulas CP-F1 (XP->level table, MAX_CORE_LEVEL=10) + CP-F2 (bench floor, epsilon-safe 0.5) + CP-F3 (level_growth stat contrib, post-SA-F1/pre-SYN-F4, referenced_by symbot-assembly erratum) + CP-F4 (xp_value from enemy_level, referenced_by enemy-database + turn-based-combat errata). Constants: MAX_CORE_LEVEL 10, XP_PER_LEVEL_BASE 100, LEVEL_COST_RAMP 1.20, XP_BASE 35*, XP_PER_ENEMY_LEVEL 10*, BOSS_XP_MULTIPLIER 2, BENCH_XP_SHARE 0.5, BENCH_LEVEL_LEAD_CAP 3 (*=provisional pending MVP zone level range, OQ-CP-1). game-concept anti-pillar #3 revised (level-matching, CD sign-off pending). New system #10c Enemy Level & Zone Scaling added to index. 2 errata passes owed (Part DB/Assembly/TBC + the #10c enemy/zone pass). Prior — Enemy AI System (#10) authored (Designed, pending /design-review): formula EAI-1 (move-scoring heuristic, no floor/ceil — only DF-1 preview floors) + constants STATUS_BASE_VALUE 1.0 + AI_PROFILE_WEIGHTS (AGGRESSIVE/TACTICAL/OPPORTUNIST). Discharges TBC AC-TBC-INT-02 + Enemy DB ED4 (2 light errata pending: TBC un-defer AC-TBC-INT-02; Enemy DB un-block AC-ED-01d via has_profile). DF-1 referenced_by += enemy-ai.md. Prior same day — Consumable Database (#1c) authored: 8 consumable items (weld_patch/repair_kit/field_forge/coolant_flush/power_cell/salvage_beacon/signal_jammer/scrap_lure) + 5 formulas (CD-1..CD-5, all no-floor/no-epsilon) + 10 constants (WELD_PATCH_AMOUNT 25 / REPAIR_KIT_AMOUNT 50 / FIELD_FORGE_AMOUNT 120 / COOLANT_FLUSH_AMOUNT 50 / POWER_CELL_AMOUNT 25 / BEACON_MULTIPLIER 2.0 / JAMMER_RATE_MULTIPLIER 0.1 / JAMMER_DURATION_STEPS 20 / LURE_RATE_MULTIPLIER 2.5 / LURE_DURATION_STEPS 15). Consumable Database APPROVED 2026-07-12 (full-panel /design-review; 5 surgical blockers fixed; systems-designer IEEE-754 blocker refuted by python3 scan). All 3 errata now APPLIED to the Approved source GDDs (registry + GDD together): TBC Rule 7a use-item action + AC-TBC-41 (preventive-only Overheat, no-turn-on-reject); Drop Rule 12 consumable channel + Beacon injection into effective_drop_rate + AC-DS-31 (Part B consumable drop frequencies scoped as OPEN OQ-DS-7); Encounter Zone EZ-1 modifier hook + AC-EZ-59 + OQ-EZ-4 RESOLVED. referenced_by lists already point at TBC/Drop/Encounter-Zone. BASE_ENERGY_REGEN confirmed 10 (not 8). Earlier 2026-07-11: Encounter Zone (#7) authored: added EZ-1 (per-step trigger) + EZ-2 (weighted enemy selection) formulas — both no-floor/no-epsilon (no scan needed); EZ-2 referenced_by TBC (enemy_id handoff). Density-band rates + gate constants held internal to encounter-zone.md until another system references them. Earlier same day: Part-Break design-review revision: ENRAGE_PER_BREAK retuned 0.15->0.12 (PB-F5 output_range 456->428, all enrage mults now epsilon-defensive); Part-Break PB-F1..F5 formulas, BREAK_SPILLOVER/ENRAGE_PER_BREAK/BREAK_BIAS_MULTIPLIERS constants; referenced_by updated on EDB-1/BREAK_HP_MIN/DAMAGE_FLOOR/MOVE-F1/TBC-F5. Earlier: N_PROTO_PITY calibration re-sync; MULTIPLIER_FLOOR (Rule 5a); N_PROTO_PITY, M_BOSS_PITY; passives section (3 status riders)
 
 # ─── ENTITIES ────────────────────────────────────────────────────────────────
 # Named game-world objects: enemies, NPCs, characters, factions, bosses.
@@ -887,6 +887,7 @@ formulas:
     source: design/gdd/symbot-core-progression.md
     referenced_by:
       - design/gdd/symbot-core-progression.md
+      - design/gdd/exploration-progress.md      # EP triggers CP-F1 re-derivation in Phase 2 restore (EC-CP-06 pattern); AC fixtures use thresholds 100/220/364/993
     variables:
       - cumulative_xp (int [0, inf), a core's total earned XP)
       - XP_PER_LEVEL_BASE (100)
@@ -917,7 +918,7 @@ formulas:
     source: design/gdd/symbot-core-progression.md
     referenced_by:
       - design/gdd/symbot-core-progression.md
-      - design/gdd/symbot-assembly.md          # Assembly applies this step between SA-F1 and SYN-F4 (erratum pending)
+      - design/gdd/symbot-assembly.md          # Assembly applies this step between SA-F1 and SYN-F4 (Core Progression erratum APPLIED 2026-07-12, Assembly Rule 6 step 4b)
     variables:
       - "level_growth[stat_key] (int [0,N], authored per CORE part, CORE-slot only)"
       - core.level (int [1,10])
@@ -932,8 +933,8 @@ formulas:
     source: design/gdd/symbot-core-progression.md
     referenced_by:
       - design/gdd/symbot-core-progression.md
-      - design/gdd/enemy-database.md            # stores derived xp_value per enemy (Enemy Level & Zone Scaling erratum pending)
-      - design/gdd/turn-based-combat.md          # passes xp_value in battle_ended (erratum pending)
+      - design/gdd/enemy-database.md            # stores derived xp_value per enemy (ELZS erratum APPLIED 2026-07-13)
+      - design/gdd/turn-based-combat.md          # passes xp_value in battle_ended (Core Progression erratum APPLIED 2026-07-12, TBC Rule 12)
       - design/gdd/enemy-level-zone-scaling.md   # Rule 2 stored-equals-derived validation (AC-ELZS-02); constants ratified by this pass
     variables:
       - enemy_level (int [1, MAX_ENEMY_LEVEL])
@@ -946,12 +947,49 @@ formulas:
     added: 2026-07-12
     revised: "2026-07-12"  # constants provisional -> CONFIRMED by #10c (OQ-CP-1 resolved); referenced_by += enemy-level-zone-scaling.md
 
+  - name: EP-PRED-1
+    status: active
+    source: design/gdd/exploration-progress.md
+    referenced_by:
+      - design/gdd/exploration-progress.md
+      # save-load.md will reference on authoring (#17): REFUSE surfaces to its error path
+    variables:
+      - "saved_version (int [1, inf), progress_format_version from the blob; missing/non-int -> REFUSE before predicate)"
+      - "CURRENT_FORMAT_VERSION (int, 1 in MVP)"
+    output_range: "enum {RESTORE, MIGRATE, REFUSE}"
+    expression: "RESTORE if saved==current; MIGRATE if saved<current (per-domain hook reserved); REFUSE if saved>current or key missing/non-int"
+    notes: "Version compatibility predicate for the progression blob. Pure integer comparison — NO floor/ceil/float, scan-exempt.
+      REFUSE guarantee: all domain in-memory state unchanged, no partial restore (AC-EP-03 call-count spy). Missing key MUST be
+      read via Dictionary.get() — bracket access crashes on missing keys in Godot 4 debug (AC-EP-02d trap)."
+    added: 2026-07-13
+    revised: ""
+
+  - name: EP-INV-1
+    status: active
+    source: design/gdd/exploration-progress.md
+    referenced_by:
+      - design/gdd/exploration-progress.md
+      - design/gdd/zone-world-map.md             # fields it validates (win_count, wins_at_last_defeat) are ZWM Rule 7 state
+      - design/gdd/encounter-zone.md             # protects the LIGHTER_REGATE delta (win_count - wins_at_last_defeat) from negatives
+    variables:
+      - "win_count (int [0, inf), ZWM Rule 7)"
+      - "wins_at_last_defeat (int [0, win_count], EZ Rule 9 snapshot)"
+    output_range: "bool"
+    expression: "valid = win_count >= 0 AND wins_at_last_defeat >= 0 AND wins_at_last_defeat <= win_count"
+    notes: "Boss-progress well-formedness invariant, validated at restore (EP Rule 6e corruption pass). On violation: clamp
+      wins_at_last_defeat to win_count (delta = 0, most conservative recovery — full re-gate required) + warning; negative
+      win_count clamps to 0 THEN re-runs this invariant (cascade, AC-EP-06A). <= boundary: wins_at_last_defeat == win_count
+      exactly is VALID (AC-EP-05b discriminator vs strict <). Pure int, scan-exempt. Exists because EZ's delta math is
+      unspecified for negatives — EP is the last line before restored data hits ZWM."
+    added: 2026-07-13
+    revised: ""
+
   - name: DS-F-LEVEL
     status: active
     source: design/gdd/enemy-level-zone-scaling.md
     referenced_by:
       - design/gdd/enemy-level-zone-scaling.md
-      - design/gdd/drop-system.md                # amends DS-1: inserts level_rarity_mult into the effective-rate product (erratum pending)
+      - design/gdd/drop-system.md                # amends DS-1: inserts level_rarity_mult into the effective-rate product (erratum APPLIED 2026-07-13 — canonical DS-1 + DS-F-LEVEL section + AC-DS-31 A2 fixture)
     variables:
       - "base_drop_rate[rarity] (float {0.70, 0.25, 0.05, 0.001}, Part DB config)"
       - "level_rarity_mult (float {0.5, 1.0, 1.5} from LEVEL_RARITY_MULTS[level_band(enemy.level)][rarity])"
@@ -1436,7 +1474,7 @@ constants:
     source: design/gdd/symbot-core-progression.md
     referenced_by:
       - design/gdd/symbot-core-progression.md
-      - design/gdd/part-database.md             # tops the level_requirement gate table (erratum pending)
+      - design/gdd/part-database.md             # tops the level_requirement gate table (Core Progression erratum APPLIED 2026-07-12)
       - design/gdd/enemy-level-zone-scaling.md   # MAX_ENEMY_LEVEL=10 deliberately matches this cap (Rule 6)
     value: 10
     unit: maximum Symbot core level (Level Backbone cap)
@@ -1530,8 +1568,8 @@ constants:
     source: design/gdd/enemy-level-zone-scaling.md
     referenced_by:
       - design/gdd/enemy-level-zone-scaling.md
-      - design/gdd/enemy-database.md             # level field validation bound (erratum pending)
-      - design/gdd/encounter-zone.md             # enemy_level_roof upper bound (erratum pending)
+      - design/gdd/enemy-database.md             # level field validation bound (erratum APPLIED 2026-07-13)
+      - design/gdd/encounter-zone.md             # enemy_level_roof upper bound (erratum APPLIED 2026-07-13)
     value: 10
     unit: hard cap on any enemy's authored level
     notes: "Matches MAX_CORE_LEVEL=10 — hardest endgame enemies on par with a fully-leveled core. Rule 6; validated by AC-ELZS-01 (level=10 passes, 11 fails — a >9 impl wrongly rejects 10)."
@@ -1543,35 +1581,76 @@ constants:
     source: design/gdd/enemy-level-zone-scaling.md
     referenced_by:
       - design/gdd/enemy-level-zone-scaling.md
-      - design/gdd/drop-system.md                # level_band() sub-function input to DS-F-LEVEL (erratum pending)
+      - design/gdd/drop-system.md                # level_band() sub-function input to DS-F-LEVEL (erratum APPLIED 2026-07-13)
     value: 3
     unit: enemy level at which the MID drop band begins
     notes: "level_band(): L1-2 EARLY, L3-5 MID, L6+ HIGH. >= boundary at exactly 3 is AC-ELZS-09's discriminator (a > impl misclassifies L3 as EARLY, halving Rare mult). Safe range 2-4."
     added: 2026-07-12
-    revised: ""
+    revised: "2026-07-13"  # drop-system erratum applied (DS-F-LEVEL section + tuning table)
 
   - name: LEVEL_BAND_HIGH_FLOOR
     status: active
     source: design/gdd/enemy-level-zone-scaling.md
     referenced_by:
       - design/gdd/enemy-level-zone-scaling.md
-      - design/gdd/drop-system.md                # level_band() sub-function input to DS-F-LEVEL (erratum pending)
+      - design/gdd/drop-system.md                # level_band() sub-function input to DS-F-LEVEL (erratum APPLIED 2026-07-13)
     value: 6
     unit: enemy level at which the HIGH drop band begins
     notes: "Deliberately aligned with the MVP zone enemy_level_roof=6 so the zone's hardest enemies give the best Rare odds. systems-designer ruled HIGH=6 over 5 (at 5, Boss 1 gets an unintended compound bonus with its BOSS role XP mult). Safe range 5-7."
     added: 2026-07-12
-    revised: ""
+    revised: "2026-07-13"  # drop-system erratum applied (DS-F-LEVEL section + tuning table)
 
   - name: LEVEL_RARITY_MULTS
     status: active
     source: design/gdd/enemy-level-zone-scaling.md
     referenced_by:
       - design/gdd/enemy-level-zone-scaling.md
-      - design/gdd/drop-system.md                # the level_rarity_mult factor in DS-F-LEVEL (erratum pending)
+      - design/gdd/drop-system.md                # the level_rarity_mult factor in DS-F-LEVEL (erratum APPLIED 2026-07-13 — LEVEL_RARITY_MULTS table + tuning knobs in Drop System)
     value: "EARLY: {Common 1.0, Rare 0.5, Boss-grade 1.0, Prototype 1.0} / MID: {all 1.0} / HIGH: {Common 1.0, Rare 1.5, Boss-grade 1.0, Prototype 1.0}"
     unit: band x rarity multiplier table (DS-F-LEVEL)
-    notes: "ONLY Rare is scaled — Common stays reliable floor loot; Boss-grade already gated by x500 break mults; Prototype fixed at 0.05. HIGH Rare warning: values >= 2.0 make Rare+Beacon+any-condition a guaranteed drop without break execution (Tuning Knobs). EARLY 0.5 safe range 0.3-0.8 (playtest watch OQ-ELZS-4); HIGH 1.5 safe range 1.2-2.0."
+    notes: "ONLY Rare is scaled — Common stays reliable floor loot; Boss-grade already gated by x500 break mults; Prototype fixed at 0.05 (all-1.0 Prototype row is LOAD-BEARING for N_PROTO_PITY — re-derive if changed). EARLY 0.5 safe range 0.3-0.8 (playtest watch OQ-ELZS-4); HIGH 1.5 safe range 1.2-1.6 (source ELZS Tuning Knobs). Hard thresholds above the safe range: >= 1.333 triggers the guaranteed-drop cap with Beacon+condition (intentional at 1.5); >= 2.0 makes Rare+Beacon-ALONE guaranteed with no break execution — never cross 2.0."
     added: 2026-07-12
+    revised: "2026-07-13"  # was: safe range 1.2-2.0 — corrected to 1.2-1.6 per source ELZS Tuning Knobs (2.0 is the Beacon-only hard threshold, not the safe ceiling); drop-system erratum applied
+
+  - name: CURRENT_FORMAT_VERSION
+    status: active
+    source: design/gdd/exploration-progress.md
+    referenced_by:
+      - design/gdd/exploration-progress.md
+      # save-load.md will reference on authoring (#17): blob format contract
+    value: 1
+    unit: progression-blob format version (EP Rule 9 / EP-PRED-1)
+    notes: "NOT a tuning value. Increment only on a breaking blob-format change, paired with a per-domain migrate hook. Never
+      decrement. Newer-than-current blobs are REFUSEd (never partially restored); missing/non-int version key also REFUSEd."
+    added: 2026-07-13
+    revised: ""
+
+  - name: EP_DOMAIN_KEYS
+    status: active
+    source: design/gdd/exploration-progress.md
+    referenced_by:
+      - design/gdd/exploration-progress.md
+      - design/gdd/zone-world-map.md             # owner of the &"zones" domain state
+      - design/gdd/symbot-core-progression.md    # owner of the &"cores" domain state
+      # world-loot.md (#13) will own &"world_loot" on authoring; key-item-system (#23a) reserves &"key_items"
+    value: '{zones: ZWM ZoneRuntimeState, cores: CoreProgressionRecord map, world_loot: collected loot_id set (provisional); key_items: RESERVED}'
+    unit: save-format-stable progression domain keys (EP Rule 1)
+    notes: "NEVER rename a key — they are save-format-stable. world_loot serialized form: sorted Array[StringName] on disk,
+      Dictionary[StringName, bool] at runtime (Godot has no native Set), dedupe on reconstruction. Unknown keys in a save are
+      preserved opaquely and written back (EP Rule 7), so removing a domain never destroys player history."
+    added: 2026-07-13
+    revised: ""
+
+  - name: DIFFICULTY_BAND_LEVEL_RANGES
+    status: active
+    source: design/gdd/enemy-level-zone-scaling.md
+    referenced_by:
+      - design/gdd/enemy-level-zone-scaling.md   # Rule 4 (owner) + AC-ELZS-06 ADVISORY validation ranges
+      - design/gdd/zone-world-map.md             # Tuning Knobs guideline table (ELZS erratum APPLIED 2026-07-13)
+    value: "EARLY: floor 1-3 / MID: floor 3-6 / LATE: floor 6-9 / ENDGAME: floor 8-10"
+    unit: difficulty_band -> enemy_level_floor guideline range (authoring guideline + ADVISORY validation, not a hard constraint)
+    notes: "Maps ZWM's difficulty_band label to a concrete level range based on the zone's ENTRY experience (the floor of enemies first encountered, not the ceiling — a zone entering at L1 stays EARLY even with an L6 boss). Ranges deliberately OVERLAP at boundaries (floor=3 valid for both EARLY and MID; 6 for MID/LATE; 8 for LATE/ENDGAME). Validated ADVISORY-only by AC-ELZS-06 (warning must be CI-visible, never blocks). The table is duplicated in ELZS Rule 4 (owner) and ZWM Tuning Knobs (erratum copy) — any retune must change BOTH or /consistency-check flags drift. MVP zone: EARLY + floor=1 (silent)."
+    added: 2026-07-13
     revised: ""
 
   - name: MVP_ZONE_LEVEL_BAND
@@ -1579,7 +1658,7 @@ constants:
     source: design/gdd/enemy-level-zone-scaling.md
     referenced_by:
       - design/gdd/enemy-level-zone-scaling.md
-      - design/gdd/encounter-zone.md             # the MVP zone's enemy_level_floor/roof values (erratum pending)
+      - design/gdd/encounter-zone.md             # the MVP zone's enemy_level_floor/roof values (erratum APPLIED 2026-07-13)
       - design/gdd/symbot-core-progression.md    # resolves OQ-CP-1 (CP-F1 arc pacing) + OQ-CP-7 (bench coverage)
     value: "[1, 6]"
     unit: MVP zone enemy_level_floor / enemy_level_roof
