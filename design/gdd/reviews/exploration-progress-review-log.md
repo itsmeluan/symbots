@@ -1,5 +1,34 @@
 # Review Log — Exploration Progress System (design/gdd/exploration-progress.md)
 
+## Review — 2026-07-13 — Verdict: APPROVED (round-2 confirmation — NEEDS REVISION → 2 new blockers + 2 fold-ins fixed same session; CD commit-approve honored, no round 3)
+Scope signal: S (persistence contract layer; effort dominated by 15 BLOCKING unit tests)
+Specialists: game-designer, systems-designer, qa-lead, creative-director (senior)
+Blocking items: 2 | Recommended: 10 | Advisory: 6
+Summary: All 4 round-1 blockers verified fixed by all three specialists. Two new true gates found and fixed same session: (1) MIGRATE path behavior was completely unspecified (SD+QA converged) — Rule 9 now normative: hookless MIGRATE → REFUSE under the full no-partial-restore guarantee (also discharges the MIGRATE-mid-failure conditional), AC-EP-02(b) rewritten with positive domain-state assertion + fall-through/silent-zero discriminators; (2) AC-EP-12's log-content assertion was untestable in GUT (push_error not capturable) — Rule 3 serialize now returns structured result {ok, failed_domain, error}, new Rule 3a.3 injectable warning sink covers all warning-count ACs. Two CD-mandated fold-ins: String-cast sort made normative (Rule 1 + AC-EP-01 fixture insertion order now normative); Player Fantasy OQ-EP-2 qualifying sentence (GD's challenge to prior CD adjudication upheld). Also landed: Rule 6(e) normative clamp ordering, domain-key-collision startup assertion, #17 forward-notes (quiesce precondition, save-repaired notice).
+CD adjudications: GD's APPROVED overruled (both gates outside GD's domain); StringName sort held at advisory severity but folded in as one-liner; QA's advisory→blocking promotion of AC-EP-12 ruled legitimate (un-runnable BLOCKING AC = defect in deliverable, not scope creep); SD's clamp-ordering blocker downgraded (CD traced all four clamp-order permutations — the only dangerous one is AC-EP-06-covered).
+Prior verdict resolved: Yes (round-1 NEEDS REVISION, 2026-07-13)
+
+### Backlog recommended items (CD-adjudicated non-gating; for future pass or downstream GDD authoring)
+1. [game-designer] EP-INV-1 rationale: name save-editing as known-and-accepted abuse vector (single-player)
+2. [game-designer] OQ-EP-1: encode default-by-omission decision (re-added boss = new encounter per EC-ZWM-10)
+3. [game-designer] World Loot domain row: double-collect ownership, loot_id format/stability, size cap → "#13 must resolve" sub-bullets
+4. [game-designer] Anti-checklist: convert aspiration to explicit delegation to #20/#13 (not mechanically enforced here)
+5. [systems-designer] Rule 6(e) check ownership: clarify domain-implemented vs system-level guard (one sentence)
+6. [qa-lead] AC-EP-09: promote deep-copy nulling sub-fixture to formal numbered step
+7. [qa-lead] Rule 3a.1: close autoload-singleton bypass in "cross-domain read" definition
+8. [qa-lead] EC-EP-15: classify null sub-blob (Rule 6a missing vs 6d wrong-type) + third AC-EP-07 fixture
+9. [qa-lead] Deferred ACs: name qa-lead as activation owner; concrete fixture for DEFERRED-A
+10. [qa-lead] AC-EP-10: note world_loot excluded pending #13; extend to 3-domain orders when #13 ships
+
+### Advisory
+- Opaque store must survive/clear on reset_to_new_game() (Rule 7 — becomes real when title-screen flow ships)
+- Rule 3a.1 accessor cycle: benign, but RefCounted cyclic-reference leak note for implementer
+- EP-PRED-1 saved=0 is dead code at v1 (documented as such post-fix)
+
+### Errata now due (approval trigger)
+- **Encounter Zone Rule 8a** reword: "ZWM implements the increment; Exploration Progress persists the counter" — one line, tracked in EP Rule 2 + Bidirectionality Notes
+
+
 ## Review — 2026-07-13 — Verdict: NEEDS REVISION (4 blockers fixed same session — pending fresh-session confirmation re-review)
 Scope signal: S (CD; game-designer estimated M — delta is test-fixture effort; producer to verify)
 Specialists: game-designer, systems-designer, qa-lead, creative-director (senior)

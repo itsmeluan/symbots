@@ -43,7 +43,7 @@ designed first.
 | 11 | Inventory System | Economy | MVP | Approved (2026-07-12, full-panel /design-review — NEEDS REVISION → 5 surgical blockers fixed same session: `next_instance_id` counter persisted (EC-INV-07 save/load), `instance_id` retyped plain int, INV-1 negative-qty/retune-down guards (EC-INV-11), Scrap-add `{accepted,rejected}` contract, OQ-INV-1 tier-refund LOCKED 0%. CD approve-on-fix-confirmation) | design/gdd/inventory.md | Part Database |
 | 12 | Zone & World Map System | World | MVP | Approved (2026-07-12, full-panel /design-review — NEEDS REVISION → 8 blockers fixed same session: ZWM-F1 boss_progress scope, missing-key EC-ZWM-12/AC-ZWM-19, zone_states_changed diff payload, LOCKED-origin outbound travel EC-ZWM-05/AC-ZWM-20, AC-ZWM-11 concrete fixture, AC-ZWM-17/18 signal contract, AC-ZWM-05 fixture gap. 15→20 ACs / 11→12 ECs) | design/gdd/zone-world-map.md | Encounter Zone |
 | 13 | World Loot System (inferred) | World | MVP | Not Started | — | Part Database, Zone & World Map |
-| 14 | Exploration Progress System | World | MVP | In Review (2026-07-13, full-panel /design-review — NEEDS REVISION → 4 blockers fixed same session: EP-INV-1 clamp direction → clamp-to-0 over-credit + AC-EP-05(a2) earned-regate discriminator; threshold notation → level-indexed preamble; new Rule 3a testability sub-contract (injectable cross-domain accessor + restore_records()); OQ-EP-2 save-trigger contingency. CD: commit-approve on fixes. **Pending fresh-session confirmation re-review.** 8 recommended items logged. EZ Rule 8a erratum still owed on approval) | design/gdd/exploration-progress.md | Zone & World Map, Symbot Core Progression; provisional: World Loot (#13 domain contract defined here) |
+| 14 | Exploration Progress System | World | MVP | Approved (2026-07-13, round-2 confirmation full-panel /design-review — all 4 round-1 blockers verified fixed by all specialists; 2 new blockers found & fixed same session: MIGRATE-no-hooks → REFUSE made normative in Rule 9 + AC-EP-02(b) positive domain-state assertion; serialize structured result `{ok, failed_domain}` + Rule 3a.3 injectable warning sink for GUT testability (AC-EP-12). 2 CD-mandated fold-ins: String-cast sort normative (Rule 1/AC-EP-01), Player Fantasy OQ-EP-2 qualifier. CD verdict APPROVED, no round 3. **EZ Rule 8a erratum now due**; 8 backlog recommended items in review log) | design/gdd/exploration-progress.md | Zone & World Map, Symbot Core Progression; provisional: World Loot (#13 domain contract defined here) |
 | 15 | Workshop System | Economy | MVP | Not Started | — | Symbot Assembly, Inventory |
 | 16 | Overworld Navigation (inferred) | World | MVP | Not Started | — | Zone & World Map, Encounter Zone |
 | 17 | Save/Load System | Persistence | MVP | Not Started | — | Inventory, Workshop, Exploration Progress |
@@ -212,8 +212,8 @@ layered structure. Part Database sits at the root with no cycles back from depen
 |--------|-------|
 | Total systems identified | 35 |
 | Design docs started | 18 |
-| Design docs reviewed | 14 |
-| Design docs approved | 17 |
+| Design docs reviewed | 15 |
+| Design docs approved | 18 |
 | MVP systems designed | 20 / 25 |
 | Vertical Slice systems designed | 0 / 3 |
 | Alpha systems designed | 0 / 3 |

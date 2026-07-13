@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/status-in%20design%20(17%20MVP%20GDDs%20approved)-yellow" alt="Status: In Design — 17 MVP GDDs approved, 1 in review">
+  <img src="https://img.shields.io/badge/status-in%20design%20(18%20MVP%20GDDs%20approved)-yellow" alt="Status: In Design — 18 MVP GDDs approved">
   <img src="https://img.shields.io/badge/engine-Godot%204.6-478cbf?logo=godotengine&logoColor=white" alt="Godot 4.6">
   <img src="https://img.shields.io/badge/platform-Mac%20%7C%20iOS-lightgrey" alt="Mac | iOS">
 </p>
@@ -50,21 +50,20 @@ Full detail in [`design/gdd/game-concept.md`](design/gdd/game-concept.md).
 
 Currently in **Design phase** (pre-production). The core build/hunt loop has
 been validated in a throwaway concept prototype ([findings](prototypes/symbot-build-loop-concept/REPORT.md) —
-verdict: **PROCEED**). MVP system design is in its final stretch — **17 MVP
-system GDDs are authored and approved** (plus 1 in final review), each through
-a multi-agent `/design-review`:
+verdict: **PROCEED**). MVP system design is in its final stretch — **all 18
+authored MVP system GDDs are approved**, each through a multi-agent
+`/design-review`:
 
 | Layer | Systems | Status |
 | ---- | ---- | ---- |
 | **Foundation** | Part Database · Move Database · Passive Database · Consumable Database · Enemy Database · Damage Formula | ✅ Approved (6) |
 | **Gameplay** | Symbot Assembly · Synergy · Turn-Based Combat · Part-Break · Enemy AI · Symbot Core Progression | ✅ Approved (6) |
-| **World / Economy** | Encounter Zone · Enemy Level & Zone Scaling · Zone & World Map · Drop System · Inventory | ✅ Approved (5) |
-| **World** | Exploration Progress | 🔍 In review (1) |
+| **World / Economy** | Encounter Zone · Enemy Level & Zone Scaling · Zone & World Map · Drop System · Inventory · Exploration Progress | ✅ Approved (6) |
 | **Integration · Presentation** | World Loot, Workshop, Overworld Navigation, Save/Load, Workshop/Combat/Map UIs, Audio, Main Menu | ⏳ Not started |
 
-Next up: **Exploration Progress** confirmation re-review, then **World Loot
-System** (#13). Full breakdown, dependency map, and design order in
-[`design/gdd/systems-index.md`](design/gdd/systems-index.md).
+Next up: **World Loot System** (#13) — its persistence contract is already
+pre-defined in the Exploration Progress GDD. Full breakdown, dependency map,
+and design order in [`design/gdd/systems-index.md`](design/gdd/systems-index.md).
 
 ## Tech Stack
 
