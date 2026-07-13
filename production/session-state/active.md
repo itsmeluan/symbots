@@ -1,6 +1,23 @@
 # Active Session State
 
-## Current Task — Exploration Progress (#14) GDD COMPLETE → Designed (2026-07-13, lean)
+## Current Task — Exploration Progress (#14) REVIEWED: NEEDS REVISION → 4 blockers FIXED same session (2026-07-13)
+
+- **Full-panel /design-review run** (game-designer, systems-designer, qa-lead in parallel + creative-director synthesis). Verdict NEEDS REVISION, 4 blockers, 8 recommended, 4 advisory. CD: "commit-approve on fixes landing." Scope signal S.
+- **All 4 blockers applied to exploration-progress.md same session:**
+  1. **EP-INV-1 clamp direction** (SD-B1, the one genuine design error): clamp-to-`win_count` silently revoked earned re-gates → changed to **clamp-to-0** (over-credit; user decision via widget). Rule 6e + EP-INV-1 rationale + EC-EP-03 rewritten; **AC-EP-05 gained (a2)** earned-regate discriminator `{win_count:10, wALD:14}` → stored 0, delta 10.
+  2. **Threshold notation trap** (SD-B2/QA-B1 convergence): AC preamble was a 0-indexed array literal vs CP-F1's level-indexed convention → preamble rewritten level-indexed (`threshold[4]=364` = level-4 boundary) + inline level annotations in AC-EP-01/-03/-10/-13.
+  3. **Rule 3a Testability sub-contract** (QA-B2+QA-B3 merged by CD): (1) injectable cross-domain accessor + technical def of "cross-domain read" (instance calls via accessor; constants exempt); (2) `restore_records(records: Array)` public inner method on keyed-collection domains (duplicate-ID injection path for AC-EP-08B; Array order = "first occurrence"). AC-EP-14/AC-EP-08B updated to cite Rule 3a.
+  4. **OQ-EP-2** (GD-B1 reframed by CD as contingency): Player Fantasy contingent on Save/Load #17 save-trigger granularity; priority-ordered trigger events listed (win_count increment foremost); cross-refs in Rule 8 + Save/Load dependency row.
+- **CD adjudications recorded**: EC-EP-09 atomicity stays advisory (GD wanted blocking); GD-B1 → Open Question not legislation of #17.
+- **Review log created**: design/gdd/reviews/exploration-progress-review-log.md (incl. the 8 recommended items left open + errata owed).
+- **systems-index**: #14 → In Review (pending fresh-session confirmation re-review).
+- **STILL OWED on approval**: EZ Rule 8a erratum (one line); recommended items 1–8 in review log (esp. World Loot contract gaps → feed into #13 authoring; two-blob atomicity + deferred-AC activation owner → feed into #17 authoring).
+
+### NEXT
+- **`/clear` then `/design-review design/gdd/exploration-progress.md`** — fix-confirmation re-review (user decision). Prior verdict NEEDS REVISION 2026-07-13; re-review should verify the 4 fixes at discriminator level.
+- On approval: apply EZ Rule 8a erratum, #14 → Approved, then `/design-system world-loot` (#13).
+
+## Prior — Exploration Progress (#14) GDD COMPLETE → Designed (2026-07-13, lean)
 - **All 12 sections written** (~5.3k words, 0 placeholders). CD-GDD-ALIGN skipped (lean) — review Section B manually before production.
 - **AC section**: 15 BLOCKING unit + 2 DEFERRED integration (Save/Load #17) + 2 delegated + 1 advisory-only. qa-lead consulted; main session corrected one fixture technique (AC-EP-08B: JSON.parse_string does NOT preserve duplicate keys — inject collision at domain-restore API level, Array-of-records form). AC-EP-14 kept as structural Phase-1 isolation test (injectable seam requirement flagged for lead programmer).
 - **Registry updated + YAML-validated**: EP-PRED-1 + EP-INV-1 formulas, CURRENT_FORMAT_VERSION + EP_DOMAIN_KEYS constants; CP-F1 referenced_by += exploration-progress.md. 34 formulas / 47 constants.
