@@ -2,8 +2,9 @@
 
 ## Current Task — World Loot System (#13) — In Design (2026-07-13)
 - File: design/gdd/world-loot.md
-- Current section: D Formulas
-- Sections complete: A Overview ✓ | B Player Fantasy ✓ | C Detailed Design ✓
+- Current section: Visual/Audio + UI + H Acceptance Criteria
+- Sections complete: A Overview ✓ | B Player Fantasy ✓ | C Detailed Design ✓ (+Rule 8 refuse-on-overflow amendment) | D Formulas ✓ (WL-PRED-1/2/3, all scan-exempt; systems-designer consulted) | E Edge Cases ✓ (12 ECs)
+- Key decisions: rewards = parts+scrap+consumables (BLUEPRINT reserved for Alpha, Rule 6); WL owns interact API; double-collect silent idempotent; overflow → REFUSE collect (chest stays closed)
 
 ## Prior — COMPLETE: Exploration Progress (#14) APPROVED (round-2 confirmation, 2026-07-13) + EZ Rule 8a erratum APPLIED
 
