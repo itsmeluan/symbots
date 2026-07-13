@@ -1,5 +1,9 @@
 # Review Log: Synergy System
 
+## Erratum — 2026-07-13 — C-4 doc-hygiene (from /review-all-gdds) — light re-review touch owed
+
+Stale-reference warning fixed (Status stays APPROVED): the Cross-system range contract (DF-1) note (line 232) cited the Damage Formula's **dead** DF-1 output range `[1, 165]` and framed the re-derivation as an outstanding downstream obligation. But that obligation was discharged 2026-07-10 (the doc's own Dependencies → Turn-Based Combat row already recorded it). Rewrote the sentence to past tense: `[1, 165]` is the *former* range, **RESOLVED to [1, 225]** under `SYNERGY_POWER_BUDGET = 40` (A ceiling 150), matching the registry + damage-formula.md. No mechanic change — prose accuracy only.
+
 ## Review — 2026-07-10 (Re-review #6, Final) — Verdict: APPROVED
 Scope signal: M (implementation — producer to verify); S for errata (applied in-session)
 Specialists: game-designer, systems-designer, ux-designer, qa-lead, creative-director

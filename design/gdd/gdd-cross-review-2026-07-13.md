@@ -130,3 +130,52 @@ The 19 designed systems are holistically sound — one coherent fantasy, no regi
 3. **Ratify the ON relay** — when Overworld Navigation (#16) is authored, formalize the `battle_ended(result, encounter_type)` relay contract and update ZWM/EZ dependency rows (C-1 remainder).
 
 The economy/tuning warnings (D-1 Scrap sink pending Workshop, D-3/D-4/D-5/D-7 playtest watches, D-6 unset consumable frequencies) should be resolved but are gated on the 4 unwritten MVP systems or on playtest — they don't block architecture of the designed set.
+
+---
+
+# Cross-GDD Review — 2026-07-13 (second pass, post Core-Progression Approval)
+
+**Trigger:** Confirmation `/review-all-gdds` after Core Progression (#10b) was Approved (4th-pass re-review + ST-1..ST-4 errata + /consistency-check PASS). Focused delta re-review: 2 parallel agents (systems-designer = consistency, game-designer = design holism) over all 19 GDDs, scoped to verify the Core Progression delta + boss-completion-bonus chain + re-check the 4 open warnings (C-3..C-6).
+
+**Verdict: FAIL → RESOLVED same session → PASS (with deferred hygiene CONCERNS).** One BLOCKING design defect was found and **fixed in this session**; the consistency pass found no blocking conflicts.
+
+## 🔴 BLOCKING (FOUND + FIXED same session) — Boss completion bonus repeated on every refight
+
+**Finding (game-designer holism):** the `completion_bonus_xp` (Boss 1 = 310, Boss 2 = 180) added in the Core Progression pass was labeled "one-time" in Enemy DB prose but **no system enforced it**. Both MVP bosses are refightable via Encounter Zone `LIGHTER_REGATE` (Boss 1 after +2 WILD wins, Boss 2 after +3), so the bonus repeated every refight: ~480 XP (170 + 310) per ~2 trivial fights = **~5.3× WILD XP density**, power-leveling any core to MAX_CORE_LEVEL in ~4–5 Boss-1 refights and blowing past every equip gate. Root cause = an EC↔AC gap: "one-time" written as intent, no owner for the "once", no AC testing non-repetition. Directly violates the anti-treadmill anti-pillar the bonus was meant to protect.
+
+**Fix applied (this session — guard in CP Rule 3a, user-chosen):**
+- **CP Rule 3a first-defeat guard:** `completion_bonus_xp` folded into `full_xp` **only when `is_first_boss_defeat == true`** (BOSS + pre-battle `defeated_once == false`); refights award `xp_value` alone.
+- **New payload field:** `battle_ended` now carries `is_first_boss_defeat: bool` (TBC Rule 12, eight-field; computed by the boss-approach/Overworld-Nav layer from ZWM-owned `defeated_once` pre-battle, ordering-independent).
+- **New AC-CP-25** (Unit, discriminating): a boss refight awards `xp_value` only (level 2, not the no-guard 480/level 4); pairs with AC-CP-24 (first defeat awards the bonus) to prove once-per-boss. **New EC-CP-13.**
+- Propagated to Enemy DB field note, ELZS AC-ELZS-14 (first-defeat basis note; first-clear math unaffected), and the registry constant.
+
+## ⚠️ Consistency pass (systems-designer) — no blocking conflicts
+
+- **C-2 confirmed RESOLVED**; boss-bonus chain bidirectionally consistent (310/180 agree across 5 docs + registry); enemy `structure` 60–594 correctly untouched (EDB-2, distinct quantity).
+- **New warning N-1 (FIXED this session):** stale secondary `battle_ended` summaries — CP Upstream-dep row (omitted `completion_bonus_xp`, said "erratum pending") and CP interactions row updated to the eight-field shape.
+- **`is_build_valid` vs `can_equip`** — CP query interface not enumerated in one place (minor; deferred to architecture).
+- **enemy-ai `H_cur [1,594]`** stale vs leveled-core 612 (confirmed advisory; heuristic input, non-blocking).
+
+## Still-open doc-hygiene warnings (deferred batch — unchanged, non-blocking)
+- **C-3** — `BASE_REGEN` (5–15, Part DB) vs `BASE_ENERGY_REGEN` (8–15, TBC) double-owned.
+- **C-4** — synergy-system.md cites the dead DF-1 range [1,165] (everything else [1,225]).
+- **C-5** — drop-system.md Rule 4 shows pre-erratum partial DS-1 (missing level_rarity_mult + beacon_factor), unlabeled.
+- **C-6** — part-database.md ↔ Core Progression dependency one-directional.
+These four were always slated for a separate doc-hygiene batch; they do not block architecture.
+
+## Endorsed (no change)
+Rule 6a (power-stat ban) + AC-CP-21 (anti-grind invariant) — both agents endorse as strong anti-treadmill defenses. The three-leg progression model (hunt / upgrade / level) is coherent now that the refight flood is closed. Cognitive load within budget; boss-victory-as-unlock reinforces Pillar 2.
+
+## Post-fix verdict: PASS (blocker resolved); CONCERNS on the 4 deferred C-3..C-6 hygiene warnings + 2 minor advisories (is_build_valid interface enumeration, enemy-ai H_cur). None blocks architecture of the designed set. Next: batch the C-3..C-6 hygiene edits, then /gate-check pre-production → /create-architecture.
+
+---
+
+## C-3..C-6 doc-hygiene batch — RESOLVED 2026-07-13 (same session)
+
+All four deferred hygiene warnings fixed:
+- **C-3 (base-regen double-name):** part-database.md `BASE_REGEN` (5–15) → renamed **`BASE_ENERGY_REGEN`** and range aligned to **8–15** (the 8-floor is load-bearing for TBC-F6 REPAIR anti-stall); owner = TBC. Registry note updated; name/owner/range now unified across Part DB + TBC + registry.
+- **C-4 (synergy stale DF-1 range):** synergy-system.md line 232 rewritten to past tense — `[1,165]` marked as the *former* range, **RESOLVED to [1,225]** (matches registry + damage-formula.md + the doc's own Dependencies row).
+- **C-5 (drop Rule 4 partial DS-1):** drop-system.md Rule 4 now shows the **canonical amended DS-1** (includes `level_rarity_mult × beacon_factor`) with an explicit "do not code the base×conditions form alone — fails AC-ELZS-10/11" warning.
+- **C-6 (Part DB↔CP one-directional dep):** part-database.md Downstream Dependents now lists **Symbot Core Progression** (reads `level_requirement`/`level_growth`; the CP-defined fields are hosted in the SympartData schema). Upstream stays "None" (correct — fields live in the root schema). 10→11 downstream systems.
+
+**All consistency warnings from both 2026-07-13 cross-review passes are now resolved.** Remaining non-blocking advisories: `is_build_valid` vs `can_equip` interface enumeration (defer to architecture) and enemy-ai H_cur [1,594] vs 612 (heuristic input). Designed-set consistency is clean for architecture.

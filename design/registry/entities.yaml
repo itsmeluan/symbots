@@ -1158,9 +1158,12 @@ constants:
       - design/gdd/move-database.md           # Rule 7 REPAIR energy-brake: energy_cost > BASE_ENERGY_REGEN
     value: 10
     unit: Energy regenerated per turn start (before recharge stat bonus)
-    notes: "Part DB Rule 4 already references 'the fixed base regen of 10' —
-      TBC-F2 formalizes it: new_energy = min(cap, current + 10 + recharge).
-      Safe range 8-15 per TBC Tuning Knobs."
+    notes: "Part DB Formula (energy_after_regen) defines the regen step; TBC-F2 formalizes/applies it:
+      new_energy = min(cap, current + 10 + recharge). Safe range 8-15 per TBC Tuning Knobs — the 8 FLOOR is
+      load-bearing for TBC-F6's REPAIR anti-stall (energy_cost > BASE_ENERGY_REGEN must be authorable).
+      C-3 hygiene RESOLVED 2026-07-13: part-database.md renamed its local `BASE_REGEN` (was safe-range 5-15) to
+      BASE_ENERGY_REGEN and aligned the range to 8-15 — name/owner/range now unified across Part DB + TBC + registry.
+      Owner = Turn-Based Combat."
     added: 2026-07-10
     revised: ""
 
@@ -1562,8 +1565,14 @@ constants:
       - design/gdd/turn-based-combat.md              # carried in the battle_ended payload (Rule 12, seven-field)
       - design/gdd/enemy-database.md
     value: "per-boss (Boss 1 = 310, Boss 2 = 180); 0 for all WILD"
-    unit: flat one-time XP bonus added to xp_value on defeating a BOSS
+    unit: flat FIRST-DEFEAT-ONLY XP bonus added to xp_value on defeating a BOSS
     notes: "Core Progression ST-1 erratum 2026-07-13 (resolves OQ-CP-8 equip-gate frustration; lever = per-boss completion bonus).
+      FIRST-DEFEAT GUARD (refight-flood fix, /review-all-gdds 2026-07-13): the bonus is awarded ONLY on a boss's first-ever defeat,
+      gated on the battle_ended `is_first_boss_defeat: bool` (true iff enemy_class==BOSS AND pre-battle defeated_once==false).
+      On any LIGHTER_REGATE refight the bonus is 0 (xp_value alone). WITHOUT this guard the +310/+180 would repeat every refight
+      (~480 XP per ~2 WILD wins, ~5.3x WILD density) and power-level alt cores past every gate — an anti-treadmill violation.
+      Enforced by CP Rule 3a; verified by AC-CP-25 (refight awards no bonus) alongside AC-CP-24 (first defeat awards it); EC-CP-13.
+      is_first_boss_defeat provenance: boss-approach/Overworld-Nav computes it from ZWM-owned defeated_once (pre-battle) and TBC relays it (ordering-independent).
       NOT CP-F4-scaled (not enemy_level-derived) — a per-boss authored Enemy DB field, calibrated by ELZS against AC-ELZS-14 so
       the deployed core lands at its drop's equip gate on the WORST-CASE floor path: Boss-grade L6 -> 6*45 + (170+310) = 750 >= threshold[6]=744;
       Prototype L8 -> 10*45 + (170+310) + (190+180) = 1300 >= threshold[8]=1292 (win_count is WILD-only per ZWM EC-ZWM-07; Boss 2 requires_defeated=Boss 1

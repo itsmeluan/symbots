@@ -1,5 +1,11 @@
 # Review Log: Part Database
 
+## Erratum — 2026-07-13 — C-3 + C-6 doc-hygiene (from /review-all-gdds) — light re-review touch owed
+
+Two cross-GDD hygiene warnings from the 2026-07-13 holistic review, fixed here (Status stays APPROVED):
+- **C-3:** the local energy-regen constant `BASE_REGEN` (safe range 5–15) renamed to **`BASE_ENERGY_REGEN`** and range aligned to **8–15**, unifying name/owner/range with TBC + registry. The 8-floor is load-bearing for TBC-F6's REPAIR anti-stall (a 5-floor would let a Light-cost Repair on a max-Recharge build become indefinitely sustainable). Owner = Turn-Based Combat; Part DB's Formula defines the regen step, TBC applies it. Renamed at the formula (energy_after_regen), variable table, tier table, and Tuning Knobs. Registry note updated.
+- **C-6:** **Symbot Core Progression (#10b)** added to the Downstream Dependents table (10→11) — it reads the CP-defined `level_requirement`/`level_growth` fields hosted in the SympartData schema. Upstream stays "None" (the fields live in the root schema; there is no true circular dependency). AC-CP-20/AC-CP-22 are DoD gates on the Part DB erratum that authors those fields' values.
+
 ## Review — 2026-07-09 — Verdict: APPROVED (Round 8)
 Scope signal: L (producer should verify before sprint planning)
 Specialists: lean mode (no specialist agents)

@@ -497,13 +497,13 @@ heat_carry_in_to_next_turn = 20   (constant)
 ### Formula 6 — Energy Regeneration
 
 ```
-energy_after_regen = min( energy_capacity, energy_current + BASE_REGEN + recharge_bonus )
+energy_after_regen = min( energy_capacity, energy_current + BASE_ENERGY_REGEN + recharge_bonus )
 energy_after_skill  = max( 0, energy_current − skill_energy_cost )
 ```
 
 | Variable | Symbol | Type | Range | Description |
 |----------|--------|------|-------|-------------|
-| BASE_REGEN | constant | int | 10 | Fixed Energy regenerated at each turn start |
+| BASE_ENERGY_REGEN | constant | int | 10 | Fixed Energy regenerated at each turn start. **Shared constant, owned by Turn-Based Combat** (TBC applies it in Rule 4 turn-start recharge; this formula defines the regen step). Renamed from `BASE_REGEN` 2026-07-13 to unify with TBC/registry (C-3 hygiene). Safe range 8–15 — the **8 floor is load-bearing** for TBC's REPAIR anti-stall invariant (TBC-F6). |
 | Recharge stat sum | `recharge_bonus` | int | 0–30 | Sum of all equipped parts' `stat_bonuses["recharge"]` values (Rule 4 — 11th MVP stat). Energy Cell and Core may each contribute up to 15 independently, so the sum can reach 30. |
 | Energy Capacity | `energy_capacity` | int | 80–120 | Post-chassis maximum Energy pool. Range derived from design-intent content targets; pending per-stat content validation in Stat Budget Reference. |
 | Skill cost | `skill_energy_cost` | int | 0–40 | From active skill definition; see tier table |
@@ -512,7 +512,7 @@ energy_after_skill  = max( 0, energy_current − skill_energy_cost )
 
 **Skill Energy cost tiers:**
 
-| Tier | Energy Cost | Sustainability at BASE_REGEN=10 |
+| Tier | Energy Cost | Sustainability at BASE_ENERGY_REGEN=10 |
 |------|------------|-------------------------------|
 | Basic attack | 0 | Always available |
 | Light | 5–8 | Sustainable every turn |
@@ -654,11 +654,12 @@ None. Part Database is the root Foundation system — it defines the data contra
 
 ### Downstream Dependents (what depends on Part Database)
 
-The following 10 systems read directly from the Part Database. Each entry specifies exactly what data it consumes.
+The following 11 systems read directly from the Part Database. Each entry specifies exactly what data it consumes.
 
 | System | What It Reads from Part Database |
 |--------|----------------------------------|
 | **Enemy Database** | `slot_type`, `rarity`, `drop_conditions` — defines which parts appear in enemy drop tables; Enemy Database references Part Database IDs for its loot entries |
+| **Symbot Core Progression** *(MVP, #10b)* | `level_requirement` (equip-gate threshold, Rule 4/5) and `level_growth` (per-CORE per-level stat contribution, CP-F3) — both are **CP-defined fields hosted in the SympartData schema** (added via the Core Progression erratum 2026-07-12). Part DB stores and content-validates them (AC-CP-20 rarity-floor + AC-CP-22 no-power-stats/25%-ceiling are DoD gates on the Part DB erratum); Core Progression owns their meaning and reads them at equip / stat-derivation time. *(Resolves the C-6 one-directional-dependency hygiene warning, 2026-07-13: Upstream stays "None" — the fields live in the root schema — but CP is a downstream reader and is now listed here.)* |
 | **Move Database** | `active_skill_id`, `slot_type`, `heat_generation`, `ammo_cost`, `upgrade_effects` — Move DB (Approved 2026-07-10) defines what each active skill and upgrade effect does at runtime; Part DB stores the references, Move DB owns their behavior |
 | **Damage Formula System** | `damage_type` (PHYSICAL / ENERGY), `element`, `stat_bonuses` (via Assembly output) — damage math requires knowing a part's element and damage type to apply type effectiveness multipliers |
 | **Symbot Assembly System** | Full schema — reads `slot_type` to enforce slot rules, `stat_bonuses` to compute `final_stat`, `chassis_modifier` table for archetype application, `active_skill_id`, `passive_id`, `heat_generation`, `ammo_cost`, `max_upgrade_tier` |
@@ -712,7 +713,7 @@ Tuning knobs are values designers can change without touching system logic. All 
 
 | Knob | Current Value | Safe Range | What Changing It Does |
 |------|--------------|------------|----------------------|
-| `BASE_REGEN` | 10 Energy/turn | 5–15 | Raises or lowers pacing of the Energy loop; below 5 makes heavy skills completely unsustainable; above 15 makes light skills always free and signature skills feel cheap |
+| `BASE_ENERGY_REGEN` | 10 Energy/turn | 8–15 | Raises or lowers pacing of the Energy loop; above 15 makes light skills always free and signature skills feel cheap. **Lower bound is 8, not 5** — TBC's REPAIR anti-stall invariant (TBC-F6) requires `energy_cost > BASE_ENERGY_REGEN` to be authorable at the low end; a 5-floor would let a Light-cost Repair on a max-Recharge build become indefinitely sustainable. **Owned by Turn-Based Combat** (shared constant; renamed from `BASE_REGEN` 2026-07-13 to unify name/owner/range across Part DB + TBC + registry — C-3 hygiene). |
 | `HEAT_OVERHEAT_THRESHOLD` | 100 | 80–100 | Below 100 shortens the heat curve dramatically; 80 would mean any two high-heat skills in sequence triggers Overheat |
 | `OVERHEAT_STRUCTURE_DAMAGE_PERCENT` | 10% | 5–20% | Punishment severity; above 20% at max Structure values (~100+) becomes a near-one-shot consequence |
 | `OVERHEAT_CARRY_IN` | 20 Heat | 10–30 | Minimum Heat entering next turn after Overheat; higher values extend the recovery period. Derivation at minimum Cooling (5): carry-in 20 → decay to 15 → Signature (40 Heat) → 55 → decay to 50 → Signature → 90 → decay to 85 → Signature → Overheat (~every 3–4 Signature uses at minimum Cooling). |

@@ -119,3 +119,15 @@
 - Report: design/gdd/gdd-cross-review-2026-07-13.md
 
 <!-- CONSISTENCY-CHECK: 2026-07-13 | GDDs checked: 19 | Conflicts found: 0 | PASS. Post Core-Progression 4th-pass + ST-1..ST-4 errata. Synced registry: CD-1 max_structure [60,594]->[60,612] + CD-3 max_energy [80,120]->[80,147] (runtime = part-derived SA-F1 + CP-F3 CORE growth; ST-4); SA-F1 output_range CP-F3 runtime-max note added (AC-SA-15/AC-CP-18); NEW constant completion_bonus_xp (per-boss Boss1=310/Boss2=180, 0 WILD; mechanism CP Rule 3a / field Enemy DB / values ELZS AC-ELZS-14; resolves OQ-CP-8). Enemy structure 60-594 correctly UNCHANGED (EDB-2, distinct quantity). 1 advisory: enemy-ai EAI-1 H_cur [1,594] vs leveled-core 612 (heuristic input, non-blocking, left as-is). Registry: 48 constants + 34 formulas + 8 items, YAML valid. -->
+
+## Session Extract — /review-all-gdds 2026-07-13 (second pass, post-#10b-Approval)
+- Verdict: FAIL (1 blocker) → RESOLVED same session → PASS (CONCERNS on deferred hygiene)
+- GDDs reviewed: 19 (2 parallel agents — consistency + design holism)
+- Flagged for revision: None (blocker fixed in-session; #10b stays Approved)
+- Blocking issue (1, FIXED): boss completion_bonus_xp repeated on LIGHTER_REGATE refights (no first-defeat guard) → ~5.3x WILD XP density, power-levels alt cores past every gate. Fixed: CP Rule 3a first-defeat guard + battle_ended.is_first_boss_defeat bool (TBC Rule 12 eight-field) + AC-CP-25 + EC-CP-13; propagated Enemy DB / ELZS AC-ELZS-14 / registry; N-1 stale-payload-summary warning also fixed.
+- Still-open (non-blocking, deferred batch): C-3 (BASE_REGEN naming), C-4 (synergy dead DF-1 range), C-5 (drop Rule 4 partial DS-1), C-6 (Part DB↔CP one-directional dep); advisories: is_build_valid interface enumeration, enemy-ai H_cur [1,594] vs 612.
+- Forward-ref: is_first_boss_defeat provenance is an Overworld Navigation #16 (Not Started) obligation — logged in production/errata-backlog.md.
+- Recommended next: batch C-3..C-6 doc-hygiene, then /gate-check pre-production → /create-architecture.
+- Report: design/gdd/gdd-cross-review-2026-07-13.md (second-pass section appended)
+
+<!-- HYGIENE-BATCH: 2026-07-13 | C-3/C-4/C-5/C-6 all RESOLVED (from /review-all-gdds). C-3: part-database BASE_REGEN->BASE_ENERGY_REGEN, range 5-15->8-15 (owner TBC, 8-floor load-bearing for TBC-F6). C-4: synergy line 232 stale DF-1 [1,165]->resolved [1,225] past-tense. C-5: drop Rule 4 -> canonical amended DS-1 (level_rarity_mult + beacon_factor) + AC-ELZS-10/11 warning. C-6: Part DB downstream +Symbot Core Progression (10->11), Upstream stays None. Registry synced, YAML valid. Logs updated (part-database/synergy-system/drop-system). Remaining advisories: is_build_valid interface enumeration (arch), enemy-ai H_cur [1,594] vs 612. All cross-review consistency warnings now cleared; designed set clean for architecture. -->

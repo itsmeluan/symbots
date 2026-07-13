@@ -1,5 +1,9 @@
 # Review Log: Drop System
 
+## Erratum — 2026-07-13 — C-5 doc-hygiene (from /review-all-gdds) — light re-review touch owed
+
+Stale-reference warning fixed (Status stays APPROVED): **Rule 4** still showed the pre-ELZS-erratum partial DS-1 (`clamp(base_rate × Π condition_multipliers, 0, 1)` — missing `level_rarity_mult` and `beacon_factor`), while the canonical amended DS-1 in Formulas (and Rule 12a) already carried both factors. Risk: an implementer coding from Rule 4 drops the level factor (the exact AC-ELZS-10/AC-ELZS-11 discriminator — returns 0.375 for all bands instead of the 0.1875/0.375/0.5625 spread). Updated Rule 4 to the **canonical amended DS-1** (full product) with an explicit "do not code the base×conditions form alone" warning naming the failing ACs. No math change — Rule 4 now matches the canonical formula it always should have.
+
 ## Review — 2026-07-11 (fresh-session re-review, round 4) — Verdict: APPROVED (punch-list applied)
 Scope signal: L
 Specialists: economy-designer, game-designer, systems-designer, qa-lead, creative-director (senior synthesis)
