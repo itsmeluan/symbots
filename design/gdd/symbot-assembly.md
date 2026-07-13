@@ -200,13 +200,15 @@ Store the full `final_stat` dictionary and emit `stats_changed(final_stat)`.
 
 **Output ranges** (inherited from Part DB Formula 1):
 
-| Stat | Practical MVP range | Notes |
+> **CP-F3 addendum (Core Progression erratum 2026-07-13):** the ranges below are **part-derived** (SA-F1 output from equipped parts). A leveled CORE's CP-F3 level-growth (Rule 6, step 4b) is added **on top** and can raise a stat above its part-only ceiling. With the Spark Core reference at level 10: `energy_capacity` up to **147** (part ceiling 120 + 27), `structure` up to **612** (594 + 18). Power stats (`physical_power`/`energy_power`) are **never** grown by CP-F3 (Core Progression Rule 6a), so their `0–110` ceiling is unaffected — this preserves Damage Formula DF-1's `A ∈ [0,150]` input domain.
+
+| Stat | Practical MVP range (part-derived) | Notes |
 |------|-------------------|-------|
-| `structure` | 60–594 | Low: all-Common Light Frame; high: all-Boss-grade Heavy Frame at +5 |
-| `physical_power` / `energy_power` | 0–110 per contributing slot | Weapon/Arms max at +5; zero if no parts contribute |
+| `structure` | 60–594 (CORE growth → up to 612) | Low: all-Common Light Frame; high: all-Boss-grade Heavy Frame at +5; +CP-F3 up to +18 |
+| `physical_power` / `energy_power` | 0–110 per contributing slot | Weapon/Arms max at +5; zero if no parts contribute. **Not** grown by CP-F3 (Rule 6a) |
 | `armor` / `resistance` | 0–132 | Boss-grade Chassis at +5 with ×1.20 modifier |
 | `mobility` | 0–96 | Light Frame ×1.20 upper bound |
-| `energy_capacity` | 80–120 | Design target range (Part DB Rule 4) |
+| `energy_capacity` | 80–120 (CORE growth → up to 147) | Design target range (Part DB Rule 4); +CP-F3 up to +27 |
 | `recharge` | 0–30 | At most 2 contributing parts × 15 each (Part DB Rule 4) |
 
 ---

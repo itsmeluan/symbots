@@ -1,9 +1,9 @@
 # Symbot Core Progression (Leveling)
 
-> **Status**: In Design
+> **Status**: In Design (revising — /design-review re-review 2026-07-13, C-2 + D-2)
 > **Author**: Luan + Claude Code Game Studios agents
-> **Last Updated**: 2026-07-12
-> **Implements Pillar**: Pillar 1 (Engineer, Don't Collect), Pillar 3 (Build Depth Over Content Breadth)
+> **Last Updated**: 2026-07-13
+> **Supports Pillar**: Pillar 1 (Engineer, Don't Collect) and Pillar 3 (Build Depth Over Content Breadth) — this is a **support/pacing** system: it *gates and paces* access to the build depth those pillars deliver, it does not itself implement them (cf. Consumable DB tagging). Anti-pillar defense: NOT a level-matching treadmill — "levels set the stage; the workshop wins the fight."
 
 ## Overview
 
@@ -94,6 +94,8 @@ Individual parts within a rarity may have a higher `level_requirement` (e.g., a 
 ---
 
 **Rule 6 — Stat growth integration.** A core part's SympartData includes a `level_growth` dictionary: `stat_key → int bonus_per_level`. This is a new field added to SympartData via Part DB erratum — only present on `CORE` slot parts (other slots have `null` or empty dict).
+
+**Rule 6a — Power stats are forbidden in `level_growth` (DF-1 domain guard).** `physical_power` and `energy_power` MUST NOT appear as keys in any core's `level_growth` dictionary. Rationale: CP-F3 is applied *before* SYN-F4, so growth in a power stat stacks with the synergy power budget (SYNERGY_POWER_BUDGET = 40) on top of the SA-F1 base (max 110). Allowing `energy_power` growth pushed the attacker-power input `A` to `110 + 18 + 40 = 168`, outside Damage Formula DF-1's declared and float-scanned domain `A ∈ [0, 150]` (see damage-formula.md). Prohibiting power stats keeps `A ≤ 150` with zero DF-1 change and no re-scan. This also enforces the anti-pillar: **leveling gates and paces access; it must never directly raise raw damage output.** Part DB content validation enforces this (AC-CP-22). Defensive/utility/resource stats (`structure`, `energy_capacity`, `cooling`, `armor`, `resistance`, `mobility`, etc.) remain permitted.
 
 At runtime, Assembly reads the equipped core's `level_growth` and applies the **CP contribution step** between the SA-F1 pipeline and SYN-F4:
 
@@ -199,7 +201,9 @@ Each enemy's `xp_value` is derived from its **enemy level** (owned by Enemy DB /
 | BOSS 1 | 5 | (35 + 50) × 2 = **170** |
 | BOSS 2 | 6 | (35 + 60) × 2 = **190** |
 
-This preserves the prior flat calibration's *scale* (a mid-level WILD ≈ 65, a boss ≈ 170–190) while making tougher enemies award proportionally more, and it gives level a second job (defining XP) exactly as intended. **Ownership note:** the Enemy Level & Zone Scaling pass may refine or replace this curve; until then, this is the ratified conversion and Enemy DB stores `xp_value` per its output.
+This preserves the prior flat calibration's *scale* (a mid-level WILD ≈ 65, a boss ≈ 170–190) while making tougher enemies award proportionally more, and it gives level a second job (defining XP) exactly as intended.
+
+**Ownership note (explicit — resolves the `→` notation).** CP-F4 and its constants (`XP_BASE`, `XP_PER_ENEMY_LEVEL`, `BOSS_XP_MULTIPLIER`) are **authored and owned here** (Core Progression, because XP is this system's concern). The Enemy Level & Zone Scaling (ELZS) system holds a **calibration obligation only**: it sets the enemy `level` distribution and MVP zone level range (OQ-CP-1), against which these provisional constants are re-tuned. It does **not** re-derive or re-own the formula. The `*(→ Enemy Level & Zone Scaling)*` tag in Tuning Knobs means exactly this: *value provisional, awaiting ELZS calibration input; formula ownership stays here.* When ELZS is (re)visited, its Dependencies section must list CP-F4 as a **read-only reference it calibrates, not owns**, and Enemy DB stores the resulting `xp_value` per this formula's output.
 
 ---
 
@@ -236,12 +240,29 @@ Applied per stat key in the equipped core's `level_growth` dictionary, after SA-
 | Stat | `level_growth` | Max (level 10) | Rationale |
 |------|---------------|----------------|-----------|
 | `structure` | 2 | +18 | Modest survivability (~15–22% of expected base) |
-| `energy_capacity` | 3 | +27 | Primary identity stat |
-| `energy_power` | 2 | +18 | Secondary energy identity |
+| `energy_capacity` | 3 | +27 | Primary identity stat (resource-pool growth, not damage) |
 | `cooling` | 1 | +9 | Light — Heat management is player skill, not level reward |
 | All other stats | 0 | 0 | Grow via part choices, not level |
 
-**Anti-grind invariant check:** total level-10 contribution ≈ 72 stat-points across 4 stats — meaningful but sub-dominant versus SA-F1's full multi-hundred-point stat pool at high part quality. A clever low-level build with great parts keeps its edge over a lazy high-level core.
+> **Power stats removed (Rule 6a, /design-review 2026-07-13):** the prior reference grew `energy_power` at 2/level (+18 at L10). That breached DF-1's `A ∈ [0,150]` domain (110 SA-F1 + 18 CP-F3 + 40 synergy = 168). Power growth is now prohibited (Rule 6a). Total L10 contribution is now **54 stat-points across 3 stats** (was 72). Removing power growth also better serves the fantasy: leveling extends the resource pool that enables *more moves*, not the raw damage per move.
+
+**Interaction with part-derived stat ceilings (range re-annotation).** CP-F3 growth is **additive on top of** the part-derived SA-F1 output ranges — it is not bounded by them. A leveled CORE therefore legitimately raises a stat above its part-only ceiling. Concretely at level 10 with this reference: `energy_capacity` max `120 → 147`; `structure` max `594 → 612`. This is intended (the CORE's leveled anchor adds a pool parts alone cannot reach). The falsified part-only ceilings are re-annotated at their source — see the Symbot Assembly SA-F1 output table and Consumable DB CD-1/CD-3 errata (Bidirectionality Notes). Downstream clamp formulas (`min(max_energy, …)`, `min(max_structure, …)`) read the runtime max and self-correct; only the *documented* ceilings needed updating.
+
+**Anti-grind invariant (honest statement — verified by AC-CP-21).** The invariant is **bounded-edge, not build-dominant-at-parity**:
+
+- Total level-10 contribution is 54 stat-points across 3 non-power stats. Against a *well-built* core (all-Rare parts, the AC-CP-21 reference baseline), each per-stat contribution is ≤ ~25% of that stat's reference pool.
+- **The invariant is NOT "a leveled core is always beaten by a lower-level one."** At *equal part rarity and equal type matchup*, the higher-level core wins on CP-F3 accumulation — level is designed to matter somewhat. What the invariant guarantees is narrower and testable: **a lower-level core that holds a build-quality advantage AND a type-matchup advantage out-damages a higher-level core that holds neither** (AC-CP-21). Level never overrides the combination of build + type mastery — the two pillars this system supports.
+- Because power stats are excluded (Rule 6a), leveling never raises raw damage directly; the CP-F3 stats (`structure`/`energy_capacity`/`cooling`) affect survivability and resource economy, keeping raw offense a function of parts + synergy + type.
+
+**AC-CP-21 reference baseline (well-built Spark Core, all-Rare parts, no synergy).** So the 25%-ceiling and the invariant are measurable, the reference build's SA-F1 per-stat outputs are fixed here (illustrative Rare-tier values; re-derive and re-run AC-CP-21 if SA-F1 tier outputs are retuned):
+
+| Stat | SA-F1 reference output (all-Rare) | CP-F3 L10 add | CP-F3 as % of reference |
+|------|-----------------------------------|---------------|-------------------------|
+| `structure` | ~260 | +18 | ~7% |
+| `energy_capacity` | ~110 | +27 | ~25% (ceiling) |
+| `cooling` | ~40 | +9 | ~22% |
+
+`energy_capacity` sits at the 25% ceiling against a well-built reference — this is the binding stat and the reason its growth is not raised further. Any future core whose `sum(level_growth[stat] × 9)` for a single stat exceeds 25% of that stat's all-Rare reference output fails the authoring guidance (AC-CP-22).
 
 ## Edge Cases
 
@@ -253,7 +274,7 @@ Applied per stat key in the equipped core's `level_growth` dictionary, after SA-
 
 **EC-CP-04 — Equip blocked by level_requirement.** *If* the player attempts to equip a part whose `level_requirement` exceeds the build's core level: the equip is rejected, no part is displaced, no Inventory change occurs, and an error message is returned. *Verified by AC-CP-04.*
 
-**EC-CP-05 — Core swap invalidates already-equipped parts.** *If* the player swaps the CORE slot to a lower-level core, and parts already in other slots now exceed the new core's level: the previously-equipped parts are **not** auto-unequipped (no silent data loss), but the build is flagged invalid and Workshop UI must surface a validation warning listing the offending parts. The build cannot enter combat while invalid. *Verified by AC-CP-05.*
+**EC-CP-05 — Core swap invalidates already-equipped parts.** *If* the player swaps the CORE slot to a lower-level core, and parts already in other slots now exceed the new core's level: the previously-equipped parts are **not** auto-unequipped (no silent data loss), but the build is flagged invalid and Workshop UI must surface a validation warning listing the offending parts. The build cannot enter combat while invalid. **Ownership of the combat block:** this system exposes `is_build_valid(symbot_build) -> bool` (returns false iff any equipped part's `level_requirement > core.level`); the "cannot enter combat" enforcement is **owned by Turn-Based Combat / Overworld Navigation**, which MUST call `is_build_valid()` before starting a battle and refuse an invalid build. This obligation is tracked in Bidirectionality Notes so it is not left orphaned in edge-case prose. *Verified by AC-CP-05 (flagging/list side, this system); the combat refusal is verified in the TBC/Workshop GDD when authored.*
 
 **EC-CP-06 — Load: stored level disagrees with cumulative_xp.** *If* a save's serialized `level` does not match what CP-F1 derives from `cumulative_xp` (drift, tampering, or a curve retune between versions): the level is **re-derived from cumulative_xp** on load — the serialized `level` field is a display cache and is never trusted. *Verified by AC-CP-07.*
 
@@ -296,6 +317,10 @@ Applied per stat key in the equipped core's `level_growth` dictionary, after SA-
 - **Enemy Level & Zone Scaling (new system)** owns: Enemy DB `level` + `xp_value` fields (CP-F4 output storage), Encounter Zone `enemy_level_floor`/`enemy_level_roof`, Zone & World Map `difficulty_band`↔level-range mapping, and Drop System level→rarity/stat-roll influence. This system (Core Progression) depends on its enemy-level output but does not own it.
 - **Inventory erratum:** Inventory must call `register_core(core_instance_id)` whenever a CORE-slot part is added to the player's collection. This is a one-way call — no progression state flows back. Inventory does not read `CoreProgressionRecord` fields; it only triggers record creation.
 - **No reverse dependency on Inventory:** `CoreProgressionRecord` is keyed by the Inventory `instance_id` but this system never queries Inventory for data.
+- **Symbot Assembly range re-annotation (erratum owed):** CP-F3 growth is additive on top of the SA-F1 output ranges. Assembly's SA-F1 "Output ranges" table must annotate that a leveled CORE raises `energy_capacity` above its part-only ceiling (`120 → up to 147` at L10 with the Spark Core reference) and `structure` (`594 → up to 612`). The ranges are part-derived; CP-F3 adds on top. *(C-2 downstream; falsified-range fix.)*
+- **Consumable DB range re-annotation (erratum owed):** Consumable DB CD-1/CD-3 cite `max_structure ∈ [60,594]` and `max_energy ∈ [80,120]` as SA-F1-owned. Both must be re-annotated as **part-derived ceilings; a leveled CORE's CP-F3 growth adds on top** (`max_energy` up to ~147, `max_structure` up to ~612). The CD-1/CD-3 clamp formulas already read the runtime max and self-correct — only the cited documentation ranges and the Power Cell/`+50`-on-80-cap balance note are stale. *(C-2 downstream.)*
+- **`cooling` has no declared SA-F1 ceiling (owed):** unlike structure/energy_capacity, no approved GDD declares a `cooling` output range. Part DB / SA-F1 must add one so CP-F3's `cooling: 1` (+9 at L10) can be range-checked. *(C-2 gap.)*
+- **Turn-Based Combat / Overworld Navigation `is_build_valid` (erratum owed):** the "invalid build cannot enter combat" invariant (EC-CP-05) is enforced by whichever system starts battles calling this system's `is_build_valid(symbot_build)`. TBC (and/or Overworld Navigation) must add this pre-battle check and an AC when authored — it currently has no owner outside this GDD's edge-case prose.
 
 ## Tuning Knobs
 
@@ -307,9 +332,9 @@ Applied per stat key in the equipped core's `level_growth` dictionary, after SA-
 | `XP_BASE` | int | 35 | This system *(→ Enemy Level & Zone Scaling)* | Flat floor in CP-F4. Sets the XP of a level-0 reference enemy. Provisional — re-calibrate with zone level ranges. |
 | `XP_PER_ENEMY_LEVEL` | int | 10 | This system *(→ Enemy Level & Zone Scaling)* | XP added per enemy level in CP-F4. The primary lever for how fast leveling tracks enemy strength. Provisional. |
 | `BOSS_XP_MULTIPLIER` | int | 2 | This system | Boss XP multiplier in CP-F4. Keep an integer to preserve CP-F4's epsilon-free property. Safe range 2–3. |
-| `BENCH_XP_SHARE` | float | 0.5 | This system | Fraction of full XP a benched core earns (CP-F2). **Keep a power of 2** (0.25 / 0.5) to stay epsilon-free; a non-power-of-2 requires an epsilon guard + scan. Safe range 0.3–0.6 (values off a power of 2 add the epsilon cost). |
+| `BENCH_XP_SHARE` | float | 0.5 | This system | Fraction of full XP a benched core earns (CP-F2). **Keep a power of 2** (0.25 / 0.5) to stay epsilon-free; a non-power-of-2 requires an epsilon guard + scan. Safe range 0.3–0.6 (values off a power of 2 add the epsilon cost). **Enforced, not just documented:** a startup assertion fires a content error if `BENCH_XP_SHARE × 2 != round(BENCH_XP_SHARE × 2)` (i.e. not a half-integer) unless the CP-F2 epsilon guard is present — see AC-CP-23. This stops a tuner picking 0.3 from the safe range without reading this note and silently shipping off-by-one bench XP. |
 | `BENCH_LEVEL_LEAD_CAP` | int | 3 | This system | How many levels above an enemy a benched core may be before its bench XP drops to 0 (Rule 3 / EC-CP-03). Lower = tighter anti-power-level clamp. Safe range 2–5. At 0–1 a benched core stops earning almost immediately in on-level zones (too punishing); above ~5 the guard rarely fires. |
-| Per-core `level_growth[stat]` | Content | authored per core | Part DB *(erratum)* | Per-level stat gain (CP-F3). Keep the level-10 total per core sub-dominant versus part-derived stats (anti-grind invariant). Guidance: total level-10 contribution ≲ 25% of a well-built core's base stat pool. |
+| Per-core `level_growth[stat]` | Content | authored per core | Part DB *(erratum)* | Per-level stat gain (CP-F3). **Power stats forbidden** (`physical_power`/`energy_power` — Rule 6a; enforced by AC-CP-22). Anti-grind ceiling: for each stat, `level_growth[stat] × 9` must be ≤ **25% of that stat's all-Rare reference SA-F1 output** (the AC-CP-21 reference baseline documented in Formulas → CP-F3), not an undefined "stat pool." The Spark Core's `energy_capacity` (+27 vs ~110 reference = 25%) sits exactly at the ceiling — do not raise it. AC-CP-22 validates the ceiling per Part DB entry. |
 | Per-part `level_requirement` | Content | Rule 5 rarity floors | Part DB *(erratum)* | Core level needed to equip. Never below the rarity floor (Common 1 / Rare 3 / Boss-grade 6 / Prototype 8); may be raised for individually powerful parts. |
 
 **Cross-referenced knob (owned elsewhere, affects this system):**
@@ -370,17 +395,34 @@ Exposes read APIs + signals; contributes no screens of its own. Consumed by Work
 
 **AC-CP-16 — CP-F4 xp_value from enemy level (isolates each constant).** **GIVEN** enemy `level = 1` WILD → `xp_value == 45` (isolates `XP_BASE`); `level = 3` WILD → `65`; `level = 5` BOSS → `170` (isolates `BOSS_XP_MULTIPLIER`). *(CP-F4)* **Test:** Unit.
 
-**AC-CP-17a — No XP on DEFEAT.** **GIVEN** cores with known `cumulative_xp`, **WHEN** `battle_ended(DEFEAT)` fires, **THEN** every core's `cumulative_xp` is unchanged (`assert_eq` to the pre-battle value). *(Rule 3)* **Test:** Unit.
+**AC-CP-17a — No XP on DEFEAT.** **GIVEN** cores with known `cumulative_xp`, **WHEN** `battle_ended(DEFEAT)` fires, **THEN** every core's `cumulative_xp` is unchanged (`assert_eq` to the pre-battle value) **AND** `assert_signal_emit_count(system, "core_leveled_up", 0)` — no spurious level-up signal on a non-victory outcome. *(Rule 3)* **Test:** Unit.
 
-**AC-CP-17b — No XP on FLED.** **GIVEN** the same, **WHEN** `battle_ended(FLED)` fires, **THEN** every core's `cumulative_xp` is unchanged. A separate code path from DEFEAT. *(Rule 3)* **Test:** Unit.
+**AC-CP-17b — No XP on FLED.** **GIVEN** the same, **WHEN** `battle_ended(FLED)` fires, **THEN** every core's `cumulative_xp` is unchanged **AND** `assert_signal_emit_count(system, "core_leveled_up", 0)`. A separate code path from DEFEAT. *(Rule 3)* **Test:** Unit.
 
 **AC-CP-18 — CP-F3 is applied AFTER SA-F1 and BEFORE SYN-F4 (pipeline ordering).** **GIVEN** a chassis archetype multiplier `M = 1.2`, a CORE with `level_growth = { target_stat: 10 }` at level 5 (contribution = 40), and an SA-F1 output of 120 for `target_stat` (100 raw × 1.2 archetype), **WHEN** Assembly computes `final_stat`, **THEN** the value fed to SYN-F4 is exactly **160** (= 120 + 40), **not 168** (= (100+40) × 1.2, which results from applying CP-F3 before SA-F1). This proves the contribution bypasses the chassis modifier and precedes synergy. *(Rule 6; CP-F3)* **Test:** Integration. **DEFERRED** — unblocks when the Symbot Assembly erratum (inserting the CP-F3 contribution step between SA-F1 and SYN-F4) is applied. *(Matches AC-CP-07b deferral pattern.)*
 
 **AC-CP-19 — core_leveled_up does NOT fire when no threshold is crossed.** **GIVEN** a level-2 core at `cumulative_xp = 100`, **WHEN** awarded 50 XP (new total 150 < threshold[3] = 220), **THEN** `cumulative_xp == 150`, `level` stays 2, **AND** `assert_signal_emit_count(system, "core_leveled_up", 0)`. *(Rule 2)* **Test:** Unit.
 
-**AC-CP-20 — Rarity level_requirement floor invariant (content validation).** For every Part DB entry: `part.level_requirement ≥ RARITY_LEVEL_FLOOR[part.rarity]` where the floors are Common 1 / Rare 3 / Boss-grade 6 / Prototype 8. A Prototype part authored with `level_requirement = 1` fails. *(Rule 5)* **Test:** Content Validation (ADVISORY gate).
+**AC-CP-20 — Rarity level_requirement floor invariant (content validation).** For every Part DB entry: `part.level_requirement ≥ RARITY_LEVEL_FLOOR[part.rarity]` where the floors are Common 1 / Rare 3 / Boss-grade 6 / Prototype 8. A Prototype part authored with `level_requirement = 1` fails. *(Rule 5)* **Test:** Content Validation. **BLOCKING** — *(promoted from ADVISORY, /design-review 2026-07-13).* This is the **sole** protection against an under-authored gate: a PROTOTYPE part with `level_requirement = 1` lets any level-1 core equip it, silently defeating the entire equip-gate system (Rule 4/5), and there is **no runtime fallback** — the gate trusts the authored value. Must run and pass before any Part DB erratum authoring `level_requirement` values is merged.
 
-**Coverage check:** every core rule (1–7) and all four formulas (CP-F1/F2/F3/F4) have ≥1 AC; every edge case EC-CP-01…12 cites a listed AC. Pipeline ordering (AC-CP-18) and signal-suppression (AC-CP-19) are explicitly covered. Signal assertions use both `assert_signal_emit_count` and parameter checks. Load-behavior ACs (07, 12) are unit-scoped against the derive/sanitize methods; the full save/load round-trip (07b) is DEFERRED pending Exploration Progress.
+**AC-CP-21 — Anti-grind invariant: build + type mastery out-damages raw level (checkable).** Verifies the honest bounded-edge invariant (see Formulas → CP-F3), using the all-Rare reference baseline. **GIVEN** two Symbots both using an Energy skill:
+- **Challenger (level 4):** Spark Core L4; Rare ARMS `energy_power` base = 45; active synergy `+10` energy_power; CP-F3 contributes 0 to `energy_power` (power stats forbidden, Rule 6a). Final `energy_power = 55`. Target Core = Thermal (T = 1.5); target `resistance = 30`.
+- **Incumbent (level 8):** Spark Core L8; Common ARMS `energy_power` base = 20; no synergy; CP-F3 contributes 0 to `energy_power`. Final `energy_power = 20`. Neutral matchup (T = 1.0); target `resistance = 30`.
+
+**WHEN** DF-1 is applied to each, **THEN**:
+- Challenger `= floor(55² / (55+30) × 1.5 + 0.0001) = floor(3025/85 × 1.5) = floor(53.38) = 53`
+- Incumbent `= floor(20² / (20+30) × 1.0 + 0.0001) = floor(400/50) = floor(8.0) = 8`
+- Assert `challenger_damage > incumbent_damage` (53 > 8) — the level-4 build+type advantage dominates the level-8 raw-level core by ~6.6×.
+
+*(Note: because Rule 6a forbids power growth, the level gap contributes **nothing** to `energy_power` here — the entire delta is build quality + type mastery, exactly as the pillars require.)* **Test:** Content Validation / calculation check. **ADVISORY gate**, but must be re-run and logged whenever `level_growth`, `XP_PER_LEVEL_BASE`, `LEVEL_COST_RAMP`, or SA-F1 Rare/Common tier outputs are retuned; a tuning change that inverts this comparison is an anti-pillar violation requiring creative-director sign-off. Record passing numbers + the tuning-knob values used in `design/balance/anti-grind-invariant-log.md`. *(Resolves cross-review D-2.)*
+
+**AC-CP-22 — level_growth content validation: no power stats, per-stat 25% ceiling.** For every CORE-slot Part DB entry: **(A)** `level_growth` contains no `physical_power` or `energy_power` key (Rule 6a) — a Spark Core authored with `energy_power: 2` fails; **(B)** for each stat key, `level_growth[stat] × 9 ≤ 0.25 × REFERENCE_SA_F1_OUTPUT[stat]` where the reference outputs are the all-Rare baseline (CP-F3 table). A core authored with `energy_capacity: 5` (+45 vs ~110 reference = 41%) fails. *(Rule 6a; CP-F3 anti-grind ceiling)* **Test:** Content Validation. **BLOCKING** — no runtime check catches an over-powered or power-stat `level_growth`; without this test, a single mis-authored core silently makes level the dominant variable (anti-pillar breach) or breaches DF-1's input domain.
+
+**AC-CP-23 — BENCH_XP_SHARE epsilon-safety assertion.** **GIVEN** `BENCH_XP_SHARE` is set to a value where `BENCH_XP_SHARE × 2` is not an integer (e.g. 0.3, within the documented safe range 0.3–0.6) **AND** the CP-F2 epsilon guard is absent, **WHEN** the system initializes, **THEN** a content error is logged via the injected logging spy naming `BENCH_XP_SHARE`. **GIVEN** the default 0.5 (a half-integer, `0.5 × 2 = 1`), **THEN** no error. *(CP-F2 epsilon note; Tuning Knobs)* **Test:** Unit — exercises the startup validation directly. **ADVISORY.**
+
+**Coverage check:** every core rule (1–7, incl. 6a) and all four formulas (CP-F1/F2/F3/F4) have ≥1 AC; every edge case EC-CP-01…12 cites a listed AC. Pipeline ordering (AC-CP-18) and signal-suppression (AC-CP-19, plus emit-count-0 on DEFEAT/FLED in AC-CP-17a/b) are explicitly covered. The anti-grind invariant is now a checkable AC (AC-CP-21) with a fixed reference baseline; content-integrity gates AC-CP-20 (gate floor) and AC-CP-22 (no power stats / 25% ceiling) are BLOCKING. Signal assertions use both `assert_signal_emit_count` and parameter checks. Load-behavior ACs (07, 12) are unit-scoped against the derive/sanitize methods; the full save/load round-trip (07b) is DEFERRED pending Exploration Progress.
+
+> **DoD note on AC-CP-18 (pipeline ordering, DEFERRED).** AC-CP-18 proves CP-F3 is inserted between SA-F1 and SYN-F4. It is DEFERRED until the Symbot Assembly erratum lands. **Unblocking and passing AC-CP-18 is a required Definition-of-Done item on the Assembly erratum story** — the erratum must not be marked complete with the CP-F3 step inserted but untested, because a wrong insertion point (before SA-F1, or after SYN-F4) produces a different `final_stat` that no non-deferred AC catches.
 
 ## Open Questions
 
@@ -408,4 +450,5 @@ The Level Backbone (enemy level + zone level range + core level) touches multipl
 - **OQ-CP-4 — Storage cores earn no XP.** Only the 3-slot active roster (1 deployed + up to 2 benched) earns; cores in storage earn nothing (Rule 3). Confirm intended. *Owner: playtest.*
 - **OQ-CP-5 — No core progress transfer.** A leveled core's XP cannot be transferred to another core (core = identity; leveling is earned per-core). Confirmed no-transfer. *Owner: this system.*
 - **OQ-CP-6 — CD sign-off on the anti-pillar revision.** The game-concept.md anti-pillar #3 change and the Core Fantasy revision (2026-07-12 design-review) require creative-director ratification before the Level Backbone is locked. *Owner: creative-director.*
+- **OQ-CP-8 — Equip-gate frustration (Pillar-2 calibration, owner: Enemy Level & Zone Scaling).** With the *provisional* CP-F4 constants and a level-1–6 MVP zone, a player earns a Boss-grade drop from Boss 1 (~level 5, ~560 cumulative XP) but needs **level 6 (744 XP)** to equip it — a ~184 XP / 2–3 extra-battle gap; the Prototype gap (Boss 2 → level 8) is worse (~452 XP / ~7 battles worst-case). Those "harvest-goal-less" battles manufacture the exact *"need more XP"* feeling the Player Fantasy prohibits and dent Pillar 2. **This is a calibration issue, not a gate-structure flaw** — every number depends on OQ-CP-1 (unset). *Resolution owned by the ELZS pass as a blocking Pillar-2 acceptance check: after calibration, verify that the XP earned reaching a boss (its WIN_COUNT gate + the boss kill) lands the player at or above the equip level for that boss's rarity tier — i.e. drop and unlock arrive in the same session, not N grind-battles apart. Levers: raise `BOSS_XP_MULTIPLIER`/`XP_PER_ENEMY_LEVEL`, lower the gate levels, or align WIN_COUNT.* *(Cross-review economy-designer finding, 2026-07-13.)*
 - **OQ-CP-7 — Bench dead zone in single-zone MVP.** In a single-zone MVP with enemy levels ~1–6, any benched core at level > `enemy_level_roof + BENCH_LEVEL_LEAD_CAP` stops earning bench XP entirely. Veterans (level 7+) produce no bench XP in the early zone. This is intentional anti-power-leveling, but it means the bench mechanic is an early-game tool only in a single-zone context. *Resolve at Enemy Level & Zone Scaling pass (OQ-CP-1): ensure the MVP zone's enemy_level_roof is high enough to keep the bench mechanic usable for most of the level-1–10 arc, or explicitly document the bench system as early-game only.* *Owner: Enemy Level & Zone Scaling pass.*
