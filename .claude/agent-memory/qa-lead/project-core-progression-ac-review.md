@@ -1,11 +1,11 @@
 ---
 name: project-core-progression-ac-review
-description: Core Progression GDD AC review — Round 2; all Round 1 blockers resolved; 4 new blockers (signal semantics contradiction, Assembly erratum dependency, multi-jump boundary, record-creation interface undefined)
+description: Core Progression GDD AC review — Round 3 (re-review); 4 new blockers (cooling ceiling undefined, AC-CP-18 traceability gap, logging spy injection unspecified, OQ-CP-6 no enforcement AC)
 metadata:
   type: project
 ---
 
-Core Progression GDD AC adversarial review — two rounds completed.
+Core Progression GDD AC adversarial review — three rounds completed.
 
 **Why:** Shift-left QA; Core Progression is a new Foundation/Core-layer pillar (added 2026-07-12). Its ACs gate all downstream Assembly, Workshop, and TBC equip-gate tests.
 
@@ -21,39 +21,57 @@ Round 1 found 6 BLOCKING, 7 RECOMMENDED (including 2 coverage gaps), 2 NICE-TO-H
 - B-6: AC-CP-18 added for pipeline ordering.
 - R-1…R-8 and coverage gaps: AC-CP-19 added, AC-CP-01 signal assertion added, AC-CP-14 and AC-CP-20 added, logging spy pattern specified throughout.
 
-## Round 2 (2026-07-12) — 4 new BLOCKING issues
+## Round 2 (2026-07-12) — 4 new BLOCKING issues (all resolved before Round 3)
 
 **B-0 — Rule 2 / EC-CP-02 / AC-CP-03 signal semantics contradiction (HIGHEST PRIORITY)**
-Rule 2 says "emit for each crossed threshold" (one-per-threshold). EC-CP-02 and AC-CP-03 say emit once spanning (old_level → new_level). These are directly contradictory. All signal-related tests are frozen until the design decision is made: emit-per-threshold OR emit-spanning. A programmer following Rule 2 implements one-per-threshold and is told by AC-CP-03 they are wrong.
+Rule 2 says "emit for each crossed threshold" (one-per-threshold). EC-CP-02 and AC-CP-03 say emit once spanning (old_level → new_level). These are directly contradictory. Resolved: Rule 2 updated to match EC-CP-02/AC-CP-03 (emit-spanning).
 
 **B-1 — AC-CP-18: Assembly erratum not committed; Integration test has no executable path.**
-AC-CP-18 tests pipeline ordering (CP-F3 after SA-F1, before SYN-F4) but requires the Assembly erratum (not yet landed). Must either carry a DEFERRED note (like AC-CP-07b) or be narrowed to a unit-stubbed pipeline. Currently untestable.
+Resolved by adding DEFERRED note plus DoD obligation on the Assembly erratum story.
 
 **B-2 — AC-CP-03: Multi-jump fixture is non-discriminating for `>=` vs `>` on final level boundary.**
-600 XP lands inside the level-5 band (537 ≤ 600 < 744) — the final level assignment is not tested at an exact boundary. An implementation using `>` on the level-5 threshold passes because 600 > 537 either way. Add a fixture landing exactly on a threshold (e.g., award 537 XP from level 1, assert level == 5) to discriminate.
+Resolved: sub-case added (award exactly 537 XP, assert level == 5).
 
 **B-3 — AC-CP-09: Record-creation trigger interface unspecified; unit test has nothing to call.**
-Rule 1 says "created when a core is first added to Inventory" but no method/signal interface is specified for this event. Is it `register_core(instance_id)`? A subscription to an Inventory signal? Without the interface, the unit test cannot be written. Inventory is not in the upstream dependencies table.
+Resolved: `register_core(core_instance_id: int) -> void` specified in Rule 1.
 
-## Round 2 RECOMMENDED issues (7)
+## Round 2 RECOMMENDED issues (7) — status in Round 3 GDD
 
-- AC-CP-04 case (b): should also assert error message is null (at-level equip emits no error).
-- AC-CP-05: validation report structure unspecified — "lists the ARMS part" is not independently testable without knowing the data type (list of slot names? instance IDs?).
-- AC-CP-06 part B: enemy level not stated; cap-guard condition requires reverse-engineering xp_value=170 via CP-F4. State enemy level explicitly.
-- AC-CP-11 part A: missing `assert_signal_emit_count(..., 0)` for spurious signal guard.
-- AC-CP-17a/b: no signal-count assertion (0) alongside the xp assert_eq.
-- AC-CP-16: "isolates XP_BASE" comment is misleading — level=1 case tests XP_BASE + XP_PER_ENEMY_LEVEL composite; multi-case set is sufficient together but comment should be corrected.
-- AC-CP-20: Part DB erratum not yet merged; needs DEFERRED note to avoid running against schema without `level_requirement` field.
+- AC-CP-04 case (b): error message null assertion — still unresolved (open).
+- AC-CP-05 validation report structure: still unspecified (open RECOMMENDED).
+- AC-CP-06 part B: enemy level now explicit in GDD. Resolved.
+- AC-CP-11 part A: signal count == 0 assertion added in current version. Resolved.
+- AC-CP-17a/b: emit_count == 0 added. Resolved.
+- AC-CP-16: "isolates" comments remain slightly misleading for BOSS fixture. Minor open.
+- AC-CP-20: DEFERRED note re Part DB erratum — still not explicitly noted in AC-CP-20 text.
 
-## Advisory notes
+## Round 3 (2026-07-13) — 4 new BLOCKING issues
 
-- AC-CP-07b (when unblocked): must also verify serialized level-10 `cumulative_xp` is not incremented past cap on restore.
-- EC-CP-12 / AC-CP-06: no test for both level-10 cap AND bench-lead cap both firing in same battle simultaneously.
+**R3-B — AC-CP-22: `cooling` reference ceiling undefined (BLOCKING)**
+AC-CP-22 checks `level_growth[stat] × 9 ≤ 0.25 × REFERENCE_SA_F1_OUTPUT[stat]` but the CP-F3 table lists cooling as `~40` (approximate). No approved GDD declares an exact SA-F1 cooling ceiling — the Bidirectionality Notes explicitly call this out as "owed." The cooling ceiling check in AC-CP-22 is un-implementable until the SA-F1 cooling range is formally declared. A test author must either hardcode 40 (fragile after retune) or import from SA-F1 (not yet defined). Fix: AC-CP-22 must explicitly note it is BLOCKED for cooling until the SA-F1 cooling ceiling erratum lands.
 
-## New patterns from Round 2
+**R3-C — AC-CP-18 unblocking: DoD prose note has no enforcement mechanism (BLOCKING)**
+The DoD note says "unblocking AC-CP-18 is a required DoD item on the Assembly erratum story." But the Assembly erratum story does not yet exist, and when authored it will draw from the Assembly GDD, which does not reference AC-CP-18. There is no mechanism that fires if the Assembly story closes without running AC-CP-18. Fix: the Assembly GDD must contain a cross-referencing AC (AC-SA-XX) that explicitly makes AC-CP-18 a gate on the Assembly erratum story, or a tracked task must exist on a board where it would block sprint review.
 
-- **Rule-vs-EC signal contradictions are blockers:** A rule that specifies signal behavior (emit-per-threshold) that contradicts its own EC resolution (emit-spanning) is a design inconsistency, not an AC wording issue. Must be resolved at design level before writing tests.
-- **Integration ACs on pending errata need DEFERRED notes:** Same pattern as Not-Started systems from Round 1 — an "Approved, erratum pending" system is as untestable as a Not-Started one.
-- **Multi-jump tests must land on threshold boundary:** An off-threshold fixture (600 XP landing inside a band) does not discriminate `>=` vs `>` on the final level. Always use a fixture where cumulative_xp == threshold[L] for some L in the jump.
+**R3-E — Logging spy injection interface unspecified; five ACs depend on it (BLOCKING)**
+ACs-CP-09, 10, 11, 12, 23 all require a logging spy, but the GDD never specifies the injection seam. If a programmer uses `push_warning()` (GDScript native, not injectable), all five tests are untestable as unit tests. This is the same structural gap as Round 2's B-3 (register_core) applied to the logging interface. Fix: Rule 1 must specify that the system accepts an injected ILogger (or equivalent) with at minimum `warn(msg)` and `error(msg)` methods. Tests inject a spy; production injects an engine wrapper.
 
-**How to apply:** (1) Check for intra-document rule/EC signal contradictions before writing any signal test. (2) Any Integration AC depending on an unapplied erratum must carry a DEFERRED note. (3) Boundary-discriminating fixtures must test at exact threshold values, not values that fall inside a band.
+**R3-G — OQ-CP-6 (CD sign-off on anti-pillar revision) has no AC and no enforcement mechanism (BLOCKING)**
+The Level Backbone revises the game-concept.md anti-pillar, which requires creative-director ratification before the Level Backbone locks (OQ-CP-6). This is tracked only in Open Questions with "Owner: creative-director." There is no AC, no blocking gate, and no mechanism preventing the GDD from being marked Approved without the sign-off. Fix: add AC-CP-24 (BLOCKING): the GDD cannot move to Approved unless game-concept.md shows explicit CD sign-off on the anti-pillar #3 revision.
+
+## Round 3 ADVISORY findings
+
+**R3-A — AC-CP-21 floor discriminant: neither fixture discriminates floor vs round in DF-1.**
+The challenger (53.38 → 53) and incumbent (8.0 → 8) both produce the same result under floor and round. AC-CP-21 correctly tests an ordering invariant (53 > 8), not the rounding function — this is acceptable if DF-1's own AC tests floor vs round. Flag for DF-1 reviewer to confirm.
+
+**R3-F — AC-CP-16 BOSS fixture "isolates" comment is slightly misleading.**
+The BOSS fixture only isolates BOSS_XP_MULTIPLIER given the prior two fixtures already constraining XP_BASE and XP_PER_ENEMY_LEVEL. Comment is technically imprecise but not incorrect in practice. Minor.
+
+## Patterns from Round 3
+
+- **Approximate reference values (`~N`) in BLOCKING ACs are blockers.** A tilde in a test reference means the test either hardcodes a guess or can't run. Any BLOCKING AC that references an approximate value must resolve it to an exact constant.
+- **DoD prose notes in one GDD are not gates on another GDD's story.** A cross-GDD DoD obligation needs a tracked enforcement mechanism (an AC in the target GDD, or a board task) — not just prose.
+- **Logging injection is a shared-API decision, not a test implementation detail.** When five ACs depend on a logging spy, the injection interface must be part of the system's API specification, not left to the implementer's inference.
+- **Required stakeholder sign-offs must be ACs, not open questions.** An OQ with "Owner: [role]" is a comment. An AC with BLOCKING gate is a gate.
+
+**How to apply:** (1) Before writing any BLOCKING content-validation AC that references a stat ceiling, verify the ceiling is an exact constant in a published, approved document. (2) For any DEFERRED AC whose unblocking is a DoD item on another story, verify the target story's GDD contains a cross-reference. (3) Check whether logging is injectable before writing logging-spy ACs. (4) Stakeholder sign-offs required before Approval must be expressed as BLOCKING ACs, not OQs.
