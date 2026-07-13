@@ -105,7 +105,17 @@ For each `drop_enabled` part `p` in the loot pool (rolled in **ID-ascending orde
 
 ```
 drops(p) = pity_guaranteed(p) OR ( rng.randf() < effective_drop_rate(p) )
-effective_drop_rate(p) = clamp( base_drop_rate[rarity(p)] × Π(multiplier for each matching condition), 0, 1 )   # Part DB Formula 3
+
+# Canonical DS-1 — amended 2026-07-13 by Enemy Level & Zone Scaling erratum (DS-F-LEVEL):
+effective_drop_rate(p) = clamp(
+    base_drop_rate[rarity(p)]
+    × level_rarity_mult(enemy.level, rarity(p))   # DS-F-LEVEL — ELZS erratum; = 1.0 when no level scaling
+    × Π(multiplier for each matching condition)    # Part DB Formula 3 factors
+    × beacon_factor,                               # CD-4 Beacon; = 1.0 when no Beacon
+    0, 1
+)
+# level_rarity_mult = LEVEL_RARITY_MULTS[level_band(enemy.level)][rarity(p)] (see DS-F-LEVEL below)
+# beacon_factor = BEACON_MULTIPLIER (2.0) if beacon_used_this_battle on VICTORY, else 1.0
 ```
 
 | Variable | Symbol | Type | Range | Description |
@@ -118,7 +128,7 @@ effective_drop_rate(p) = clamp( base_drop_rate[rarity(p)] × Π(multiplier for e
 
 **Worked example:** Rare Servo Arm, base 0.25; `arm_broken` (×1.5) + `targeting_active` (×1.3) fired → `clamp(0.25 × 1.5 × 1.3, 0, 1) = 0.4875`. Seeded draw `randf() = 0.41 < 0.4875` → **drops**. A draw of `0.49` → no drop.
 
-**Salvage Beacon factor (Rule 12a erratum).** When `beacon_used_this_battle` on VICTORY, the product gains one more factor before the clamp: `effective_drop_rate(p) = clamp( base_drop_rate[rarity] × Π(condition multipliers) × beacon_multiplier, 0, 1 )`, `beacon_multiplier = 2.0` (Consumable CD-4). Same worked example *with* a Beacon → `clamp(0.25 × 1.5 × 1.3 × 2.0, 0, 1) = clamp(0.975) = 0.975`. A Common already at the conditioned ceiling clamps: `clamp(0.70 × … × 2.0) = 1.0` (guaranteed Commons gain nothing — acceptable). The factor is absent (≡ 1.0) on non-Beacon fights and on flee/loss.
+**Salvage Beacon factor (Rule 12a erratum; as amended by DS-F-LEVEL).** The `beacon_factor` is one factor in the canonical DS-1 above (`beacon_multiplier = 2.0`, Consumable CD-4). When `beacon_used_this_battle` on VICTORY, `beacon_factor = 2.0`; absent (≡ 1.0) on non-Beacon fights and on flee/loss. Worked example with Beacon and a Rare MID-band enemy (level=4, `level_rarity_mult = 1.0`), one condition ×1.3: `clamp(0.25 × 1.0 × 1.3 × 2.0) = clamp(0.65) = 0.65`. A Common already at the conditioned ceiling clamps: `clamp(0.70 × 1.0 × … × 2.0) = 1.0` (guaranteed Commons gain nothing — acceptable). *Pre-DS-F-LEVEL note: the earlier partial form `clamp(base × Π(conditions) × beacon_multiplier)` is superseded by the canonical DS-1 above, which explicitly includes `level_rarity_mult` between `base` and `Π(conditions)`. Both forms are numerically equivalent when `level_rarity_mult = 1.0` (MID band, most fights), but the canonical form is the normative expression.*
 
 ### DS-2 — Prototype Gradient Pity (PGP-1) — discharges Part DB DB2
 
@@ -187,6 +197,41 @@ Both pity thresholds are calibrated to a **minimum content strength**. If conten
 
 **Cross-system constants introduced here:** `N_PROTO_PITY = 25` (optimal-attempts-to-guarantee; the runtime credit threshold is the derived `N_PROTO_PITY × C` per part), `M_BOSS_PITY = 8`, `MULTIPLIER_FLOOR = 1.5` (flagged for the entity registry).
 
+### DS-F-LEVEL — Level-Scaled Drop Rate Factor (Enemy Level & Zone Scaling erratum, 2026-07-13)
+
+This factor was inserted into the canonical DS-1 expression above by the Enemy Level & Zone Scaling (#10c) erratum. It derives a `level_rarity_mult` from the enemy's level band and the dropped part's rarity, and multiplies it into the DS-1 product before the clamp.
+
+**level_band sub-function** (parameterized for testability — `LEVEL_BAND_MID_FLOOR = 3`, `LEVEL_BAND_HIGH_FLOOR = 6`):
+```
+level_band(level: int, mid_floor: int = LEVEL_BAND_MID_FLOOR, high_floor: int = LEVEL_BAND_HIGH_FLOOR) -> StringName:
+    if level < mid_floor:  return &"EARLY"   # [1, 2] at default constants
+    if level < high_floor: return &"MID"     # [3, 5] at default constants
+    return &"HIGH"                           # [6, MAX_ENEMY_LEVEL] at default constants
+```
+
+**LEVEL_RARITY_MULTS lookup:**
+
+| `level_band` | Common | Rare | Boss-grade | Prototype |
+|--------------|--------|------|------------|-----------|
+| EARLY (L1–2) | 1.0 | **0.5** | 1.0 | 1.0 |
+| MID (L3–5) | 1.0 | **1.0** | 1.0 | 1.0 |
+| HIGH (L6+) | 1.0 | **1.5** | 1.0 | 1.0 |
+
+Only Rare is scaled. Common stays reliable at all tiers. Boss-grade is already conditioned by ×500 break multipliers; scaling it here would double-reward. **Prototype's all-1.0 row is load-bearing for DS-2:** `N_PROTO_PITY = 25` is calibrated against an unscaled 0.05 Prototype base — changing any Prototype mult away from 1.0 requires re-deriving `N_PROTO_PITY` for the affected band.
+
+**Production interface obligation (AC-ELZS-11 Done condition):** the Drop System erratum story must document which class owns `effective_drop_rate()` and whether it accepts `enemy_level: int` directly (resolving `level_rarity_mult` internally) or accepts a pre-computed mult. AC-ELZS-11's integration test fixtures bind to whichever form is documented. The erratum story is **not Done** until AC-ELZS-11's integration test passes in `tests/integration/drop_system/`. *(See ELZS GDD, AC-ELZS-11 and Errata pre-gate block 3c.)*
+
+**Discriminating worked examples:**
+
+| Scenario | base | level_mult | Π(cond) | beacon | raw | clamped |
+|----------|------|-----------|---------|--------|-----|---------|
+| Rare, EARLY (L2), ×1.5 cond, no Beacon | 0.25 | 0.5 | 1.5 | 1.0 | 0.1875 | **0.1875** |
+| Rare, MID (L4), ×1.5 cond, no Beacon | 0.25 | 1.0 | 1.5 | 1.0 | 0.375 | **0.375** |
+| Rare, HIGH (L6), ×1.5 cond, no Beacon | 0.25 | 1.5 | 1.5 | 1.0 | 0.5625 | **0.5625** |
+| Rare, HIGH (L6), no conds, Beacon | 0.25 | 1.5 | 1.0 | 2.0 | 0.75 | **0.75** |
+
+The three Rare rows are discriminating: an implementation ignoring `level_rarity_mult` returns 0.375 for all three (MID value), failing EARLY and HIGH. The L6/Beacon row (0.75) is the AC-DS-31 fixture added by this erratum.
+
 ## Edge Cases
 
 **EC-DS-01 — Victory with no conditions fired.** *If the player wins having fired zero drop conditions*: every part rolls at `base_drop_rate × 1.0` (no multipliers). Commons/Rares still drop at base; Boss-grade rolls at 0.001 (its deliberate persistence floor — see Rule 4 note; DS-3 counter is not incremented since no qualifying break fired). No crash. *Verified by AC-DS-05.*
@@ -235,6 +280,7 @@ Both pity thresholds are calibrated to a **minimum content strength**. If conten
 - **Enemy Database** already references Drop System (OQ-4/OQ-5 deferred here; loot pools) ✓ — **this GDD resolves both** (see obligations below)
 - **Part-Break System** (Approved 2026-07-11) — contract ratified: Part-Break emits the Rule 5 break-event keys deterministically into TBC's `fired_break_events` set; Rule 5/7 are no longer provisional
 - **Consumable Database** (Approved 2026-07-12) already lists Drop System as a downstream reader (its Downstream table + errata obligation 2: consumable drop channel + Beacon injection) ✓ — this Rule 12 erratum discharges that obligation; consumable frequencies remain open as OQ-DS-7
+- **Enemy Level & Zone Scaling** (Approved 2026-07-13) amended DS-1 by inserting `level_rarity_mult` (DS-F-LEVEL erratum). This system now reads `enemy.level` as a DS-1 input. AC-ELZS-11 (integration test confirming DS-F-LEVEL is live in the production `effective_drop_rate()`) is a Done condition on the ELZS erratum story (see DS-F-LEVEL section above).
 
 ### Upstream obligations this GDD discharges
 
@@ -272,8 +318,10 @@ Both pity thresholds are calibrated to a **minimum content strength**. If conten
 - **A1 — Battle volume:** ~200 victories across the ~10-hour MVP arc.
 - **A2 — Per-victory drop yield** (base rates × Pool Common cap, averaged; Rare/Prototype get modest condition uplift; dedupe per Rule 2 means no duplicate flood):
   - Common: ~2.0 Common pool slots × 0.70 ≈ **1.4/victory → ~280** over the arc.
-  - Rare: ~1.2 Rare slots × ~0.30 effective ≈ **0.36/victory → ~72**.
+  - Rare: ~1.2 Rare slots × ~0.30 effective ≈ **0.36/victory → ~72**. *(The ~0.30 figure is the MID-band effective rate: 0.25 base × ~1.2 condition uplift. DS-F-LEVEL applies a weighted arc multiplier of ~0.95 on top — see re-annotation below.)*
   - Boss-grade: boss fights only → **~5** over the arc.
+
+  > **DS-F-LEVEL economy re-annotation (Enemy Level & Zone Scaling erratum, 2026-07-13):** DS-F-LEVEL scales Rare drop rates by level band (EARLY ×0.5, MID ×1.0, HIGH ×1.5). The arc-weighted Rare multiplier is ~0.95 (15% EARLY + 80% MID + 5% HIGH fight share: 0.15×0.5 + 0.80×1.0 + 0.05×1.5 = 0.95), giving an arc-average Rare rate of **~0.34/victory** (vs. the ~0.36 baseline above). Over the arc: ~68 Rares (vs. 72 baseline) → revised Scrap contribution ~680 (vs. 720) → revised central **~1,800 vs. 1,840** — a ~2% reduction. The revised central sits well inside the mild-scarcity band (floor ~1,556). **Economy validity: ESTIMATED at the derived figure (design-time model)** — the 15/80/5 fight-share weights are design-time estimates; all plausible weight errors for the EARLY-overstated and HIGH-understated directions move the arc mult toward 1.0 (safer); HIGH-overstated (weak re-gate) pushes above 1.0 (surplus, not scarcity). See ELZS GDD Bidirectionality Notes for full derivation, sensitivity analysis, and weight provenance.
   - Prototype: ~0.04/victory → **~8**.
 - **A3 — Drop-absorption rate** (fraction of drops the player *scraps* rather than equipping across ≤3 Symbots or banking; each type is wanted on up to 3 Symbots, so early copies are kept — Commons saturate fastest, Prototype wanted on multiple builds): **Common 75%, Rare 50%, Boss-grade 0%, Prototype 25%.**
   - **Boss-grade at 0% (MVP scope):** at 2-boss MVP scale there are only ~2 distinct Boss-grade parts. A player equips both (one per Symbot, or one + a bank spare) and scraps **none** — so Boss-grade contributes ~0 Scrap in MVP, not a reliable faucet. (Corrected this revision from the earlier 25%/75-Scrap line, which was structurally implausible at 2-boss scope; any Boss-grade scrap is a rare bonus, not modeled income.)
@@ -312,7 +360,16 @@ The sketch confirms the cheap early tiers (10/20/40 = 70 total for a Common max)
 
 Pool cap (≤2 WILD / ≤3 BOSS) is an Enemy DB authoring constraint — the Drop System has no runtime enforcement and no AC for it; a future QA tester should not hunt for one.
 
-**Referenced (owned elsewhere, not Drop System knobs):** the per-rarity `base_drop_rate` (Common 0.70 / Rare 0.25 / Boss-grade 0.001 / Prototype 0.05) and condition multipliers are **Part DB** config — tune them there, not here. `BOSS_GRADE_BREAK_GUARANTEE = 0.5` (×500 break multiplier) is **Enemy DB**.
+**DS-F-LEVEL tuning knobs (Enemy Level & Zone Scaling erratum, 2026-07-13):**
+
+| Knob | Value | Owner | Safe range | Notes |
+|------|-------|-------|------------|-------|
+| `LEVEL_BAND_MID_FLOOR` | 3 | ELZS | 2–4 | Level at which MID band begins (EARLY = levels below this). Lowering broadens EARLY; raising can push Boss 1 into EARLY band territory (Boss 1 is L5 at default). |
+| `LEVEL_BAND_HIGH_FLOOR` | 6 | ELZS | 5–7 | Level at which HIGH band begins (Rare ×1.5). At 5: Boss 1 gets HIGH Rare odds; at 7: HIGH activates only in Alpha zones. Aligned with MVP `enemy_level_roof = 6`. |
+| `LEVEL_RARITY_MULTS[EARLY][Rare]` | 0.5 | ELZS | 0.3–0.8 | Rare mult in the starter band. At 1.0 no farming incentive to push deeper. At 0.0 Rares cannot drop from EARLY enemies. |
+| `LEVEL_RARITY_MULTS[HIGH][Rare]` | 1.5 | ELZS | 1.2–1.6 | Rare mult in the HIGH band. Current value (1.5) intentionally triggers the guaranteed-drop cap with Beacon + any condition (`0.25 × 1.5 × 1.5 × 2.0 = 1.125 → clamp 1.0`). Keep < 2.0 to prevent Beacon-alone guarantee (see ELZS Tuning Knobs for threshold derivation). `N_PROTO_PITY` assumes all Prototype mults = 1.0 — **do not change the Prototype row without re-deriving N_PROTO_PITY**. |
+
+**Referenced (owned elsewhere, not Drop System knobs):** the per-rarity `base_drop_rate` (Common 0.70 / Rare 0.25 / Boss-grade 0.001 / Prototype 0.05) and condition multipliers are **Part DB** config — tune them there, not here. `BOSS_GRADE_BREAK_GUARANTEE = 0.5` (×500 break multiplier) is **Enemy DB**. `LEVEL_RARITY_MULTS` values (except the row/column structure) are **ELZS** config — tune them there, referencing the ELZS Tuning Knobs cross-system warnings.
 
 ## Visual/Audio Requirements
 
@@ -410,7 +467,7 @@ All BLOCKING ACs are Logic-type automated unit tests in `tests/unit/drop_system/
 
 **AC-DS-27** (BLOCKING): Phase 6 output list contract. GIVEN pool with `servo_arm` (Rare 0.25), no conditions, draw **0.20** (< 0.25). WHEN VICTORY resolved. THEN resolution returns a list containing exactly one `PartInstance{part_id: 'servo_arm', upgrade_tier: 0}`. FAIL: list is null or empty; list contains wrong part_id; tier ≠ 0. *Phase 6 output contract is testable independently of Combat UI.*
 
-**AC-DS-31** (BLOCKING): Salvage Beacon injection (Rule 12a). GIVEN a Rare part base 0.25, no conditions. SCENARIO A (**Beacon on VICTORY**): `beacon_used_this_battle = true`; effective rate = `clamp(0.25 × 2.0) = 0.50`; draw **0.40** (< 0.50) → drops, and `beacon_drop_multiplier_applied == true`. Discriminator: a no-injection impl uses 0.25 and does **not** drop at 0.40 (0.40 ≥ 0.25). SCENARIO B (**flee — no injection**): `beacon_used_this_battle = true`, outcome `FLED` → resolution awards nothing, `beacon_drop_multiplier_applied == false` (Rule 1 victory-only). SCENARIO C (**clamp**): Common base 0.70 with Beacon → `clamp(0.70 × 2.0) = 1.0` (guaranteed). SCENARIO D (**pity-guaranteed ignores Beacon**): a pity-guaranteed part with Beacon active drops exactly once and the Beacon multiplier is not applied to a rate (guarantee is pre-roll, Rule 12b). `0.25 × 2.0 = 0.5` and `0.70 × 2.0 = 1.4→clamp 1.0` are exact in IEEE-754 — no epsilon. FAIL: A doesn't drop at 0.40 (injection missing); B applies the multiplier or awards on flee; the Beacon boosts the *consumable* channel; D double-drops or applies the multiplier to a guaranteed part. **Test type**: Unit (injected seeded RNG + battle-context stub exposing `beacon_used_this_battle`).
+**AC-DS-31** (BLOCKING): Salvage Beacon injection (Rule 12a) **+ DS-F-LEVEL level factor** (ELZS erratum, 2026-07-13). GIVEN a Rare part base 0.25, no conditions. SCENARIO A (**Beacon on VICTORY, MID band**): `beacon_used_this_battle = true`, enemy level 4 (MID, `level_rarity_mult = 1.0`); effective rate = `clamp(0.25 × 1.0 × 2.0) = 0.50`; draw **0.40** (< 0.50) → drops, and `beacon_drop_multiplier_applied == true`. Discriminator for Beacon: a no-injection impl uses 0.25 and does **not** drop at 0.40. SCENARIO A2 (**Beacon on VICTORY, HIGH band — DS-F-LEVEL discriminator**): `beacon_used_this_battle = true`, enemy level 6 (HIGH, `level_rarity_mult = 1.5`); effective rate = `clamp(0.25 × 1.5 × 2.0) = clamp(0.75) = 0.75`; draw **0.60** (< 0.75) → drops. Discriminator for DS-F-LEVEL: an implementation wiring Beacon but ignoring `level_rarity_mult` returns `clamp(0.25 × 1.0 × 2.0) = 0.50`, so draw 0.60 ≥ 0.50 → **does not drop** — caught. SCENARIO B (**flee — no injection**): `beacon_used_this_battle = true`, outcome `FLED` → resolution awards nothing, `beacon_drop_multiplier_applied == false` (Rule 1 victory-only). SCENARIO C (**clamp**): Common base 0.70 with Beacon → `clamp(0.70 × 1.0 × 2.0) = 1.0` (guaranteed; Common `level_rarity_mult = 1.0` always). SCENARIO D (**pity-guaranteed ignores Beacon**): a pity-guaranteed part with Beacon active drops exactly once and the Beacon multiplier is not applied to a rate (guarantee is pre-roll, Rule 12b). All values are exact in IEEE-754 — no epsilon. FAIL: A doesn't drop at 0.40 (Beacon injection missing); A2 drops at 0.60 with impl ignoring level factor (level factor missing); B applies the multiplier or awards on flee; the Beacon boosts the *consumable* channel; D double-drops or applies the multiplier to a guaranteed part. **Test type**: Unit (injected seeded RNG + battle-context stub exposing `beacon_used_this_battle`).
 
 ### Gated (numbered) — release-blocking
 

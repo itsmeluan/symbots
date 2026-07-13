@@ -227,6 +227,7 @@ The `win_count` increment is **not** a formula here — it is `win_count += 1` o
 
 ### Bidirectionality Note
 
+- **Enemy Level & Zone Scaling erratum (applied 2026-07-13):** ELZS (#10c, Approved) amends this system — it added the `difficulty_band` → level range guideline table and ADVISORY validation to the Tuning Knobs section above. This system's `difficulty_band` field is now an upstream input to ELZS (the guideline's honesty requires `enemy_level_floor` from the Encounter Zone erratum to be consistent with the band label). ELZS is therefore a downstream reader of this field — see ELZS Dependencies table.
 - **Encounter Zone erratum (light):** This system depends on Encounter Zone, so Encounter Zone's GDD should list **Zone & World Map** as a downstream dependent (it currently predates this system). This is a one-line addition to the Encounter Zone Dependencies section — recorded here as a pending consistency touch, not a semantic change to Encounter Zone. Its Rule 8a/8/9 gate contract is consumed exactly as written; nothing in Encounter Zone changes behaviorally.
 - When **Overworld Navigation**, **Exploration Progress**, **World Map UI**, and **World Loot** are authored, each must list Zone & World Map in its upstream dependencies.
 - **No dependency on Symbot Core Progression** (#10b): leveling concerns Symbots, not the world graph. The two systems do not interact.
@@ -249,6 +250,17 @@ This system is structural, not numeric — its "knobs" are mostly **content-auth
 | `gate_params.required_wins` (Boss 1 = 6, Boss 2 = 10) | **Encounter Zone** (Tuning Knobs) | Sets how many WILD wins gate each boss. This system holds the `win_count` those thresholds are checked against but **does not define the thresholds** — tune them in Encounter Zone. Changing them alters how long a zone stays ACCESSIBLE before CLEARED. |
 
 **Warning — difficulty_band honesty.** Because zones are mostly `OPEN`, the *only* thing steering a player away from an over-tough zone is the `difficulty_band` read-out. If a band label understates a zone's real difficulty, a low-power player wanders into a wall with no hard gate to stop them. Author bands conservatively and revisit them whenever a zone's enemy roster changes.
+
+**Level range guideline (Enemy Level & Zone Scaling erratum, 2026-07-13).** The `difficulty_band` label maps to a level range based on the zone's *entry experience* — the floor of enemies the player first encounters, not the ceiling. A zone whose entry enemies are level 1 remains EARLY even if it contains a level-6 boss (the boss is an earned milestone, not the introduction):
+
+| `difficulty_band` | `enemy_level_floor` guideline | Interpretation |
+|-------------------|------------------------------|----------------|
+| `EARLY` | 1–3 | Starter zone; builds viable at any rarity |
+| `MID` | 3–6 | Mid-game; Rare parts more available; demands solid builds |
+| `LATE` | 6–9 | Alpha zones; high stats; demands strong builds |
+| `ENDGAME` | 8–10 | Full Vision cap content; max-level enemies |
+
+Ranges overlap at boundaries (floor=3 is valid for both `EARLY` and `MID`). This is an authoring guideline, not a hard constraint — an ADVISORY validator (ELZS AC-ELZS-06) warns when a zone's band label is inconsistent with its `enemy_level_floor` (from the Encounter Zone erratum). MVP zone: `EARLY`, `enemy_level_floor = 1`. The content validator must emit the warning to stdout/log so it is visible in CI output; a validator that suppresses the warning silently fails AC-ELZS-06.
 
 **Warning — bidirectional edges.** Bidirectional travel requires two `ZoneEdge` entries to be authored (Rule 3). A `BOSS_DEFEATED` gate on A→B with no corresponding B→A edge creates a one-way trap: the player enters B and cannot return to A to farm. Validate graph topology at content-authoring time: every reachable zone should have at least one traversable outbound edge, unless explicitly designed as a terminal zone (label it as such).
 

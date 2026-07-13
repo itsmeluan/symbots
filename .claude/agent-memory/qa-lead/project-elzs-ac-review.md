@@ -1,64 +1,56 @@
 ---
 name: project-elzs-ac-review
-description: Enemy Level & Zone Scaling GDD AC review history — round 3 findings; 5 blockers, 7 recommended, 2 NICE-TO-HAVE; new patterns for integer-bound discriminators and integration-test gate ordering
+description: Enemy Level & Zone Scaling GDD AC review history — round 4 (fresh-session confirmation); 3 new BLOCKING gaps found despite CD's "APPROVE on fix-confirmation, no round 5" commitment
 metadata:
   type: project
 ---
 
-Enemy Level & Zone Scaling GDD adversarial AC review — Round 3 completed 2026-07-12.
+Enemy Level & Zone Scaling GDD adversarial AC review — Round 4 completed 2026-07-12.
 
-**Why:** Third-round review after round-2 applied 4 confirmed blockers (AC-11 both directions, AC-12 empty-pool standalone, AC-13 dangling ID fail-safe, AC-02 anti-hardcoding fixture). Round 3 checks that those fixes are correctly applied and audits the full AC set for deeper specification problems.
+**Why:** Round 4 is a fresh-session confirmation pass after three prior rounds. CD committed "APPROVE on fix-confirmation, no round 5." QA-lead mandate is adversarial: find what prior reviewers missed.
 
-**Round 3 (2026-07-12):** All 4 round-2 blockers verified correctly applied. Found 5 new BLOCKING, 7 RECOMMENDED, 2 NICE-TO-HAVE issues.
+**Round 3 (prior) blockers — all confirmed correctly applied before round 4 audit:**
+- AC-05: floor discriminator replaced with at-roof fixture (level-6 enemy in [3,6] zone passes).
+- AC-05(E): all-out-of-band fixture added (report-all discriminator).
+- AC-09: injection signature pinned to `level_band(level, mid_floor, high_floor)` + independent HIGH_FLOOR retune fixture.
+- AC-11: both-directions wiring (0.1875 and 0.5625) confirmed present with diagnostic labels.
+- AC-06: ADVISORY warning CI-visible requirement added.
+- AC-02: BOSS L3→130 synthetic anti-hardcoding fixture confirmed.
+- AC-13: pass fixture (all-valid IDs → passes) confirmed.
+- AC-04: floor=1 and roof=10 boundary discriminators confirmed.
+- Errata pre-gate: 3a canonical DS-1, 3b AC-DS-31 amendment, 3c interface doc + AC-11 Done condition, CI obligations confirmed.
 
-**Round-2 blockers — all confirmed applied:**
-- AC-11 EARLY 0.1875 + HIGH 0.5625 both present with correct diagnostic labels.
-- AC-12 empty-pool standalone with distinct-code-path discriminator.
-- AC-13 dangling-ID fail-safe with correct fixture and filter-before-loop discriminator.
-- AC-02 BOSS L3→130 synthetic anti-hardcoding fixture.
+**Round 4 new BLOCKING findings:**
 
-**BLOCKING issues (round 3):**
+**BLOCKING-1 (AC-ELZS-05): At-floor acceptance fixture missing for F > 1.**
+Round 3 correctly removed the false floor discriminator (`level > F−1` ≡ `level >= F` for integers) and replaced it with the at-roof fixture (C). But it did not add an at-floor ACCEPTANCE fixture where `F > 1`. Fixture A uses zone [1,6] — the floor is 1, so a `level > F` implementation misclassifying at-floor works only when F = 1, where `level > 1` is false for level 1. A zone [3,6] with a level-3 enemy SHOULD pass, but no fixture asserts this. An implementation using `level > F` (strict greater-than) instead of `level >= F` rejects a level-3 enemy in zone [3,6] and passes all five stated AC-05 fixtures. This is the symmetric gap left by the round-3 fix. Requires adding: "(F) zone [3, 6], pool includes a level-3 enemy → passes (at-floor boundary discriminator: an implementation using strict `level > F` instead of `level >= F` rejects this enemy)."
 
-- Finding 2 (AC-ELZS-05): The floor-boundary discriminator is non-discriminating for integer levels. The claim that `level > F − 1` (wrong) differs from `level >= F` (correct) is false for integers — both are equivalent. The actual off-by-one risk is on the **upper bound**: `level < R` vs `level <= R`. Fix: replace the floor discriminator with an upper-bound discriminator (level == R must pass; a strict-`<` impl rejects it).
+**BLOCKING-2 (AC-ELZS-06): Overlap-boundary fixtures missing for Rule 4 bands.**
+Rule 4 table has overlapping ranges: floor = 3 is valid for BOTH EARLY and MID; floor = 6 for MID and LATE; floor = 8 for LATE and ENDGAME. No AC-06 fixture covers a floor value in an overlap zone (e.g., `MID + floor = 3` should NOT warn; `LATE + floor = 6` should NOT warn). An implementation with wrong overlap logic — warning at `MID + floor = 3` — passes all stated AC-06 fixtures while mis-flagging valid authoring. The MVP zone (floor=1, EARLY) is the only pass fixture, but it is not in an overlap zone. Required: at least one no-warning fixture at an overlap value (e.g., `MID + floor = 3` → no warning emitted; `LATE + floor = 6` → no warning emitted).
 
-- Finding 3 (AC-ELZS-09): Retune fixture does not specify the injection mechanism for `LEVEL_BAND_MID_FLOOR`/`LEVEL_BAND_HIGH_FLOOR`. "Injected/config constants" is not a function signature. Without knowing whether the function takes parameters, reads a config resource, or uses module constants, no test author can write the retune test. This is the seed-underspecification pattern from AC-EAI-06. Fix: specify the injection mechanism explicitly; recommended pattern is function parameters `level_band(level, mid_floor, high_floor)`.
+**BLOCKING-3 (AC-ELZS-04): `floor = 0` rejection fixture missing.**
+AC-04 specifies `enemy_level_floor >= 1` and adds the round-3 discriminator that `floor = 1` passes. But there is no fixture asserting `floor = 0` fails. An implementation that accepts `floor = 0` while rejecting missing fields passes all stated AC-04 fixtures. Compare: AC-01 correctly has both `level == 0` fails and `level == 10` passes. AC-04 has only the at-minimum acceptance, not the below-minimum rejection. Requires: `enemy_level_floor = 0` fails (BLOCKING).
 
-- Finding 5 (AC-ELZS-11): Production `effective_drop_rate()` function interface is unspecified. The integration test cannot be written without knowing whether the function takes `enemy_level` or a pre-computed `level_rarity_mult`. Fix: specify the function interface; require a placeholder test file to exist before story Done is declared.
+**Round 4 RECOMMENDED findings:**
 
-- Finding 13 (EC-ELZS-06 → AC-05 citation): After AC-ELZS-12 was carved out of AC-ELZS-05, the all-out-of-band scenario (non-empty pool where every entry fails the band check) has no explicit fixture. AC-ELZS-05's fixtures all show one bad entry in a pool with other valid entries — the all-bad-pool case is not tested. Fix: add an all-out-of-band fixture to AC-ELZS-05, or promote EC-ELZS-06 to a dedicated AC.
+**RECOMMENDED-1 (AC-ELZS-10): Common invariance asserted "at every band" but tested only at HIGH.**
+The fixture `Common (0.70) at HIGH with ×1.5 condition → clamp(0.70 × 1.0 × 1.5) = 1.0` clamps, so it's not a discriminating Common-multiplier test — a wrong EARLY Common mult (e.g., 0.5) would not be caught because the fixture is only at HIGH. Add: Common at EARLY, no beacon, no conditions → `clamp(0.70 × 1.0) = 0.70`; Common at MID, no conditions, no beacon → `clamp(0.70 × 1.0) = 0.70`. These discriminate an implementation that accidentally scales Common.
 
-- Finding 16 (AC-ELZS-11 gate ordering): The integration test is framed as "post-Drop System erratum implementation" — a follow-on task — when it should be a condition on the erratum story's Definition of Done. Fix: change the qualifier to "the Drop System erratum story is NOT Done without this integration test passing."
+**RECOMMENDED-2 (AC-ELZS-09): `level_band(1, 3, 6) == EARLY` fixture missing.**
+All four stated boundary fixtures use levels 2–6. Level 1 (the minimum valid level) is unverified. An implementation with an off-by-one or special-case at level 1 (returning null or UNKNOWN) passes all stated fixtures.
 
-**RECOMMENDED issues (round 3):**
+**RECOMMENDED-3 (AC-ELZS-11): Cross-document enforcement gap.**
+The "Done condition" language is correct but the enforcement depends on the Drop System erratum story existing with AC-ELZS-11 explicitly in its Done criteria. No erratum story file exists to verify. If the erratum is applied without referencing the ELZS GDD, the integration test file may never be created. Risk mitigation: the Errata pre-gate block should explicitly list AC-ELZS-11 as a Done criterion for the erratum sprint story, not only as a note in the ELZS GDD body.
 
-- Finding 1 (AC-ELZS-06): "ADVISORY warning" and "CI pass/fail" are never reconciled. A validator that emits the warning but exits 0 silently satisfies CI while the advisory issue exists. Add: "validator exits 0 but must emit the warning to stdout/log so it is observable."
+**RECOMMENDED-4 (AC-ELZS-02): L10 fixtures absent despite "required reference values" claim.**
+CP-F4 table lists WILD L10 → 135 and BOSS L10 → 270 as "required reference values for any future ENDGAME content authoring." AC-02 fixtures stop at L6. A content validator hardcoding L1–L6 values passes AC-02 while silently miscalculating ENDGAME entries. Not a MVP blocker but inconsistent with the "required reference values" framing.
 
-- Finding 4 (AC-ELZS-10): No adjacent-level fixture for MID/HIGH boundary (level 5 → MID, level 6 → HIGH in a single DS-F-LEVEL assertion). AC-ELZS-09 covers the band classification; AC-ELZS-10 provides indirect coverage via level-6 multi-factor product. Failure diagnosis is harder without an isolated boundary fixture.
+**NICE-TO-HAVE (unchanged from round 3):**
+- EC-ELZS-08 → AC-CP-08 delegation: no cross-check confirming AC-CP-08 uses roof=6 specifically.
+- AC-DS-31 amendment cited in errata pre-gate but no ELZS AC verifies it was applied.
 
-- Finding 6 (AC-ELZS-02): "Runs over the entire roster on every content commit (CI-gated)" is a process requirement, not a testable assertion. Move to the CI configuration or errata pre-gate block; remove from the AC body.
-
-- Finding 7 (AC-ELZS-04): Missing `floor == 1` and `roof == MAX_ENEMY_LEVEL` boundary discriminators. AC-ELZS-01 does this correctly (level 10 passes; `> 9` impl rejects). AC-ELZS-04 should apply the same pattern.
-
-- Finding 8 (AC-ELZS-12 + AC-ELZS-13 + AC-ELZS-05 scope): No file path specified for content-validation ACs (unlike unit ACs which are assigned to `tests/unit/drop_system/`). Recommended path: `tests/unit/encounter_zone/test_encounter_zone_content_validator.gd`.
-
-- Finding 9 (AC-ELZS-13): Missing pass fixture (all valid IDs → passes). Only a fail fixture is present. Always-fail validator passes the stated FAIL case. This is the same happy-path gap pattern as AC-EAI-17/18.
-
-- Finding 14 (summary count): When Finding 13 is fixed (either new AC or fixture addition), the BLOCKING count becomes 11, not 10. Update the summary line.
-
-- Finding 15 (content validation test type): Content Validation ACs do not specify whether each validator function has a GUT unit test or is a manual run. The path for automated CI evidence is unspecified for 8 of 13 ACs.
-
-**NICE-TO-HAVE issues:**
-
-- Finding 10 (AC-ELZS-08 delegation to AC-CP-08): Delegation is correct in principle, but nothing confirms AC-CP-08 fixtures the actual MVP zone roof=6. A cross-check note would close this.
-
-- Finding 12 (AC-ELZS-03): Missing non-inverted unequal pass fixture (`[4, 5]` passes) alongside the equal-floor-roof case.
-
-**New patterns introduced by this review:**
-
-- Integer-bound discriminators: `level > F − 1` vs `level >= F` is a non-discriminator for integer levels. The real off-by-one risk is always on the boundary value itself (does `level == F` or `level == R` pass or reject?). Any integer-range AC must use the exact boundary value as the fixture input, not arithmetic equivalents.
-
-- Integration-test gate ordering: An integration test framed as "post-[erratum] implementation" is a follow-on task, not a Done condition. Integration tests must be declared as a condition on the gating story's Done, not a separate follow-on.
-
-- All-out-of-band scenario gap: When one AC is carved out of another (e.g. empty-pool from membership check), audit whether the parent AC still covers the compound failure case (all entries failing the check). Carve-outs can leave the compound case uncovered.
-
-**How to apply:** (1) Any integer-range AC: use the exact boundary value as fixture input, not algebraic equivalents. (2) Any integration test for a cross-system amendment: it must be a Done condition on the amendment story, not a separate follow-on. (3) When carving a new AC out of an existing one, re-audit the parent AC's fixtures for compound-failure coverage. (4) All content-validator ACs should specify a GUT test file path; manual-only validators are not CI-gated.
+**How to apply:**
+(1) Any range AC using `>= F` (floor) or `<= R` (roof): fixture BOTH the at-floor acceptance (level == F passes) AND the at-floor rejection (level == F−1 fails where F > 1), AND the at-roof acceptance (level == R passes) AND the at-roof rejection (level == R+1 fails). Four fixtures total per range bound.
+(2) Any ADVISORY validation with "at every band" coverage claim: provide a fixture at each band, not just the highest/lowest.
+(3) Any guideline table with overlapping ranges: provide no-warning fixtures for values in the overlap, not only values in a single-band range.
+(4) Integration tests as "Done conditions": verify the sprint story file exists and explicitly carries the AC as a Done criterion — cross-GDD references are not self-enforcing.

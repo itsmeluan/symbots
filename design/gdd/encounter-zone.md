@@ -49,6 +49,8 @@ The boss gate reinforces the same feeling from another direction: the boss doesn
 | `terrain_patches` | Array[TerrainPatch] | The zone's encounter terrains — see Rule 2 |
 | `boss_encounters` | Array[BossEncounter] | The zone's bosses and their gates — see Rule 6 |
 | `spawn_enabled` | bool | Zone-level master switch (mirrors Enemy DB `spawn_enabled`) |
+| `enemy_level_floor` | int | **Enemy Level & Zone Scaling erratum (2026-07-13).** Lowest enemy level allowed in this zone's spawn pool. `≥ 1`; `≤ enemy_level_roof`. Missing or 0 fails content validation (BLOCKING). MVP zone: `1`. *(See ELZS GDD, Rule 3.)* |
+| `enemy_level_roof` | int | **Enemy Level & Zone Scaling erratum (2026-07-13).** Highest enemy level allowed in this zone's spawn pool. `≥ enemy_level_floor`; `≤ MAX_ENEMY_LEVEL (10)`. Missing or `> 10` fails content validation (BLOCKING). MVP zone: `6`. In-band invariant: every enemy in `terrain_patches[].enemy_subpool[]` must have `level ∈ [enemy_level_floor, enemy_level_roof]` (inclusive). Content validation fails (BLOCKING) for any out-of-band enemy, naming the violating `enemy_id`. An empty spawn pool also fails independently (BLOCKING) — a zone with no enemies cannot run encounters. An unresolvable `enemy_id` in the pool fails (BLOCKING), never silently skips. Verified by ELZS AC-ELZS-03, -04, -05, -12, -13. *(See ELZS GDD, Rule 3 + Edge Cases.)* |
 
 **Rule 2 — Terrain patch (the encounter unit).** A terrain patch binds a terrain *type* to an enemy sub-pool. Terrain type is the player's coarse targeting lever — different terrain, different enemies.
 
@@ -283,6 +285,7 @@ DENSE/STANDARD = 2.3× more encounters per step justifies the fast-farm role; be
 | **Turn-Based Combat** | Receives the resolved `enemy_id` + WILD/BOSS context at encounter start (lateral handoff; TBC instantiates the enemy and applies its flee rule — TBC Rule 7) | Approved | None new — TBC already accepts an enemy at battle start; Encounter Zone supplies the ID and class context |
 | **Zone & World Map** *(Not Started)* | The zone's `terrain_patches`, `boss_encounters`, placement, and gate structure — to realize them as actual map geometry (where a terrain patch physically is, where a boss lives, and the spatial half of reserved `REACH`/`DUNGEON_RUSH`/`DUNGEON`/`HIDDEN`) | Not Started | Must list Encounter Zone; owns the spatial realization; must fulfill the reserved-gate spatial contract when those gates are authored |
 | **Overworld Navigation** *(Not Started)* | Calls Encounter Zone with the player's current `terrain_type` per step (EZ-1 trigger, EZ-2 resolution); owns step detection and movement | Not Started | Must list Encounter Zone; owns movement/step state; treats a sentinel `enemy_id` as "no encounter this step" (EC-EZ-01) |
+| **Enemy Level & Zone Scaling** *(#10c, Approved 2026-07-13)* | `enemy_level_floor`, `enemy_level_roof`, spawn-pool enemy references (to validate in-band membership); `difficulty_band` (for ADVISORY consistency check AC-ELZS-06) | Approved | **ELZS erratum applied 2026-07-13**: `enemy_level_floor` and `enemy_level_roof` added to the zone schema (Rule 1 above). ELZS content validation ACs (AC-ELZS-03 through -06, -12, -13) run against zone entries; in-band membership validation sweeps the full spawn pool on every content commit. |
 
 ### Bidirectionality
 
@@ -297,6 +300,7 @@ None. Encounter Zone reads Enemy DB through its existing, already-documented int
 ### Errata received from other GDDs
 
 - **Consumable Database (Approved 2026-07-12)** — applied the **EZ-1 encounter-rate modifier hook** (`effective_rate = clamp(encounter_rate × active_modifier, 0, 1)`, CD-5) for the Signal Jammer / Scrap Lure, un-deferring **OQ-EZ-4** (now RESOLVED). The modifier is supplied per step by Overworld Navigation (which owns the `duration_steps` countdown); Encounter Zone only reads it. Consumable Database is now listed as a Soft upstream dependency, and its Downstream table + errata obligation 3 already list Encounter Zone — bidirectionality confirmed. New AC-EZ-59.
+- **Enemy Level & Zone Scaling (Approved 2026-07-13)** — applied the **level band fields erratum**: `enemy_level_floor: int` and `enemy_level_roof: int` added to the zone definition schema (Rule 1); in-band spawn pool content validation added; ELZS listed as downstream dependent in the table above. Content validation ACs (AC-ELZS-03/04/05/06/12/13) run against zone entries.
 
 ## Tuning Knobs
 
