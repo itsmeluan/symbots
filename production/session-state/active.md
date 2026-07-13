@@ -1,6 +1,23 @@
 # Active Session State
 
-## Current Task — Exploration Progress (#14) REVIEWED: NEEDS REVISION → 4 blockers FIXED same session (2026-07-13)
+## Current Task — COMPLETE: Exploration Progress (#14) APPROVED (round-2 confirmation, 2026-07-13) + EZ Rule 8a erratum APPLIED
+
+- **Round-2 confirmation full-panel /design-review** (game-designer, systems-designer, qa-lead in parallel + creative-director synthesis). All 4 round-1 blockers verified fixed by all three specialists. Verdicts split (GD: APPROVED; SD/QA: NEEDS REVISION) — CD adjudicated **2 true gates** of 5 claimed blockers, fixed same session:
+  1. **MIGRATE semantics** (SD-B2 = QA-B1, converged): Rule 9 now normative — hookless MIGRATE → **REFUSE** under the full no-partial-restore guarantee (also covers mid-migration hook failure, discharging the conditional SD-B3); EP-PRED-1 comment + worked example updated; **AC-EP-02(b) rewritten** with positive domain-state assertion (win_count==5 kept, spy: no restore() invoked) + two discriminators (silent-zero impl, fall-through-RESTORE impl).
+  2. **AC-EP-12 GUT-testability** (QA-B2, advisory→blocking promotion upheld by CD): Rule 3 serialize returns structured result `{ok: true, blob}` / `{ok: false, failed_domain, error}`; new **Rule 3a.3 injectable warning/error sink** (push_error not GUT-capturable) — covers all warning assertions AC-EP-05..09 + AC-EP-12.
+- **2 CD-mandated fold-ins**: String-cast sort normative (Rule 1 `sort_custom` on `String(a) < String(b)`; AC-EP-01 fixture insertion order chest_z→chest_a→chest_m made normative to kill intern-order sorts); Player Fantasy OQ-EP-2 qualifying sentence (GD's challenge to prior CD adjudication upheld — CD conceded).
+- **CD-directed cheap items**: Rule 6(e) normative clamp ordering (win_count clamp → EP-INV-1, sequenced); domain-key-collision startup assertion (Rule 1); #17 forward-notes in Save/Load dep row (serialize only at quiesce points; "save was repaired" notice); GDScript-traps summary extended (intern-order sort, push_error non-capturability).
+- **CD adjudications recorded**: SD's clamp-ordering "blocker" downgraded (CD traced all 4 permutations — only dangerous one already AC-EP-06-covered); StringName sort held advisory severity but folded in; QA's AC-EP-12 promotion ruled legitimate, not scope creep.
+- **Tracking updated**: GDD header → Approved; systems-index #14 → **Approved** (18 approved / 15 reviewed; MVP designed 20/25); review-log round-2 entry appended with **10 backlog recommended items** (several are #13/#17/#20 authoring inputs: World Loot double-collect/loot_id-format/size-cap, deferred-AC activation owner, anti-checklist delegation).
+- **EZ Rule 8a erratum APPLIED** (the last owed erratum): encounter-zone.md Rule 8a + dependency row (status → Approved) + AC-EZ-55 activation note reworded — "ZWM implements the increment; Exploration Progress persists the counter"; header erratum note added. All three "owed" markers in EP GDD discharged. **No pending errata remain anywhere.**
+
+### NEXT
+- **Option A (recommended)**: `/clear` then `/design-system world-loot` (#13 — next Not Started MVP system; its `&"world_loot"` domain contract is pre-defined in EP Rule 1; resolve the 3 backlog contract gaps during authoring).
+- **Option B**: `/consistency-check` — validate revised EP GDD (Rule 9 MIGRATE, serialize result contract, Rule 3a.3) against registry + 17 other approved GDDs.
+
+<!-- ERRATA APPLIED: 2026-07-13 | Encounter Zone Rule 8a hook wording (ZWM increments / EP persists) — final owed erratum discharged. -->
+
+## Prior — Exploration Progress (#14) REVIEWED: NEEDS REVISION → 4 blockers FIXED same session (2026-07-13)
 
 - **Full-panel /design-review run** (game-designer, systems-designer, qa-lead in parallel + creative-director synthesis). Verdict NEEDS REVISION, 4 blockers, 8 recommended, 4 advisory. CD: "commit-approve on fixes landing." Scope signal S.
 - **All 4 blockers applied to exploration-progress.md same session:**
