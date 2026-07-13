@@ -1,6 +1,21 @@
 # Active Session State
 
-## Current Task — COMPLETE: World Loot System (#13) GDD → Designed (2026-07-13, lean)
+## Current Task — COMPLETE: ADR-0001 Save/Load written (2026-07-13, Technical Setup, lean)
+- **File**: `docs/architecture/adr-0001-save-load.md` (312 lines, Status: **Proposed**). First of 4 Foundation ADRs.
+- **Decision**: single-file human-readable JSON per slot; top-level **provider-domain envelope** generalizing the Exploration Progress pattern to the whole save. Providers: `progression` (= entire EP blob, opaque, owns its own `progress_format_version`), `inventory` (part_instances + next_instance_id + scrap + consumables), `workshop` (builds), `drop` (pity), `settings`. Two-layer versioning (`save_format_version` outer / `progress_format_version` inner). Provider contract = EP's `snapshot()/restore()/rederive()`. SL-PRED-1 file version predicate mirrors EP-PRED-1. Atomic write (tmp + `rename_absolute` + `.bak`). **Plain-data-only** (no live Resource in snapshot) — neutralizes the Godot 4.6 Resource-serialization HIGH risk. Budget **2 MiB / 50 ms iOS**. Part instances uncapped — watch via telemetry, no cap (QQ-04 deferred).
+- **User design calls** (ELI5 session): readable JSON ✓ / single file ✓ / watch-don't-cap ✓ / 2 MiB+50 ms ✓.
+- **godot-specialist validation**: 0 blocking. Folded in 5 fixes → check full write-failure surface (`get_open_error()` + bool + `get_error()`, not bool alone — iOS disk-full/sandbox); budget guard must be explicit `if` (assert stripped in Release); `int()`-cast numeric fields on restore (JSON parses numbers as float — matters for next_instance_id/pity/scrap/cumulative_xp); close FileAccess on every early-return; `JSON.stringify(envelope, "\t")` pretty-print. Confirmed correct: store_string→bool (4.4), rename_absolute atomic within APFS user:// volume, plain-data dodges Resource footgun.
+- **Registry**: added 3 stances to `docs/registry/architecture.yaml` (YAML valid) — `save_provider` interface contract; `save_serialization` API decision (JSON, NOT var_to_bytes / NOT .tres); `live_resource_in_save_snapshot` forbidden pattern.
+- **Process**: TD-ADR skipped (lean). GDD sync check clean (ADR uses EP names faithfully; only adds new names). Status Proposed → must reach **Accepted** before any persistence coding (via `/architecture-review` in a FRESH session).
+
+### NEXT (Foundation ADRs — write in this session or fresh, but /architecture-review MUST be a fresh session)
+- **ADR-0002 — Event bus** (recommended next): resolves the load-bearing dual-`battle_ended` disambiguation AND the save-trigger quiesce-point timing that ADR-0001 deferred to it. `/architecture-decision "Event bus architecture"`.
+- **ADR-0003 — Content resources** (.tres DB loading strategy); **ADR-0004 — Scene/boot** (autoloads + boot order: DBs → autoloads → EP restore → derive → gameplay).
+- Then **fresh session**: `/architecture-review` (populates tr-registry.yaml, audits all Foundation ADRs, gate to move ADRs Proposed→Accepted). Also queued per gate: `/test-setup`, `/ux-design`, `/create-control-manifest`, `/art-bible` (early).
+
+---
+
+## Prior — COMPLETE: World Loot System (#13) GDD → Designed (2026-07-13, lean)
 - **File**: design/gdd/world-loot.md — all 12 sections written, 0 placeholders (~276 lines).
 - **Sections**: A Overview / B Player Fantasy (CD not consulted — lean; review manually) / C Detailed Rules 1–9 (incl. Rule 8 refuse-on-overflow + Rule 9 testability contract: injectable sink + injectable Inventory + structured load_catalog result) / D Formulas (WL-PRED-1 collect guard, WL-PRED-2 catalog validity, WL-PRED-3 snapshot sort — all scan-exempt, systems-designer consulted) / E 12 ECs / F Dependencies / G Tuning Knobs (6–10 nodes/zone, 1–3 PART nodes, COMMON+RARE ceiling, scrap ≤~10% arc guardrail) / Visual-Audio (chest states; art-director not consulted — lean) / UI (anti-checklist normative: no counts, no map markers) / H 11 BLOCKING + 1 ADVISORY ACs (qa-lead consulted) / OQ-WL-1..3.
 - **Key decisions**: rewards = parts+scrap+consumables; BLUEPRINT enum reserved for Alpha (#25, Rule 6); WL owns interact API; double-collect silently idempotent; inventory-overflow → REFUSE collect (chest stays closed, never destroys reward); loot_id globally unique fatal-on-duplicate; orphans preserve-and-warn (EP Rule 6c).

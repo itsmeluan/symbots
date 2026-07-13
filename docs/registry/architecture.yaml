@@ -30,7 +30,7 @@
 #   Superseded entries:     Grep pattern="status: superseded"
 
 version: 1
-last_updated: ""
+last_updated: "2026-07-13"
 
 # ─── STATE OWNERSHIP ─────────────────────────────────────────────────────────
 # Who is the authoritative owner of each piece of shared game state.
@@ -71,7 +71,23 @@ state_ownership: []
 #
 # pattern options: signal | direct_call | event_bus | shared_resource | rpc | none
 
-interfaces: []
+interfaces:
+  - contract: save_provider
+    status: active
+    pattern: direct_call     # Save/Load calls three methods on each registered provider
+    producer: save-load
+    consumers:
+      - inventory            # part_instances, next_instance_id, scrap, consumables
+      - workshop             # equipped builds
+      - drop-system          # pity counters
+      - settings             # player options
+      - exploration-progress # the `progression` provider (wraps EP's own blob opaquely)
+    adr: docs/architecture/adr-0001-save-load.md
+    signal_signature: "snapshot() -> Dictionary (plain data only) / restore(data: Dictionary) (Phase 1, no cross-provider reads) / rederive() (Phase 2, provider-local)"
+    referenced_by:
+      - docs/architecture/adr-0001-save-load.md
+    added: 2026-07-13
+    revised: ""
 
 # Example:
 #
@@ -131,7 +147,19 @@ performance_budgets: []
 # Register an API decision when the choice is non-obvious and other ADRs might
 # make a different choice for the same purpose without knowing this was decided.
 
-api_decisions: []
+api_decisions:
+  - purpose: save_serialization
+    status: active
+    api: "JSON.stringify(envelope, \"\\t\") / JSON.parse_string()"
+    not:                       # explicitly banned for save serialization
+      - var_to_bytes / bytes_to_var   # opaque, undebuggable, brittle on schema change
+      - ResourceSaver / .tres          # couples on-disk format to class layout; hits 4.4/4.5 Resource footguns
+    adr: docs/architecture/adr-0001-save-load.md
+    reason: "Human-readable + retune-safe + sidesteps the Godot 4.6 Resource-serialization HIGH risk. NOTE: JSON parses all numbers as float — int source facts must be int()-cast on restore."
+    referenced_by:
+      - docs/architecture/adr-0001-save-load.md
+    added: 2026-07-13
+    revised: ""
 
 # Example:
 #
@@ -157,7 +185,18 @@ api_decisions: []
 # Register a pattern when an ADR explicitly bans it AND other ADRs might
 # unknowingly use it (i.e., it's a tempting but wrong approach for this project).
 
-forbidden_patterns: []
+forbidden_patterns:
+  - pattern: live_resource_in_save_snapshot
+    status: active
+    description: "A save provider's snapshot() must NEVER return a live Godot Resource
+      (or a Dictionary/Array containing one). Flatten all state to plain data
+      (Dictionary / Array / int / float / String / bool) before it enters serialization."
+    why: "Serializing live Resources walks straight into the Godot 4.4/4.5 shallow
+      Resource.duplicate() / duplicate_deep() nested-resource footgun and couples the
+      on-disk format to in-memory class layout. Plain-data-only is what neutralizes the
+      HIGH serialization risk — a single Resource leaking into a snapshot reopens it."
+    adr: docs/architecture/adr-0001-save-load.md
+    added: 2026-07-13
 
 # Example:
 #
