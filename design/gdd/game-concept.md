@@ -185,7 +185,7 @@ Exploration exists to feed the build loop. Every zone, secret, and boss exists p
 
 - **NOT a catch-and-store collector**: There is no Pokédex-style "gotta catch 'em all" completion counter. Players build what excites them, not what fills a registry.
 - **NOT a story-first game**: Lore and narrative are enrichment, not the driving force. We do not design cutscenes before the build loop is proven fun.
-- **NOT a grind-levels-to-win treadmill**: Stats grow meaningfully through better parts and crafting, not generic XP farming. A clever build with mid-tier parts should challenge a lazily assembled high-tier one. The path to power runs through the workshop.
+- **NOT a level-matching treadmill** *(revised 2026-07-12 — CD sign-off pending)*: Leveling is a real progression axis — enemy levels and zone level ranges scale the world, core level gates access to high-tier parts and grows stats, and higher-level enemies yield better XP and drops. But leveling is **not the win condition**. A clever build with well-chosen parts must still beat a lazily-assembled higher-level one. Levels set the stage; the workshop wins the fight. The path to power runs primarily through parts, builds, and synergies — leveling paces access to them. *(Prior text — "NOT a grind-levels-to-win treadmill: Stats grow meaningfully through better parts and crafting, not generic XP farming" — revised when the Level Backbone was introduced via Symbot Core Progression #10b. See symbot-core-progression.md.)*
 - **NOT a real-time action game**: Turn-based is a design commitment, not a placeholder. Every UI decision and mechanic assumes the player has time to think about their build.
 
 ---

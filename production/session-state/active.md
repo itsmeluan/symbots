@@ -2,8 +2,13 @@
 
 ## Current Task — Symbot Core Progression (#10b) /design-system IN PROGRESS (2026-07-12)
 - **File**: design/gdd/symbot-core-progression.md (skeleton created)
-- **Sections done**: none yet | **Review mode**: lean
-- **NEXT**: Section A — Overview
+- **COMPLETE → Designed** (2026-07-12, lean). All 8 required + Visual/Audio + UI + Open Questions written. systems-index #10b → Designed; docs started 15→16, MVP designed 16→17/25 (new system added to denominator).
+- **MAJOR PIVOT (2026-07-12)**: user introduced the **Level Backbone** — enemy levels + zone level ranges + core level. XP now derived from enemy level (CP-F4). Anti-pillar #3 REVISED in game-concept.md (**CD sign-off PENDING** — OQ-CP-6). New tracked system added to index: **#10c Enemy Level & Zone Scaling** (owns Enemy DB/Encounter Zone/Drop System/Zone&Map errata).
+- **Formulas**: CP-F1 (XP→level threshold table: L2=100..L10=2080, base 100 ramp 1.20, MAX_CORE_LEVEL=10), CP-F2 (bench = floor(xp×0.5), epsilon-safe — 0.5 exact in IEEE754), CP-F3 (level_growth[stat]×(level-1), applied post-SA-F1 pre-SYN-F4, pure int), CP-F4 (xp_value=(XP_BASE35+enemy_level×XP_PER_ENEMY_LEVEL10)×role_mult{WILD1/BOSS2}, pure int). All provisional pending MVP zone level range (OQ-CP-1). systems-designer validated; level_growth[structure]=2 not 5 for anti-grind.
+- **ACs**: 20 (AC-CP-01..20 incl 07b DEFERRED). qa-lead found 6 blockers ALL FIXED: AC-CP-18 pipeline-ordering (post-SA-F1/pre-SYN-F4, 160≠168 discriminator), AC-CP-06 co-core independence, AC-CP-08 ≥-cap boundary (benched=6/enemy=3), AC-CP-04 null level_req, AC-CP-07/12 unit-scoped (07b deferred), AC-CP-19 signal-not-fired. Equip gate: Common1/Rare3/Boss6/Proto8. BENCH_LEVEL_LEAD_CAP=3.
+- **level_requirement gates**: Common=1/Rare=3/Boss-grade=6/Prototype=8. Bench XP=50%. Bench-lead cap prevents power-leveling a strong core in a weak zone.
+- **2 ERRATA PASSES OWED** (from Change Manifest in the GDD Open Questions): (A) **Core Progression errata pass** → Part DB (level_requirement + level_growth fields), Symbot Assembly (equip gate call + CP-F3 step, discharges CORE-identity Deferred Obligation), TBC (battle_ended carries xp_value/level/deployed + update OQ-TBC-6). (B) **Enemy Level & Zone Scaling design pass (#10c)** → Enemy DB (level + xp_value + OQ-CP-2 stats-driven-or-label), Encounter Zone (level floor/roof), Drop System (level→rarity/stats OQ-CP-3), Zone&Map (difficulty_band↔level-range).
+- **NEXT**: `/clear` then `/design-review design/gdd/symbot-core-progression.md` FRESH session. On approval, execute errata pass A. Then design #10c Enemy Level & Zone Scaling. CD sign-off on anti-pillar (OQ-CP-6) still owed. Registry: CP-F1..F4 + constants pending (candidates presented).
 
 ## Prior Task — Zone & World Map System (#12) /design-review → APPROVED (2026-07-12)
 - **Full-panel /design-review** (game-designer + systems-designer + level-designer + qa-lead + CD synthesis). Verdict NEEDS REVISION → **8 surgical blockers fixed same session** → **APPROVED**.

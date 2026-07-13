@@ -37,7 +37,7 @@
 #   Each entry: name, status, source, referenced_by[], attributes{}, added, revised
 
 version: 1
-last_updated: "2026-07-12"  # Enemy AI System (#10) authored (Designed, pending /design-review): formula EAI-1 (move-scoring heuristic, no floor/ceil — only DF-1 preview floors) + constants STATUS_BASE_VALUE 1.0 + AI_PROFILE_WEIGHTS (AGGRESSIVE/TACTICAL/OPPORTUNIST). Discharges TBC AC-TBC-INT-02 + Enemy DB ED4 (2 light errata pending: TBC un-defer AC-TBC-INT-02; Enemy DB un-block AC-ED-01d via has_profile). DF-1 referenced_by += enemy-ai.md. Prior same day — Consumable Database (#1c) authored: 8 consumable items (weld_patch/repair_kit/field_forge/coolant_flush/power_cell/salvage_beacon/signal_jammer/scrap_lure) + 5 formulas (CD-1..CD-5, all no-floor/no-epsilon) + 10 constants (WELD_PATCH_AMOUNT 25 / REPAIR_KIT_AMOUNT 50 / FIELD_FORGE_AMOUNT 120 / COOLANT_FLUSH_AMOUNT 50 / POWER_CELL_AMOUNT 25 / BEACON_MULTIPLIER 2.0 / JAMMER_RATE_MULTIPLIER 0.1 / JAMMER_DURATION_STEPS 20 / LURE_RATE_MULTIPLIER 2.5 / LURE_DURATION_STEPS 15). Consumable Database APPROVED 2026-07-12 (full-panel /design-review; 5 surgical blockers fixed; systems-designer IEEE-754 blocker refuted by python3 scan). All 3 errata now APPLIED to the Approved source GDDs (registry + GDD together): TBC Rule 7a use-item action + AC-TBC-41 (preventive-only Overheat, no-turn-on-reject); Drop Rule 12 consumable channel + Beacon injection into effective_drop_rate + AC-DS-31 (Part B consumable drop frequencies scoped as OPEN OQ-DS-7); Encounter Zone EZ-1 modifier hook + AC-EZ-59 + OQ-EZ-4 RESOLVED. referenced_by lists already point at TBC/Drop/Encounter-Zone. BASE_ENERGY_REGEN confirmed 10 (not 8). Earlier 2026-07-11: Encounter Zone (#7) authored: added EZ-1 (per-step trigger) + EZ-2 (weighted enemy selection) formulas — both no-floor/no-epsilon (no scan needed); EZ-2 referenced_by TBC (enemy_id handoff). Density-band rates + gate constants held internal to encounter-zone.md until another system references them. Earlier same day: Part-Break design-review revision: ENRAGE_PER_BREAK retuned 0.15->0.12 (PB-F5 output_range 456->428, all enrage mults now epsilon-defensive); Part-Break PB-F1..F5 formulas, BREAK_SPILLOVER/ENRAGE_PER_BREAK/BREAK_BIAS_MULTIPLIERS constants; referenced_by updated on EDB-1/BREAK_HP_MIN/DAMAGE_FLOOR/MOVE-F1/TBC-F5. Earlier: N_PROTO_PITY calibration re-sync; MULTIPLIER_FLOOR (Rule 5a); N_PROTO_PITY, M_BOSS_PITY; passives section (3 status riders)
+last_updated: "2026-07-12"  # Symbot Core Progression (#10b) authored (Designed, pending /design-review): the LEVEL BACKBONE. Formulas CP-F1 (XP->level table, MAX_CORE_LEVEL=10) + CP-F2 (bench floor, epsilon-safe 0.5) + CP-F3 (level_growth stat contrib, post-SA-F1/pre-SYN-F4, referenced_by symbot-assembly erratum) + CP-F4 (xp_value from enemy_level, referenced_by enemy-database + turn-based-combat errata). Constants: MAX_CORE_LEVEL 10, XP_PER_LEVEL_BASE 100, LEVEL_COST_RAMP 1.20, XP_BASE 35*, XP_PER_ENEMY_LEVEL 10*, BOSS_XP_MULTIPLIER 2, BENCH_XP_SHARE 0.5, BENCH_LEVEL_LEAD_CAP 3 (*=provisional pending MVP zone level range, OQ-CP-1). game-concept anti-pillar #3 revised (level-matching, CD sign-off pending). New system #10c Enemy Level & Zone Scaling added to index. 2 errata passes owed (Part DB/Assembly/TBC + the #10c enemy/zone pass). Prior — Enemy AI System (#10) authored (Designed, pending /design-review): formula EAI-1 (move-scoring heuristic, no floor/ceil — only DF-1 preview floors) + constants STATUS_BASE_VALUE 1.0 + AI_PROFILE_WEIGHTS (AGGRESSIVE/TACTICAL/OPPORTUNIST). Discharges TBC AC-TBC-INT-02 + Enemy DB ED4 (2 light errata pending: TBC un-defer AC-TBC-INT-02; Enemy DB un-block AC-ED-01d via has_profile). DF-1 referenced_by += enemy-ai.md. Prior same day — Consumable Database (#1c) authored: 8 consumable items (weld_patch/repair_kit/field_forge/coolant_flush/power_cell/salvage_beacon/signal_jammer/scrap_lure) + 5 formulas (CD-1..CD-5, all no-floor/no-epsilon) + 10 constants (WELD_PATCH_AMOUNT 25 / REPAIR_KIT_AMOUNT 50 / FIELD_FORGE_AMOUNT 120 / COOLANT_FLUSH_AMOUNT 50 / POWER_CELL_AMOUNT 25 / BEACON_MULTIPLIER 2.0 / JAMMER_RATE_MULTIPLIER 0.1 / JAMMER_DURATION_STEPS 20 / LURE_RATE_MULTIPLIER 2.5 / LURE_DURATION_STEPS 15). Consumable Database APPROVED 2026-07-12 (full-panel /design-review; 5 surgical blockers fixed; systems-designer IEEE-754 blocker refuted by python3 scan). All 3 errata now APPLIED to the Approved source GDDs (registry + GDD together): TBC Rule 7a use-item action + AC-TBC-41 (preventive-only Overheat, no-turn-on-reject); Drop Rule 12 consumable channel + Beacon injection into effective_drop_rate + AC-DS-31 (Part B consumable drop frequencies scoped as OPEN OQ-DS-7); Encounter Zone EZ-1 modifier hook + AC-EZ-59 + OQ-EZ-4 RESOLVED. referenced_by lists already point at TBC/Drop/Encounter-Zone. BASE_ENERGY_REGEN confirmed 10 (not 8). Earlier 2026-07-11: Encounter Zone (#7) authored: added EZ-1 (per-step trigger) + EZ-2 (weighted enemy selection) formulas — both no-floor/no-epsilon (no scan needed); EZ-2 referenced_by TBC (enemy_id handoff). Density-band rates + gate constants held internal to encounter-zone.md until another system references them. Earlier same day: Part-Break design-review revision: ENRAGE_PER_BREAK retuned 0.15->0.12 (PB-F5 output_range 456->428, all enrage mults now epsilon-defensive); Part-Break PB-F1..F5 formulas, BREAK_SPILLOVER/ENRAGE_PER_BREAK/BREAK_BIAS_MULTIPLIERS constants; referenced_by updated on EDB-1/BREAK_HP_MIN/DAMAGE_FLOOR/MOVE-F1/TBC-F5. Earlier: N_PROTO_PITY calibration re-sync; MULTIPLIER_FLOOR (Rule 5a); N_PROTO_PITY, M_BOSS_PITY; passives section (3 status riders)
 
 # ─── ENTITIES ────────────────────────────────────────────────────────────────
 # Named game-world objects: enemies, NPCs, characters, factions, bosses.
@@ -882,6 +882,69 @@ formulas:
     added: 2026-07-12
     revised: 2026-07-12
 
+  - name: CP-F1
+    status: active
+    source: design/gdd/symbot-core-progression.md
+    referenced_by:
+      - design/gdd/symbot-core-progression.md
+    variables:
+      - cumulative_xp (int [0, inf), a core's total earned XP)
+      - XP_PER_LEVEL_BASE (100)
+      - LEVEL_COST_RAMP (1.20)
+      - MAX_CORE_LEVEL (10)
+    output_range: "level int [1, 10]"
+    expression: "level = L where threshold[L] <= cumulative_xp < threshold[L+1]; threshold[] = [0,100,220,364,537,744,993,1292,1650,2080]"
+    notes: "Player-side XP-to-level table (Level Backbone core side). Pre-computed threshold table is the runtime authority — do NOT re-run the ramp formula per lookup (sorted-int lookup only). Thresholds cumulative: L2=100, L3=220, L4=364, L5=537, L6=744, L7=993, L8=1292, L9=1650, L10=2080. Level always re-derived from cumulative_xp on load (never trust serialized level — EC-CP-06). >= boundary (AC-CP-02). Arc pacing PROVISIONAL until MVP zone level range is set (OQ-CP-1)."
+    added: 2026-07-12
+    revised: ""
+
+  - name: CP-F2
+    status: active
+    source: design/gdd/symbot-core-progression.md
+    referenced_by:
+      - design/gdd/symbot-core-progression.md
+    variables:
+      - full_xp (int, = defeated enemy xp_value from CP-F4)
+      - BENCH_XP_SHARE (0.5 exactly)
+    output_range: "[0, floor(full_xp * 0.5)]"
+    expression: "bench_xp = floor(full_xp * BENCH_XP_SHARE)"
+    notes: "Benched-core XP award. NO epsilon guard needed — BENCH_XP_SHARE=0.5=2^-1 is exactly representable in IEEE754, so N*0.5 is exact for all int N (odd N -> exact X.5, floor correct). If BENCH_XP_SHARE ever becomes non-power-of-2, add +0.0001 epsilon + python3 scan. Subject to the Rule 3 bench-level-lead cap (BENCH_LEVEL_LEAD_CAP): a benched core at level >= enemy_level + cap earns 0 (EC-CP-03/AC-CP-08)."
+    added: 2026-07-12
+    revised: ""
+
+  - name: CP-F3
+    status: active
+    source: design/gdd/symbot-core-progression.md
+    referenced_by:
+      - design/gdd/symbot-core-progression.md
+      - design/gdd/symbot-assembly.md          # Assembly applies this step between SA-F1 and SYN-F4 (erratum pending)
+    variables:
+      - "level_growth[stat_key] (int [0,N], authored per CORE part, CORE-slot only)"
+      - core.level (int [1,10])
+    output_range: "[0, level_growth[stat_key] * 9]"
+    expression: "level_contribution[stat_key] = level_growth[stat_key] * (core.level - 1)"
+    notes: "Core level-growth stat contribution. Pure INTEGER multiply — no floor/float/epsilon. Applied AFTER SA-F1 (bypasses chassis modifier) and BEFORE SYN-F4 (synergy adds on top) — pipeline ORDERING is load-bearing, verified by AC-CP-18 (160 != 168 discriminator). Level-1 core contributes 0 (level-1=0), seamless with SA-F1. Only the CORE-slot part's level_growth is read (non-CORE ignored, EC-CP-11). Anti-grind: keep level-10 total sub-dominant vs part-derived stats; Spark Core example structure=2 (+18), not 5."
+    added: 2026-07-12
+    revised: ""
+
+  - name: CP-F4
+    status: active
+    source: design/gdd/symbot-core-progression.md
+    referenced_by:
+      - design/gdd/symbot-core-progression.md
+      - design/gdd/enemy-database.md            # stores derived xp_value per enemy (Enemy Level & Zone Scaling erratum pending)
+      - design/gdd/turn-based-combat.md          # passes xp_value in battle_ended (erratum pending)
+    variables:
+      - enemy_level (int [1, MAX_ENEMY_LEVEL])
+      - XP_BASE (35, provisional)
+      - XP_PER_ENEMY_LEVEL (10, provisional)
+      - "role_multiplier (int; WILD=1, BOSS=BOSS_XP_MULTIPLIER=2)"
+    output_range: "positive int"
+    expression: "xp_value = (XP_BASE + enemy_level * XP_PER_ENEMY_LEVEL) * role_multiplier"
+    notes: "Bridge formula (Level Backbone): enemy level -> awarded XP. Pure INTEGER — no floor/float/epsilon (all multipliers int). Worked: L1 WILD=45, L3 WILD=65, L5 WILD=85, L5 BOSS=170, L6 BOSS=190. CONSTANTS PROVISIONAL until MVP zone level range set (OQ-CP-1). Ownership shared: this system defines the conversion (XP is its concern); Enemy DB stores xp_value; the Enemy Level & Zone Scaling pass (#10c) may refine the curve. AC-CP-16 isolates each constant."
+    added: 2026-07-12
+    revised: ""
+
 # Example:
 #
 # formulas:
@@ -1347,6 +1410,95 @@ constants:
       (would be a registry conflict). MVP: scrapping is tier-INDEPENDENT (a tiered part yields the flat per-rarity value; no
       upgrade refund). MVP tier-refund stance LOCKED 0% (total sink) on 2026-07-12 review — NOT an open question; OQ-INV-1 is
       retained only as a FORWARD hook for an ADDITIVE, NON-RETROACTIVE refund the Part Upgrade System (Alpha) may layer later."
+    added: 2026-07-12
+    revised: ""
+
+  - name: MAX_CORE_LEVEL
+    status: active
+    source: design/gdd/symbot-core-progression.md
+    referenced_by:
+      - design/gdd/symbot-core-progression.md
+      - design/gdd/part-database.md             # tops the level_requirement gate table (erratum pending)
+    value: 10
+    unit: maximum Symbot core level (Level Backbone cap)
+    notes: "Level cap; determines the whole CP-F1 curve scope and the top of every part level_requirement. Changing it requires re-authoring the Rule 5 rarity-gate table. Safe MVP range 8-12. Cores discard XP beyond threshold[10] (EC-CP-01)."
+    added: 2026-07-12
+    revised: ""
+
+  - name: XP_PER_LEVEL_BASE
+    status: active
+    source: design/gdd/symbot-core-progression.md
+    referenced_by:
+      - design/gdd/symbot-core-progression.md
+    value: 100
+    unit: XP cost of the first core level-up (1->2), base of the CP-F1 ramp
+    notes: "Raising it slows all core leveling proportionally. Safe range 60-150."
+    added: 2026-07-12
+    revised: ""
+
+  - name: LEVEL_COST_RAMP
+    status: active
+    source: design/gdd/symbot-core-progression.md
+    referenced_by:
+      - design/gdd/symbot-core-progression.md
+    value: 1.20
+    unit: per-level XP cost multiplier (CP-F1)
+    notes: "1.0=flat curve; higher=back-loaded grind. Safe range 1.10-1.35. Above ~1.4 the L9->10 wall grinds; at 1.0 late levels feel unearned. Used only to pre-compute the CP-F1 threshold table (not evaluated at runtime)."
+    added: 2026-07-12
+    revised: ""
+
+  - name: XP_BASE
+    status: active
+    source: design/gdd/symbot-core-progression.md
+    referenced_by:
+      - design/gdd/symbot-core-progression.md
+    value: 35
+    unit: flat XP floor in CP-F4 (PROVISIONAL)
+    notes: "CP-F4 flat floor (XP of a level-0 reference enemy). PROVISIONAL — re-calibrate once the MVP zone level range is set (OQ-CP-1, owned by Enemy Level & Zone Scaling #10c)."
+    added: 2026-07-12
+    revised: ""
+
+  - name: XP_PER_ENEMY_LEVEL
+    status: active
+    source: design/gdd/symbot-core-progression.md
+    referenced_by:
+      - design/gdd/symbot-core-progression.md
+    value: 10
+    unit: XP added per enemy level in CP-F4 (PROVISIONAL)
+    notes: "Primary lever for how fast core leveling tracks enemy strength. PROVISIONAL pending zone level ranges (OQ-CP-1)."
+    added: 2026-07-12
+    revised: ""
+
+  - name: BOSS_XP_MULTIPLIER
+    status: active
+    source: design/gdd/symbot-core-progression.md
+    referenced_by:
+      - design/gdd/symbot-core-progression.md
+    value: 2
+    unit: role_multiplier for BOSS enemies in CP-F4
+    notes: "Keep an INTEGER to preserve CP-F4's epsilon-free property (int*int is exact). Safe range 2-3. WILD role_multiplier is 1."
+    added: 2026-07-12
+    revised: ""
+
+  - name: BENCH_XP_SHARE
+    status: active
+    source: design/gdd/symbot-core-progression.md
+    referenced_by:
+      - design/gdd/symbot-core-progression.md
+    value: 0.5
+    unit: fraction of full XP a benched core earns (CP-F2)
+    notes: "KEEP A POWER OF 2 (0.25/0.5) to stay epsilon-free — 0.5=2^-1 exact in IEEE754. A non-power-of-2 requires a +0.0001 epsilon guard + python3 scan. Safe range 0.3-0.6 (off-power-of-2 values add the epsilon cost)."
+    added: 2026-07-12
+    revised: ""
+
+  - name: BENCH_LEVEL_LEAD_CAP
+    status: active
+    source: design/gdd/symbot-core-progression.md
+    referenced_by:
+      - design/gdd/symbot-core-progression.md
+    value: 3
+    unit: levels a benched core may lead an enemy before its bench XP drops to 0
+    notes: "Anti-power-level guard (Rule 3): if benched_core.level >= enemy_level + BENCH_LEVEL_LEAD_CAP, bench award is 0 (EC-CP-03). Lower=tighter clamp. Safe range 2-5; at 0-1 a benched core stops earning almost immediately in on-level zones (too punishing); above ~5 rarely fires. Deployed cores are never capped. >= boundary is AC-CP-08's discriminator."
     added: 2026-07-12
     revised: ""
 

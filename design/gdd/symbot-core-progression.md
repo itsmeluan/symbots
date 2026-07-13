@@ -9,9 +9,11 @@
 
 The Symbot Core Progression System is the runtime authority for every Symbot core's experience points, level, and level-gated stat growth. It owns three responsibilities: (1) **XP tracking** — receiving XP awards from Turn-Based Combat at battle end and distributing them to active and benched core slots according to the bench share rule; (2) **level derivation** — converting cumulative XP into a discrete level using the CP-F1 XP-to-level formula; and (3) **equip gating** — enforcing the `level_requirement` field that Part Database authors set on parts, blocking equip via the Workshop if the occupying core's level is below threshold.
 
-This system does not own stat computation — the per-level stat gains it stores are read by Symbot Assembly and feed into the SA-F1 pipeline alongside the part's own stat bonuses. It does not own the Workshop equip flow — it exposes a gate-check call that Assembly invokes on equip. It does not own XP award amounts — those are authored in content data (one amount for WILD battles, one for boss encounters) and passed in by TBC.
+This system does not own stat computation — the per-level stat gains it stores are read by Symbot Assembly and feed into the SA-F1 pipeline alongside the part's own stat bonuses. It does not own the Workshop equip flow — it exposes a gate-check call that Assembly invokes on equip. It does not own XP award amounts — each defeated enemy carries an `xp_value` (derived from its **enemy level**, owned by the Enemy Database), and Turn-Based Combat passes that value in at battle end. Higher-level enemies award more XP.
 
-Core level is the sole output that gates access to high-tier parts. It cannot be purchased — the only path is battle XP. Scrap currency upgrades parts; battle XP levels cores. These two axes are intentionally non-substitutable.
+Core level is the sole player-side output that gates access to high-tier parts. It cannot be purchased — the only path is battle XP. Scrap currency upgrades parts; battle XP levels cores. These two axes are intentionally non-substitutable.
+
+**This GDD is the player-side authority of the Level Backbone.** The Level Backbone is the game's unified leveling model, introduced 2026-07-12: **enemy level** (Enemy DB — drives enemy power, XP reward, and drop quality), **zone level range** (Encounter Zone — floor/roof levels that gradient the world's difficulty), and **core level** (this system — the player's access/investment leg). This GDD owns only the core-level (player) side and how enemy level converts to awarded XP. The enemy-level and zone-range sides are designed in the separate **Enemy Level & Zone Scaling** system (see Dependencies and the Cross-Document Change Manifest in Open Questions).
 
 ## Player Fantasy
 
@@ -51,13 +53,15 @@ A `CoreProgressionRecord` is created when a core is first added to Inventory, in
 
 **Rule 3 — XP award at battle end.** On `battle_ended(VICTORY, ...)`:
 
-1. Determine `full_xp`: `XP_PER_BOSS` if the defeated enemy was a boss encounter; `XP_PER_WILD` otherwise.
+1. Read `full_xp = defeated_enemy.xp_value` — the per-enemy XP value carried on the `battle_ended` payload (derived from the enemy's level by the Enemy Database via CP-F4; see Formulas). This system does not compute enemy XP — it consumes the value TBC hands it.
 2. For each Symbot in the active team roster (up to `TEAM_ROSTER_CAP` = 3):
    - If the Symbot was **deployed** (fielded at any point during the battle): award `full_xp` to its core.
-   - If the Symbot was **not deployed** (was in the team roster but never switched in): award `floor(full_xp × BENCH_XP_SHARE)` to its core.
+   - If the Symbot was **not deployed** (was in the team roster but never switched in): award `floor(full_xp × BENCH_XP_SHARE)` to its core (CP-F2).
 3. On `battle_ended(DEFEAT, ...)` or `battle_ended(FLED, ...)`: no XP is awarded to any core.
 
 **"Deployed"** is tracked by TBC's existing switch state — if a Symbot was the active fighter at any point during the battle (including entering as the start-of-battle active Symbot), it counts as deployed.
+
+**Bench-level cap guard (anti-power-leveling):** A benched core only earns XP toward levels it could plausibly reach in the current zone. If `benched_core.level >= defeated_enemy.level + BENCH_LEVEL_LEAD_CAP`, the bench award is 0 for that core — a max-level veteran benched in a low-level zone does not vacuum XP from trivial fights. This prevents a player from parking a strong core to farm easy zones for free levels. (Deployed cores are never capped this way — actively fighting always earns.)
 
 ---
 
@@ -131,32 +135,267 @@ The CP contribution at level 1 is zero (`core.level - 1 = 0`), so the integratio
 
 ## Formulas
 
-[To be designed]
+> **Calibration note:** CP-F1's arc pacing and CP-F4's XP outputs both depend on the MVP zone's `enemy_level_floor`/`enemy_level_roof`, which are owned by the **Enemy Level & Zone Scaling** system (not yet designed). The constants below are **provisional first-pass values** and must be re-calibrated once the MVP zone's level range is set. The *formula structure* is stable; the constants are tuning knobs.
+
+### CP-F1 — XP-to-Level Threshold Table (player side)
+
+Converts a core's `cumulative_xp` to its level. Thresholds derive from `XP_PER_LEVEL_BASE` with a `LEVEL_COST_RAMP` multiplier per step:
+
+`threshold[L] = Σ (XP_PER_LEVEL_BASE × LEVEL_COST_RAMP^(k-1)) for k = 1 .. (L-1)`
+
+| Variable | Type | Value | Description |
+|----------|------|-------|-------------|
+| `cumulative_xp` | int | [0, ∞) | Total XP earned by this core instance |
+| `XP_PER_LEVEL_BASE` | int | 100 | XP cost of the first level-up (1→2) |
+| `LEVEL_COST_RAMP` | float | 1.20 | Multiplicative cost increase per level |
+| `MAX_CORE_LEVEL` | int | 10 | Hard level cap |
+
+**Threshold table (pre-computed — use this table directly at runtime, do not re-run the ramp formula):**
+
+| Level | Cumulative XP required | Per-level cost |
+|-------|----------------------|----------------|
+| 1 | 0 (start) | — |
+| 2 | 100 | 100 |
+| 3 | 220 | 120 |
+| 4 | 364 | 144 |
+| 5 | 537 | 173 |
+| 6 | 744 | 207 |
+| 7 | 993 | 249 |
+| 8 | 1,292 | 299 |
+| 9 | 1,650 | 358 |
+| 10 | 2,080 | 430 |
+
+**Output:** `level = L` where `threshold[L] ≤ cumulative_xp < threshold[L+1]` (capped at `MAX_CORE_LEVEL`). Pure sorted-integer lookup at runtime — no float arithmetic.
+
+---
+
+### CP-F4 — Enemy XP Value from Enemy Level (bridge formula)
+
+Each enemy's `xp_value` is derived from its **enemy level** (owned by Enemy DB / Enemy Level & Zone Scaling). This system defines the conversion because XP is its concern; the resulting `xp_value` is stored on the Enemy DB entry and passed to this system via `battle_ended`.
+
+`xp_value = (XP_BASE + enemy_level × XP_PER_ENEMY_LEVEL) × role_multiplier`
+
+| Variable | Type | Value (provisional) | Description |
+|----------|------|---------------------|-------------|
+| `enemy_level` | int | [1, MAX_ENEMY_LEVEL] | The defeated enemy's level (Enemy DB) |
+| `XP_BASE` | int | 35 | Flat XP floor at level 0 |
+| `XP_PER_ENEMY_LEVEL` | int | 10 | XP added per enemy level |
+| `role_multiplier` | int | WILD = 1, BOSS = `BOSS_XP_MULTIPLIER` = 2 | Bosses award double |
+
+**Output:** a positive integer. **Pure integer arithmetic — no floor, no float, no epsilon** (all multipliers are integers; `int × int` is exact in GDScript). Worked values at provisional constants:
+
+| Enemy | Level | xp_value |
+|-------|-------|----------|
+| WILD-early | 1 | (35 + 10) × 1 = **45** |
+| WILD-mid | 3 | (35 + 30) × 1 = **65** |
+| WILD-mid | 5 | (35 + 50) × 1 = **85** |
+| BOSS 1 | 5 | (35 + 50) × 2 = **170** |
+| BOSS 2 | 6 | (35 + 60) × 2 = **190** |
+
+This preserves the prior flat calibration's *scale* (a mid-level WILD ≈ 65, a boss ≈ 170–190) while making tougher enemies award proportionally more, and it gives level a second job (defining XP) exactly as intended. **Ownership note:** the Enemy Level & Zone Scaling pass may refine or replace this curve; until then, this is the ratified conversion and Enemy DB stores `xp_value` per its output.
+
+---
+
+### CP-F2 — Bench XP Award
+
+`bench_xp = floor(full_xp × BENCH_XP_SHARE)`
+
+| Variable | Type | Range | Description |
+|----------|------|-------|-------------|
+| `full_xp` | int | = defeated enemy's `xp_value` (CP-F4) | The XP a deployed core earns |
+| `BENCH_XP_SHARE` | float | 0.5 (exactly) | Fraction awarded to non-deployed team members |
+
+**Output range:** `[0, floor(full_xp × 0.5)]`. **No epsilon guard required** — `BENCH_XP_SHARE = 0.5 = 2⁻¹` is exactly representable in IEEE 754, so `N × 0.5` is exact for all integer N (odd N → exact `X.5`, `floor(X.5) = X` correctly). *If BENCH_XP_SHARE is ever changed to a non-power-of-2 value, add a `+ 0.0001` epsilon guard and run a python3 scan.*
+
+**Example:** `floor(65 × 0.5) = 32`; `floor(170 × 0.5) = 85`. Subject to the Rule 3 bench-level-cap guard (a benched core at `level ≥ enemy_level + BENCH_LEVEL_LEAD_CAP` earns 0).
+
+---
+
+### CP-F3 — Level-Growth Stat Contribution
+
+Applied per stat key in the equipped core's `level_growth` dictionary, after SA-F1 and before SYN-F4:
+
+`level_contribution[stat_key] = level_growth[stat_key] × (core.level − 1)`
+
+| Variable | Type | Range | Description |
+|----------|------|-------|-------------|
+| `level_growth[stat_key]` | int | [0, N]; authored per core | Per-level flat bonus for this stat; 0 = no growth in this stat |
+| `core.level` | int | [1, 10] | Current derived level of the equipped core |
+
+**Output range:** `[0, level_growth[stat_key] × 9]` (max at level 10). **Pure integer multiplication — no floor, no float, no epsilon.** At level 1 the contribution is always 0.
+
+**Authoring reference (Spark Core — energy-focused):**
+
+| Stat | `level_growth` | Max (level 10) | Rationale |
+|------|---------------|----------------|-----------|
+| `structure` | 2 | +18 | Modest survivability (~15–22% of expected base) |
+| `energy_capacity` | 3 | +27 | Primary identity stat |
+| `energy_power` | 2 | +18 | Secondary energy identity |
+| `cooling` | 1 | +9 | Light — Heat management is player skill, not level reward |
+| All other stats | 0 | 0 | Grow via part choices, not level |
+
+**Anti-grind invariant check:** total level-10 contribution ≈ 72 stat-points across 4 stats — meaningful but sub-dominant versus SA-F1's full multi-hundred-point stat pool at high part quality. A clever low-level build with great parts keeps its edge over a lazy high-level core.
 
 ## Edge Cases
 
-[To be designed]
+**EC-CP-01 — Core at max level gains XP.** *If* a level-10 core is awarded XP: the XP beyond `threshold[10]` is discarded (not banked), `cumulative_xp` is held at `threshold[10]`, and the core stays level 10. No overflow, no wrap. *Verified by AC-CP-06.*
+
+**EC-CP-02 — Single XP gain crosses multiple level thresholds.** *If* one XP award pushes `cumulative_xp` past two or more thresholds (e.g., a low-level core defeats a high-XP boss): the core jumps directly to the correct final level, and `core_leveled_up(id, old_level, new_level)` fires once with the full span (`old_level` → `new_level`). Consumers that unlock per-level content iterate the crossed range. *Verified by AC-CP-03.*
+
+**EC-CP-03 — Benched core at or above the level-lead cap.** *If* `benched_core.level ≥ defeated_enemy.level + BENCH_LEVEL_LEAD_CAP`: the bench award for that core is 0 (Rule 3 guard). A max-level veteran benched in a low-level zone earns nothing from trivial fights, preventing free power-leveling. *Verified by AC-CP-08.*
+
+**EC-CP-04 — Equip blocked by level_requirement.** *If* the player attempts to equip a part whose `level_requirement` exceeds the build's core level: the equip is rejected, no part is displaced, no Inventory change occurs, and an error message is returned. *Verified by AC-CP-04.*
+
+**EC-CP-05 — Core swap invalidates already-equipped parts.** *If* the player swaps the CORE slot to a lower-level core, and parts already in other slots now exceed the new core's level: the previously-equipped parts are **not** auto-unequipped (no silent data loss), but the build is flagged invalid and Workshop UI must surface a validation warning listing the offending parts. The build cannot enter combat while invalid. *Verified by AC-CP-05.*
+
+**EC-CP-06 — Load: stored level disagrees with cumulative_xp.** *If* a save's serialized `level` does not match what CP-F1 derives from `cumulative_xp` (drift, tampering, or a curve retune between versions): the level is **re-derived from cumulative_xp** on load — the serialized `level` field is a display cache and is never trusted. *Verified by AC-CP-07.*
+
+**EC-CP-07 — Core instance with no CoreProgressionRecord.** *If* a core part instance exists in Inventory but has no `CoreProgressionRecord` (newly acquired core, or a drifted save): a record is created with `cumulative_xp = 0, level = 1`. Cores are never level-less. *Verified by AC-CP-09.*
+
+**EC-CP-08 — level_growth references an unknown stat key.** *If* a core's `level_growth` dictionary contains a key not in the canonical 11 stats: log a content warning and skip that key (mirrors Assembly EC-SA-05 / Part DB EC-08). Other keys apply normally; no crash. *Verified by AC-CP-10.*
+
+**EC-CP-09 — Enemy xp_value is 0 or absent.** *If* `defeated_enemy.xp_value` is 0 or missing (content error, or an intentionally XP-less enemy): all cores are awarded 0 XP for that battle, no level changes, no crash. A content warning is logged if the field is absent (distinct from an intentional 0). *Verified by AC-CP-11.*
+
+**EC-CP-10 — Negative cumulative_xp on corrupt load.** *If* a loaded `cumulative_xp` is negative (corruption or manual save edit): clamp to 0, log a content error, and re-derive level (→ 1). XP is semantically non-negative. *Verified by AC-CP-12.*
+
+**EC-CP-11 — Non-CORE part carries level_growth.** *If* a part in a non-CORE slot has a non-empty `level_growth` (authoring error — the field is CORE-only): it is ignored. Only the `level_growth` of the part in the CORE slot is read by CP-F3. *Verified by AC-CP-13.*
+
+**EC-CP-12 — Defeated but max-level deployed core.** *If* a deployed core is already level 10 when the battle is won: it earns 0 (EC-CP-01) but still **counts as deployed** — its presence does not change the XP awarded to other team members. Each core's award is computed independently. *Verified by AC-CP-06.*
 
 ## Dependencies
 
-[To be designed]
+### Upstream Dependencies (what this system requires)
+
+| System | What this system reads/receives | Hard/Soft | Status |
+|--------|--------------------------------|-----------|--------|
+| **Turn-Based Combat** | `battle_ended(outcome, enemy_id, ...)` extended to carry `defeated_enemy.xp_value`, `defeated_enemy.level`, and the set of **deployed** Symbots | **Hard** — no XP awards without the battle-end signal | Approved ✓ *(erratum pending — payload extension + OQ-TBC-6)* |
+| **Enemy Database / Enemy Level & Zone Scaling** | Enemy `level` and derived `xp_value` (CP-F4) | **Hard** — XP is a function of enemy level | Enemy DB Approved ✓; **Enemy Level & Zone Scaling Not Started** (new tracked system) |
+| **Part Database** | `level_requirement: int` (equip gate, Rule 4/5) and `level_growth: Dictionary[String, int]` (CP-F3, CORE parts only) | **Hard** — no gate or stat growth without these fields | Approved ✓ *(erratum pending — two new fields)* |
+
+### Downstream Dependents (what depends on this system)
+
+| System | What it reads/calls | Status |
+|--------|--------------------|--------|
+| **Symbot Assembly** | Calls `can_equip(core_instance_id, part)` on every equip (Rule 4); reads the equipped core's `level_growth` and applies the CP-F3 contribution step in its pipeline | Approved ✓ *(erratum pending — gate call + CP-F3 step)* |
+| **Exploration Progress** | Serializes/restores every `CoreProgressionRecord` (`cumulative_xp` per `core_instance_id`); level always re-derived on load, never trusted from disk (EC-CP-06) | Not Started |
+| **Workshop System** | Reads `core.level` / `cumulative_xp` for display; routes the equip-gate result; flags invalid builds (EC-CP-05) | Not Started |
+| **Workshop UI** | Level display on core slot, level-up notification, greyed-out parts with "Core level N required" tooltips, invalid-build warning banner | Not Started |
+
+### Bidirectionality Notes (errata obligations)
+
+- **Turn-Based Combat erratum:** `battle_ended` must carry `xp_value`, enemy `level`, and the deployed-Symbot set. OQ-TBC-6 (currently records "no XP — concept: no level grind") must be updated to reflect the Level Backbone.
+- **Part Database erratum:** add `level_requirement: int` and `level_growth: Dictionary[String, int]` to the Sympart schema; author `level_requirement` per Rule 5's rarity table; author `level_growth` on CORE parts only.
+- **Symbot Assembly erratum:** wire the equip gate call (Rule 4) and insert the CP-F3 contribution step between SA-F1 and SYN-F4. Discharges Assembly's open **"CORE identity mechanical enforcement"** Deferred Obligation — the CORE now has mechanical teeth (leveled anchor + gate).
+- **Enemy Level & Zone Scaling (new system)** owns: Enemy DB `level` + `xp_value` fields (CP-F4 output storage), Encounter Zone `enemy_level_floor`/`enemy_level_roof`, Zone & World Map `difficulty_band`↔level-range mapping, and Drop System level→rarity/stat-roll influence. This system (Core Progression) depends on its enemy-level output but does not own it.
+- **No dependency on Inventory beyond the `instance_id` key:** `CoreProgressionRecord` is keyed by the Inventory `instance_id` but Inventory does not read progression state.
 
 ## Tuning Knobs
 
-[To be designed]
+| Knob | Type | Value | Owner | Effect / Safe guidance |
+|------|------|-------|-------|------------------------|
+| `XP_PER_LEVEL_BASE` | int | 100 | This system | Cost of level 1→2. Raising it slows all leveling proportionally. Safe range 60–150. |
+| `LEVEL_COST_RAMP` | float | 1.20 | This system | Per-level cost multiplier. 1.0 = flat curve; higher = back-loaded grind. Safe range 1.10–1.35. Above ~1.4 the level-9→10 wall becomes a grind; at 1.0 late levels feel unearned. |
+| `MAX_CORE_LEVEL` | int | 10 | This system | Level cap. Determines the whole curve's scope and the top of every `level_requirement`. Changing it requires re-authoring the Rule 5 rarity gate table. Safe MVP range 8–12. |
+| `XP_BASE` | int | 35 | This system *(→ Enemy Level & Zone Scaling)* | Flat floor in CP-F4. Sets the XP of a level-0 reference enemy. Provisional — re-calibrate with zone level ranges. |
+| `XP_PER_ENEMY_LEVEL` | int | 10 | This system *(→ Enemy Level & Zone Scaling)* | XP added per enemy level in CP-F4. The primary lever for how fast leveling tracks enemy strength. Provisional. |
+| `BOSS_XP_MULTIPLIER` | int | 2 | This system | Boss XP multiplier in CP-F4. Keep an integer to preserve CP-F4's epsilon-free property. Safe range 2–3. |
+| `BENCH_XP_SHARE` | float | 0.5 | This system | Fraction of full XP a benched core earns (CP-F2). **Keep a power of 2** (0.25 / 0.5) to stay epsilon-free; a non-power-of-2 requires an epsilon guard + scan. Safe range 0.3–0.6 (values off a power of 2 add the epsilon cost). |
+| `BENCH_LEVEL_LEAD_CAP` | int | 3 | This system | How many levels above an enemy a benched core may be before its bench XP drops to 0 (Rule 3 / EC-CP-03). Lower = tighter anti-power-level clamp. Safe range 2–5. At 0–1 a benched core stops earning almost immediately in on-level zones (too punishing); above ~5 the guard rarely fires. |
+| Per-core `level_growth[stat]` | Content | authored per core | Part DB *(erratum)* | Per-level stat gain (CP-F3). Keep the level-10 total per core sub-dominant versus part-derived stats (anti-grind invariant). Guidance: total level-10 contribution ≲ 25% of a well-built core's base stat pool. |
+| Per-part `level_requirement` | Content | Rule 5 rarity floors | Part DB *(erratum)* | Core level needed to equip. Never below the rarity floor (Common 1 / Rare 3 / Boss-grade 6 / Prototype 8); may be raised for individually powerful parts. |
+
+**Cross-referenced knob (owned elsewhere, affects this system):**
+
+| Knob | Owner | Relevance here |
+|------|-------|----------------|
+| `enemy_level_floor` / `enemy_level_roof` | Encounter Zone *(Enemy Level & Zone Scaling erratum)* | The zone's level band bounds the enemy levels this system sees, which drives XP (CP-F4) and the bench-lead cap (Rule 3). CP-F1's arc pacing cannot be finalized until these are set. |
+| `TEAM_ROSTER_CAP` | Symbot Assembly | Number of cores that can earn XP per battle (1 deployed + up to 2 benched at cap = 3). |
+
+**Warning — the anti-grind invariant is a tuning contract, not just a formula property.** `XP_PER_ENEMY_LEVEL`, `level_growth`, and `LEVEL_COST_RAMP` jointly determine whether leveling stays a supporting axis or creeps toward dominance. Whenever any of the three is retuned, re-check the invariant: *a clever low-level build with great parts must still beat a lazily-assembled higher-level core.* Validate at playtest, not just on paper.
 
 ## Visual/Audio Requirements
 
-[To be designed]
+This system renders nothing directly; its footprint is the signals it emits. `core_leveled_up(core_id, old_level, new_level)` → Workshop UI / post-battle summary shows a level-up flourish on the core slot; Audio plays a level-up chime. Per the Player Fantasy, this is deliberately *quiet* — a line in the post-battle summary and a glow on the Workshop core slot, not a screen-stopping cutscene. The emotionally important beat is what the level *unlocks* (a greyed part becoming available), not the number itself. All art (level badge, XP bar, greyed-part treatment, level-up animation) and mix parameters are specified in the **Workshop UI GDD** and **Audio System GDD**. This section defines only the signal contract those systems subscribe to.
 
 ## UI Requirements
 
-[To be designed]
+Exposes read APIs + signals; contributes no screens of its own. Consumed by Workshop UI (#18) and Combat UI (#19):
+- Reads: `core.level`, `cumulative_xp`, XP-to-next (`threshold[level+1] − cumulative_xp`), per-part `level_requirement`, `can_equip()` result.
+- Signals: `core_leveled_up(core_id: int, old_level: int, new_level: int)`.
+
+> **📌 UX Flag — Symbot Core Progression**: Workshop UI must show the core's level + an XP-progress bar on the core slot; parts above the core's level render greyed with a "Core level N required" tooltip; an invalid-build banner appears when a core swap orphans over-level parts (EC-CP-05); the post-battle summary shows the level-up notification. Run `/ux-design` for these before writing Workshop UI stories. Touch-first: tap-targets ≥ 44×44pt, no hover-only affordances (per technical-preferences).
 
 ## Acceptance Criteria
 
-[To be designed]
+**AC-CP-01 — Deployed core earns full xp_value; level-up signal fires on a threshold cross.** **GIVEN** a deployed core `cumulative_xp = 100` (level 2), defeated enemy `xp_value = 170`, **WHEN** `battle_ended(VICTORY)` fires, **THEN** `cumulative_xp == 270`, `level == 3`, **AND** `core_leveled_up` fires exactly once with params `[core_id, 2, 3]`. *(Rule 3; CP-F4)* **Test:** Unit. *(Assert via `assert_signal_emit_count(system, "core_leveled_up", 1)` + `assert_signal_emitted_with_parameters(...)` — the count assertion is required, not optional.)*
+
+**AC-CP-02 — Level derivation boundary (`≥` discriminator).** **GIVEN** `cumulative_xp ∈ {99, 100, 219, 220}`, **WHEN** CP-F1 derives level, **THEN** result is `{1, 2, 2, 3}` respectively. An implementation using `>` instead of `≥` returns level 1 at exactly 100 and fails. **Test:** Unit.
+
+**AC-CP-03 — Multi-level jump emits a single spanning signal.** **GIVEN** a level-1 core `cumulative_xp = 0`, **WHEN** awarded 600 XP in one battle, **THEN** `level == 5` (600 ≥ 537, < 744), **AND** `assert_signal_emit_count(system, "core_leveled_up", 1)` **AND** `assert_signal_emitted_with_parameters(system, "core_leveled_up", [core_id, 1, 5])`. An implementation firing one signal per crossed threshold (4 signals) fails the count assertion. *(EC-CP-02)* **Test:** Unit.
+
+**AC-CP-04 — Equip gate blocks under-level, allows at-level, ignores null.** **GIVEN** a build whose CORE is level 3: (a) equipping `level_requirement = 6` → `can_equip == false`, no part displaced, error returned; (b) equipping `level_requirement = 3` → `can_equip == true`, equip proceeds; (c) equipping `level_requirement = 0` (or null) → `can_equip == true` regardless of core level. *(Rule 4; EC-CP-04)* **Test:** Unit.
+
+**AC-CP-05 — Core swap invalidates over-level parts without unequipping them.** **GIVEN** a build with a Boss-grade part (`level_requirement = 6`) in ARMS and a level-8 core, **WHEN** the CORE is swapped to a level-4 core, **THEN** the build is flagged invalid, the ARMS part is **not** auto-unequipped, and the validation report lists the ARMS part. *(EC-CP-05)* **Test:** Unit. *(The "cannot enter combat while invalid" block is verified in the Workshop/TBC GDD, not here.)*
+
+**AC-CP-06 — Max level caps XP and the cap is per-core, not global.** **(A)** **GIVEN** a level-10 core `cumulative_xp = 2080`, **WHEN** awarded 170 XP, **THEN** `cumulative_xp` stays 2080, `level` stays 10. **(B)** **GIVEN** the same battle also has a benched level-5 core (below the lead cap), enemy `xp_value = 170`, **THEN** the benched core earns `floor(170 × 0.5) = 85` — proving the level-10 core's cap does not zero other cores' awards. *(EC-CP-01, EC-CP-12)* **Test:** Unit.
+
+**AC-CP-07 — Level is re-derived from cumulative_xp, never trusted from the serialized field.** **GIVEN** a `CoreProgressionRecord` deserialized from `{ cumulative_xp: 744, level: 3 }` (drifted), **WHEN** its level is derived, **THEN** `level == 6` (from `cumulative_xp` via CP-F1), not 3. *(EC-CP-06)* **Test:** Unit — exercises the derive method directly, independent of the Not-Started Exploration Progress system.
+
+**AC-CP-07b — Full save/load round-trip.** **GIVEN** a saved core at `cumulative_xp = 744`, **WHEN** the game saves and reloads via Exploration Progress, **THEN** the restored core derives to level 6. **Test:** Integration. **DEFERRED** — unblocks when Exploration Progress serialization is implemented.
+
+**AC-CP-08 — Bench-lead cap boundary (`≥` discriminator).** **GIVEN** `BENCH_LEVEL_LEAD_CAP = 3`, enemy `level = 3`, `xp_value = 65`: **(A)** benched core `level = 6` (6 ≥ 3+3) → earns **0** (the at-cap discriminator; a `>` impl wrongly awards XP here); **(B)** benched `level = 5` (5 < 6) → earns `floor(65 × 0.5) = 32`; **(C)** benched `level = 9` → earns **0**. *(Rule 3; EC-CP-03)* **Test:** Unit.
+
+**AC-CP-09 — Missing CoreProgressionRecord is created on inventory-add.** **GIVEN** a core part instance added to Inventory with no existing record, **WHEN** it is added, **THEN** a record is created with `cumulative_xp == 0, level == 1`. *(EC-CP-07)* **Test:** Unit.
+
+**AC-CP-10 — Unknown level_growth stat key is skipped with a warning.** **GIVEN** a core `level_growth = { structure: 2, bogus_stat: 5 }` at level 10, **WHEN** CP-F3 applies, **THEN** `structure` gains +18, `bogus_stat` is skipped, no crash, **AND** an injected logging spy shows a warning containing `"bogus_stat"`. *(EC-CP-08)* **Test:** Unit.
+
+**AC-CP-11 — Enemy xp_value of 0 vs. absent.** **(A)** **GIVEN** defeated enemy `xp_value = 0`, **WHEN** `battle_ended(VICTORY)`, **THEN** all cores earn 0, no level change (no warning — intentional). **(B)** **GIVEN** the payload lacks the `xp_value` key (`.has("xp_value") == false`), **THEN** all cores earn 0 **AND** a content warning is logged via the logging spy. *(EC-CP-09)* **Test:** Unit.
+
+**AC-CP-12 — Negative cumulative_xp is clamped on load.** **GIVEN** a `CoreProgressionRecord` deserialized with `cumulative_xp = -50`, **WHEN** it is sanitized, **THEN** `cumulative_xp == 0`, `level == 1`, and a content error is logged via the spy. *(EC-CP-10)* **Test:** Unit — exercises the sanitize method directly.
+
+**AC-CP-13 — Non-CORE level_growth is ignored.** **GIVEN** a WEAPON part with `level_growth = { physical_power: 5 }` and a core at level 10, **WHEN** CP-F3 runs, **THEN** `physical_power` receives **no** level contribution from the WEAPON — only the CORE-slot part's `level_growth` is read. *(EC-CP-11)* **Test:** Unit.
+
+**AC-CP-14 — Deployed vs. benched split across the full roster.** **GIVEN** core A deployed and cores B and C both benched (both below the lead cap), enemy `xp_value = 170`, **WHEN** `battle_ended(VICTORY)`, **THEN** A earns 170, B earns 85, C earns 85 — verifying the bench-list iteration does not skip the second benched core. *(Rule 3; CP-F2)* **Test:** Unit.
+
+**AC-CP-15 — Level-growth contribution is a level-1 no-op and scales thereafter.** **GIVEN** a core `level_growth = { energy_capacity: 3 }`: at **level 1**, `final_stat[energy_capacity]` is identical to the SA-F1 output (contribution 0 — assert the pipeline value, not just the delta); at **level 5**, contribution `= +12`; at **level 10**, `= +27`. *(CP-F3)* **Test:** Unit.
+
+**AC-CP-16 — CP-F4 xp_value from enemy level (isolates each constant).** **GIVEN** enemy `level = 1` WILD → `xp_value == 45` (isolates `XP_BASE`); `level = 3` WILD → `65`; `level = 5` BOSS → `170` (isolates `BOSS_XP_MULTIPLIER`). *(CP-F4)* **Test:** Unit.
+
+**AC-CP-17a — No XP on DEFEAT.** **GIVEN** cores with known `cumulative_xp`, **WHEN** `battle_ended(DEFEAT)` fires, **THEN** every core's `cumulative_xp` is unchanged (`assert_eq` to the pre-battle value). *(Rule 3)* **Test:** Unit.
+
+**AC-CP-17b — No XP on FLED.** **GIVEN** the same, **WHEN** `battle_ended(FLED)` fires, **THEN** every core's `cumulative_xp` is unchanged. A separate code path from DEFEAT. *(Rule 3)* **Test:** Unit.
+
+**AC-CP-18 — CP-F3 is applied AFTER SA-F1 and BEFORE SYN-F4 (pipeline ordering).** **GIVEN** a chassis archetype multiplier `M = 1.2`, a CORE with `level_growth = { target_stat: 10 }` at level 5 (contribution = 40), and an SA-F1 output of 120 for `target_stat` (100 raw × 1.2 archetype), **WHEN** Assembly computes `final_stat`, **THEN** the value fed to SYN-F4 is exactly **160** (= 120 + 40), **not 168** (= (100+40) × 1.2, which results from applying CP-F3 before SA-F1). This proves the contribution bypasses the chassis modifier and precedes synergy. *(Rule 6; CP-F3)* **Test:** Integration.
+
+**AC-CP-19 — core_leveled_up does NOT fire when no threshold is crossed.** **GIVEN** a level-2 core at `cumulative_xp = 100`, **WHEN** awarded 50 XP (new total 150 < threshold[3] = 220), **THEN** `cumulative_xp == 150`, `level` stays 2, **AND** `assert_signal_emit_count(system, "core_leveled_up", 0)`. *(Rule 2)* **Test:** Unit.
+
+**AC-CP-20 — Rarity level_requirement floor invariant (content validation).** For every Part DB entry: `part.level_requirement ≥ RARITY_LEVEL_FLOOR[part.rarity]` where the floors are Common 1 / Rare 3 / Boss-grade 6 / Prototype 8. A Prototype part authored with `level_requirement = 1` fails. *(Rule 5)* **Test:** Content Validation (ADVISORY gate).
+
+**Coverage check:** every core rule (1–7) and all four formulas (CP-F1/F2/F3/F4) have ≥1 AC; every edge case EC-CP-01…12 cites a listed AC. Pipeline ordering (AC-CP-18) and signal-suppression (AC-CP-19) are explicitly covered. Signal assertions use both `assert_signal_emit_count` and parameter checks. Load-behavior ACs (07, 12) are unit-scoped against the derive/sanitize methods; the full save/load round-trip (07b) is DEFERRED pending Exploration Progress.
 
 ## Open Questions
 
-[To be designed]
+### Cross-Document Change Manifest (Level Backbone — introduced 2026-07-12)
+
+The Level Backbone (enemy level + zone level range + core level) touches multiple Approved GDDs. This system owns the **player/core** side; the enemy/zone side is designed in the separate **Enemy Level & Zone Scaling** system.
+
+| # | Document | Status | Change | Owned by |
+|---|----------|--------|--------|----------|
+| 1 | game-concept.md | **DONE** (CD sign-off pending) | Anti-pillar #3 revised to "NOT a level-matching treadmill" | This session |
+| 2 | enemy-database.md | Approved | Add real `level` field; relate level to EDB-2 stat block; add `xp_value` (CP-F4 output); drop-quality hook | Enemy Level & Zone Scaling pass |
+| 3 | encounter-zone.md | Approved | Add `enemy_level_floor` / `enemy_level_roof`; enemies spawn in-band | Enemy Level & Zone Scaling pass |
+| 4 | zone-world-map.md | Approved | Map `difficulty_band` → zone level range | Enemy Level & Zone Scaling pass |
+| 5 | drop-system.md | Approved | Enemy level → drop rarity odds + stat rolls | Enemy Level & Zone Scaling pass |
+| 6 | part-database.md | Approved | Add `level_requirement` + `level_growth` fields | Core Progression errata pass |
+| 7 | symbot-assembly.md | Approved | Wire equip gate + CP-F3 step; discharges CORE-identity Deferred Obligation | Core Progression errata pass |
+| 8 | turn-based-combat.md | Approved | `battle_ended` carries `xp_value`/`level`/deployed set; update OQ-TBC-6 | Core Progression errata pass |
+| 9 | systems-index.md | Draft | Add **Enemy Level & Zone Scaling** system; update #10b scope | This session |
+
+### Genuine open questions
+
+- **OQ-CP-1 — MVP zone level range unset.** CP-F1 arc pacing and CP-F4 constants (`XP_BASE`/`XP_PER_ENEMY_LEVEL`) are provisional until the MVP zone's `enemy_level_floor`/`roof` are set. *Owner: Enemy Level & Zone Scaling pass.*
+- **OQ-CP-2 — Does enemy level DRIVE stats or LABEL them?** Either enemy level feeds a scaling formula that produces the stat block, or it is a consistent label over the existing manually-authored EDB-2 TTK-band stats. Central Enemy DB design decision. *Owner: Enemy Level & Zone Scaling pass.*
+- **OQ-CP-3 — Does source enemy level influence dropped part stat rolls?** The PoE item-level model: higher-level enemies drop parts with better stat rolls / rarity odds. *Owner: Drop System erratum.*
+- **OQ-CP-4 — Storage cores earn no XP.** Only the 3-slot active roster (1 deployed + up to 2 benched) earns; cores in storage earn nothing (Rule 3). Confirm intended. *Owner: playtest.*
+- **OQ-CP-5 — No core progress transfer.** A leveled core's XP cannot be transferred to another core (core = identity; leveling is earned per-core). Confirmed no-transfer. *Owner: this system.*
+- **OQ-CP-6 — CD sign-off on the anti-pillar revision.** The game-concept.md anti-pillar #3 change requires creative-director ratification before the Level Backbone is locked. *Owner: creative-director.*
