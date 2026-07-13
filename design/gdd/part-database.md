@@ -56,6 +56,8 @@ Every Sympart in the game is defined by the following fields. The Part Database 
 | `ammo_cost` | int | Ammo consumed per skill use; 0 if not ammo-based |
 | `flavor_text` | String | One-line lore description shown in UI |
 | `sprite_id` | StringName | Art asset identifier for this part's visual representation on a Symbot. The Symbot renderer and Workshop UI look up this ID to swap the sprite for the affected visual zone when the part is equipped. Required for all parts — must be non-null and non-empty. |
+| `level_requirement` | int | Core level required to equip this part. Authoring floors by rarity (CP Rule 5): COMMON=1, RARE=3, BOSS_GRADE=6, PROTOTYPE=8. Individual parts may have a higher `level_requirement` than their rarity floor; never lower. `null` or 0 defaults to no gate (treated as 1). *(Core Progression erratum 2026-07-12.)* |
+| `level_growth` | Dictionary[String, int] | Per-level flat stat bonus applied by CP-F3 (Core Progression); **non-null only on CORE-slot parts**. Key = canonical stat name; value = flat bonus per level. Empty dict or `null` for all non-CORE parts — Assembly ignores `level_growth` on non-CORE slots. *(Core Progression erratum 2026-07-12.)* |
 
 Fields reserved for later content (must be in schema now, `null` in MVP content): `motherboard_slot_type`, `ram_cost`, `weight_class`, `modification_slots`.
 

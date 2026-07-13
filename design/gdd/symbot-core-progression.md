@@ -45,9 +45,13 @@ The anti-fantasy to avoid: never let "need more XP" become grinding filler. If r
 
 A `CoreProgressionRecord` is created when a core is first added to Inventory, initialized with `cumulative_xp = 0, level = 1`. The Exploration Progress System serializes it to disk.
 
+**Core acquisition:** CORE-slot parts enter Inventory via the standard Drop System (enemy drops from specific enemy types, following standard drop mechanics) or as a starter gift at game start (`drop_enabled = false`, never hunted). The bench XP mechanic therefore becomes relevant only when the player holds ≥ 2 cores and has added a second to their active roster. A player with only 1 core on their team roster earns full XP from the deployed slot; there are no bench rows to populate. Early-game, the player will likely have a single Symbot for their first several encounters — this is expected and correct.
+
+**Interface:** this system exposes `register_core(core_instance_id: int) -> void`. The caller (Inventory, or whoever adds the core to the player's collection) invokes this on first-add. Calling `register_core` with an already-registered `core_instance_id` is a no-op with a content warning logged. No other system creates `CoreProgressionRecord` entries.
+
 ---
 
-**Rule 2 — Level derivation.** Level is a deterministic function of `cumulative_xp`, computed via CP-F1 (the XP threshold table). The table is derived from a base cost of `XP_PER_LEVEL_BASE` with a `LEVEL_COST_RAMP` multiplier per level (see Formulas). Level never decreases. After any XP gain, re-derive level and emit `core_leveled_up(core_instance_id, old_level, new_level)` if level increased. Multiple levels in a single XP gain are possible (emit for each crossed threshold).
+**Rule 2 — Level derivation.** Level is a deterministic function of `cumulative_xp`, computed via CP-F1 (the XP threshold table). The table is derived from a base cost of `XP_PER_LEVEL_BASE` with a `LEVEL_COST_RAMP` multiplier per level (see Formulas). Level never decreases. After any XP gain, re-derive level and emit `core_leveled_up(core_instance_id, old_level, new_level)` if level increased. Multiple levels in a single XP gain are possible — in this case, emit **once** with the final span (`old_level → new_level`); consumers that unlock per-level content iterate the crossed range.
 
 ---
 
@@ -130,6 +134,7 @@ The CP contribution at level 1 is zero (`core.level - 1 = 0`), so the integratio
 | **Turn-Based Combat** (upstream) | Emits `battle_ended(VICTORY, enemy_id, fired_break_events)` plus whether the battle was BOSS or WILD, plus which Symbots were deployed | This system receives the signal and awards XP per Rules 3–4 |
 | **Symbot Assembly** (downstream) | Assembly invokes the equip gate (Rule 4) on every equip call; reads `level_growth` from the core's SympartData and applies the CP contribution step | Assembly is the only system that calls the gate-check; this system never directly blocks equip — it exposes `can_equip(core_instance_id, part)` → bool |
 | **Part Database** *(erratum pending)* | Defines `level_requirement: int` and `level_growth: Dictionary[String, int]` on all SympartData | Source of gate thresholds and per-core growth authored values |
+| **Inventory** (upstream caller) | Calls `register_core(core_instance_id)` when a CORE-slot part is first added to the player's collection | Record creation only; Inventory does not read progression state |
 | **Exploration Progress** (downstream) | Serializes `CoreProgressionRecord` (cumulative_xp per core instance_id); state is always re-derived on load (level re-computed from cumulative_xp, never read from serialized level) | Persistence layer only |
 | **Workshop System** (downstream) | Reads `core.level` and `cumulative_xp` for display; forwards Assembly's gate-check result as a UI validation message | Display and equip routing only |
 
@@ -166,6 +171,8 @@ Converts a core's `cumulative_xp` to its level. Thresholds derive from `XP_PER_L
 | 10 | 2,080 | 430 |
 
 **Output:** `level = L` where `threshold[L] ≤ cumulative_xp < threshold[L+1]` (capped at `MAX_CORE_LEVEL`). Pure sorted-integer lookup at runtime — no float arithmetic.
+
+**Derivation procedure (use when extending the table for a new `MAX_CORE_LEVEL` value within the safe range 8–12):** For each level k (k ≥ 2), the per-level cost = `round(XP_PER_LEVEL_BASE × LEVEL_COST_RAMP^(k-2))`. Accumulate the running sum of these rounded per-step values to obtain each threshold — do not round the cumulative total itself. Example: k=5 → `round(100 × 1.20^3) = round(172.8) = 173`; threshold[5] = 100+120+144+173 = 537.
 
 ---
 
@@ -287,7 +294,8 @@ Applied per stat key in the equipped core's `level_growth` dictionary, after SA-
 - **Part Database erratum:** add `level_requirement: int` and `level_growth: Dictionary[String, int]` to the Sympart schema; author `level_requirement` per Rule 5's rarity table; author `level_growth` on CORE parts only.
 - **Symbot Assembly erratum:** wire the equip gate call (Rule 4) and insert the CP-F3 contribution step between SA-F1 and SYN-F4. Discharges Assembly's open **"CORE identity mechanical enforcement"** Deferred Obligation — the CORE now has mechanical teeth (leveled anchor + gate).
 - **Enemy Level & Zone Scaling (new system)** owns: Enemy DB `level` + `xp_value` fields (CP-F4 output storage), Encounter Zone `enemy_level_floor`/`enemy_level_roof`, Zone & World Map `difficulty_band`↔level-range mapping, and Drop System level→rarity/stat-roll influence. This system (Core Progression) depends on its enemy-level output but does not own it.
-- **No dependency on Inventory beyond the `instance_id` key:** `CoreProgressionRecord` is keyed by the Inventory `instance_id` but Inventory does not read progression state.
+- **Inventory erratum:** Inventory must call `register_core(core_instance_id)` whenever a CORE-slot part is added to the player's collection. This is a one-way call — no progression state flows back. Inventory does not read `CoreProgressionRecord` fields; it only triggers record creation.
+- **No reverse dependency on Inventory:** `CoreProgressionRecord` is keyed by the Inventory `instance_id` but this system never queries Inventory for data.
 
 ## Tuning Knobs
 
@@ -322,6 +330,7 @@ This system renders nothing directly; its footprint is the signals it emits. `co
 Exposes read APIs + signals; contributes no screens of its own. Consumed by Workshop UI (#18) and Combat UI (#19):
 - Reads: `core.level`, `cumulative_xp`, XP-to-next (`threshold[level+1] − cumulative_xp`), per-part `level_requirement`, `can_equip()` result.
 - Signals: `core_leveled_up(core_id: int, old_level: int, new_level: int)`.
+- **Post-battle bench-XP legibility (bench-lead-cap transparency):** The post-battle summary must list per-core XP earned. For a benched core that earned 0 due to the level-lead cap (Rule 3 guard: `benched.level ≥ enemy_level + BENCH_LEVEL_LEAD_CAP`), the entry must display "0 XP — over-level for this zone" rather than a blank line. This ensures the player understands why their veteran core stopped advancing. *(Detail spec in Workshop UI / Combat UI GDD.)*
 
 > **📌 UX Flag — Symbot Core Progression**: Workshop UI must show the core's level + an XP-progress bar on the core slot; parts above the core's level render greyed with a "Core level N required" tooltip; an invalid-build banner appears when a core swap orphans over-level parts (EC-CP-05); the post-battle summary shows the level-up notification. Run `/ux-design` for these before writing Workshop UI stories. Touch-first: tap-targets ≥ 44×44pt, no hover-only affordances (per technical-preferences).
 
@@ -331,13 +340,13 @@ Exposes read APIs + signals; contributes no screens of its own. Consumed by Work
 
 **AC-CP-02 — Level derivation boundary (`≥` discriminator).** **GIVEN** `cumulative_xp ∈ {99, 100, 219, 220}`, **WHEN** CP-F1 derives level, **THEN** result is `{1, 2, 2, 3}` respectively. An implementation using `>` instead of `≥` returns level 1 at exactly 100 and fails. **Test:** Unit.
 
-**AC-CP-03 — Multi-level jump emits a single spanning signal.** **GIVEN** a level-1 core `cumulative_xp = 0`, **WHEN** awarded 600 XP in one battle, **THEN** `level == 5` (600 ≥ 537, < 744), **AND** `assert_signal_emit_count(system, "core_leveled_up", 1)` **AND** `assert_signal_emitted_with_parameters(system, "core_leveled_up", [core_id, 1, 5])`. An implementation firing one signal per crossed threshold (4 signals) fails the count assertion. *(EC-CP-02)* **Test:** Unit.
+**AC-CP-03 — Multi-level jump emits a single spanning signal.** **GIVEN** a level-1 core `cumulative_xp = 0`, **WHEN** awarded 600 XP in one battle, **THEN** `level == 5` (600 ≥ 537, < 744), **AND** `assert_signal_emit_count(system, "core_leveled_up", 1)` **AND** `assert_signal_emitted_with_parameters(system, "core_leveled_up", [core_id, 1, 5])`. An implementation firing one signal per crossed threshold (4 signals) fails the count assertion. **Sub-case (discriminator for `≥` vs `>` at the final level boundary):** starting from `cumulative_xp = 0`, award exactly **537 XP** (= threshold[5]); assert `level == 5` and `assert_signal_emitted_with_parameters(system, "core_leveled_up", [core_id, 1, 5])`. A `>` implementation yields `level = 4` here (537 is the threshold value, not strictly greater than itself). *(EC-CP-02)* **Test:** Unit.
 
 **AC-CP-04 — Equip gate blocks under-level, allows at-level, ignores null.** **GIVEN** a build whose CORE is level 3: (a) equipping `level_requirement = 6` → `can_equip == false`, no part displaced, error returned; (b) equipping `level_requirement = 3` → `can_equip == true`, equip proceeds; (c) equipping `level_requirement = 0` (or null) → `can_equip == true` regardless of core level. *(Rule 4; EC-CP-04)* **Test:** Unit.
 
 **AC-CP-05 — Core swap invalidates over-level parts without unequipping them.** **GIVEN** a build with a Boss-grade part (`level_requirement = 6`) in ARMS and a level-8 core, **WHEN** the CORE is swapped to a level-4 core, **THEN** the build is flagged invalid, the ARMS part is **not** auto-unequipped, and the validation report lists the ARMS part. *(EC-CP-05)* **Test:** Unit. *(The "cannot enter combat while invalid" block is verified in the Workshop/TBC GDD, not here.)*
 
-**AC-CP-06 — Max level caps XP and the cap is per-core, not global.** **(A)** **GIVEN** a level-10 core `cumulative_xp = 2080`, **WHEN** awarded 170 XP, **THEN** `cumulative_xp` stays 2080, `level` stays 10. **(B)** **GIVEN** the same battle also has a benched level-5 core (below the lead cap), enemy `xp_value = 170`, **THEN** the benched core earns `floor(170 × 0.5) = 85` — proving the level-10 core's cap does not zero other cores' awards. *(EC-CP-01, EC-CP-12)* **Test:** Unit.
+**AC-CP-06 — Max level caps XP and the cap is per-core, not global.** **(A)** **GIVEN** a level-10 core `cumulative_xp = 2080`, **WHEN** awarded 85 XP, **THEN** `cumulative_xp` stays 2080, `level` stays 10. **(B)** **GIVEN** the same battle also has a benched level-5 core (below the lead cap), enemy `xp_value = 85` (level-5 WILD: `(35+50)×1`), **THEN** the benched core earns `floor(85 × 0.5) = 42` — proving the level-10 core's cap does not zero other cores' awards. (`round(42.5) = 43` in GDScript round-half-away-from-zero — this is the discriminating case per project standards: floor ≠ round.) *(EC-CP-01, EC-CP-12)* **Test:** Unit.
 
 **AC-CP-07 — Level is re-derived from cumulative_xp, never trusted from the serialized field.** **GIVEN** a `CoreProgressionRecord` deserialized from `{ cumulative_xp: 744, level: 3 }` (drifted), **WHEN** its level is derived, **THEN** `level == 6` (from `cumulative_xp` via CP-F1), not 3. *(EC-CP-06)* **Test:** Unit — exercises the derive method directly, independent of the Not-Started Exploration Progress system.
 
@@ -345,7 +354,7 @@ Exposes read APIs + signals; contributes no screens of its own. Consumed by Work
 
 **AC-CP-08 — Bench-lead cap boundary (`≥` discriminator).** **GIVEN** `BENCH_LEVEL_LEAD_CAP = 3`, enemy `level = 3`, `xp_value = 65`: **(A)** benched core `level = 6` (6 ≥ 3+3) → earns **0** (the at-cap discriminator; a `>` impl wrongly awards XP here); **(B)** benched `level = 5` (5 < 6) → earns `floor(65 × 0.5) = 32`; **(C)** benched `level = 9` → earns **0**. *(Rule 3; EC-CP-03)* **Test:** Unit.
 
-**AC-CP-09 — Missing CoreProgressionRecord is created on inventory-add.** **GIVEN** a core part instance added to Inventory with no existing record, **WHEN** it is added, **THEN** a record is created with `cumulative_xp == 0, level == 1`. *(EC-CP-07)* **Test:** Unit.
+**AC-CP-09 — Missing CoreProgressionRecord is created on register_core call.** **GIVEN** a core part instance with no existing record, **WHEN** `register_core(core_instance_id)` is called, **THEN** a record is created with `cumulative_xp == 0, level == 1`. Calling `register_core` a second time with the same id is a no-op with a content warning emitted via logging spy. *(EC-CP-07, Rule 1 interface)* **Test:** Unit.
 
 **AC-CP-10 — Unknown level_growth stat key is skipped with a warning.** **GIVEN** a core `level_growth = { structure: 2, bogus_stat: 5 }` at level 10, **WHEN** CP-F3 applies, **THEN** `structure` gains +18, `bogus_stat` is skipped, no crash, **AND** an injected logging spy shows a warning containing `"bogus_stat"`. *(EC-CP-08)* **Test:** Unit.
 
@@ -365,7 +374,7 @@ Exposes read APIs + signals; contributes no screens of its own. Consumed by Work
 
 **AC-CP-17b — No XP on FLED.** **GIVEN** the same, **WHEN** `battle_ended(FLED)` fires, **THEN** every core's `cumulative_xp` is unchanged. A separate code path from DEFEAT. *(Rule 3)* **Test:** Unit.
 
-**AC-CP-18 — CP-F3 is applied AFTER SA-F1 and BEFORE SYN-F4 (pipeline ordering).** **GIVEN** a chassis archetype multiplier `M = 1.2`, a CORE with `level_growth = { target_stat: 10 }` at level 5 (contribution = 40), and an SA-F1 output of 120 for `target_stat` (100 raw × 1.2 archetype), **WHEN** Assembly computes `final_stat`, **THEN** the value fed to SYN-F4 is exactly **160** (= 120 + 40), **not 168** (= (100+40) × 1.2, which results from applying CP-F3 before SA-F1). This proves the contribution bypasses the chassis modifier and precedes synergy. *(Rule 6; CP-F3)* **Test:** Integration.
+**AC-CP-18 — CP-F3 is applied AFTER SA-F1 and BEFORE SYN-F4 (pipeline ordering).** **GIVEN** a chassis archetype multiplier `M = 1.2`, a CORE with `level_growth = { target_stat: 10 }` at level 5 (contribution = 40), and an SA-F1 output of 120 for `target_stat` (100 raw × 1.2 archetype), **WHEN** Assembly computes `final_stat`, **THEN** the value fed to SYN-F4 is exactly **160** (= 120 + 40), **not 168** (= (100+40) × 1.2, which results from applying CP-F3 before SA-F1). This proves the contribution bypasses the chassis modifier and precedes synergy. *(Rule 6; CP-F3)* **Test:** Integration. **DEFERRED** — unblocks when the Symbot Assembly erratum (inserting the CP-F3 contribution step between SA-F1 and SYN-F4) is applied. *(Matches AC-CP-07b deferral pattern.)*
 
 **AC-CP-19 — core_leveled_up does NOT fire when no threshold is crossed.** **GIVEN** a level-2 core at `cumulative_xp = 100`, **WHEN** awarded 50 XP (new total 150 < threshold[3] = 220), **THEN** `cumulative_xp == 150`, `level` stays 2, **AND** `assert_signal_emit_count(system, "core_leveled_up", 0)`. *(Rule 2)* **Test:** Unit.
 
@@ -398,4 +407,5 @@ The Level Backbone (enemy level + zone level range + core level) touches multipl
 - **OQ-CP-3 — Does source enemy level influence dropped part stat rolls?** The PoE item-level model: higher-level enemies drop parts with better stat rolls / rarity odds. *Owner: Drop System erratum.*
 - **OQ-CP-4 — Storage cores earn no XP.** Only the 3-slot active roster (1 deployed + up to 2 benched) earns; cores in storage earn nothing (Rule 3). Confirm intended. *Owner: playtest.*
 - **OQ-CP-5 — No core progress transfer.** A leveled core's XP cannot be transferred to another core (core = identity; leveling is earned per-core). Confirmed no-transfer. *Owner: this system.*
-- **OQ-CP-6 — CD sign-off on the anti-pillar revision.** The game-concept.md anti-pillar #3 change requires creative-director ratification before the Level Backbone is locked. *Owner: creative-director.*
+- **OQ-CP-6 — CD sign-off on the anti-pillar revision.** The game-concept.md anti-pillar #3 change and the Core Fantasy revision (2026-07-12 design-review) require creative-director ratification before the Level Backbone is locked. *Owner: creative-director.*
+- **OQ-CP-7 — Bench dead zone in single-zone MVP.** In a single-zone MVP with enemy levels ~1–6, any benched core at level > `enemy_level_roof + BENCH_LEVEL_LEAD_CAP` stops earning bench XP entirely. Veterans (level 7+) produce no bench XP in the early zone. This is intentional anti-power-leveling, but it means the bench mechanic is an early-game tool only in a single-zone context. *Resolve at Enemy Level & Zone Scaling pass (OQ-CP-1): ensure the MVP zone's enemy_level_roof is high enough to keep the bench mechanic usable for most of the level-1–10 arc, or explicitly document the bench system as early-game only.* *Owner: Enemy Level & Zone Scaling pass.*

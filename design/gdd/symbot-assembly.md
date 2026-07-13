@@ -67,6 +67,7 @@ Every slot ships pre-equipped with a starter `COMMON` part when a new `SymbotBui
 When the player equips part `P` into slot `slot_type`:
 
 1. **Validate**: `P.slot_type == slot_type`. If not, reject — mismatched slot types cannot be equipped.
+1b. **Level gate** *(Core Progression erratum 2026-07-12)*: Call `CoreProgression.can_equip(build.core_instance_id, P)`. If false, reject — return error `"Core level [N] required — your [core name] is level [M]."` No part is displaced. If `P.slot_type == CORE`, the gate still applies against the *current* core's level (a lower-level core cannot equip itself to a slot requiring a higher level; in practice the gate fires on non-CORE parts being gated by the core that will be replaced — the Workshop UI handles the re-validate pass on swap).
 2. **Displace**: The currently equipped part in `slot_type` is returned to the player's Inventory as a new instance at its current upgrade tier.
 3. **Install**: `P` is removed from Inventory and installed into the slot.
 4. **Recompute**: `final_stat` is recomputed eagerly (see Rule 6).
@@ -109,6 +110,7 @@ Assembly owns the complete Formula 1 / 2 / 2b computation. Triggered eagerly aft
 2. **Sum per stat**: Sum all 8 parts' upgraded contributions for each stat key.
 3. **Apply chassis modifier**: Read `chassis_archetype` from the equipped `CHASSIS` part. For each stat `S`: multiply sum by `chassis_modifier.get(S, 1.0)` (using the Part DB Formula 1 modifier table; unlisted stats use ×1.0).
 4. **Floor and clamp**: `final_stat[S] = max(0, floor(sum[S] × chassis_modifier[S] + 0.0001))`.
+4b. **Core level-growth contribution (CP-F3)** *(Core Progression erratum 2026-07-12)*: For each `stat_key` in the equipped CORE part's `level_growth` dictionary: `final_stat[stat_key] += level_growth[stat_key] × (core.level - 1)`. This step bypasses the chassis modifier (applied post-multiplication, so level growth is not amplified by archetype) and precedes synergy bonuses (SYN-F4 applied at battle time by TBC). At level 1, contribution is 0 for all stats. Unknown stat keys in `level_growth` are skipped with a content warning (same pattern as EC-SA-05 / Part DB EC-08).
 5. **Store**: Replace the current `final_stat` dictionary with the newly computed values.
 6. **Emit**: `stats_changed(final_stat)`.
 
@@ -263,7 +265,8 @@ The hypothetical build is computed in memory only — no equip event fires, no s
 
 | System | What Assembly Reads | Status |
 |--------|-------------------|--------|
-| **Part Database** | `SympartData` definitions via `PartDatabase.get_part(id)` — slot types, `stat_bonuses`, `chassis_archetype`, `active_skill_id`, `passive_id`, upgrade tier multiplier table, `heat_generation`, `ammo_cost` | Approved ✓ |
+| **Part Database** | `SympartData` definitions via `PartDatabase.get_part(id)` — slot types, `stat_bonuses`, `chassis_archetype`, `active_skill_id`, `passive_id`, upgrade tier multiplier table, `heat_generation`, `ammo_cost`, `level_requirement`, `level_growth` | Approved ✓ *(level_requirement + level_growth erratum applied 2026-07-12)* |
+| **Core Progression** | `can_equip(core_instance_id, part) → bool` for the Rule 3 level gate; `CoreProgressionRecord.level` for the CP-F3 step in Rule 6 | Approved ✓ *(Core Progression erratum 2026-07-12)* |
 | **Inventory System** | Provides parts available for equipping; receives displaced parts on swap | Not Started |
 | **Move Database** | `active_skill_id` references must resolve to valid entries at runtime | Not Started (referenced in Part DB Rule 1; not yet in systems index as a standalone system) |
 | **Passive Database** | `passive_id` references must resolve to valid entries at runtime | Not Started |

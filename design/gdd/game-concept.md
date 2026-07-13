@@ -39,9 +39,7 @@ part you equip changes how a Symbot thinks, moves, attacks, and defends. A fire-
 a shielded support unit, a hybrid glass cannon built from boss parts no one else has found —
 your workshop is your expression and your laboratory.
 
-The game rewards you not for grinding levels, but for understanding the system deeply:
-knowing which parts synergize, which boss drops what component, which build counters which
-opponent. Power isn't given — it's engineered.
+The game rewards mastery over the system: knowing which parts synergize, which boss drops what component, which build counters which opponent. Levels pace your access to the workshop's most powerful tools — but the workshop wins the fight. Power isn't given — it's engineered.
 
 ---
 
