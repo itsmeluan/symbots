@@ -1,14 +1,17 @@
 # Active Session State
 
-## Current Task — Enemy Level & Zone Scaling (#10c) — COMPLETE → Designed (2026-07-12, lean)
-- **File**: design/gdd/enemy-level-zone-scaling.md — ALL sections written (8 required + V/A + UI + OQ; 0 placeholders, ~5.0k words).
-- **Decisions locked**: Label/Anchor model (OQ-CP-2 RESOLVED — level labels manually-authored EDB-2 stats, never drives them by formula); MVP zone [1,6] difficulty_band=EARLY (OQ-CP-1 RESOLVED — CP-F4 XP_BASE=35/XP_PER_ENEMY_LEVEL=10 CONFIRMED, pacing L3 ~4-5 fights / L5 ~10-12); OQ-CP-3 rarity-odds half RESOLVED via DS-F-LEVEL (stat-roll half deferred to Alpha, OQ-ELZS-2); OQ-CP-7 RESOLVED (bench dead zone L9-10 intentional, 80% arc coverage at roof=6).
-- **Key values**: MAX_ENEMY_LEVEL=10 (matches MAX_CORE_LEVEL); level_band(): L1-2 EARLY / L3-5 MID / L6+ HIGH (MID_FLOOR=3, HIGH_FLOOR=6 — systems-designer ruled 6 over 5, avoids Boss-1 compound bonus); LEVEL_RARITY_MULTS only Rare scaled: EARLY 0.5 / MID 1.0 / HIGH 1.5. Enemy levels: WILD-early L1-2 (45/55 xp), WILD-mid L3-5 (65/75/85), Boss 1 L5 (170), Boss 2 L6 (190).
-- **DS-F-LEVEL**: effective_drop_rate = clamp(base × level_rarity_mult × Π(cond) × beacon, 0, 1). Float-clamp pattern (CD-4/CD-5 family) — NO epsilon/scan. Discriminating spread 0.1875/0.375/0.5625. Rare+HIGH+Beacon+cond → clamp(1.125)=1.0 expected (EC-ELZS-07).
-- **ECs/ACs**: 11 ECs, ACs = 7 BLOCKING + 1 ADVISORY + 2 delegated (AC-CP-08, AC-ELZS-10-internal). Full EC↔AC coverage. Unit ACs (09/10) live in tests/unit/drop_system/. qa-lead flagged + fixed dangling-AC gap (EC-ELZS-11 added).
-- **Registry updated + YAML-validated (87 entries)**: +DS-F-LEVEL formula; +5 constants (MAX_ENEMY_LEVEL, LEVEL_BAND_MID_FLOOR, LEVEL_BAND_HIGH_FLOOR, LEVEL_RARITY_MULTS, MVP_ZONE_LEVEL_BAND); CP-F4/XP_BASE/XP_PER_ENEMY_LEVEL provisional→CONFIRMED; referenced_by += #10c on 6 entries. systems-index #10c → Designed; docs started 16→17; MVP designed 17→18/25.
-- **4 ERRATA PENDING (apply on approval)**: (1) Enemy DB — add `level` + `xp_value` fields + stored-equals-derived validation + bidirectional dep; (2) Encounter Zone — add `enemy_level_floor`/`enemy_level_roof` + in-band validation + bidirectional dep; (3) Drop System — amend DS-1 with level_rarity_mult (DS-F-LEVEL) + LEVEL_RARITY_MULTS knob + bidirectional dep; (4) Zone & World Map — Rule 4 difficulty_band↔level-range guideline + ADVISORY validation + bidirectional dep.
-- **NEXT**: `/clear` then `/design-review design/gdd/enemy-level-zone-scaling.md` FRESH session. On approval apply the 4 errata (+ also still owed: Core Progression errata pass A — Part DB/Assembly/TBC; CD sign-off OQ-CP-6 on anti-pillar). Then #11→ done; remaining MVP: #13 World Loot, #14 Exploration Progress, #15 Workshop, #16 Overworld Nav, #17 Save/Load, UI/Audio layer. Playtest watch: OQ-ELZS-4 (EARLY Rare ×0.5 drought feel).
+## Current Task — Enemy Level & Zone Scaling (#10c) — /design-review NEEDS REVISION → fixes applied (2026-07-12)
+- **File**: design/gdd/enemy-level-zone-scaling.md — 7 fixes applied this session; re-review pending.
+- **Review verdict**: NEEDS REVISION. 5 specialists + CD (full-panel). 4 blockers fixed same session:
+  - B1: Drop System economy erratum note added to Bidirectionality Notes (DS-F-LEVEL lowers arc-avg Rare ~25% → revised Scrap central ~1,660 vs ~1,840)
+  - B2: Errata pre-gate process block added to AC section
+  - B3: EC-ELZS-12 added (empty pool); AC-ELZS-05(D) citation corrected; EC↔AC cross-check → 12 ECs
+  - B4: AC-ELZS-11 added (BLOCKING integration gate — DS-F-LEVEL wired in production Drop System)
+  - + 3 RECOMMENDED fixes: drop-band legibility requirement to Combat UI (Pillar 2), Tuning Knobs warning threshold corrected (1.333 not 2.0), Boss 1 MID-band rationale note
+- **CD key rulings**: Game-designer's 3 design-philosophy blockers → RECOMMENDED (zone-selection farming is on-reference MHW/PoE gradient; fix = legibility not cutting the multiplier; HIGH-band Boss-2-exclusive = OQ-ELZS-1). Economy erratum is the real gate. DS-2/Prototype coupling → ADVISORY.
+- **systems-index #10c → In Review**. docs reviewed = 17→17 (In Review, not yet Approved). MVP designed 18/25.
+- **4 ERRATA STILL PENDING (apply on approval)**: (1) Enemy DB; (2) Encounter Zone; (3) Drop System — DS-F-LEVEL + **economy model re-annotation** (Scrap revised ~1,660); (4) Zone & World Map.
+- **NEXT**: `/clear` then `/design-review design/gdd/enemy-level-zone-scaling.md` FRESH session (re-review). On approval apply 4 errata. Then: Core Progression errata pass A (Part DB/Assembly/TBC) still owed; CD sign-off OQ-CP-6 on anti-pillar; remaining MVP: #13 World Loot, #14, #15, #16, #17, UI/Audio. Playtest watches: OQ-ELZS-4 (EARLY Rare drought) + OQ-ELZS-1 (HIGH band re-validate at Vertical Slice).
 
 ## Prior Task — Symbot Core Progression (#10b) /design-system IN PROGRESS (2026-07-12)
 - **File**: design/gdd/symbot-core-progression.md (skeleton created)
