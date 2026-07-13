@@ -131,3 +131,11 @@
 - Report: design/gdd/gdd-cross-review-2026-07-13.md (second-pass section appended)
 
 <!-- HYGIENE-BATCH: 2026-07-13 | C-3/C-4/C-5/C-6 all RESOLVED (from /review-all-gdds). C-3: part-database BASE_REGEN->BASE_ENERGY_REGEN, range 5-15->8-15 (owner TBC, 8-floor load-bearing for TBC-F6). C-4: synergy line 232 stale DF-1 [1,165]->resolved [1,225] past-tense. C-5: drop Rule 4 -> canonical amended DS-1 (level_rarity_mult + beacon_factor) + AC-ELZS-10/11 warning. C-6: Part DB downstream +Symbot Core Progression (10->11), Upstream stays None. Registry synced, YAML valid. Logs updated (part-database/synergy-system/drop-system). Remaining advisories: is_build_valid interface enumeration (arch), enemy-ai H_cur [1,594] vs 612. All cross-review consistency warnings now cleared; designed set clean for architecture. -->
+
+## Session Extract — /create-architecture 2026-07-13
+- Artifact: docs/architecture/architecture.md v1.0 written (layers, module ownership, data flow, API boundaries, 8-ADR work plan, principles, open questions).
+- TD sign-off: APPROVED WITH CONCERNS (blueprint sound; 4 Foundation ADRs must be written+Accepted before coding; persistence budget + battle_ended disambiguation are load-bearing). LP-FEASIBILITY skipped (lean mode).
+- TR baseline: 148 requirements across 19 GDDs (Core 41, Data 28, Save/Load 24, Events 22, Content-Val 18, Perf 7, UI 6, Engine 2). 6 hotspots. 0/148 currently in ADRs → 8 Required ADRs.
+- Required ADRs (priority): Foundation ADR-0001 Save/Load, ADR-0002 Event bus, ADR-0003 Content resources, ADR-0004 Scene/boot; Core ADR-0005 stat pipeline, ADR-0006 RNG, ADR-0007 TBC FSM; Presentation ADR-0008 touch UI.
+- Stage: Technical Setup. Next: write the 4 Foundation ADRs (ADR-0001 first) via /architecture-decision; then /architecture-review (populates tr-registry), /test-setup, /ux-design, /create-control-manifest. Also /art-bible early (per gate).
+- Engine gap: turn-based 2D → most Godot 4.6 HIGH-risk is 3D/N-A; real surface = UI dual-focus/AccessKit + Resources/serialization (FileAccess.store_*→bool, duplicate_deep).
