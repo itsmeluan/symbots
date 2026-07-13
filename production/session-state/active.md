@@ -1,6 +1,11 @@
 # Active Session State
 
-## Current Task — COMPLETE: Exploration Progress (#14) APPROVED (round-2 confirmation, 2026-07-13) + EZ Rule 8a erratum APPLIED
+## Current Task — World Loot System (#13) — In Design (2026-07-13)
+- File: design/gdd/world-loot.md
+- Current section: D Formulas
+- Sections complete: A Overview ✓ | B Player Fantasy ✓ | C Detailed Design ✓
+
+## Prior — COMPLETE: Exploration Progress (#14) APPROVED (round-2 confirmation, 2026-07-13) + EZ Rule 8a erratum APPLIED
 
 - **Round-2 confirmation full-panel /design-review** (game-designer, systems-designer, qa-lead in parallel + creative-director synthesis). All 4 round-1 blockers verified fixed by all three specialists. Verdicts split (GD: APPROVED; SD/QA: NEEDS REVISION) — CD adjudicated **2 true gates** of 5 claimed blockers, fixed same session:
   1. **MIGRATE semantics** (SD-B2 = QA-B1, converged): Rule 9 now normative — hookless MIGRATE → **REFUSE** under the full no-partial-restore guarantee (also covers mid-migration hook failure, discharging the conditional SD-B3); EP-PRED-1 comment + worked example updated; **AC-EP-02(b) rewritten** with positive domain-state assertion (win_count==5 kept, spy: no restore() invoked) + two discriminators (silent-zero impl, fall-through-RESTORE impl).
