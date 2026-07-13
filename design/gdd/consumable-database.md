@@ -90,7 +90,7 @@ A single **use** is an atomic transaction: validate (item in inventory, valid ta
 
 ## Formulas
 
-**No formula in this section uses `floor()`/`ceil()`.** CD-1/2/3 are pure integer clamps (`min`/`max`); CD-4/5 are float-multiply-into-`clamp()` feeding a `randf() <` comparison (identical in structure to the already-approved EZ-1 and DS-1). No epsilon nudge is needed and **no python3 float scan is required** — stated explicitly so a reviewer does not flag the absence. All effect magnitudes are per-entry constants (Tuning Knobs, Section G). Combat resource ranges are owned by upstream systems: `max_structure` ∈ [60, 594] (SA-F1, **part-derived**), Heat ∈ [0, 100] (Overheat at 100), `max_energy` ∈ [80, 120] (SA-F1, **part-derived**), `BASE_ENERGY_REGEN = 10`/turn (TBC-F2). **CP-F3 addendum (Core Progression erratum 2026-07-13):** a leveled CORE adds level-growth on top of the part-derived maxima — `max_structure` up to ~612, `max_energy` up to ~147 at level 10 (Spark Core reference). The CD-1/CD-3 `min(max_…, …)` clamps read the runtime max and self-correct, so formula correctness is unaffected; the Power Cell "`+50` on an 80-cap pool" balance note (CD-3) is framed against the part-only floor and reads as a *lower* bound on the pool a leveled core carries.
+**No formula in this section uses `floor()`/`ceil()`.** CD-1/2/3 are pure integer clamps (`min`/`max`); CD-4/5 are float-multiply-into-`clamp()` feeding a `randf() <` comparison (identical in structure to the already-approved EZ-1 and DS-1). No epsilon nudge is needed and **no python3 float scan is required** — stated explicitly so a reviewer does not flag the absence. All effect magnitudes are per-entry constants (Tuning Knobs, Section G). Combat resource ranges are owned by upstream systems: `max_structure` ∈ [60, 612] (part-derived floor 594 via SA-F1 + up to +18 CP-F3 CORE growth at L10), Heat ∈ [0, 100] (Overheat at 100), `max_energy` ∈ [80, 147] (part-derived ceiling 120 via SA-F1 + up to +27 CP-F3 at L10), `BASE_ENERGY_REGEN = 10`/turn (TBC-F2). **CP-F3 note (Core Progression erratum ST-4, 2026-07-13):** the ranges above are the *runtime* maxima a leveled CORE actually carries; the CD-1/CD-3 variable tables now declare these runtime ranges and the `min(max_…, …)` clamps read the runtime max, and **AC-CD-03 case C explicitly tests the L10 `max_energy = 147` ceiling** so a hardcoded-120 implementation is caught (previously all BLOCKING CD tests passed while a L10 core would clamp at the wrong value — systems-designer F4). The Power Cell "`+50` on an 80-cap pool" balance note (CD-3) is framed against the part-only floor and reads as a *lower* bound on the pool a leveled core carries.
 
 ### CD-1 — RESTORE_STRUCTURE (Weld Patch / Repair Kit / Field Forge)
 
@@ -99,7 +99,7 @@ A single **use** is an atomic transaction: validate (item in inventory, valid ta
 | Variable | Symbol | Type | Range | Description |
 |----------|--------|------|-------|-------------|
 | Current Structure | `current_structure` | int | [1, max_structure] | Target's Structure at use (> 0 enforced by living-target rule) |
-| Max Structure | `max_structure` | int | [60, 594] | Target's max Structure (SA-F1, build-dependent) |
+| Max Structure | `max_structure` | int | [60, 612] | Target's max Structure at runtime — part-derived floor 594 (SA-F1) + up to +18 CP-F3 CORE growth at L10 (Core Progression erratum ST-4) |
 | Restore amount | `amount` | int | tier constant | **Weld Patch 25 / Repair Kit 50 / Field Forge 120** |
 | Output | `new_structure` | int | [1, max_structure] | Structure after application; overheal clamped, never exceeds max |
 
@@ -130,7 +130,7 @@ A single **use** is an atomic transaction: validate (item in inventory, valid ta
 | Variable | Symbol | Type | Range | Description |
 |----------|--------|------|-------|-------------|
 | Current Energy | `current_energy` | int | [0, max_energy] | Target's Energy at use |
-| Max Energy | `max_energy` | int | [80, 120] | Target's energy capacity (SA-F1) |
+| Max Energy | `max_energy` | int | [80, 147] | Target's energy capacity at runtime — part-derived ceiling 120 (SA-F1) + up to +27 CP-F3 CORE growth at L10 (Core Progression erratum ST-4) |
 | Restore amount | `amount` | int | constant **25** | Energy restored by a Power Cell |
 | Output | `new_energy` | int | [0, max_energy] | Energy after application; capped at max_energy |
 
@@ -317,7 +317,7 @@ Obligations on Combat UI, World Map UI, and Inventory UI (all Not Started) — l
 
 **AC-CD-02** (BLOCKING, Unit): CD-2 REDUCE_HEAT applies + floors at 0. **A:** Coolant Flush (50), `current_heat=30` → `0` (floored, not −20). **B:** `current_heat=80` → `30`. Discriminator: an impl omitting `max(0,…)` returns −20 in A.
 
-**AC-CD-03** (BLOCKING, Unit): CD-3 RESTORE_ENERGY applies + caps. **A:** Power Cell (25), `max_energy=100`, `current=90` → `100` (clamped, not 115). **B:** `max_energy=80`, `current=50` → `75`. Discriminator: an impl omitting `min()` returns 115 in A.
+**AC-CD-03** (BLOCKING, Unit): CD-3 RESTORE_ENERGY applies + caps. **A:** Power Cell (25), `max_energy=100`, `current=90` → `100` (clamped, not 115). **B:** `max_energy=80`, `current=50` → `75`. **C (leveled-core ceiling — Core Progression erratum ST-4):** `max_energy=147` (L10 Spark Core: 120 part-derived + 27 CP-F3), `current=130` → `min(147, 155) == 147` (clamped to the *runtime* max, not a hardcoded 120). Discriminator: an impl omitting `min()` returns 115 in A; **an impl that hardcodes the cap at 120 returns 120 in C (≠ 147)** — C is the sole catch for a hardcoded-ceiling bug against an endgame leveled core.
 
 **AC-CD-04** (BLOCKING, Unit): CD-4 BOOST_DROP injects + clamps. Beacon `multiplier=2.0`, `cond_mults=[]`. **A:** `base_rate=0.25` (Rare) → `effective == 0.5` (exact). **B:** `base_rate=0.70` (Common) → `effective == 1.0` (clamped from 1.40). Discriminator: an impl omitting `clamp` returns 1.4 in B; an impl treating empty product as 0.0 returns 0.0 in A.
 

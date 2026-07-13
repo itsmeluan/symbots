@@ -1,5 +1,20 @@
 # Review Log — Enemy Level & Zone Scaling (#10c)
 
+## Erratum — 2026-07-13 — ST-1 (Core Progression equip-gate coverage + boss completion bonus) APPLIED — light re-review touch owed
+
+Source: Symbot Core Progression 4th-pass `/design-review` (2026-07-13); economy-designer + game-designer findings on OQ-CP-8 (equip-gate frustration), tracked as **ST-1** in `production/errata-backlog.md`. Lever chosen by the user: **per-boss completion bonus XP**.
+
+**Problem:** With confirmed CP-F4 constants and the [1,6] MVP zone, the natural path to each boss left the player short of the equip gate for the part that boss drops (Boss-grade L6: ~304 XP short at floor; Prototype L8: ~482 short) — the boss-drop part greyed out at the exact moment the Player Fantasy promises "it finally became equippable." OQ-CP-8 had been routed to ELZS "as a blocking Pillar-2 AC" but **ELZS was Approved without absorbing it** — the obligation lived only as prose in a closing Core Progression doc pointing at this closed one.
+
+**Changes applied here (file-verified):**
+1. **AC-ELZS-14** (BLOCKING) — equip-gate XP coverage, **passing**: `(required_wins × xp_value[enemy_level_floor]) + Σ(xp_value + completion_bonus_xp over bosses defeated by the gate) ≥ threshold[gate_level]`. Boss-grade L6: `6×45 + (170+310) = 750 ≥ 744` ✓; Prototype L8: `10×45 + (170+310) + (190+180) = 1300 ≥ 1292` ✓. Discriminators: MUST use `enemy_level_floor` (45) not roof (85); `required_wins` is WILD-only. Retunes must fix a failing gate with a **per-gate** lever, never a blanket CP-F4 change. Summary count 10 → **11 BLOCKING**.
+2. Enemy DB erratum bullet extended: also add `completion_bonus_xp: int` (0 WILD; Boss 1 = 310, Boss 2 = 180), calibrated here against AC-ELZS-14.
+3. Core Progression interaction row updated: this system now **calibrates** `completion_bonus_xp` and resolves OQ-CP-8 (not just supplies `level`/`xp_value`).
+
+**Correctness note:** `win_count` counts WILD wins only (ZWM EC-ZWM-07 / AC-ZWM-05) and Boss 2 carries `requires_defeated = Boss 1` (Encounter Zone Rule 8 Boss-1-first sequencing) — so Boss 2's worst-case floor path is a full 10 WILD + the guaranteed Boss 1 award + Boss 2; the 310/180 values clear both gates with a small floor-margin (real play, above floor level, overshoots comfortably but stays below the next gate's threshold — no shortcut).
+
+**Sibling edits (this same session):** Core Progression Rule 3a + AC-CP-24 + OQ-CP-8 resolution; Enemy DB `completion_bonus_xp` field; TBC `battle_ended` payload extended to carry it. **Owed:** a light `/design-review enemy-level-zone-scaling.md` confirmation touch (mechanical erratum — Status stays APPROVED).
+
 ## Review — 2026-07-12 — Verdict: NEEDS REVISION
 Scope signal: M
 Specialists: systems-designer, game-designer, economy-designer, qa-lead, creative-director

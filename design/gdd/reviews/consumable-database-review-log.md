@@ -18,6 +18,20 @@ Blocking items: 5 | Recommended: 3 (converged: 2)
 
 **3 RECOMMENDED (carry into errata work):** (a) encounter-modifier "latest wins" lets a COMMON Lure silently consume an active RARE Jammer — game-designer + economy-designer converged; consider rejection-with-confirm, bind chosen behavior into the Encounter Zone erratum. (b) Beacon spend-on-flee needs explicit intended-tension framing in Player Fantasy — game-designer + economy-designer converged; bind into TBC/Drop errata. (c) "Beacon self-replenishes ~2:1" claim is contingent on the unset Drop System consumable drop frequencies (OQ-CD-2) — restate the ×3.0 break threshold in terms of Beacon's share of the RARE pool.
 
+## Erratum — 2026-07-13 — ST-4 (Core Progression CP-F3 range) APPLIED — light re-review touch owed
+
+Source: Symbot Core Progression 4th-pass `/design-review` (2026-07-13); systems-designer finding **F4** (BLOCKING), tracked as **ST-4** in `production/errata-backlog.md`.
+
+**Problem:** CP-F3 CORE level-growth is additive on top of the SA-F1 part-derived combat-resource maxima. A level-10 Spark Core reaches `max_energy ≈ 147` / `max_structure ≈ 612`, but CD-1/CD-3 still declared the pre-CP-F3 ranges (`max_structure ∈ [60,594]`, `max_energy ∈ [80,120]`) and AC-CD-03's ceiling fixture used `max_energy=100`. **A hardcoded-120-ceiling implementation passed every BLOCKING CD test yet would clamp a leveled core's Power Cell at the wrong value in production** — a silent endgame runtime failure with no test coverage. (The CD-1/CD-3 `min()` clamps self-correct *if* the impl reads the runtime max; nothing tested that it does.)
+
+**Changes applied (file-verified):**
+1. CD-1 `max_structure` variable-table range `[60, 594]` → **`[60, 612]`** (annotated: part-derived floor 594 + up to +18 CP-F3 at L10).
+2. CD-3 `max_energy` variable-table range `[80, 120]` → **`[80, 147]`** (annotated: part-derived ceiling 120 + up to +27 CP-F3 at L10).
+3. Formulas-preamble CP-F3 note rewritten: the declared ranges are now the *runtime* maxima; points at AC-CD-03 case C as the guard; structure-side (+18/+3%) mirrored.
+4. **AC-CD-03 case C added** (BLOCKING, Unit): `max_energy=147`, `current=130` → `min(147, 155) == 147`. Discriminator: a hardcoded-120 impl returns 120 ≠ 147 — the sole catch for the F4 bug. AC count unchanged (25 — a case on the existing AC, not a new AC).
+
+**Owed:** a light `/design-review consumable-database.md` confirmation touch (mechanical erratum, no design change — Status stays APPROVED). Registry: no constant changed (max_structure/max_energy ceilings are SA-F1-derived runtime values, not registered constants); the `WORLD_SCRAP_CEILING`-style internal-only pattern does not apply here.
+
 **Nice-to-have (deferred):** AC-CD-05 Case C explicit `qty==1` pre-condition + mutation confirm; AC-CD-19 promote to BLOCKING or add to smoke-check gate; AC-CD-03 add `current_energy=0` boundary + CD-4 Boss-grade Beacon (`0.001×2.0`) worked example; player-readable Jammer/Lure duration unit; Overview 6-vs-8 clarifying sentence.
 
 Prior verdict resolved: First review

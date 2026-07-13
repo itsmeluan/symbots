@@ -1,5 +1,13 @@
 # Review Log: Enemy Database
 
+## Erratum — 2026-07-13 — ST-1 (`completion_bonus_xp` boss field) APPLIED — light re-review touch owed
+
+Source: Symbot Core Progression 4th-pass `/design-review` (2026-07-13), OQ-CP-8 fix (per-boss completion bonus lever), tracked as **ST-1** in `production/errata-backlog.md`.
+
+**Change (file-verified):** new schema field **`completion_bonus_xp: int`** added after `xp_value`. Flat one-time bonus added to `xp_value` by Core Progression at battle end (CP Rule 3a) before the deployed/benched split; **`0` for all WILD**, non-zero **only on BOSS** (MVP: Boss 1 = 310, Boss 2 = 180). Unlike `xp_value` it is **not** CP-F4-derived — per-boss authored, calibrated by ELZS against AC-ELZS-14. Content validation (BLOCKING): `≥ 0`, and `0` unless `enemy_class == BOSS`. Flows to Core Progression via the TBC `battle_ended` payload.
+
+**Owed:** light `/design-review enemy-database.md` confirmation touch (mechanical schema-field addition — Status stays APPROVED); the `completion_bonus_xp` content-validation rule may warrant a small AC when the Enemy DB content-validation suite is next revised (currently specified in the field description).
+
 ## Review — 2026-07-09 — Verdict: NEEDS REVISION
 Scope signal: L
 Specialists: game-designer, systems-designer, economy-designer, qa-lead; senior synthesis: creative-director

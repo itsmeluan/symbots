@@ -1,5 +1,24 @@
 # Review Log — Turn-Based Combat System
 
+## Erratum — 2026-07-13 — ST-1 (`completion_bonus_xp` payload field) APPLIED — light re-review touch owed
+
+Source: Symbot Core Progression 4th-pass `/design-review` (2026-07-13), OQ-CP-8 fix (per-boss completion bonus), tracked as **ST-1** in `production/errata-backlog.md`.
+
+**Change (file-verified):** Rule 12 `battle_ended` payload extended to carry **`completion_bonus_xp: int`** (all three outcomes — VICTORY/DEFEAT/FLED — for payload uniformity; the signal is now "seven-field"). It rides alongside `xp_value`/`enemy_level`; Core Progression consumes it and folds it into `full_xp` per CP Rule 3a. `0` for WILD; per-boss for BOSS (Enemy DB field). AC-TBC-31 (payload/dedup AC) unchanged — it never enumerated the XP fields (consistent with how the 2026-07-12 Level Backbone payload extension was handled). **Owed:** light `/design-review turn-based-combat.md` confirmation touch (mechanical payload extension — Status stays APPROVED); this and the ST-3 touch below can be combined into one TBC re-review.
+
+## Erratum — 2026-07-13 — ST-3 (Core Progression invalid-build combat refusal) APPLIED — light re-review touch owed
+
+Source: Symbot Core Progression 4th-pass `/design-review` (2026-07-13); qa-lead finding **R4-B3** (BLOCKING), tracked as **ST-3** in `production/errata-backlog.md`.
+
+**Problem:** Core Progression EC-CP-05 — after a CORE swap to a lower-level core, now-over-level parts are flagged (not auto-unequipped) and the build "cannot enter combat while invalid." Core Progression exposes `is_build_valid(build) → bool` and explicitly delegates the *combat-entry refusal* to whichever system starts battles. TBC (Approved) contained **no AC** for it — the obligation lived only as prose in Core Progression. **A player who swaps a core and presses "Enter Combat" was stopped by no tested code path.**
+
+**Changes applied (file-verified):**
+1. **Rule 2 step 0** (battle-start build-validity precondition): before any snapshot, TBC MUST call `CoreProgression.is_build_valid(build)` for every fielded Symbot; if any is invalid, the battle does not start — TBC emits `battle_start_refused(invalid_symbot_ids, offending_parts)`, instantiates no runtime state, fires no `battle_ended`. Overworld Navigation (Not Started) noted as an additional earlier gate; TBC's check is the authoritative last line of defense.
+2. **AC-TBC-42** (BLOCKING, Unit): invalid build (Boss-grade ARMS `level_requirement=6` on a level-4 CORE) refused at battle start, no runtime state created, `battle_start_refused` names the offender, no `battle_ended`; **positive control** for an all-valid roster proceeding normally.
+3. **Core Progression** added to TBC's Upstream dependency table as a **Hard** read (`is_build_valid`), annotated as a mutual reference with the Rule 12 `battle_ended` emit (not a design-order cycle — stateless query). Core Progression EC-CP-05 + Bidirectionality note updated to name AC-TBC-42 (owner-pointer discharged).
+
+**Owed:** a light `/design-review turn-based-combat.md` confirmation touch (mechanical erratum adding one precondition + one Unit AC; no design change — Status stays APPROVED). No registry change.
+
 ## Review — 2026-07-11 — Verdict: NEEDS REVISION → APPROVED (fix-confirmation of the Part-Break erratum; 2 blockers fixed same session)
 Scope signal: S
 Specialists: game-designer, systems-designer, qa-lead, creative-director (senior synthesis)
