@@ -37,7 +37,7 @@
 #   Each entry: name, status, source, referenced_by[], attributes{}, added, revised
 
 version: 1
-last_updated: "2026-07-13"  # ELZS (#10c) APPROVED (round-4 confirmation, 2026-07-13) + ALL 4 ERRATA APPLIED same day: Enemy DB (level+xp_value schema fields), Encounter Zone (enemy_level_floor/roof + in-band validation), Drop System (canonical DS-1 + DS-F-LEVEL section + AC-DS-31 A2 fixture + economy re-annotation ~1,800 ESTIMATED + tuning knobs), ZWM (difficulty_band level-range guideline table). /consistency-check 2026-07-13: PASS, 0 conflicts, 69 entries verified; registry synced (10 stale erratum-pending comments discharged; LEVEL_RARITY_MULTS HIGH safe range corrected 1.2-2.0 -> 1.2-1.6 per source ELZS; NEW constant DIFFICULTY_BAND_LEVEL_RANGES registered — table now lives in both ELZS Rule 4 and ZWM Tuning Knobs). Prior 2026-07-12 — Enemy Level & Zone Scaling (#10c) authored: the Level Backbone enemy/zone side. NEW formula DS-F-LEVEL (level_rarity_mult into DS-1 product, float-clamp no-epsilon, referenced_by drop-system erratum pending). NEW constants: MAX_ENEMY_LEVEL 10, LEVEL_BAND_MID_FLOOR 3, LEVEL_BAND_HIGH_FLOOR 6, LEVEL_RARITY_MULTS (only Rare scaled: EARLY 0.5/MID 1.0/HIGH 1.5), MVP_ZONE_LEVEL_BAND [1,6]. UPDATES: CP-F4 + XP_BASE + XP_PER_ENEMY_LEVEL provisional->CONFIRMED (OQ-CP-1 RESOLVED; pacing L3 ~4-5 fights, L5 ~10-12); BENCH_LEVEL_LEAD_CAP note (OQ-CP-7 RESOLVED, bench 80% arc coverage); referenced_by += #10c on CP-F4/XP_BASE/XP_PER_ENEMY_LEVEL/BOSS_XP_MULTIPLIER/BENCH_LEVEL_LEAD_CAP/MAX_CORE_LEVEL. Label/anchor model (OQ-CP-2 RESOLVED); OQ-CP-3 rarity-half resolved via DS-F-LEVEL (stat-roll half deferred OQ-ELZS-2). 4 errata owed on approval: Enemy DB (level+xp_value) / Encounter Zone (floor/roof) / Drop (DS-F-LEVEL) / ZWM (band mapping). Prior — Symbot Core Progression (#10b) authored (Designed, pending /design-review): the LEVEL BACKBONE. Formulas CP-F1 (XP->level table, MAX_CORE_LEVEL=10) + CP-F2 (bench floor, epsilon-safe 0.5) + CP-F3 (level_growth stat contrib, post-SA-F1/pre-SYN-F4, referenced_by symbot-assembly erratum) + CP-F4 (xp_value from enemy_level, referenced_by enemy-database + turn-based-combat errata). Constants: MAX_CORE_LEVEL 10, XP_PER_LEVEL_BASE 100, LEVEL_COST_RAMP 1.20, XP_BASE 35*, XP_PER_ENEMY_LEVEL 10*, BOSS_XP_MULTIPLIER 2, BENCH_XP_SHARE 0.5, BENCH_LEVEL_LEAD_CAP 3 (*=provisional pending MVP zone level range, OQ-CP-1). game-concept anti-pillar #3 revised (level-matching, CD sign-off pending). New system #10c Enemy Level & Zone Scaling added to index. 2 errata passes owed (Part DB/Assembly/TBC + the #10c enemy/zone pass). Prior — Enemy AI System (#10) authored (Designed, pending /design-review): formula EAI-1 (move-scoring heuristic, no floor/ceil — only DF-1 preview floors) + constants STATUS_BASE_VALUE 1.0 + AI_PROFILE_WEIGHTS (AGGRESSIVE/TACTICAL/OPPORTUNIST). Discharges TBC AC-TBC-INT-02 + Enemy DB ED4 (2 light errata pending: TBC un-defer AC-TBC-INT-02; Enemy DB un-block AC-ED-01d via has_profile). DF-1 referenced_by += enemy-ai.md. Prior same day — Consumable Database (#1c) authored: 8 consumable items (weld_patch/repair_kit/field_forge/coolant_flush/power_cell/salvage_beacon/signal_jammer/scrap_lure) + 5 formulas (CD-1..CD-5, all no-floor/no-epsilon) + 10 constants (WELD_PATCH_AMOUNT 25 / REPAIR_KIT_AMOUNT 50 / FIELD_FORGE_AMOUNT 120 / COOLANT_FLUSH_AMOUNT 50 / POWER_CELL_AMOUNT 25 / BEACON_MULTIPLIER 2.0 / JAMMER_RATE_MULTIPLIER 0.1 / JAMMER_DURATION_STEPS 20 / LURE_RATE_MULTIPLIER 2.5 / LURE_DURATION_STEPS 15). Consumable Database APPROVED 2026-07-12 (full-panel /design-review; 5 surgical blockers fixed; systems-designer IEEE-754 blocker refuted by python3 scan). All 3 errata now APPLIED to the Approved source GDDs (registry + GDD together): TBC Rule 7a use-item action + AC-TBC-41 (preventive-only Overheat, no-turn-on-reject); Drop Rule 12 consumable channel + Beacon injection into effective_drop_rate + AC-DS-31 (Part B consumable drop frequencies scoped as OPEN OQ-DS-7); Encounter Zone EZ-1 modifier hook + AC-EZ-59 + OQ-EZ-4 RESOLVED. referenced_by lists already point at TBC/Drop/Encounter-Zone. BASE_ENERGY_REGEN confirmed 10 (not 8). Earlier 2026-07-11: Encounter Zone (#7) authored: added EZ-1 (per-step trigger) + EZ-2 (weighted enemy selection) formulas — both no-floor/no-epsilon (no scan needed); EZ-2 referenced_by TBC (enemy_id handoff). Density-band rates + gate constants held internal to encounter-zone.md until another system references them. Earlier same day: Part-Break design-review revision: ENRAGE_PER_BREAK retuned 0.15->0.12 (PB-F5 output_range 456->428, all enrage mults now epsilon-defensive); Part-Break PB-F1..F5 formulas, BREAK_SPILLOVER/ENRAGE_PER_BREAK/BREAK_BIAS_MULTIPLIERS constants; referenced_by updated on EDB-1/BREAK_HP_MIN/DAMAGE_FLOOR/MOVE-F1/TBC-F5. Earlier: N_PROTO_PITY calibration re-sync; MULTIPLIER_FLOOR (Rule 5a); N_PROTO_PITY, M_BOSS_PITY; passives section (3 status riders)
+last_updated: "2026-07-13"  # /consistency-check 2026-07-13 (Core Progression 4th-pass + ST-1..ST-4 errata): PASS, 0 conflicts. Synced: CD-1 max_structure [60,594]->[60,612] + CD-3 max_energy [80,120]->[80,147] (runtime = part-derived + CP-F3 CORE growth, ST-4); SA-F1 output_range note added (part-derived; CP-F3 adds on top post-pipeline, AC-SA-15); NEW constant completion_bonus_xp (per-boss Boss1=310/Boss2=180, 0 WILD; mechanism=CP Rule 3a, field=Enemy DB, values=ELZS AC-ELZS-14; resolves OQ-CP-8). NOTE: enemy `structure` 60-594 UNCHANGED (EDB-2 enemy HP, different quantity). Advisory: enemy-ai.md EAI-1 H_cur [1,594] slightly stale vs leveled-core 612 (heuristic input, non-blocking). --- ELZS (#10c) APPROVED (round-4 confirmation, 2026-07-13) + ALL 4 ERRATA APPLIED same day: Enemy DB (level+xp_value schema fields), Encounter Zone (enemy_level_floor/roof + in-band validation), Drop System (canonical DS-1 + DS-F-LEVEL section + AC-DS-31 A2 fixture + economy re-annotation ~1,800 ESTIMATED + tuning knobs), ZWM (difficulty_band level-range guideline table). /consistency-check 2026-07-13: PASS, 0 conflicts, 69 entries verified; registry synced (10 stale erratum-pending comments discharged; LEVEL_RARITY_MULTS HIGH safe range corrected 1.2-2.0 -> 1.2-1.6 per source ELZS; NEW constant DIFFICULTY_BAND_LEVEL_RANGES registered — table now lives in both ELZS Rule 4 and ZWM Tuning Knobs). Prior 2026-07-12 — Enemy Level & Zone Scaling (#10c) authored: the Level Backbone enemy/zone side. NEW formula DS-F-LEVEL (level_rarity_mult into DS-1 product, float-clamp no-epsilon, referenced_by drop-system erratum pending). NEW constants: MAX_ENEMY_LEVEL 10, LEVEL_BAND_MID_FLOOR 3, LEVEL_BAND_HIGH_FLOOR 6, LEVEL_RARITY_MULTS (only Rare scaled: EARLY 0.5/MID 1.0/HIGH 1.5), MVP_ZONE_LEVEL_BAND [1,6]. UPDATES: CP-F4 + XP_BASE + XP_PER_ENEMY_LEVEL provisional->CONFIRMED (OQ-CP-1 RESOLVED; pacing L3 ~4-5 fights, L5 ~10-12); BENCH_LEVEL_LEAD_CAP note (OQ-CP-7 RESOLVED, bench 80% arc coverage); referenced_by += #10c on CP-F4/XP_BASE/XP_PER_ENEMY_LEVEL/BOSS_XP_MULTIPLIER/BENCH_LEVEL_LEAD_CAP/MAX_CORE_LEVEL. Label/anchor model (OQ-CP-2 RESOLVED); OQ-CP-3 rarity-half resolved via DS-F-LEVEL (stat-roll half deferred OQ-ELZS-2). 4 errata owed on approval: Enemy DB (level+xp_value) / Encounter Zone (floor/roof) / Drop (DS-F-LEVEL) / ZWM (band mapping). Prior — Symbot Core Progression (#10b) authored (Designed, pending /design-review): the LEVEL BACKBONE. Formulas CP-F1 (XP->level table, MAX_CORE_LEVEL=10) + CP-F2 (bench floor, epsilon-safe 0.5) + CP-F3 (level_growth stat contrib, post-SA-F1/pre-SYN-F4, referenced_by symbot-assembly erratum) + CP-F4 (xp_value from enemy_level, referenced_by enemy-database + turn-based-combat errata). Constants: MAX_CORE_LEVEL 10, XP_PER_LEVEL_BASE 100, LEVEL_COST_RAMP 1.20, XP_BASE 35*, XP_PER_ENEMY_LEVEL 10*, BOSS_XP_MULTIPLIER 2, BENCH_XP_SHARE 0.5, BENCH_LEVEL_LEAD_CAP 3 (*=provisional pending MVP zone level range, OQ-CP-1). game-concept anti-pillar #3 revised (level-matching, CD sign-off pending). New system #10c Enemy Level & Zone Scaling added to index. 2 errata passes owed (Part DB/Assembly/TBC + the #10c enemy/zone pass). Prior — Enemy AI System (#10) authored (Designed, pending /design-review): formula EAI-1 (move-scoring heuristic, no floor/ceil — only DF-1 preview floors) + constants STATUS_BASE_VALUE 1.0 + AI_PROFILE_WEIGHTS (AGGRESSIVE/TACTICAL/OPPORTUNIST). Discharges TBC AC-TBC-INT-02 + Enemy DB ED4 (2 light errata pending: TBC un-defer AC-TBC-INT-02; Enemy DB un-block AC-ED-01d via has_profile). DF-1 referenced_by += enemy-ai.md. Prior same day — Consumable Database (#1c) authored: 8 consumable items (weld_patch/repair_kit/field_forge/coolant_flush/power_cell/salvage_beacon/signal_jammer/scrap_lure) + 5 formulas (CD-1..CD-5, all no-floor/no-epsilon) + 10 constants (WELD_PATCH_AMOUNT 25 / REPAIR_KIT_AMOUNT 50 / FIELD_FORGE_AMOUNT 120 / COOLANT_FLUSH_AMOUNT 50 / POWER_CELL_AMOUNT 25 / BEACON_MULTIPLIER 2.0 / JAMMER_RATE_MULTIPLIER 0.1 / JAMMER_DURATION_STEPS 20 / LURE_RATE_MULTIPLIER 2.5 / LURE_DURATION_STEPS 15). Consumable Database APPROVED 2026-07-12 (full-panel /design-review; 5 surgical blockers fixed; systems-designer IEEE-754 blocker refuted by python3 scan). All 3 errata now APPLIED to the Approved source GDDs (registry + GDD together): TBC Rule 7a use-item action + AC-TBC-41 (preventive-only Overheat, no-turn-on-reject); Drop Rule 12 consumable channel + Beacon injection into effective_drop_rate + AC-DS-31 (Part B consumable drop frequencies scoped as OPEN OQ-DS-7); Encounter Zone EZ-1 modifier hook + AC-EZ-59 + OQ-EZ-4 RESOLVED. referenced_by lists already point at TBC/Drop/Encounter-Zone. BASE_ENERGY_REGEN confirmed 10 (not 8). Earlier 2026-07-11: Encounter Zone (#7) authored: added EZ-1 (per-step trigger) + EZ-2 (weighted enemy selection) formulas — both no-floor/no-epsilon (no scan needed); EZ-2 referenced_by TBC (enemy_id handoff). Density-band rates + gate constants held internal to encounter-zone.md until another system references them. Earlier same day: Part-Break design-review revision: ENRAGE_PER_BREAK retuned 0.15->0.12 (PB-F5 output_range 456->428, all enrage mults now epsilon-defensive); Part-Break PB-F1..F5 formulas, BREAK_SPILLOVER/ENRAGE_PER_BREAK/BREAK_BIAS_MULTIPLIERS constants; referenced_by updated on EDB-1/BREAK_HP_MIN/DAMAGE_FLOOR/MOVE-F1/TBC-F5. Earlier: N_PROTO_PITY calibration re-sync; MULTIPLIER_FLOOR (Rule 5a); N_PROTO_PITY, M_BOSS_PITY; passives section (3 status riders)
 
 # ─── ENTITIES ────────────────────────────────────────────────────────────────
 # Named game-world objects: enemies, NPCs, characters, factions, bosses.
@@ -357,9 +357,14 @@ formulas:
       15 * (2/3) = 5.000000000000001 in IEEE 754; ceil without -0.0001 returns
       6 → result -6 (wrong); with epsilon: ceil(4.9999...) = 5 → result -5 (correct)).
       output_range[recharge] max is 30 as authoring target only; values above 30
-      are possible via content error and are logged but not clamped (EC-SA-06)."
+      are possible via content error and are logged but not clamped (EC-SA-06).
+      CP-F3 note (Core Progression, 2026-07-13): these output_range values are PART-DERIVED (this pipeline's
+      output). A leveled CORE's CP-F3 level-growth is added AFTER SA-F1 and BEFORE synergy (separate formula,
+      verified by AC-SA-15 / AC-CP-18), raising the RUNTIME max above these values — structure up to 612 (+18),
+      energy_capacity up to 147 (+27) with the Spark Core reference at L10. Power stats (physical_power/energy_power
+      0-110) are NEVER grown by CP-F3 (Core Progression Rule 6a), preserving DF-1's A in [0,150] domain."
     added: 2026-07-10
-    revised: "2026-07-10"  # corrected step3 (removed erroneous floor), step4 (removed stat_max ref), epsilon example, and range notes
+    revised: "2026-07-13"  # 2026-07-10 pipeline corrections; 2026-07-13 CP-F3 runtime-max note (ST-2/ST-4)
 
   - name: SYN-F1
     status: active
@@ -748,14 +753,17 @@ formulas:
       - design/gdd/turn-based-combat.md      # use-item applies RESTORE_STRUCTURE (erratum)
     variables:
       - current_structure (int [1, max_structure])
-      - max_structure (int [60, 594], SA-F1)
+      - max_structure (int [60, 612], runtime; part-derived floor 594 SA-F1 + up to +18 CP-F3 CORE growth at L10)  # was: [60, 594], SA-F1 — before 2026-07-13 (CP-F3 ST-4)
       - amount (int; Weld Patch 25 / Repair Kit 50 / Field Forge 120)
     output_range: "[1, max_structure]"
     expression: "new_structure = min(max_structure, current_structure + amount)"
     notes: "RESTORE_STRUCTURE. Flat (not %-of-max) — meaningful across the 10x Structure spread and scan-exempt
-      (a % model would add floor(pct*max) needing an epsilon scan). Pure int + min() clamp; NO floor/epsilon."
+      (a % model would add floor(pct*max) needing an epsilon scan). Pure int + min() clamp; NO floor/epsilon.
+      max_structure is the RUNTIME max (part-derived SA-F1 [60,594] + CP-F3 CORE level-growth up to +18 at L10 = 612);
+      the min() clamp reads the runtime value and self-corrects. AC-CD-01 uses 594 fixtures (part-only); leveled-core
+      ceiling coverage is on AC-CD-03 case C (energy side, higher-risk gap). CP-F3 ST-4 erratum 2026-07-13."
     added: 2026-07-12
-    revised: ""
+    revised: "2026-07-13"
 
   - name: CD-2
     status: active
@@ -781,11 +789,14 @@ formulas:
       - design/gdd/turn-based-combat.md      # use-item applies RESTORE_ENERGY (erratum)
     variables:
       - current_energy (int [0, max_energy])
-      - max_energy (int [80, 120], SA-F1)
+      - max_energy (int [80, 147], runtime; part-derived ceiling 120 SA-F1 + up to +27 CP-F3 CORE growth at L10)  # was: [80, 120], SA-F1 — before 2026-07-13 (CP-F3 ST-4)
       - amount (int; Power Cell 25)
     output_range: "[0, max_energy]"
     expression: "new_energy = min(max_energy, current_energy + amount)"
-    notes: "RESTORE_ENERGY. min() cap. NO floor/epsilon. 25 ~= 2.5 turns of BASE_ENERGY_REGEN (10) — a bridge, not a reset."
+    notes: "RESTORE_ENERGY. min() cap. NO floor/epsilon. 25 ~= 2.5 turns of BASE_ENERGY_REGEN (10) — a bridge, not a reset.
+      max_energy is the RUNTIME max (part-derived SA-F1 [80,120] + CP-F3 CORE level-growth up to +27 at L10 = 147);
+      AC-CD-03 case C (max_energy=147, current=130 -> 147) is the BLOCKING guard against a hardcoded-120 impl (systems-designer
+      F4, highest silent-failure risk). CP-F3 ST-4 erratum 2026-07-13."
     added: 2026-07-12
     revised: ""
 
@@ -1540,6 +1551,28 @@ constants:
     unit: role_multiplier for BOSS enemies in CP-F4
     notes: "Keep an INTEGER to preserve CP-F4's epsilon-free property (int*int is exact). Safe range 2-3. WILD role_multiplier is 1."
     added: 2026-07-12
+    revised: ""
+
+  - name: completion_bonus_xp
+    status: active
+    source: design/gdd/enemy-database.md            # the schema FIELD lives here
+    referenced_by:
+      - design/gdd/symbot-core-progression.md       # MECHANISM: CP Rule 3a folds it into full_xp; AC-CP-24; resolves OQ-CP-8
+      - design/gdd/enemy-level-zone-scaling.md       # VALUES calibrated here vs AC-ELZS-14 (equip-gate coverage)
+      - design/gdd/turn-based-combat.md              # carried in the battle_ended payload (Rule 12, seven-field)
+      - design/gdd/enemy-database.md
+    value: "per-boss (Boss 1 = 310, Boss 2 = 180); 0 for all WILD"
+    unit: flat one-time XP bonus added to xp_value on defeating a BOSS
+    notes: "Core Progression ST-1 erratum 2026-07-13 (resolves OQ-CP-8 equip-gate frustration; lever = per-boss completion bonus).
+      NOT CP-F4-scaled (not enemy_level-derived) — a per-boss authored Enemy DB field, calibrated by ELZS against AC-ELZS-14 so
+      the deployed core lands at its drop's equip gate on the WORST-CASE floor path: Boss-grade L6 -> 6*45 + (170+310) = 750 >= threshold[6]=744;
+      Prototype L8 -> 10*45 + (170+310) + (190+180) = 1300 >= threshold[8]=1292 (win_count is WILD-only per ZWM EC-ZWM-07; Boss 2 requires_defeated=Boss 1
+      per EZ Rule 8, so Boss 1's award is always in the Boss 2 pot). Anti-shortcut: each bonus keeps the deployed core BELOW the next gate's threshold
+      (Boss 1 < threshold[7]=993; Boss 2 < threshold[9]=1650). Ownership: mechanism = Core Progression Rule 3a; field = Enemy DB; values = ELZS.
+      Content-val (BLOCKING): >= 0, and 0 unless enemy_class == BOSS. Retune only via per-gate levers (this bonus / required_wins / rarity level_requirement
+      floor), NEVER a blanket BOSS_XP_MULTIPLIER change (OQ-CP-8 single-lever caution). Runtime distribution: folded into full_xp, so deployed cores get the
+      full bonus and benched cores get floor((xp_value+bonus)*BENCH_XP_SHARE) subject to the lead cap (AC-CP-24)."
+    added: 2026-07-13
     revised: ""
 
   - name: BENCH_XP_SHARE
