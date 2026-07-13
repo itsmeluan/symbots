@@ -1,6 +1,20 @@
 # Active Session State
 
-## Current Task — Enemy Level & Zone Scaling (#10c) — /design-review NEEDS REVISION → fixes applied (2026-07-12)
+## Current Task — Enemy Level & Zone Scaling (#10c) — ROUND-2 /design-review NEEDS REVISION → 6 blockers + 4 recommended fixed (2026-07-12)
+- **Re-review** (fresh session, full-panel: game-designer/systems-designer/economy-designer/qa-lead + CD). Verdict NEEDS REVISION; **CD committed APPROVE on fix-confirmation** (fixes are surgical, design structurally sound).
+- **Blockers fixed same session**:
+  - B1 [systems]: Tuning Knobs Beacon-only threshold **1.667 was a math error** → corrected to 2.0 (`1/(0.25×BEACON 2.0)`; registry-verified). 1.333 cap-threshold derivation shown inline (MULTIPLIER_FLOOR=1.5).
+  - B2 [economy]: **prior session's 0.27/1,660 economy annotation was underived and wrong-signed** → replaced with explicit fight-distribution derivation: 15% EARLY / 80% MID / 5% HIGH → weighted mult 0.95 → ~0.34 Rares/victory → central **~1,800** vs 1,840 (~2% dip). **Mild-scarcity CONFIRMED** (band floor ~1,556); sensitivity 30% EARLY → ~1,750 still in-band.
+  - B3 [qa]: AC-ELZS-11 now 2 integration fixtures (EARLY 0.1875 + HIGH 0.5625) — catches EARLY-only wiring.
+  - B4 [qa]: empty-pool guard promoted from AC-05 fixture (D) to standalone **AC-ELZS-12**.
+  - B5 [qa]: new **EC-ELZS-13 + AC-ELZS-13** — dangling enemy_id → fail BLOCKING, never skip (EZ EC-EZ-12 fail-safe pattern).
+  - B6 [qa]: AC-ELZS-02 anti-hardcoding fixture **BOSS L3 → 130** (synthetic — no MVP enemy there) + full-roster CI invocation contract.
+- **Recommended applied**: R1 boss-XP anti-grind cross-ref (EZ Rule 9/8a delta re-gate); R2 UI min-bar normative (tier label + Rare ↑/↓ at encounter start); R3 AC-09 constants-injection retune fixture (MID_FLOOR=4 → level_band(3)==EARLY); R4 OQ-ELZS-3 consumable-faucet validity condition (sell_price inert per Consumable DB Rule 8) + OQ-ELZS-1 HIGH-band-negligible-in-MVP note.
+- **CD rulings**: boss-XP-farming re-escalation REJECTED on facts (EZ delta re-gate caps refights); UI min-bar as blocker REJECTED (data-layer GDD; delegated w/ normative minimum). Economy derive-or-defer → user chose DERIVE.
+- **Counts**: 13 ECs / 10 BLOCKING + 1 ADVISORY + 2 delegated ACs. systems-index #10c note updated (In Review, round 2); review log entry appended.
+- **NEXT**: `/clear` then `/design-review design/gdd/enemy-level-zone-scaling.md` FRESH session (round-3 fix-confirmation; CD pre-committed APPROVE if fixes verify). On approval apply the 4 errata (Enemy DB / Encounter Zone / Drop+economy-derivation-table / ZWM). Registry note: no constant VALUES changed this round (1.667 was prose-only error).
+
+## Prior Round — Enemy Level & Zone Scaling (#10c) — /design-review NEEDS REVISION → fixes applied (2026-07-12)
 - **File**: design/gdd/enemy-level-zone-scaling.md — 7 fixes applied this session; re-review pending.
 - **Review verdict**: NEEDS REVISION. 5 specialists + CD (full-panel). 4 blockers fixed same session:
   - B1: Drop System economy erratum note added to Bidirectionality Notes (DS-F-LEVEL lowers arc-avg Rare ~25% → revised Scrap central ~1,660 vs ~1,840)
