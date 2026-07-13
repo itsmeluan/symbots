@@ -84,13 +84,13 @@ Scrapping an EQUIPPED instance is **blocked** (Rule 5) — the only guarded tran
 | **Part Database** *(Approved)* | ← reads | Part definitions (`id`, `display_name`, `rarity`, `slot_type`, `part_family`, `flavor_text`, `max_upgrade_tier`, `upgrade_effects`) to validate `part_id` and display instances |
 | **Consumable Database** *(Approved)* | ← reads | Consumable definitions (`id`, `display_name`, `rarity`, `max_stack`, use-context, effect metadata). Rule 4 enforces `max_stack` — **resolves EC-CD-12, un-blocks AC-CD-23** |
 | **Drop System** *(Approved)* | → deposits | Awards part instances, consumable increments, and Scrap via `add` (Rule 4); receives `{accepted, rejected}` for stack-full feedback |
-| **World Loot System** *(Not Started)* | → deposits | Same `add` interface for overworld chests/pickups |
+| **World Loot System** *(Approved 2026-07-13)* | → deposits | Same `add` interface for overworld chests/pickups; reads `{accepted, rejected}` for Rule 8 full-deposit refusal |
 | **Workshop System** *(Not Started)* | ↔ | Reads holdings (`get_parts`/`get_instance`) to build; **owns the equipped-instance set** Inventory queries for the Rule 5 scrap guard; mutates a `PartInstance.upgrade_tier` when upgrading (spending Scrap) |
 | **Turn-Based Combat** *(Approved erratum)* | → decrements | On a successful in-battle item apply (TBC Rule 7a), calls Inventory to decrement a consumable count by 1 (Rule 6); rejected use decrements nothing. Wiring realized at TBC integration |
 | **Save/Load System** *(Not Started)* | → serializes | Persists/restores the three stores **plus the `next_instance_id` counter** (Rule 1 — serialized, never rebuilt from live instances); clamps any `current > max_stack` on deserialize (EC-INV-11). Inventory defines the serialization-friendly model (flat records, stable `instance_id`s) |
 | **Inventory UI / Combat UI** *(Not Started)* | → surfaced by | Render holdings, sort/filter, scrap-confirm flow, stack-full notices |
 
-*Provisional: Workshop / World Loot / Save/Load / UI are Not Started — their interface columns are the contract this GDD exposes for them. Part DB, Consumable DB, Drop System are Approved.*
+*Provisional: Workshop / Save/Load / UI are Not Started — their interface columns are the contract this GDD exposes for them. Part DB, Consumable DB, Drop System, World Loot are Approved.*
 
 ## Formulas
 
@@ -169,7 +169,7 @@ Inventory **imports these by name; it does not define or shadow them** (redefini
 | System | Interface | Status |
 |--------|-----------|--------|
 | **Drop System** | Calls `add()` to deposit part instances, consumable increments, and Scrap; reads `{accepted, rejected}` for stack-full feedback. Owns `SCRAP_YIELD` (Inventory references it) | Approved |
-| **World Loot System** | Calls `add()` for overworld chests/pickups | Not Started |
+| **World Loot System** | Calls `add()` to deposit overworld chest/pickup rewards (part / Scrap / consumable); reads the `{accepted, rejected}` return as its Rule 8 full-deposit refusal check (refuses the collect if `rejected > 0`, leaving the node uncollected — no partial award) | Approved (2026-07-13) |
 | **Workshop System** | Reads holdings; **owns the equipped-instance set Inventory queries** for the Rule 5 scrap guard; mutates a `PartInstance.upgrade_tier` when upgrading (spends Scrap); initiates the scrap action | Not Started |
 | **Turn-Based Combat** | Calls `decrement_consumable(id)` on a successful in-battle item use (TBC Rule 7a); rejected use decrements nothing | Approved (erratum) |
 | **Save/Load System** | Serializes/restores the three stores **+ the `next_instance_id` counter** (flat records, stable `instance_id`s; the counter is persisted, not derived — EC-INV-07); clamps stale over-cap consumable counts on load (EC-INV-11) | Not Started |
@@ -185,7 +185,8 @@ Inventory **imports these by name; it does not define or shadow them** (redefini
 ### Bidirectionality
 
 - **Part Database, Consumable Database, Drop System** already list Inventory in their Dependencies (verified) — bidirectionality confirmed. They currently tag it "Not Started"; a light touch updates those rows to "Designed/Approved" on approval.
-- **Workshop, World Loot, Save/Load, Inventory/Combat UI** (all Not Started) must list Inventory when authored.
+- **World Loot** *(Approved 2026-07-13)* — lists Inventory in its Dependencies ✓.
+- **Workshop, Save/Load, Inventory/Combat UI** (Not Started) must list Inventory when authored.
 
 ### Errata obligations this GDD creates on Approved docs
 

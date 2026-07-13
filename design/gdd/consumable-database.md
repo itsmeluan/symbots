@@ -81,6 +81,7 @@ A single **use** is an atomic transaction: validate (item in inventory, valid ta
 | **Drop System** | → read by *(ERRATUM)* | Reads `rarity` to place consumables in a level/rarity-scaled drop channel (separate from part loot pools); reads the Beacon flag to multiply the fight's effective drop rates (clamp [0, 1]). Consumable drop frequency owned by Drop System. Scrap currency (used by `buy_price`/`sell_price`) is owned by the Drop System economy (HOLISM-01). |
 | **Encounter Zone** | → read by *(ERRATUM)* | Reads `MODIFY_ENCOUNTER_RATE` via a new EZ-1 modifier hook (un-defers OQ-EZ-4): `effective_rate = clamp(base_rate × active_modifier, 0, 1)`. |
 | **Inventory** *(Approved)* | ↔ stored by | Stores per-save consumable quantities as a **stackable** class (vs per-instance parts); reads `max_stack`, `display_name`, metadata. The DB declares stack behavior; Inventory owns the counts + the reject-with-notice overflow (INV-1). |
+| **World Loot** *(Approved 2026-07-13)* | → read by | Reads `consumable_id` (resolution) + `max_stack` for a world-chest CONSUMABLE reward; `max_stack` participates in World Loot's Rule 8 full-deposit refusal check. MVP world-loot consumable awards are exactly 1 unit (no quantity field). |
 | **Overworld Navigation** *(Not Started)* | ← used by | Decrements the encounter-modifier `steps_remaining` per step; applies the active modifier when calling EZ-1. |
 | **NPC System / future Shop** *(Not Started)* | → read by | Post-MVP: reads `buy_price`/`sell_price` to run vendor buy/sell in Scrap. Inert in MVP (no shops). |
 | **Combat UI / World Map UI** *(Not Started)* | → read by | Item menus (name/icon/use_context), the battle **target-picker** (living team member), and the Beacon + encounter-modifier active indicators. |
@@ -207,6 +208,7 @@ A single **use** is an atomic transaction: validate (item in inventory, valid ta
 | **Drop System** | → read by *(ERRATUM)* | consumables as a level/rarity-scaled drop channel; reads the Beacon flag to inject `beacon_multiplier` (CD-4) | Approved |
 | **Encounter Zone** | → read by *(ERRATUM)* | EZ-1 `encounter_rate` modifier hook (CD-5); un-defers OQ-EZ-4 | Approved |
 | **Inventory** *(Approved)* | ↔ stored by | per-save quantities, stacking, `max_stack`, reject-with-notice overflow (INV-1) | Approved |
+| **World Loot** *(Approved)* | → read by | `consumable_id` + `max_stack` for world-chest CONSUMABLE rewards; `max_stack` feeds World Loot Rule 8 deposit-refusal | Approved |
 | **Overworld Navigation** *(Not Started)* | ← used by | decrements the encounter-modifier `steps_remaining` per step | Not Started |
 | **NPC System / future Shop** *(Not Started)* | → read by | `buy_price` / `sell_price` for vendor buy/sell in Scrap (post-MVP) | Not Started |
 | **Combat UI / World Map UI** *(Not Started)* | → read by | item menus, the battle target-picker, Beacon + encounter-modifier active indicators | Not Started |
