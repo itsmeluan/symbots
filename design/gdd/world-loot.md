@@ -58,6 +58,12 @@ One thing this fantasy explicitly resists: the **completionist pull**. The colle
 
 **Rule 8 — Collection refusal on full inventory.** Before awarding, `collect()` verifies the reward can be **fully deposited** (Scrap: `current + amount ≤ SCRAP_MAX`; consumable: stack space available; parts: always accepted — instances are uncapped). If the deposit would be rejected or truncated, the collect is **REFUSED**: no reward, `loot_id` NOT added to the collected Set, node stays UNCOLLECTED, and a `collect_refused(loot_id, reason)` signal fires for UI feedback ("Scrap storage full"). The reward is never partially awarded and never destroyed — the player can free space and return.
 
+**Rule 9 — Testability contract (hard interface requirements — the ACs cannot be written without these; lead programmer must design them in before implementation).**
+
+1. **Injectable warning/error sink.** Godot 4's `push_warning()`/`push_error()` cannot be captured by GUT. Every content warning and error this GDD mandates (EC-WL-02/04/05/06/07, Rule 5 fatal) is emitted through an injectable reporting interface (production: forwards to `push_warning`/`push_error`; tests: a recording sink). Same pattern as EP Rule 3a.3.
+2. **Injectable Inventory interface.** The Inventory dependency is injected (constructor or setter), never a singleton access. Tests configure a stub to accept or reject deposits — the only practical seam for the Rule 8 refusal path (AC-WL-09).
+3. **Catalog load returns a structured result.** `load_catalog()` returns `{ok: bool, error: String}` — the Rule 5 fatal duplicate is a returned error plus sink emission, never a process abort (a hard crash is untestable in GUT).
+
 ### States and Transitions
 
 Each `LootNode` has exactly two states:
@@ -233,7 +239,35 @@ This system owns the **chest/pickup presentation states** (per EP's Visual/Audio
 
 ## Acceptance Criteria
 
-[To be designed]
+**Test path:** `tests/unit/world_loot/` · **Framework:** GUT (GDScript) · All fixtures use synthetic IDs (`zone_01_*`, `dup_id`, `orphan_*`) — no real content dependencies. Inventory is stubbed per Rule 9.2; warnings asserted via the Rule 9.1 sink, never log output.
+
+**AC-WL-01** (BLOCKING, Unit) — **Happy-path collect for all three reward types.** **GIVEN** a catalog with one PART node (`{part_id: &"part_servo_arm_r"}`), one SCRAP node (`{amount: 15}`), one CONSUMABLE node (`{consumable_id: &"cons_repair_kit"}`), and an accepting Inventory stub, **WHEN** each is collected, **THEN** per node: exactly one matching Inventory add-call (add-part with `part_servo_arm_r` / add-scrap 15 / add-consumable), the `loot_id` enters the collected Set, `can_collect(loot_id)` flips to `false`, and exactly one `node_collected(loot_id)` signal fires (use `assert_signal_emit_count` — at-least-one misses double-fires). Discriminators: Set-mutation-without-award fails the Inventory assertion; award-without-mutation fails `can_collect`. *(Rules 2, 3; WL-PRED-1 true branch)*
+
+**AC-WL-02** (BLOCKING, Unit) — **Double-collect is a silent no-op.** **GIVEN** `&"zone_01_part_servo"` already collected, **WHEN** `collect()` is called again, **THEN** the Inventory stub records **exactly one** add-call total across both calls, no signal fires on the second call, `collected_set.size() == 1`, and **zero** sink emissions (silence is normative — this is legal, not a bug). *(Rule 4; WL-PRED-1 already-collected branch; EC-WL-01)*
+
+**AC-WL-03** (BLOCKING, Unit) — **Unknown `loot_id` warns and no-ops.** **WHEN** `collect(&"nonexistent_phantom_id")` is called with no such catalog entry, **THEN** no Set mutation, no signal, `can_collect()` returns `false`, and **exactly one warning** via the sink naming the unknown ID. The warning-count assertion is the discriminator against EC-WL-01: an impl treating unknown IDs silently (like double-collect) passes every state assertion but fails the warning check. *(WL-PRED-1 absent-from-catalog branch; EC-WL-02)*
+
+**AC-WL-04** (BLOCKING, Unit) — **Duplicate `loot_id` is fatal at load.** **GIVEN** a two-node catalog sharing `loot_id = &"dup_id"`, **WHEN** `load_catalog()` runs, **THEN** it returns `{ok: false, error: …}` naming the duplicate (Rule 9.3 structured result — asserted on the return value, not log output), an error is emitted via the sink, and no catalog is built (no node collectable). *(Rule 5; WL-PRED-2 uniqueness clause; EC-WL-03)*
+
+**AC-WL-05** (BLOCKING, Unit) — **Phantom degradation is non-contagious.** Three sub-fixtures, each a catalog of one bad node + two valid nodes: **(a)** `reward_type = BLUEPRINT`; **(b)** PART with `part_id = &"nonexistent_part_xyz"`; **(c)** `zone_id = &"zone_doesnt_exist"`. **THEN** in each: the bad node is phantom (`can_collect == false`, not rendered), one warning via the sink names its `loot_id`, **and both valid nodes remain collectable** — the discriminator: a fail-hard impl that aborts the whole load fails the valid-node assertion; a fail-open impl that includes the bad node fails the phantom assertion. *(Rule 6; WL-PRED-2 per-node clause; EC-WL-04/05/06)*
+
+**AC-WL-06** (BLOCKING, Unit) — **Snapshot sort contract + fresh-copy.** **GIVEN** keys inserted in the order `&"z_node"` → `&"a_node"` → `&"m_node"` (non-alphabetical insertion, normative — makes intern order diverge from alphabetical so both the insertion-order bug and the raw-StringName-sort bug produce wrong output), **WHEN** `snapshot()` is called, **THEN** the result is exactly `["a_node", "m_node", "z_node"]`. **Fresh-copy sub-fixture:** mutate the returned Array, call `snapshot()` again → second result still correct (an aliasing impl returns a corrupted view). **Empty sub-fixture:** empty Set → `[]` (typed empty Array, `assert_not_null`). *(WL-PRED-3; Rule 7 snapshot clause)*
+
+**AC-WL-07** (BLOCKING, Unit) — **Empty-state round-trip.** `snapshot()` on a fresh instance → `[]`; `restore([])` → empty Set, no error, no warning. This is the new-game state and also covers WL's side of EP's wrong-type handling (EP AC-EP-07 hands this domain `restore({})`-equivalent empty data). *(EC-WL-08)*
+
+**AC-WL-08** (BLOCKING, Unit) — **Orphan preservation.** **WHEN** `restore(["known_id", "orphan_a", "orphan_b"])` runs where only `known_id` exists in the catalog, **THEN** the Set contains all three (`size == 3`), one warning via the sink reports the orphans, and `snapshot()` returns all three sorted. **Round-trip sub-fixture:** that snapshot restored on a fresh instance still carries both orphans. Discriminating line: `assert_eq(size, 3)` — a drop-unknown-IDs impl fails it (losing a collected fact is the anti-fantasy). *(Rule 7 restore clause; EC-WL-07; EP Rule 6c)*
+
+**AC-WL-09** (BLOCKING, Unit) — **Refusal + retry leaves no residue.** **GIVEN** the Inventory stub configured to reject (Rule 9.2 seam), **WHEN** `collect(loot_id)` runs, **THEN** exactly one `collect_refused(loot_id, reason)` fires, the Set is unmutated, the stub received **no** add-call, and `can_collect(loot_id)` still returns `true`; **WHEN** the stub is reconfigured to accept and `collect()` retried, **THEN** `node_collected` fires, the Set contains `loot_id`, and the stub records exactly one add-call total. Discriminator: an impl that marks collected despite refusing (wrong guard order) fails the mid-sequence `can_collect == true`. *(Rule 8; EC-WL-09/10)*
+
+**AC-WL-10** (BLOCKING, Unit) — **Restore replaces, never merges.** Restore `["chest_a", "chest_b"]`, then restore `["chest_c"]` → Set is exactly `{chest_c}` (`size == 1`). The discriminating line: `assert_false(collected_set.has(&"chest_a"))` — a merge-based restore passes every single-restore test and fails only here. *(Rule 7; EP Rule 3 replacement semantics)*
+
+**AC-WL-11** (BLOCKING, Unit) — **Permanence survives a session round-trip.** Collect a node → `snapshot()` → **fresh WL instance** → `restore(snapshot)` → `can_collect(loot_id) == false` and the node's derived state is COLLECTED. This is the "never reappears" guarantee of Rule 3 crossing a simulated restart — distinct from AC-WL-10 (replacement semantics in isolation). *(Rule 3; States and Transitions)*
+
+**AC-WL-12** (ADVISORY, Unit) — **`rederive()` is a safe no-op.** **GIVEN** a populated collected Set, **WHEN** `rederive()` is called, **THEN** the Set is unchanged, no error, no signal. Advisory: a no-op is trivially correct — the test only guards against an impl that wipes state. *(Rule 7 rederive clause)*
+
+**EC↔AC Cross-Check:** EC-WL-01 → AC-02 · EC-02 → AC-03 · EC-03 → AC-04 · EC-04/05/06 → AC-05(a/b/c) · EC-07 → AC-08 · EC-08 → AC-07 · EC-09 → AC-09 · EC-10 → AC-09 (retry leg) · EC-11 → delegated (EP AC-EP-08A) · EC-12 → no AC by design (structural impossibility, owned by Overworld Navigation). **All 12 ECs covered, delegated, or explicitly no-AC-by-design.**
+
+**Summary: 11 BLOCKING unit + 1 ADVISORY.** Every core rule (1–9) and predicate (WL-PRED-1/2/3) has ≥1 AC. Anti-hardcoding: all fixtures use synthetic IDs. GDScript traps addressed: StringName intern-order sort (AC-06 normative insertion order), `push_warning` non-capturability (Rule 9.1 sink), aliasing snapshot (AC-06 fresh-copy), signal double-fire (`assert_signal_emit_count` in AC-01).
 
 ## Open Questions
 

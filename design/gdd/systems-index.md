@@ -42,7 +42,7 @@ designed first.
 | 10c | Enemy Level & Zone Scaling | World | MVP | Approved (2026-07-12, round-4 confirmation pass — all round-3 fixes verified; 2 new AC fixture blockers + 4 recommended applied same session. B1: AC-ELZS-05 Fixture F at-floor acceptance for F > 1; B2: AC-ELZS-04 floor=0 rejection. R: AC-09 L1 fixture, Enemy DB AC-ED-14 integration contract note, economy sensitivity redistribution stated, HIGH-overstated qualifying clause. CD: APPROVED, no round 5. **4 errata owed**: Enemy DB / Encounter Zone / Drop System+economy-model / ZWM) | design/gdd/enemy-level-zone-scaling.md | Enemy Database, Encounter Zone, Drop System, Zone & World Map |
 | 11 | Inventory System | Economy | MVP | Approved (2026-07-12, full-panel /design-review — NEEDS REVISION → 5 surgical blockers fixed same session: `next_instance_id` counter persisted (EC-INV-07 save/load), `instance_id` retyped plain int, INV-1 negative-qty/retune-down guards (EC-INV-11), Scrap-add `{accepted,rejected}` contract, OQ-INV-1 tier-refund LOCKED 0%. CD approve-on-fix-confirmation) | design/gdd/inventory.md | Part Database |
 | 12 | Zone & World Map System | World | MVP | Approved (2026-07-12, full-panel /design-review — NEEDS REVISION → 8 blockers fixed same session: ZWM-F1 boss_progress scope, missing-key EC-ZWM-12/AC-ZWM-19, zone_states_changed diff payload, LOCKED-origin outbound travel EC-ZWM-05/AC-ZWM-20, AC-ZWM-11 concrete fixture, AC-ZWM-17/18 signal contract, AC-ZWM-05 fixture gap. 15→20 ACs / 11→12 ECs) | design/gdd/zone-world-map.md | Encounter Zone |
-| 13 | World Loot System (inferred) | World | MVP | Not Started | — | Part Database, Zone & World Map |
+| 13 | World Loot System | World | MVP | Designed (2026-07-13, lean — pending fresh-session /design-review; systems-designer + qa-lead consulted for Formulas/ACs) | design/gdd/world-loot.md | Part Database, Consumable Database, Inventory, Zone & World Map |
 | 14 | Exploration Progress System | World | MVP | Approved (2026-07-13, round-2 confirmation full-panel /design-review — all 4 round-1 blockers verified fixed by all specialists; 2 new blockers found & fixed same session: MIGRATE-no-hooks → REFUSE made normative in Rule 9 + AC-EP-02(b) positive domain-state assertion; serialize structured result `{ok, failed_domain}` + Rule 3a.3 injectable warning sink for GUT testability (AC-EP-12). 2 CD-mandated fold-ins: String-cast sort normative (Rule 1/AC-EP-01), Player Fantasy OQ-EP-2 qualifier. CD verdict APPROVED, no round 3. **EZ Rule 8a erratum now due**; 8 backlog recommended items in review log) | design/gdd/exploration-progress.md | Zone & World Map, Symbot Core Progression; provisional: World Loot (#13 domain contract defined here) |
 | 15 | Workshop System | Economy | MVP | Not Started | — | Symbot Assembly, Inventory |
 | 16 | Overworld Navigation (inferred) | World | MVP | Not Started | — | Zone & World Map, Encounter Zone |
@@ -211,10 +211,10 @@ layered structure. Part Database sits at the root with no cycles back from depen
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 35 |
-| Design docs started | 18 |
+| Design docs started | 19 |
 | Design docs reviewed | 15 |
 | Design docs approved | 18 |
-| MVP systems designed | 20 / 25 |
+| MVP systems designed | 21 / 25 |
 | Vertical Slice systems designed | 0 / 3 |
 | Alpha systems designed | 0 / 3 |
 | Full Vision systems designed | 0 / 2 |

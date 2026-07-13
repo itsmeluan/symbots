@@ -1443,6 +1443,7 @@ constants:
     source: design/gdd/inventory.md
     referenced_by:
       - design/gdd/inventory.md
+      - design/gdd/world-loot.md               # Rule 8 refusal boundary — collect() REFUSED if scrap deposit would exceed SCRAP_MAX
     value: 999999
     unit: Scrap (the game's sole currency); ceiling on the Inventory Scrap balance
     notes: "Defensive ceiling on the Scrap balance (EC-INV-06). MVP whole-arc Scrap income is ~1,555-2,125 (Drop System),
@@ -1458,6 +1459,7 @@ constants:
     referenced_by:
       - design/gdd/drop-system.md              # owns the yield values (Rule 9 / Tuning Knobs)
       - design/gdd/inventory.md                 # scrap() grants SCRAP_YIELD[rarity], tier-ignored (INV Rule 5 / AC-INV-06)
+      - design/gdd/world-loot.md                # Tuning Knobs benchmark — SCRAP node amounts scaled to 1-3 victories' worth
     value: "{COMMON: 5, RARE: 20, PROTOTYPE: 35, BOSS_GRADE: 60}"
     unit: Scrap granted when the player scraps one part instance of the given rarity
     notes: "Owned by the Drop System (Rule 9, the source side of the scrap sink). Promoted to the registry 2026-07-12 when
@@ -1632,8 +1634,9 @@ constants:
       - design/gdd/exploration-progress.md
       - design/gdd/zone-world-map.md             # owner of the &"zones" domain state
       - design/gdd/symbot-core-progression.md    # owner of the &"cores" domain state
-      # world-loot.md (#13) will own &"world_loot" on authoring; key-item-system (#23a) reserves &"key_items"
-    value: '{zones: ZWM ZoneRuntimeState, cores: CoreProgressionRecord map, world_loot: collected loot_id set (provisional); key_items: RESERVED}'
+      - design/gdd/world-loot.md                 # owner of the &"world_loot" domain (Rule 7 — contract implemented 2026-07-13; provisional marker discharged)
+      # key-item-system (#23a) reserves &"key_items"
+    value: '{zones: ZWM ZoneRuntimeState, cores: CoreProgressionRecord map, world_loot: collected loot_id set (world-loot.md Rule 7); key_items: RESERVED}'
     unit: save-format-stable progression domain keys (EP Rule 1)
     notes: "NEVER rename a key — they are save-format-stable. world_loot serialized form: sorted Array[StringName] on disk,
       Dictionary[StringName, bool] at runtime (Godot has no native Set), dedupe on reconstruction. Unknown keys in a save are

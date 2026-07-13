@@ -1,10 +1,17 @@
 # Active Session State
 
-## Current Task — World Loot System (#13) — In Design (2026-07-13)
-- File: design/gdd/world-loot.md
-- Current section: Visual/Audio + UI + H Acceptance Criteria
-- Sections complete: A Overview ✓ | B Player Fantasy ✓ | C Detailed Design ✓ (+Rule 8 refuse-on-overflow amendment) | D Formulas ✓ (WL-PRED-1/2/3, all scan-exempt; systems-designer consulted) | E Edge Cases ✓ (12 ECs)
-- Key decisions: rewards = parts+scrap+consumables (BLUEPRINT reserved for Alpha, Rule 6); WL owns interact API; double-collect silent idempotent; overflow → REFUSE collect (chest stays closed)
+## Current Task — COMPLETE: World Loot System (#13) GDD → Designed (2026-07-13, lean)
+- **File**: design/gdd/world-loot.md — all 12 sections written, 0 placeholders (~276 lines).
+- **Sections**: A Overview / B Player Fantasy (CD not consulted — lean; review manually) / C Detailed Rules 1–9 (incl. Rule 8 refuse-on-overflow + Rule 9 testability contract: injectable sink + injectable Inventory + structured load_catalog result) / D Formulas (WL-PRED-1 collect guard, WL-PRED-2 catalog validity, WL-PRED-3 snapshot sort — all scan-exempt, systems-designer consulted) / E 12 ECs / F Dependencies / G Tuning Knobs (6–10 nodes/zone, 1–3 PART nodes, COMMON+RARE ceiling, scrap ≤~10% arc guardrail) / Visual-Audio (chest states; art-director not consulted — lean) / UI (anti-checklist normative: no counts, no map markers) / H 11 BLOCKING + 1 ADVISORY ACs (qa-lead consulted) / OQ-WL-1..3.
+- **Key decisions**: rewards = parts+scrap+consumables; BLUEPRINT enum reserved for Alpha (#25, Rule 6); WL owns interact API; double-collect silently idempotent; inventory-overflow → REFUSE collect (chest stays closed, never destroys reward); loot_id globally unique fatal-on-duplicate; orphans preserve-and-warn (EP Rule 6c).
+- **Registry**: no new entries (WL-PREDs internal); referenced_by += world-loot.md on SCRAP_MAX / SCRAP_YIELD / EP_DOMAIN_KEYS (provisional marker discharged). YAML validated.
+- **systems-index**: #13 → Designed; deps expanded (+Consumable DB, +Inventory); docs started 19; MVP designed 21/25.
+- **3 LIGHT ERRATA OWED on approval**: (1) EP dependency row — discharge "soft-provisional" marker on &"world_loot" row; (2) Consumable DB — add World Loot as downstream reader; (3) Inventory — add World Loot as caller of add interfaces + Rule 8 pre-deposit check.
+
+### NEXT
+- **`/clear` then `/design-review design/gdd/world-loot.md`** — fresh-session review (never same-session).
+- On approval: apply the 3 light errata, #13 → Approved.
+- Then next Not Started MVP systems: #15 Workshop, #16 Overworld Navigation, #17 Save/Load.
 
 ## Prior — COMPLETE: Exploration Progress (#14) APPROVED (round-2 confirmation, 2026-07-13) + EZ Rule 8a erratum APPLIED
 
