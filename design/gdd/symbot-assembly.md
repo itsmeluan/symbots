@@ -7,7 +7,7 @@
 
 ## Overview
 
-The Symbot Assembly System is the runtime build state for every Symbot on the player's team. It owns three responsibilities: (1) **slot validation** — enforcing that each of the 8 part slots carries exactly one valid `SympartData` entry whose `slot_type` matches the slot, with no empty slots permitted; (2) **stat derivation** — executing the Formula 1 / 2 / 2b pipeline to compute all 11 `final_stat` values for a given build from the equipped parts' `stat_bonuses`, upgrade tiers, and the Chassis archetype modifier table; and (3) **build exposure** — providing the computed stat block, active skill pool, passive list, and combat resource maxima (max Structure, max Energy Capacity) to every downstream system that reads from it (Synergy, Turn-Based Combat, Workshop UI).
+The Symbot Assembly System is the runtime build state for every Symbot on the player's team. It owns three responsibilities: (1) **slot validation** — enforcing that each of the 8 part slots carries exactly one valid `PartDef` entry whose `slot_type` matches the slot, with no empty slots permitted; (2) **stat derivation** — executing the Formula 1 / 2 / 2b pipeline to compute all 11 `final_stat` values for a given build from the equipped parts' `stat_bonuses`, upgrade tiers, and the Chassis archetype modifier table; and (3) **build exposure** — providing the computed stat block, active skill pool, passive list, and combat resource maxima (max Structure, max Energy Capacity) to every downstream system that reads from it (Synergy, Turn-Based Combat, Workshop UI).
 
 The Assembly System does not define what parts exist (Part Database's job), does not store which copies of parts the player owns (Inventory's job), and does not track runtime combat values such as current Structure or current Energy (Turn-Based Combat's job). It knows only what is *equipped* and what those parts *compute to*. Like the Part Database, it is read-only at combat start — stats are locked in when the fight begins and do not change mid-battle. Recomputation happens in the Workshop when the player swaps a part.
 
@@ -134,7 +134,7 @@ Runtime current values (current Structure, current Energy, current Heat) are own
 
 **Rule 8 — Synergy Interface**
 
-Assembly exposes the equipped-parts list (all 8 `SympartData` references) to the Synergy System for tag evaluation. Assembly's `final_stat` output represents **base stats from parts only** — synergy bonuses are not included. The Synergy System computes its own bonus block separately; Turn-Based Combat and Workshop UI sum Assembly base stats + Synergy bonuses as needed.
+Assembly exposes the equipped-parts list (all 8 `PartDef` references) to the Synergy System for tag evaluation. Assembly's `final_stat` output represents **base stats from parts only** — synergy bonuses are not included. The Synergy System computes its own bonus block separately; Turn-Based Combat and Workshop UI sum Assembly base stats + Synergy bonuses as needed.
 
 This one-way dependency (Synergy reads from Assembly; Assembly does not call Synergy) prevents circular dependencies.
 
@@ -152,9 +152,9 @@ The Workshop System (not Assembly) manages the distinction between "player is in
 
 | System | Reads from Assembly | Writes to Assembly / Triggers |
 |--------|--------------------|-----------------------------|
-| **Part Database** | Assembly reads `SympartData` via `PartDatabase.get_part(id)` | — |
+| **Part Database** | Assembly reads `PartDef` via `PartDatabase.get_part(id)` | — |
 | **Inventory System** | — | Provides parts for equipping; receives displaced parts on swap |
-| **Synergy System** | Reads equipped-parts list (all 8 `SympartData`) for tag evaluation | — |
+| **Synergy System** | Reads equipped-parts list (all 8 `PartDef`) for tag evaluation | — |
 | **Turn-Based Combat** | Reads `final_stat`, active move pool (skill IDs for moves 2–4), passive pool, `max_structure`, `max_energy_capacity`, `heat_max` | — |
 | **Workshop System** | Triggers `equip_part(symbot_build, slot, part_id)`; reads `final_stat` for stat display | Initiates all equip operations |
 | **Workshop UI** | Reads `final_stat` for live display; reads stat delta between current build and proposed swap | — |
@@ -267,7 +267,7 @@ The hypothetical build is computed in memory only — no equip event fires, no s
 
 | System | What Assembly Reads | Status |
 |--------|-------------------|--------|
-| **Part Database** | `SympartData` definitions via `PartDatabase.get_part(id)` — slot types, `stat_bonuses`, `chassis_archetype`, `active_skill_id`, `passive_id`, upgrade tier multiplier table, `heat_generation`, `ammo_cost`, `level_requirement`, `level_growth` | Approved ✓ *(level_requirement + level_growth erratum applied 2026-07-12)* |
+| **Part Database** | `PartDef` definitions via `PartDatabase.get_part(id)` — slot types, `stat_bonuses`, `chassis_archetype`, `active_skill_id`, `passive_id`, upgrade tier multiplier table, `heat_generation`, `ammo_cost`, `level_requirement`, `level_growth` | Approved ✓ *(level_requirement + level_growth erratum applied 2026-07-12)* |
 | **Core Progression** | `can_equip(core_instance_id, part) → bool` for the Rule 3 level gate; `CoreProgressionRecord.level` for the CP-F3 step in Rule 6 | Approved ✓ *(Core Progression erratum 2026-07-12)* |
 | **Inventory System** | Provides parts available for equipping; receives displaced parts on swap | Not Started |
 | **Move Database** | `active_skill_id` references must resolve to valid entries at runtime | Not Started (referenced in Part DB Rule 1; not yet in systems index as a standalone system) |
@@ -281,7 +281,7 @@ The hypothetical build is computed in memory only — no equip event fires, no s
 
 | System | What It Reads from Assembly | Constraint |
 |--------|---------------------------|------------|
-| **Synergy System** | Equipped-parts list (all 8 `SympartData`) for synergy tag evaluation | Assembly must expose the full equipped-parts list, not just `final_stat`. Synergy reads tags, not computed stats. |
+| **Synergy System** | Equipped-parts list (all 8 `PartDef`) for synergy tag evaluation | Assembly must expose the full equipped-parts list, not just `final_stat`. Synergy reads tags, not computed stats. |
 | **Turn-Based Combat** | `final_stat` (all 11 stats), active move pool (skill IDs for moves 2–4), passive pool, `max_structure`, `max_energy_capacity`, `heat_max` | Stat snapshot taken at battle start; locked for the duration. Assembly must not change during combat. |
 | **Workshop System** | Triggers `equip_part()` and replacement swaps; reads `final_stat` for display | Workshop is the only system that calls `equip_part()`. All other systems are read-only consumers. |
 | **Workshop UI** | `final_stat` for live display; SA-F2 stat delta for part comparison previews | Must not include Synergy bonuses in delta computation (Rule 8). |
@@ -328,7 +328,7 @@ Each Symbot is composed from 8 Sprite2D layers stacked back-to-front:
 
 ### Swap Trigger
 
-When Assembly emits `part_equipped(slot_type, new_part_id)`, the visual layer for `slot_type` immediately swaps to the sprite referenced by `PartDatabase.get_part(new_part_id).sprite_id`. The composite redraws within the same frame as the equip. The `sprite_id` field in `SympartData` (Part Database Rule 1) is the sole source of truth for which art asset corresponds to a given part.
+When Assembly emits `part_equipped(slot_type, new_part_id)`, the visual layer for `slot_type` immediately swaps to the sprite referenced by `PartDatabase.get_part(new_part_id).sprite_id`. The composite redraws within the same frame as the equip. The `sprite_id` field in `PartDef` (Part Database Rule 1) is the sole source of truth for which art asset corresponds to a given part.
 
 ### Workshop Visual Preview
 

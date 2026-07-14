@@ -33,7 +33,7 @@ The reference feeling: Monster Hunter's armor set skills — where you're not hu
 Synergy is evaluated independently for each Symbot. There are no team-wide synergy bonuses in MVP. (Team-wide synergies are deferred to Vertical Slice.)
 
 **Rule 2: Tag counting.**
-On each `evaluate()` call, the system iterates all 8 equipped part slots. For each non-null `SympartData`, increment the count for each tag in `part.synergy_tags`:
+On each `evaluate()` call, the system iterates all 8 equipped part slots. For each non-null `PartDef`, increment the count for each tag in `part.synergy_tags`:
 - Every part contributes exactly 1 element tag (`VOLT`, `THERMAL`, or `KINETIC`)
 - Non-wild parts also contribute exactly 1 manufacturer tag (`boltwell`, `ironclad`, `scrapjaw`)
 - Wild parts contribute no manufacturer tag
@@ -80,11 +80,11 @@ A passive effect is a `StringName` ID (e.g., `&"volt_shock_on_hit"`). This syste
 
 **Rule 7: Trigger events.**
 
-`evaluate(parts: Array[SympartData])` is called by the **Workshop System** after every part equip or unequip. It always emits `synergy_changed(active_synergies: Array[StringName], bonus_block: Dictionary)` — even if the resulting bonus block is identical to the prior call. Callers must not assume deduplication; if they want idempotent behavior (e.g., to avoid animation triggers on unchanged state), they must implement their own change detection before acting on the signal.
+`evaluate(parts: Array[PartDef])` is called by the **Workshop System** after every part equip or unequip. It always emits `synergy_changed(active_synergies: Array[StringName], bonus_block: Dictionary)` — even if the resulting bonus block is identical to the prior call. Callers must not assume deduplication; if they want idempotent behavior (e.g., to avoid animation triggers on unchanged state), they must implement their own change detection before acting on the signal.
 
 **Change-detection contract for callers**: a caller that wants to detect a *genuine* synergy state change MUST diff on the `active_synergies` tier-ID set — NOT on `bonus_block` numeric equality alone. Two different active-tier sets can aggregate to a numerically identical `stat_delta` (e.g., a build loses a +4 tier while simultaneously gaining a different +4 tier). Diffing only the aggregated block would miss this real threshold crossing and suppress a warranted activation/deactivation animation. The `active_synergies` set is the authoritative signal of which tiers are active; compare it against the previously received set to detect crossings. (Debounce windows, subscriber-side state, and animation-thrash handling on rapid part swaps are UI concerns — see DCO-7.)
 
-`evaluate_silent(parts: Array[SympartData])` is called by **Turn-Based Combat** once at battle start to establish the baseline bonus block. It computes and caches the bonus block identically to `evaluate()` but does NOT emit `synergy_changed`. This prevents Workshop UI subscribers from receiving a spurious signal at battle start.
+`evaluate_silent(parts: Array[PartDef])` is called by **Turn-Based Combat** once at battle start to establish the baseline bonus block. It computes and caches the bonus block identically to `evaluate()` but does NOT emit `synergy_changed`. This prevents Workshop UI subscribers from receiving a spurious signal at battle start.
 
 Signal parameters:
 - `active_synergies: Array[StringName]` — ordered list of tier IDs for all currently active tiers (e.g., `[&"volt_3_piece", &"volt_5_piece"]`), ordered by registration order (ascending alphabetical by tier ID — see Rule 3). Always an `Array[StringName]`, **never null** — including when zero tiers are active (the empty build yields `[]`), mirroring the SYN-F3 `effects` type guarantee
@@ -123,8 +123,8 @@ The Synergy System holds exactly one piece of mutable state: `cached_bonus_block
 
 | System | Direction | Interface | Data Exchanged |
 |--------|-----------|-----------|----------------|
-| **Symbot Assembly** | ← reads from | `SymbotBuild.get_parts()` | `Array[SympartData]` (8 entries, null for empty slots) |
-| **Part Database** | ← reads from | `SympartData.synergy_tags` | `Array[StringName]` tags per part |
+| **Symbot Assembly** | ← reads from | `SymbotBuild.get_parts()` | `Array[PartDef]` (8 entries, null for empty slots) |
+| **Part Database** | ← reads from | `PartDef.synergy_tags` | `Array[StringName]` tags per part |
 | **Workshop System** | ← triggered by | `evaluate(parts)` called on equip/unequip | Provides current part list |
 | **Turn-Based Combat** | ← triggered by, → provides | `evaluate_silent(parts)` at battle start; provides `cached_bonus_block` | Stat delta dict + effect ID array |
 | **Workshop UI** | → provides on signal | `synergy_changed` signal; `preview()` return value | Bonus block for live display and swap preview |
@@ -148,7 +148,7 @@ tag_count[tag] = Σ (1 for each equipped part p where tag ∈ p.synergy_tags)
 | Symbol | Type | Range | Description |
 |--------|------|-------|-------------|
 | `tag` | `StringName` | element or manufacturer tag IDs | e.g., `&"ironclad"`, `&"VOLT"` |
-| `p.synergy_tags` | `Array[StringName]` | 1–2 entries when content-valid (1 element + ≤1 manufacturer) | Tags on each non-null `SympartData`. Null slots contribute 0. A null or empty `synergy_tags` field is treated as `[]` — see EC-SYN-07. |
+| `p.synergy_tags` | `Array[StringName]` | 1–2 entries when content-valid (1 element + ≤1 manufacturer) | Tags on each non-null `PartDef`. Null slots contribute 0. A null or empty `synergy_tags` field is treated as `[]` — see EC-SYN-07. |
 | `tag_count[tag]` | `int` | `[0, 8]` under valid content | Output. Can exceed 8 only under EC-SYN-11 duplicate-tag content errors. |
 
 ---
@@ -301,7 +301,7 @@ A content author adds a new effect ID to a synergy tier before it is defined in 
 A content error produces `stat_delta = { "speed": 10 }`. SYN-F3 aggregates it into `synergy_bonus_block`. Consumers call `.get(S, 0)` for each of the 11 known stats and receive 0 for "speed". The unknown key is silently ignored. No crash. This is detectable only by content validation tooling. *Verified by AC-SYN-17.*
 
 **EC-SYN-07: Part with empty or null synergy_tags.**
-A `SympartData` has `synergy_tags = []` (content error — Part DB requires at least an element tag). The system iterates an empty array and contributes no counts. No crash. The part acts as a synergy-inert slot.
+A `PartDef` has `synergy_tags = []` (content error — Part DB requires at least an element tag). The system iterates an empty array and contributes no counts. No crash. The part acts as a synergy-inert slot.
 
 The same outcome applies when `synergy_tags` is **null** rather than `[]` (e.g., the field was absent from the data file and the loader did not initialize it). Null and empty are distinct runtime states in GDScript — `for tag in null` is a runtime error, not an empty iteration — so the implementation MUST guard the iteration: a null `synergy_tags` is treated exactly as `[]` (no tags contributed, no crash) and never iterated directly. **Invariant ownership**: the Part DB is the invariant owner (every part must carry at least one element tag, and the loader must initialize the field); the Synergy System's null-guard is a defensive measure only, and it is not responsible for detecting or reporting the content error. *Verified by AC-SYN-19 (both the `[]` and `null` scenarios).*
 
@@ -315,7 +315,7 @@ No change — hypothetical evaluation returns a block identical to `cached_bonus
 If fewer than 8 entries are provided (programming error), missing indices are treated as null (no tags contributed). If more than 8 entries are provided, indices beyond 7 are ignored. The system logs a content/programming error in both cases but does not crash. *Verified by AC-SYN-18.*
 
 **EC-SYN-11: Part with duplicate tags in `synergy_tags`.**
-A `SympartData` has `synergy_tags = [&"ironclad", &"ironclad"]` (content error). SYN-F1 iterates the array and increments the count once per occurrence — this single part contributes **2** to `tag_count["ironclad"]`. The Synergy System does NOT deduplicate tags within a single part's array; it counts each occurrence. This can silently inflate a tag count and wrongly activate a higher tier (e.g., three such parts would read as `ironclad = 6`, activating the 5-piece tier with only 3 physical parts). Detection is the responsibility of Part DB validation tooling — a part must carry exactly one element tag and at most one manufacturer tag, with no duplicates. The Synergy System is not responsible for detecting it and does not crash. (Rationale for count-each-occurrence rather than per-part dedup: SYN-F1 stays a trivial O(n) sum with no per-part set construction; the invariant is enforced upstream at content-authoring time where it belongs.) *Verified by AC-SYN-21.*
+A `PartDef` has `synergy_tags = [&"ironclad", &"ironclad"]` (content error). SYN-F1 iterates the array and increments the count once per occurrence — this single part contributes **2** to `tag_count["ironclad"]`. The Synergy System does NOT deduplicate tags within a single part's array; it counts each occurrence. This can silently inflate a tag count and wrongly activate a higher tier (e.g., three such parts would read as `ironclad = 6`, activating the 5-piece tier with only 3 physical parts). Detection is the responsibility of Part DB validation tooling — a part must carry exactly one element tag and at most one manufacturer tag, with no duplicates. The Synergy System is not responsible for detecting it and does not crash. (Rationale for count-each-occurrence rather than per-part dedup: SYN-F1 stays a trivial O(n) sum with no per-part set construction; the invariant is enforced upstream at content-authoring time where it belongs.) *Verified by AC-SYN-21.*
 
 **EC-SYN-12: Synergy tier with empty `requirements`.**
 A content author authors a tier with `requirements = []`. Per SYN-F2, a universally-quantified check over an empty set is vacuously true, which would make the tier permanently active on every build — including a completely empty build. This is a content error. The implementation MUST treat an empty requirements list as invalid: **skip the tier and log a content error** rather than evaluating it as always-active. Content validation tooling must reject any tier with empty requirements at load time. No crash. (See the requirements validity invariant under SYN-F2.) *Verified by AC-SYN-22.*
@@ -332,7 +332,7 @@ The Workshop UI previews removing a part by calling `preview(null, target_slot, 
 
 | System | What this system reads | Status |
 |--------|------------------------|--------|
-| **Part Database** | `SympartData.synergy_tags` — element and manufacturer tags per part | Approved |
+| **Part Database** | `PartDef.synergy_tags` — element and manufacturer tags per part | Approved |
 | **Symbot Assembly** | `SymbotBuild.get_parts()` — the 8-slot equipped part list, read-only | Approved |
 
 Bidirectional notes:
@@ -593,13 +593,13 @@ FAIL: `energy_power == 18` (indices 8–9 wrongly counted, tipping VOLT to 5); c
 **AC-SYN-19: Part with empty or null synergy_tags contributes no counts (EC-SYN-07)**
 
 *Scenario A (empty array):*
-Fixture: 8-slot build. Slots 0–2: parts with `synergy_tags = [&"ironclad", &"VOLT"]`. Slot 3: a non-null `SympartData` with `synergy_tags = []` (content-error part). Slots 4–7: null. Content: Ironclad 3-piece = `{ armor: 8 }`; no VOLT tier defined for this fixture. Subscribe to `synergy_changed`; counter = 0.
+Fixture: 8-slot build. Slots 0–2: parts with `synergy_tags = [&"ironclad", &"VOLT"]`. Slot 3: a non-null `PartDef` with `synergy_tags = []` (content-error part). Slots 4–7: null. Content: Ironclad 3-piece = `{ armor: 8 }`; no VOLT tier defined for this fixture. Subscribe to `synergy_changed`; counter = 0.
 Call `evaluate(parts)`. ironclad = 3 (slots 0–2 only — slot 3 must NOT contribute).
 Pass: no crash; signal counter == 1; `cached_bonus_block.stat_delta["armor"] == 8` AND `cached_bonus_block.stat_delta.size() == 1` (slot 3 did not inflate any count); `active_synergies.size() == 1` (only `ironclad_3_piece`).
 FAIL: `armor == 0` (slot 3 wrongly blocked counting); any additional tier present (slot 3 wrongly contributed a count — e.g., an implementation substituting a default tag for empty arrays); crash.
 
 *Scenario B (null field):*
-Same fixture, but slot 3's `SympartData` has `synergy_tags = null` (not `[]`).
+Same fixture, but slot 3's `PartDef` has `synergy_tags = null` (not `[]`).
 Pass: identical to Scenario A — no crash, `armor == 8`, `size() == 1`, `active_synergies.size() == 1`. The null field is treated exactly as `[]` per EC-SYN-07's null-guard requirement.
 FAIL: runtime error on iteration (`for tag in null` — null-guard missing); any count contributed by slot 3.
 

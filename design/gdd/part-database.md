@@ -659,7 +659,7 @@ The following 11 systems read directly from the Part Database. Each entry specif
 | System | What It Reads from Part Database |
 |--------|----------------------------------|
 | **Enemy Database** | `slot_type`, `rarity`, `drop_conditions` — defines which parts appear in enemy drop tables; Enemy Database references Part Database IDs for its loot entries |
-| **Symbot Core Progression** *(MVP, #10b)* | `level_requirement` (equip-gate threshold, Rule 4/5) and `level_growth` (per-CORE per-level stat contribution, CP-F3) — both are **CP-defined fields hosted in the SympartData schema** (added via the Core Progression erratum 2026-07-12). Part DB stores and content-validates them (AC-CP-20 rarity-floor + AC-CP-22 no-power-stats/25%-ceiling are DoD gates on the Part DB erratum); Core Progression owns their meaning and reads them at equip / stat-derivation time. *(Resolves the C-6 one-directional-dependency hygiene warning, 2026-07-13: Upstream stays "None" — the fields live in the root schema — but CP is a downstream reader and is now listed here.)* |
+| **Symbot Core Progression** *(MVP, #10b)* | `level_requirement` (equip-gate threshold, Rule 4/5) and `level_growth` (per-CORE per-level stat contribution, CP-F3) — both are **CP-defined fields hosted in the PartDef schema** (added via the Core Progression erratum 2026-07-12). Part DB stores and content-validates them (AC-CP-20 rarity-floor + AC-CP-22 no-power-stats/25%-ceiling are DoD gates on the Part DB erratum); Core Progression owns their meaning and reads them at equip / stat-derivation time. *(Resolves the C-6 one-directional-dependency hygiene warning, 2026-07-13: Upstream stays "None" — the fields live in the root schema — but CP is a downstream reader and is now listed here.)* |
 | **Move Database** | `active_skill_id`, `slot_type`, `heat_generation`, `ammo_cost`, `upgrade_effects` — Move DB (Approved 2026-07-10) defines what each active skill and upgrade effect does at runtime; Part DB stores the references, Move DB owns their behavior |
 | **Damage Formula System** | `damage_type` (PHYSICAL / ENERGY), `element`, `stat_bonuses` (via Assembly output) — damage math requires knowing a part's element and damage type to apply type effectiveness multipliers |
 | **Symbot Assembly System** | Full schema — reads `slot_type` to enforce slot rules, `stat_bonuses` to compute `final_stat`, `chassis_modifier` table for archetype application, `active_skill_id`, `passive_id`, `heat_generation`, `ammo_cost`, `max_upgrade_tier` |
@@ -678,7 +678,7 @@ Part Database exposes **read-only access only**. No downstream system may write 
 The canonical access pattern is:
 
 ```gdscript
-var part: SympartData = PartDatabase.get_part(part_id)
+var part: PartDef = PartDatabase.get_part(part_id)
 ```
 
 Changes to the Part Database (adding parts, patching stat values, toggling `drop_enabled`) are content updates, not runtime state changes.
@@ -773,7 +773,7 @@ The stat budget table (Common / Rare / Boss-grade / Prototype per slot) is the p
 
 ### Runtime Behavior
 
-**AC-14**: `PartDatabase.get_part(id)` returns the correct resource for a valid ID and returns null for an unknown ID without crashing. **Pass when**: `get_part("boltwell_spark_core")` returns a non-null `SympartData` whose `id` matches. `get_part("nonexistent_id_xyz")` returns `null` with no exception. `get_part("")` returns `null` without crash. `get_part(null)` returns `null` without crash. **Test type**: Unit.
+**AC-14**: `PartDatabase.get_part(id)` returns the correct resource for a valid ID and returns null for an unknown ID without crashing. **Pass when**: `get_part("boltwell_spark_core")` returns a non-null `PartDef` whose `id` matches. `get_part("nonexistent_id_xyz")` returns `null` with no exception. `get_part("")` returns `null` without crash. `get_part(null)` returns `null` without crash. **Test type**: Unit.
 
 **AC-15a**: A part with `drop_enabled = false` is excluded from drop table queries. **Pass when**: `DropSystem.build_drop_table(enemy)` does not include the disabled part in its returned pool. `PartDatabase.get_part(that_id)` still returns the full valid entry (the part is not deleted). `PartDatabase.get_part(that_id).drop_enabled == false` for a part authored with `drop_enabled = false`. **Test type**: Unit.
 

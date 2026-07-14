@@ -30,7 +30,7 @@
 #   Superseded entries:     Grep pattern="status: superseded"
 
 version: 1
-last_updated: "2026-07-13"
+last_updated: "2026-07-14"
 
 # ─── STATE OWNERSHIP ─────────────────────────────────────────────────────────
 # Who is the authoritative owner of each piece of shared game state.
@@ -43,7 +43,50 @@ last_updated: "2026-07-13"
 # interface: how other systems access this state (read-only property, method call,
 #   signal, shared resource, etc.) — this is the contract other ADRs depend on.
 
-state_ownership: []
+state_ownership:
+  - state: symbot_final_stat
+    status: active
+    owner_system: symbot-assembly
+    adr: docs/architecture/adr-0005-stat-pipeline.md
+    interface: "SymbotBuild.final_stat cache (11 canonical keys -> int; parts + chassis +
+      CP-F3 only — synergy NEVER included, Assembly Rule 8) + stats_changed(final_stat:
+      Dictionary) signal. Recomputed ONLY via StatPipeline.derive on equip; battle reads
+      the frozen CombatantSnapshot copy, never the live cache."
+    write_access: symbot-assembly-only
+    referenced_by:
+      - docs/architecture/adr-0005-stat-pipeline.md
+    added: 2026-07-14
+    revised: ""
+
+  - state: synergy_bonus_block
+    status: active
+    owner_system: synergy-system
+    adr: docs/architecture/adr-0005-stat-pipeline.md
+    interface: "SynergyEvaluator.cached_bonus_block (initialized to a valid empty zero-bonus
+      block) + synergy_changed(active_synergies: Array[StringName], bonus_block: Dictionary)
+      signal. evaluate() recomputes + always emits; evaluate_silent() recomputes without emit
+      (battle baseline); preview() is pure — no cache write, no emit."
+    write_access: synergy-system-only
+    referenced_by:
+      - docs/architecture/adr-0005-stat-pipeline.md
+    added: 2026-07-14
+    revised: ""
+
+  - state: core_progression_ledger
+    status: active
+    owner_system: core-progression
+    adr: docs/architecture/adr-0005-stat-pipeline.md
+    interface: "CoreProgression ledger Dictionary[int, CoreProgressionRecord]; cumulative_xp
+      is authoritative, level is a display cache always re-derived via CP-F1. Reads via
+      can_equip/is_build_valid; writes ONLY via register_core/apply_battle_result;
+      core_leveled_up(id, old_level, new_level) signal. Persists as plain data inside the
+      exploration-progress save-provider blob (ADR-0001)."
+    write_access: core-progression-only
+    referenced_by:
+      - docs/architecture/adr-0005-stat-pipeline.md
+      - docs/architecture/adr-0001-save-load.md
+    added: 2026-07-14
+    revised: ""
 
 # Example:
 #
@@ -88,6 +131,7 @@ interfaces:
       - docs/architecture/adr-0001-save-load.md
       - docs/architecture/adr-0002-event-bus.md   # §4 save quiesce: autosave triggers + is_battle_active() manual-save gate
       - docs/architecture/adr-0004-scene-boot.md  # boot step 5 registers providers; Continue/New-Game share one restore→rederive path
+      - docs/architecture/adr-0005-stat-pipeline.md  # CoreProgression ledger rides inside the exploration-progress blob as plain data
     added: 2026-07-13
     revised: ""
 
@@ -109,6 +153,7 @@ interfaces:
       only after emit() returns"
     referenced_by:
       - docs/architecture/adr-0002-event-bus.md
+      - docs/architecture/adr-0005-stat-pipeline.md   # CoreProgression.apply_battle_result consumes the 8 payload fields verbatim
     added: 2026-07-13
     revised: "2026-07-13"  # /architecture-review conflict fix — signature was a bad transcription of Rule 12
 
@@ -147,6 +192,7 @@ interfaces:
     referenced_by:
       - docs/architecture/adr-0003-content-resources.md
       - docs/architecture/adr-0004-scene-boot.md   # boot step 2 sequences load_catalog for all 6 DBs before any consumer
+      - docs/architecture/adr-0005-stat-pipeline.md  # StatPipeline copies primitives out of PartDef; build_enemy reads EnemyDef — never mutates/duplicates a def
     added: 2026-07-13
     revised: ""
 
@@ -170,6 +216,80 @@ interfaces:
     referenced_by:
       - docs/architecture/adr-0004-scene-boot.md
     added: 2026-07-13
+    revised: ""
+
+  - contract: combatant_snapshot
+    status: active
+    pattern: shared_resource   # immutable-by-construction RefCounted handed to battle
+    producer: stat-pipeline    # CombatantSnapshot.build_player / build_enemy at BATTLE_INIT
+    consumers:
+      - turn-based-combat      # ADR-0007 damage resolution + initiative read effective_stat()
+      - combat-ui              # stat displays
+    adr: docs/architecture/adr-0005-stat-pipeline.md
+    signal_signature: "CombatantSnapshot.build_player(build, bonus_block, aura_block) /
+      build_enemy(def: EnemyDef) / effective_stat(s: StringName) -> int
+      # built ONCE at BATTLE_INIT; every field deep-copied; no setters; one class for both
+      sides (enemy synergy/aura = {}); effective_stat is THE in-battle SYN-F4 composition point"
+    referenced_by:
+      - docs/architecture/adr-0005-stat-pipeline.md
+    added: 2026-07-14
+    revised: ""
+
+  - contract: damage_computation
+    status: active
+    pattern: direct_call       # pure static function, no state
+    producer: stat-pipeline
+    consumers:
+      - turn-based-combat      # ADR-0007 damage resolution
+      - workshop-ui            # damage preview displays
+    adr: docs/architecture/adr-0005-stat-pipeline.md
+    signal_signature: "DamageFormula.compute_damage(a: int, d: int, type_mult: float, cfg,
+      log, crit_mult: float = 1.0) -> int
+      # DF-1 verbatim: a==0 && d==0 -> damage_floor BEFORE division; float casts before
+      divide; type/crit multipliers pre-floor; maxi(damage_floor, floor_eps(...)) post.
+      Deterministic — consumes NO RNG; crit_mult is passed in, never rolled here"
+    referenced_by:
+      - docs/architecture/adr-0005-stat-pipeline.md
+    added: 2026-07-14
+    revised: ""
+
+  - contract: synergy_evaluation
+    status: active
+    pattern: direct_call       # + owner-declared synergy_changed signal
+    producer: synergy-system
+    consumers:
+      - workshop               # evaluate() after every equip/unequip
+      - turn-based-combat      # evaluate_silent() once at battle start (no spurious UI emit)
+      - workshop-ui            # preview() on hover; subscribes synergy_changed
+    adr: docs/architecture/adr-0005-stat-pipeline.md
+    signal_signature: "evaluate(parts) — recompute + ALWAYS emit synergy_changed(
+      active_synergies: Array[StringName], bonus_block: Dictionary) / evaluate_silent(parts)
+      — recompute + cache, no emit / preview(candidate, slot, parts) — pure read-only.
+      active_synergies never null; the empty block is a valid zero-bonus state"
+    referenced_by:
+      - docs/architecture/adr-0005-stat-pipeline.md
+    added: 2026-07-14
+    revised: ""
+
+  - contract: core_progression_gate
+    status: active
+    pattern: direct_call       # + owner-declared core_leveled_up signal
+    producer: core-progression
+    consumers:
+      - symbot-assembly        # can_equip on every equip attempt (CP Rule 4 gate)
+      - turn-based-combat      # is_build_valid battle-start precondition (AC-TBC-42); battle_ended -> apply_battle_result
+      - inventory              # register_core on first-add
+      - workshop-ui            # level display, gate tooltips, invalid-build banner
+    adr: docs/architecture/adr-0005-stat-pipeline.md
+    signal_signature: "register_core(core_instance_id: int) / can_equip(core_instance_id,
+      part) -> bool / is_build_valid(build) -> bool / apply_battle_result(outcome, xp_value,
+      completion_bonus_xp, is_first_boss_defeat, enemy_level, deployed_symbot_ids)
+      # consumes the combat_battle_end payload fields verbatim — host-agnostic (takes
+      fields, not a TBC reference) / core_leveled_up(id, old_level, new_level) emitted
+      once per gain span"
+    referenced_by:
+      - docs/architecture/adr-0005-stat-pipeline.md
+    added: 2026-07-14
     revised: ""
 
 # Example:
@@ -308,7 +428,47 @@ api_decisions:
       gate, gameplay screens unreachable before it."
     referenced_by:
       - docs/architecture/adr-0004-scene-boot.md
+      - docs/architecture/adr-0005-stat-pipeline.md   # BalanceConfig load added to boot step 2; Layer-2 owners constructed at boot step 5
     added: 2026-07-13
+    revised: ""
+
+  - purpose: stat_formula_home
+    status: active
+    api: "Pure static-function formula core in src/core/stats/ (StatMath, StatPipeline,
+      DamageFormula, SynergyMath, ProgressionMath — no state, no signals, no autoload
+      registration) + thin stateful owners as DI-constructed RefCounted (SymbotBuild,
+      SynergyEvaluator, CoreProgression), built by BootScreen step 5 and handed to screens
+      via ScreenManager injection. All constructors take (cfg: BalanceConfig, log: LogSink)."
+    not:                       # explicitly banned as homes for stat/formula logic
+      - "stat/synergy/progression service autoloads — would amend ADR-0004's fixed roster of 10 and defeat the DI/coverage mandate"
+      - "Node-based stat components — no per-entity scene exists; scene-tree lifecycle risk for pure data math"
+    adr: docs/architecture/adr-0005-stat-pipeline.md
+    reason: "Every formula is GUT-testable against the GDDs' discriminating worked examples
+      with a spy sink and a test config; consumers are few and known (Workshop, TBC, UI), so
+      injection is cheap; honors the fixed-roster and thin-host stances without amendment."
+    referenced_by:
+      - docs/architecture/adr-0005-stat-pipeline.md
+    added: 2026-07-14
+    revised: ""
+
+  - purpose: tuning_constants
+    status: active
+    api: "Single BalanceConfig typed Resource (class_name BalanceConfig extends Resource),
+      authored as one .tres (assets/data/balance_config.tres), loaded by BootScreen at boot
+      step 2 alongside the six catalogs (fatal-on-missing -> BootError), validated by a
+      ContentValidator section (xp_thresholds strictly increasing, bench_xp_share power-of-2,
+      chassis_modifiers keys in the canonical 11), constructor-injected into every Layer-1/2
+      user."
+    not:                       # explicitly banned for tunable gameplay values
+      - "UPPER_SNAKE_CASE consts beside formulas — violates the data-driven standard. EXCEPTION: EPSILON = 0.0001 stays a StatMath const (DF-1: 'not a tuning knob; fixed implementation constant')"
+      - "per-system tuning .tres files — multiplies boot steps; cross-system constants (synergy budgets span Synergy + DF-1 + validation) have no home"
+    adr: docs/architecture/adr-0005-stat-pipeline.md
+    reason: "One reviewable balance diff, one boot step, one validator section. Typed-dict
+      .tres tables share ADR-0003's open round-trip verification gate; the nested tables
+      (chassis_modifiers, type_chart) need their fallback form decided if the gate fails."
+    referenced_by:
+      - docs/architecture/adr-0005-stat-pipeline.md
+    added: 2026-07-14
     revised: ""
 
 # Example:
@@ -456,6 +616,33 @@ forbidden_patterns:
       (ADR-0004 §2–3; enforced by static grep test for change_scene_to and screen free().)"
     adr: docs/architecture/adr-0004-scene-boot.md
     added: 2026-07-13
+
+  - pattern: inline_stat_composition
+    status: active
+    description: "No code may reimplement SYN-F4 (effective stat = maxi(0, final + synergy
+      + aura)) outside StatMath.effective_stat / CombatantSnapshot.effective_stat. TBC
+      damage resolution, initiative, and every UI display MUST call the single composition
+      point."
+    why: "Two implementations of one formula is exactly how the MOVE-F1 preview seam shipped
+      through a full approval (design-review 2026-07-12): copies drift the first time one is
+      patched. Review aid: grep for maxi(0,/max(0, near 'synergy' outside the two legal
+      sites. (ADR-0005 §Layer 3.)"
+    adr: docs/architecture/adr-0005-stat-pipeline.md
+    added: 2026-07-14
+
+  - pattern: mid_battle_stat_recompute
+    status: active
+    description: "After BATTLE_INIT builds the CombatantSnapshots, no battle-scope code path
+      may call StatPipeline.derive or SynergyEvaluator.evaluate/evaluate_silent, and battle
+      code must never hold a reference into the live SymbotBuild or the evaluator cache.
+      Battle reads the frozen snapshot only; in-battle stat changes are TBC-owned modifiers
+      layered ON TOP of effective_stat()."
+    why: "The GDD freeze (TBC Rule 2) is a behavioral contract, not an engine lock — one
+      mid-battle recompute re-couples battle state to Workshop state and voids the snapshot's
+      isolation guarantees. Enforced by the isolation GUT test + the Workshop equip lockout
+      while is_battle_active (Synergy DCO-8). (ADR-0005 §Layer 3.)"
+    adr: docs/architecture/adr-0005-stat-pipeline.md
+    added: 2026-07-14
 
 # Example:
 #

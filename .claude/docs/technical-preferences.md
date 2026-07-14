@@ -61,7 +61,8 @@
 - **ADR-0002** — Event Bus & Signal Architecture — **Accepted 2026-07-13** (hybrid: owner-declared signals + closed 3-signal EventBus roster; `encounter_resolved` rename; synchronous-emit teardown contract; deferred autosave quiesce)
 - **ADR-0003** — Content Resource Loading & Schema Mapping — **Accepted 2026-07-13** (typed `.tres` defs, one catalog per DB, CI + dev-boot ContentValidator; typed-dict `.tres` round-trip verification gate still open — blocks content authoring, not acceptance)
 - **ADR-0004** — Scene Management & Boot — **Accepted 2026-07-13** (persistent Game root + ScreenManager, Overworld keep-alive, explicit BootScreen sequencer, fixed 10-autoload roster)
-- Planned next (per `architecture-review-2026-07-13.md`): ADR-0005 stat pipeline → ADR-0006 RNG service → ADR-0007 TBC state machine → ADR-0008 UI architecture
+- **ADR-0005** — Stat Pipeline & Battle Snapshot — **Proposed 2026-07-14** (pure formula core in `src/core/stats/` + DI RefCounted owners, typed `CombatantSnapshot` frozen at BATTLE_INIT with single SYN-F4 composition point, single `BalanceConfig` .tres; no new autoloads)
+- Planned next (per `architecture-review-2026-07-13.md`): ADR-0006 RNG service → ADR-0007 TBC state machine (must resolve the `battle_ended`-host seam) → ADR-0008 UI architecture
 
 ## Engine Specialists
 
