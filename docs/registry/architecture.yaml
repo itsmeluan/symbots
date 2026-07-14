@@ -128,6 +128,23 @@ interfaces:
     added: 2026-07-13
     revised: ""
 
+  - contract: content_db_lookup
+    status: active
+    pattern: direct_call     # every consumer reads content via the DB singletons' typed getters
+    producer: content-databases   # PartDB / EnemyDB / MoveDB / PassiveDB / ConsumableDB / WorldLootDB
+    consumers:
+      - all-systems          # any system reading gameplay values (data-driven mandate)
+    adr: docs/architecture/adr-0003-content-resources.md
+    signal_signature: "load_catalog(catalog: XCatalog, log_sink: LogSink) -> bool (boot-time, DI;
+      fatal on duplicate ID / null entry) / has_x(id: StringName) -> bool /
+      get_x(id: StringName) -> XDef  # returns NULL for unknown id — callers MUST null-check
+      (typed GDScript annotations do not prevent null). Defs are frozen shared instances;
+      cross-DB references are StringName IDs, never Resource links."
+    referenced_by:
+      - docs/architecture/adr-0003-content-resources.md
+    added: 2026-07-13
+    revised: ""
+
 # Example:
 #
 # interfaces:
@@ -197,6 +214,29 @@ api_decisions:
     reason: "Human-readable + retune-safe + sidesteps the Godot 4.6 Resource-serialization HIGH risk. NOTE: JSON parses all numbers as float — int source facts must be int()-cast on restore."
     referenced_by:
       - docs/architecture/adr-0001-save-load.md
+      - docs/architecture/adr-0003-content-resources.md   # JSON is player-data-only; content is .tres — the two must not be conflated
+    added: 2026-07-13
+    revised: ""
+
+  - purpose: content_authoring
+    status: active
+    api: "Typed .tres Resource entries (class_name def scripts, @export typed fields incl.
+      Dictionary[StringName, int] — VERIFICATION GATE: .tres round-trip must pass before
+      content authoring begins) + one explicit catalog Resource per DB (Array[XDef] manifest).
+      Loading = ResourceLoader.load of 6 catalog files; content enums explicit-from-1.
+      Validation: single ContentValidator, CI-blocking headless GUT suite + dev-boot
+      fail-loud via LogSink (release builds skip)."
+    not:                       # explicitly banned for content authoring/loading
+      - "JSON content files — inspector authoring lost, parse layer, all-floats casts (JSON is for SAVES, ADR-0001)"
+      - "generic Dictionary catalogs — no compile-time field checking"
+      - "directory-scan loading — DirAccess listing breaks on .remap stubs in exported PCKs"
+      - "monolithic single-file catalogs — merge conflicts concentrate in one file"
+    adr: docs/architecture/adr-0003-content-resources.md
+    reason: "Read-only content never re-serializes at runtime, so ADR-0001's Resource-save
+      footguns don't apply; the catalog IS the reviewable manifest of what ships; typed defs
+      make the compiler enforce half the schema contract."
+    referenced_by:
+      - docs/architecture/adr-0003-content-resources.md
     added: 2026-07-13
     revised: ""
 
@@ -295,6 +335,45 @@ forbidden_patterns:
       can trace who talks to whom. The closed 3-signal MVP roster is only reviewable
       because admission is gated; routing convenience is not a criterion."
     adr: docs/architecture/adr-0002-event-bus.md
+    added: 2026-07-13
+
+  - pattern: runtime_content_mutation
+    status: active
+    description: "Content defs (PartDef, EnemyDef, MoveDef, PassiveDef, ConsumableDef,
+      LootNodeDef) and catalogs are frozen shared instances — mutating any field at runtime
+      is forbidden, and the ban explicitly covers calling duplicate() or duplicate_deep()
+      on any def or catalog. Systems needing mutable working state copy specific fields
+      into their own runtime structures (battle snapshot, part instances)."
+    why: "Lookups hand out THE shared instance; one mutation corrupts every future reader.
+      duplicate() (shallow for nested resources since Godot 4.5) is the trap's disguise:
+      a 'copy' of an EnemyDef still shares its BreakRegionDefs, so copy-then-mutate
+      silently mutates shared state. (ADR-0003 §4; immutability GUT test is load-bearing.)"
+    adr: docs/architecture/adr-0003-content-resources.md
+    added: 2026-07-13
+
+  - pattern: content_directory_scanning
+    status: active
+    description: "No DirAccess directory listing anywhere in the content load path. Content
+      ships exclusively through the explicit catalog Resource reference chains resolved by
+      ResourceLoader."
+    why: "In exported PCKs, .tres resources get companion .remap stubs; DirAccess listing
+      returns only stub names, so *.tres scans work in-editor and find NOTHING post-export —
+      a works-in-editor/fails-on-iOS failure class. ResourceLoader.load() resolves remaps
+      transparently, which is why catalogs are export-safe. (ADR-0003 §2; enforced by a
+      static grep test.)"
+    adr: docs/architecture/adr-0003-content-resources.md
+    added: 2026-07-13
+
+  - pattern: content_enum_reordering
+    status: active
+    description: "Enums used in content def @export fields declare explicit integer values
+      starting at 1 (0 = reserved/invalid) and are APPEND-ONLY — never reorder, insert,
+      or renumber existing values."
+    why: ".tres files store enum values as raw integers, not names. Inserting or reordering
+      a value silently re-labels every already-authored entry (a part authored as ARMOR
+      becomes WEAPON) with no load error — content corruption invisible until gameplay.
+      (ADR-0003 §1.)"
+    adr: docs/architecture/adr-0003-content-resources.md
     added: 2026-07-13
 
 # Example:
