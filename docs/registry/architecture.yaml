@@ -87,6 +87,7 @@ interfaces:
     referenced_by:
       - docs/architecture/adr-0001-save-load.md
       - docs/architecture/adr-0002-event-bus.md   # §4 save quiesce: autosave triggers + is_battle_active() manual-save gate
+      - docs/architecture/adr-0004-scene-boot.md  # boot step 5 registers providers; Continue/New-Game share one restore→rederive path
     added: 2026-07-13
     revised: ""
 
@@ -119,12 +120,14 @@ interfaces:
       - encounter-zone       # boss-gate re-evaluation trigger
       - world-map-ui         # map refresh
       - save-load            # autosave trigger — the ONLY CONNECT_DEFERRED site in the project (ADR-0002 §4)
+      - screen-manager       # battle teardown (queue_free) + Overworld re-enable (ADR-0004 §3)
     adr: docs/architecture/adr-0002-event-bus.md
     signal_signature: "EventBus.encounter_resolved(result: int, encounter_type: int)
       # RENAMED from the ambiguous 2-field world 'battle_ended' (ADR-0002 §2) —
       # distinct name from TBC's 8-field combat battle_ended; statically testable"
     referenced_by:
       - docs/architecture/adr-0002-event-bus.md
+      - docs/architecture/adr-0004-scene-boot.md   # ScreenManager subscribes; autosave connect sequenced at boot step 6
     added: 2026-07-13
     revised: ""
 
@@ -142,6 +145,29 @@ interfaces:
       cross-DB references are StringName IDs, never Resource links."
     referenced_by:
       - docs/architecture/adr-0003-content-resources.md
+      - docs/architecture/adr-0004-scene-boot.md   # boot step 2 sequences load_catalog for all 6 DBs before any consumer
+    added: 2026-07-13
+    revised: ""
+
+  - contract: screen_transitions
+    status: active
+    pattern: direct_call     # systems REQUEST transitions on an injected ScreenManager reference
+    producer: scene-management   # ScreenManager node under the persistent Game.tscn root
+    consumers:
+      - overworld-navigation # enter_battle(encounter_payload) — its GDD (#16) must author against this
+      - main-menu            # goto_overworld() only valid after restore/fresh-init + rederive
+      - workshop-ui          # open_workshop() / close_workshop()
+      - all-screens          # every screen receives the manager injected at instantiation (no get_parent() climbing)
+    adr: docs/architecture/adr-0004-scene-boot.md
+    signal_signature: "goto_main_menu() / goto_overworld() / enter_battle(encounter_payload:
+      Dictionary) / open_workshop() / close_workshop()  # ONLY ScreenManager creates, frees,
+      shows, or hides screens. Battle exit is NOT a method — ScreenManager subscribes to
+      EventBus.encounter_resolved and tears down via queue_free() ONLY (never free(): the
+      synchronous cascade must unwind; later subscribers see is_queued_for_deletion()==true).
+      Overworld keep-alive during battle: hide() + PROCESS_MODE_DISABLED + gui_release_focus()
+      (4.6 dual-focus)."
+    referenced_by:
+      - docs/architecture/adr-0004-scene-boot.md
     added: 2026-07-13
     revised: ""
 
@@ -257,6 +283,30 @@ api_decisions:
       anything-goes channel. EventBus must be FIRST in the autoload order (→ ADR-0004)."
     referenced_by:
       - docs/architecture/adr-0002-event-bus.md
+      - docs/architecture/adr-0004-scene-boot.md   # EventBus-first constraint discharged (autoload #1 of 10)
+    added: 2026-07-13
+    revised: ""
+
+  - purpose: boot_initialization
+    status: active
+    api: "Explicit BootScreen sequencer under the persistent Game.tscn root: run_boot()
+      drives catalogs (6× load_catalog) → ContentValidator gate (debug builds) →
+      RngService.init() → save-provider registration → autosave CONNECT_DEFERRED
+      connections → Main Menu. Every fatal step routes to a BootError screen via
+      LogSink. Autoload roster, fixed order of 10: EventBus, Log, PartDB, EnemyDB,
+      MoveDB, PassiveDB, ConsumableDB, WorldLootDB, RngService, SaveLoad — all thin
+      hosts. Save restore happens at Main Menu Continue, NOT during boot; New Game
+      runs the same Phase 2 rederive() as 'restore from nothing'."
+    not:                       # explicitly banned for boot/initialization
+      - "autoload _ready chain as boot driver — ordering invisible to review, black-screen death on failure, untestable"
+      - "change_scene_to_packed()/change_scene_to_file() — the root is permanent; ScreenManager owns all transitions"
+      - "eager catalog loading in DB autoload _ready — see forbidden pattern autoload_ready_work"
+    adr: docs/architecture/adr-0004-scene-boot.md
+    reason: "Boot is the one sequence that must be reviewable, testable, and fail-visible.
+      TR-ep-004 (restore before derive) is satisfied structurally: derivation is a phase
+      gate, gameplay screens unreachable before it."
+    referenced_by:
+      - docs/architecture/adr-0004-scene-boot.md
     added: 2026-07-13
     revised: ""
 
@@ -374,6 +424,36 @@ forbidden_patterns:
       becomes WEAPON) with no load error — content corruption invisible until gameplay.
       (ADR-0003 §1.)"
     adr: docs/architecture/adr-0003-content-resources.md
+    added: 2026-07-13
+
+  - pattern: autoload_ready_work
+    status: active
+    description: "Autoloads are thin hosts: no I/O, no catalog loads, no signal connections,
+      no cross-autoload reads in _ready. All initialization is driven explicitly by the
+      BootScreen sequencer, in code, in order."
+    why: "Work in autoload _ready makes boot order an invisible editor setting, gives
+      failures no scene tree to show an error on (black-screen death), and makes the
+      sequence untestable without replicating the autoload environment. Thin hosts keep
+      every piece of logic constructible in GUT and make autoload list order immaterial
+      to correctness. (ADR-0004 §1; enforced by review checklist + grep for I/O in
+      autoload scripts.)"
+    adr: docs/architecture/adr-0004-scene-boot.md
+    added: 2026-07-13
+
+  - pattern: unowned_scene_transition
+    status: active
+    description: "No system, screen, or UI code may perform a screen transition itself:
+      no change_scene_to_packed()/change_scene_to_file(), no add_child()/free()/
+      queue_free() of screen scenes outside ScreenManager, no get_parent() climbing to
+      reach the manager. Screens request transitions on their injected ScreenManager
+      reference; Battle teardown in particular is queue_free() by ScreenManager only,
+      never free()."
+    why: "A single transition owner makes the legal screen flow equal to ScreenManager's
+      method list — illegal transitions don't exist rather than being checked. Self-service
+      swaps reintroduce the destroyed-Overworld problem (position/zone-state loss) and
+      free() during the synchronous encounter_resolved cascade is a use-after-free.
+      (ADR-0004 §2–3; enforced by static grep test for change_scene_to and screen free().)"
+    adr: docs/architecture/adr-0004-scene-boot.md
     added: 2026-07-13
 
 # Example:
