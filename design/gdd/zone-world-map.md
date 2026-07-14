@@ -1,8 +1,9 @@
 # Zone & World Map System
 
 > **Status**: **APPROVED — 2026-07-12 (full-panel /design-review — NEEDS REVISION → 8 blockers fixed same session: ZWM-F1 source_zone scope, EC-ZWM-12/AC-ZWM-19 missing-key, zone_states_changed diff payload, LOCKED-origin outbound travel, AC-ZWM-11 concrete fixture, AC-ZWM-17/18 signal contract, AC-ZWM-05 GIVEN completed. 15→20 ACs / 11→12 ECs)**
+> **ADR-0002 erratum applied 2026-07-13**: the Overworld-Navigation-relayed 2-field battle-end signal is now named explicitly — `EventBus.encounter_resolved(result, encounter_type)` (formerly the ambiguous "battle_ended"; TBC's 8-field combat `battle_ended` is unchanged). Closes the cross-review C-1 remainder for this GDD.
 > **Author**: Luan + Claude Code Game Studios agents
-> **Last Updated**: 2026-07-12
+> **Last Updated**: 2026-07-13
 > **Implements Pillar**: Pillar 5 (The World Is a Workshop), Pillar 2 (Every Battle Has a Harvest Goal)
 
 ## Overview
@@ -82,7 +83,7 @@ Because most edges are `OPEN`, **many zones can be ACCESSIBLE at once** — the 
 | Field | Type | Notes |
 |-------|------|-------|
 | `state` | Enum | Derived per Rule 5 (LOCKED/ACCESSIBLE/CLEARED) |
-| `win_count` | int | Cumulative WILD wins in this zone. **Incremented per Encounter Zone Rule 8a semantics** (all-time, wins-only, no reset; fled/lost never count) on a `battle_ended(result = WIN)` for a WILD encounter in this zone. |
+| `win_count` | int | Cumulative WILD wins in this zone. **Incremented per Encounter Zone Rule 8a semantics** (all-time, wins-only, no reset; fled/lost never count) on an `encounter_resolved(result = WIN)` relay (ADR-0002) for a WILD encounter in this zone. |
 | `boss_progress` | Array[BossProgress] | One per zone boss: `{ boss_id, defeated_once: bool, wins_at_last_defeat: int }` (the delta snapshot Encounter Zone Rule 9 requires for re-gates) |
 
 This system **owns these fields at runtime and implements Encounter Zone's rule semantics** — it does not re-define them. The Exploration Progress System serializes this state to disk and restores it on load (see Interactions); it is the persistence layer, not the runtime owner.
@@ -101,17 +102,17 @@ Zone state is a pure function of progression data, recomputed on every relevant 
 | `ACCESSIBLE` | `CLEARED` | The zone's final un-defeated boss's `defeated_once` flips to `true` (all bosses now defeated) |
 | `CLEARED` | `CLEARED` | Terminal — re-entering a cleared zone to farm does not change state |
 
-Recomputation runs a reachability pass from `start_zone_id` across traversable edges, then overlays CLEARED for zones with all bosses defeated. Triggers: `battle_ended` (win-count/boss-defeat change), story-flag change, key-item acquisition, and load (after Exploration Progress restores state). The pass is deterministic and side-effect-free apart from emitting `zone_states_changed(transitions)` when any state differs from the prior pass — `transitions` is an `Array[Dictionary]`, each entry `{ zone_id: StringName, from_state: ZoneState, to_state: ZoneState }`. **The signal is suppressed entirely when no state changed** — prevents spurious UI re-renders and audio triggers on battles where no zone transitions occurred.
+Recomputation runs a reachability pass from `start_zone_id` across traversable edges, then overlays CLEARED for zones with all bosses defeated. Triggers: `encounter_resolved` (the ADR-0002 relay — win-count/boss-defeat change), story-flag change, key-item acquisition, and load (after Exploration Progress restores state). The pass is deterministic and side-effect-free apart from emitting `zone_states_changed(transitions)` when any state differs from the prior pass — `transitions` is an `Array[Dictionary]`, each entry `{ zone_id: StringName, from_state: ZoneState, to_state: ZoneState }`. **The signal is suppressed entirely when no state changed** — prevents spurious UI re-renders and audio triggers on battles where no zone transitions occurred.
 
 ### Interactions with Other Systems
 
 | System | Direction | Interface |
 |--------|-----------|-----------|
 | **Encounter Zone** (upstream) | This system reads `zone_id`, `boss_encounters` (boss_id, gate_params, regate_params, repeat_policy) and **calls** its gate-check, passing `win_count` + `boss_progress` as inputs | Encounter Zone owns spawn tables + gate *semantics*; this system owns the *runtime counter/flags* and never lets Encounter Zone read up |
-| **Overworld Navigation** (downstream) | Calls `can_travel(from, to)` and `enter_zone(to)`; reports `battle_ended(result, encounter_type)` for win-count increment | Owns tile movement + encounter triggering; this system owns zone-level transition validation and progression state |
+| **Overworld Navigation** (downstream) | Calls `can_travel(from, to)` and `enter_zone(to)`; relays `EventBus.encounter_resolved(result, encounter_type)` (ADR-0002) for win-count increment | Owns tile movement + encounter triggering; this system owns zone-level transition validation and progression state |
 | **Exploration Progress** (downstream) | Serializes/restores every `ZoneRuntimeState` (`win_count`, `boss_progress`, derived `state` re-derived on load) | Persistence layer only — not the runtime owner |
 | **World Map UI** (downstream) | Reads `zones`, `current_zone_id`, each node's `state`, `display_name`, `map_position`, `difficulty_band`, and edge lock status; receives `zone_states_changed(transitions)` diff | Read-only; renders locked/accessible/cleared and the difficulty read-out; uses `from_state`/`to_state` in `transitions` to select unlock fanfare vs. cleared flourish |
-| **Turn-Based Combat** (indirect) | Emits the `battle_ended` signal (result WIN/LOSS/FLEE) that Overworld Navigation relays for win-count increment | This system never reads combat state directly |
+| **Turn-Based Combat** (indirect) | Emits the 8-field combat `battle_ended` signal (VICTORY/DEFEAT/FLED) that Overworld Navigation maps (→ WIN/LOSS/FLEE) and relays as `EventBus.encounter_resolved(result, encounter_type)` (ADR-0002) | This system never reads combat state directly |
 
 ## Formulas
 
@@ -173,7 +174,7 @@ step3 (assign): for each zone z:
 
 **Example (2-node, discriminating):** `scrapfield` (start) with one `BOSS_DEFEATED(forge_titan)` edge to `foundry`; `foundry` has no inbound OPEN edge. Before Forge Titan: `reachable = {scrapfield}` → `foundry` is **LOCKED** (an implementation that ignored `traversable` and treated all edges as open would wrongly mark it ACCESSIBLE). After Forge Titan: edge traversable → `reachable = {scrapfield, foundry}` → `foundry` **ACCESSIBLE**.
 
-The `win_count` increment is **not** a formula here — it is `win_count += 1` on a qualifying `battle_ended(WIN, WILD)`, implementing Encounter Zone Rule 8a's semantics (owned there, not redefined).
+The `win_count` increment is **not** a formula here — it is `win_count += 1` on a qualifying `encounter_resolved(WIN, WILD)` relay (ADR-0002), implementing Encounter Zone Rule 8a's semantics (owned there, not redefined).
 
 ## Edge Cases
 

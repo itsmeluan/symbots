@@ -86,6 +86,45 @@ interfaces:
     signal_signature: "snapshot() -> Dictionary (plain data only) / restore(data: Dictionary) (Phase 1, no cross-provider reads) / rederive() (Phase 2, provider-local)"
     referenced_by:
       - docs/architecture/adr-0001-save-load.md
+      - docs/architecture/adr-0002-event-bus.md   # §4 save quiesce: autosave triggers + is_battle_active() manual-save gate
+    added: 2026-07-13
+    revised: ""
+
+  - contract: combat_battle_end
+    status: active
+    pattern: signal          # owner-declared typed signal on TBC — NOT on the EventBus
+    producer: turn-based-combat
+    consumers:
+      - core-progression     # XP award (reads is_first_boss_defeat guard)
+      - drop-system          # loot roll from the battle payload
+      - overworld-navigation # maps result → WIN/LOSS/FLEE and relays as EventBus.encounter_resolved
+      - combat-ui            # end-of-battle screen (direct connection justified: UI already calls TBC to submit actions)
+    adr: docs/architecture/adr-0002-event-bus.md
+    signal_signature: "battle_ended(result: int, player_team: Array, enemy_team: Array,
+      turns_elapsed: int, damage_dealt: Dictionary, damage_taken: Dictionary,
+      is_boss: bool, is_first_boss_defeat: bool)  # 8-field, TBC Rule 12; synchronous emit;
+      payloads self-sufficient (ADR-0002 teardown contract) — TBC may discard battle state
+      only after emit() returns"
+    referenced_by:
+      - docs/architecture/adr-0002-event-bus.md
+    added: 2026-07-13
+    revised: ""
+
+  - contract: world_encounter_relay
+    status: active
+    pattern: event_bus       # one of the 3 signals on the closed MVP EventBus roster
+    producer: overworld-navigation
+    consumers:
+      - zone-world-map       # zone-state recompute trigger
+      - encounter-zone       # boss-gate re-evaluation trigger
+      - world-map-ui         # map refresh
+      - save-load            # autosave trigger — the ONLY CONNECT_DEFERRED site in the project (ADR-0002 §4)
+    adr: docs/architecture/adr-0002-event-bus.md
+    signal_signature: "EventBus.encounter_resolved(result: int, encounter_type: int)
+      # RENAMED from the ambiguous 2-field world 'battle_ended' (ADR-0002 §2) —
+      # distinct name from TBC's 8-field combat battle_ended; statically testable"
+    referenced_by:
+      - docs/architecture/adr-0002-event-bus.md
     added: 2026-07-13
     revised: ""
 
@@ -161,6 +200,26 @@ api_decisions:
     added: 2026-07-13
     revised: ""
 
+  - purpose: cross_system_eventing
+    status: active
+    api: "Hybrid: owner-declared typed signals + direct connections by default;
+      thin stateless EventBus autoload (signal declarations ONLY) for cross-layer
+      broadcasts meeting the ADR-0002 admission criteria (transient/unauthored
+      producer OR unbounded consumer set). Closed MVP bus roster: encounter_resolved,
+      zone_states_changed, zone_entered."
+    not:                       # explicitly banned for cross-system eventing
+      - "string-based connect (obj.connect(\"signal_name\", ...)) — deprecated; typed Signal.connect() only"
+      - "CONNECT_DEFERRED outside the Save/Load autosave triggers — synchronous emit is the contract"
+      - "string-topic pub/sub (emit(\"topic\", payload)) — no compile-time checking, unreviewable surface"
+    adr: docs/architecture/adr-0002-event-bus.md
+    reason: "Typed direct connections keep contracts compiler-visible and testable;
+      the bus stays a closed, reviewable 3-signal surface instead of a global
+      anything-goes channel. EventBus must be FIRST in the autoload order (→ ADR-0004)."
+    referenced_by:
+      - docs/architecture/adr-0002-event-bus.md
+    added: 2026-07-13
+    revised: ""
+
 # Example:
 #
 # api_decisions:
@@ -196,6 +255,46 @@ forbidden_patterns:
       on-disk format to in-memory class layout. Plain-data-only is what neutralizes the
       HIGH serialization risk — a single Resource leaking into a snapshot reopens it."
     adr: docs/architecture/adr-0001-save-load.md
+    added: 2026-07-13
+
+  - pattern: subscriber_ordering_dependency
+    status: active
+    description: "No subscriber may depend on running before or after another subscriber
+      of the same signal. Every signal payload must be self-sufficient — carry everything
+      consumers need so no consumer has to read state another consumer might have already
+      mutated. Payload collections are read-only: consumers needing mutation copy first
+      via dict.duplicate(true) / array.duplicate(true)."
+    why: "Godot invokes connections in connection order, which is boot-order-dependent
+      and silently changes when autoloads or scene structure are reordered. An ordering
+      dependency works until an unrelated refactor breaks it. (ADR-0002 teardown contract
+      rules 3–4.)"
+    adr: docs/architecture/adr-0002-event-bus.md
+    added: 2026-07-13
+
+  - pattern: global_push_diagnostics
+    status: active
+    description: "System code (src/) must not call push_warning()/push_error() directly.
+      Diagnostics go through the injected LogSink (@abstract class_name LogSink:
+      warn(code: StringName, detail: Dictionary) / error(...)). Production sink forwards
+      to Godot's console; tests inject a spy sink (preload()-ed, not class_name-declared)."
+    why: "Global push_* calls are invisible to unit tests — a formula that push_error()s
+      on bad input passes GUT silently. The injected sink makes every diagnostic assertable,
+      which the 80% game-logic coverage mandate requires. (Extends ADR-0001 File Rule 7
+      project-wide.)"
+    adr: docs/architecture/adr-0002-event-bus.md
+    added: 2026-07-13
+
+  - pattern: bus_by_default
+    status: active
+    description: "New cross-system signals default to owner-declared typed signals with
+      direct connections. A signal may be added to the EventBus ONLY if it meets an
+      ADR-0002 admission criterion: (1) the producer is not a stable boot-time autoload
+      (transient/unauthored), or (2) it is a world-state broadcast with an unbounded
+      consumer set. Adding a bus signal requires an ADR-0002 amendment."
+    why: "A bus that accepts everything degenerates into a global event soup where no one
+      can trace who talks to whom. The closed 3-signal MVP roster is only reviewable
+      because admission is gated; routing convenience is not a criterion."
+    adr: docs/architecture/adr-0002-event-bus.md
     added: 2026-07-13
 
 # Example:
