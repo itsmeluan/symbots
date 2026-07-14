@@ -101,15 +101,16 @@ interfaces:
       - overworld-navigation # maps result → WIN/LOSS/FLEE and relays as EventBus.encounter_resolved
       - combat-ui            # end-of-battle screen (direct connection justified: UI already calls TBC to submit actions)
     adr: docs/architecture/adr-0002-event-bus.md
-    signal_signature: "battle_ended(result: int, player_team: Array, enemy_team: Array,
-      turns_elapsed: int, damage_dealt: Dictionary, damage_taken: Dictionary,
-      is_boss: bool, is_first_boss_defeat: bool)  # 8-field, TBC Rule 12; synchronous emit;
+    signal_signature: "battle_ended(outcome: int, enemy_id: StringName,
+      fired_break_events: Dictionary, xp_value: int, completion_bonus_xp: int,
+      is_first_boss_defeat: bool, enemy_level: int, deployed_symbot_ids: Array)
+      # 8-field, TBC Rule 12 verbatim (ADR-0002 §1); synchronous emit;
       payloads self-sufficient (ADR-0002 teardown contract) — TBC may discard battle state
       only after emit() returns"
     referenced_by:
       - docs/architecture/adr-0002-event-bus.md
     added: 2026-07-13
-    revised: ""
+    revised: "2026-07-13"  # /architecture-review conflict fix — signature was a bad transcription of Rule 12
 
   - contract: world_encounter_relay
     status: active

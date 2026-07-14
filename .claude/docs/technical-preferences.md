@@ -57,7 +57,11 @@
 ## Architecture Decisions Log
 
 <!-- Quick reference linking to full ADRs in docs/architecture/ -->
-- [No ADRs yet — use /architecture-decision to create one]
+- **ADR-0001** — Save/Load Architecture & Serialization Format — **Accepted 2026-07-13** (single-file JSON provider envelope, atomic writes, 2 MiB / 50 ms iOS budget, `save_emergency()` lifecycle path)
+- **ADR-0002** — Event Bus & Signal Architecture — **Accepted 2026-07-13** (hybrid: owner-declared signals + closed 3-signal EventBus roster; `encounter_resolved` rename; synchronous-emit teardown contract; deferred autosave quiesce)
+- **ADR-0003** — Content Resource Loading & Schema Mapping — **Accepted 2026-07-13** (typed `.tres` defs, one catalog per DB, CI + dev-boot ContentValidator; typed-dict `.tres` round-trip verification gate still open — blocks content authoring, not acceptance)
+- **ADR-0004** — Scene Management & Boot — **Accepted 2026-07-13** (persistent Game root + ScreenManager, Overworld keep-alive, explicit BootScreen sequencer, fixed 10-autoload roster)
+- Planned next (per `architecture-review-2026-07-13.md`): ADR-0005 stat pipeline → ADR-0006 RNG service → ADR-0007 TBC state machine → ADR-0008 UI architecture
 
 ## Engine Specialists
 

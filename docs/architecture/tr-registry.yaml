@@ -23,34 +23,2275 @@
 #   NNN = three-digit zero-padded sequence per system, starting at 001
 #
 # STATUS VALUES: active | deprecated | superseded-by: TR-[system]-NNN
+#
+# NOTE (2026-07-13, first population): extracted by /architecture-review from
+# all 19 Approved GDDs + cross-cutting standards. IDs cited in ADR-0001..0004
+# and architecture.md (e.g. TR-ep-004, TR-eai-003, TR-zwm-002) were pinned to
+# their cited meanings during extraction, so existing ADR references remain valid.
 
 version: 1
-last_updated: ""
+last_updated: "2026-07-13"
 
-requirements: []
+requirements:
 
-# --- EXAMPLE ENTRIES (remove when first real entries are added) ---
-#
-# - id: TR-combat-001
-#   system: combat
-#   gdd: design/gdd/combat-system.md
-#   requirement: "Player takes damage from enemies based on attack power minus defence"
-#   created: 2026-03-10
-#   revised: ""
-#   status: active
-#
-# - id: TR-combat-002
-#   system: combat
-#   gdd: design/gdd/combat-system.md
-#   requirement: "Combo window timing is 0.4 seconds between hits"
-#   created: 2026-03-10
-#   revised: "2026-04-01"
-#   status: active
-#
-# - id: TR-combat-003
-#   system: combat
-#   gdd: design/gdd/combat-system.md
-#   requirement: "Old damage formula using raw stats"
-#   created: 2026-03-10
-#   revised: ""
-#   status: superseded-by: TR-combat-001
+  # --- Exploration Progress (design/gdd/exploration-progress.md) ---
+  - id: TR-ep-001
+    system: ep
+    gdd: design/gdd/exploration-progress.md
+    requirement: "Registry of progression domains (zones, cores, world_loot) with StringName keys"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-ep-002
+    system: ep
+    gdd: design/gdd/exploration-progress.md
+    requirement: "Domain contract: snapshot()->Dictionary, restore(data), rederive() three-operation interface"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-ep-003
+    system: ep
+    gdd: design/gdd/exploration-progress.md
+    requirement: "Two-phase restore: Phase 1 cross-domain-read-free, Phase 2 re-derivation"
+    domain: SaveLoad
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-ep-004
+    system: ep
+    gdd: design/gdd/exploration-progress.md
+    requirement: "Restore must run before any derivation (restore -> rederive ordering; one derivation path)"
+    domain: SaveLoad
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-ep-005
+    system: ep
+    gdd: design/gdd/exploration-progress.md
+    requirement: "Serialize validation: refuses bad snapshot (non-Dictionary), returns {ok, blob} or {ok:false, failed_domain, error}"
+    domain: SaveLoad
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-ep-006
+    system: ep
+    gdd: design/gdd/exploration-progress.md
+    requirement: "Serialize produces {domain_key: snapshot()} plus progress_format_version"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-ep-007
+    system: ep
+    gdd: design/gdd/exploration-progress.md
+    requirement: "Blob carries progress_format_version=1; version check before restore"
+    domain: SaveLoad
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-ep-008
+    system: ep
+    gdd: design/gdd/exploration-progress.md
+    requirement: "EP-PRED-1 version predicate: RESTORE/MIGRATE/REFUSE logic"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-ep-009
+    system: ep
+    gdd: design/gdd/exploration-progress.md
+    requirement: "EP-INV-1 boss-progress invariant: wins_at_last_defeat <= win_count (clamped on violation)"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-ep-010
+    system: ep
+    gdd: design/gdd/exploration-progress.md
+    requirement: "Corruption pass clamps: win_count<0 -> 0, then re-check invariant; cumulative_xp<0 -> 0"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-ep-011
+    system: ep
+    gdd: design/gdd/exploration-progress.md
+    requirement: "Save timing owned by Save/Load at event-boundary quiesce points (OQ-EP-2 / Rule 8)"
+    domain: SaveLoad
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-ep-012
+    system: ep
+    gdd: design/gdd/exploration-progress.md
+    requirement: "Zone LOCKED/ACCESSIBLE/CLEARED always re-derived via ZWM-F2, never trusted from disk"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-ep-013
+    system: ep
+    gdd: design/gdd/exploration-progress.md
+    requirement: "Core level always re-derived from cumulative_xp via CP-F1, never trusted from disk"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-ep-014
+    system: ep
+    gdd: design/gdd/exploration-progress.md
+    requirement: "Unknown domain keys preserved opaquely in session memory, round-tripped on next serialize"
+    domain: SaveLoad
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-ep-015
+    system: ep
+    gdd: design/gdd/exploration-progress.md
+    requirement: "Replacement semantics: restore() unconditionally replaces all source facts, never merges"
+    domain: SaveLoad
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-ep-016
+    system: ep
+    gdd: design/gdd/exploration-progress.md
+    requirement: "Duplicate core_instance_id: first occurrence wins + warning"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-ep-017
+    system: ep
+    gdd: design/gdd/exploration-progress.md
+    requirement: "Duplicate loot IDs: deduped via Set reconstruction + warning"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+
+  # --- Inventory (design/gdd/inventory.md) ---
+  - id: TR-inv-001
+    system: inv
+    gdd: design/gdd/inventory.md
+    requirement: "Persist part_instances + next_instance_id (monotonic) \u2014 primary inventory persistence requirement"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-inv-002
+    system: inv
+    gdd: design/gdd/inventory.md
+    requirement: "PartInstance schema: instance_id (int, stable, never reused), part_id (StringName), upgrade_tier (int)"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-inv-003
+    system: inv
+    gdd: design/gdd/inventory.md
+    requirement: "Parts never merged/stacked/deduplicated \u2014 N copies = N distinct instances"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-inv-004
+    system: inv
+    gdd: design/gdd/inventory.md
+    requirement: "Consumable stacks: single count per id, 0 <= quantity <= max_stack (from Consumable DB)"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-inv-005
+    system: inv
+    gdd: design/gdd/inventory.md
+    requirement: "Persist scrap + consumable counts (Rule 8 split: Inventory owns model, Save/Load owns disk)"
+    domain: SaveLoad
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-inv-006
+    system: inv
+    gdd: design/gdd/inventory.md
+    requirement: "INV-1 consumable overflow: accepted=min(qty, max_stack-current), rejected=qty-accepted (reported)"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-inv-007
+    system: inv
+    gdd: design/gdd/inventory.md
+    requirement: "Scrap balance clamped at SCRAP_MAX; excess reported as rejected, never silently dropped"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-inv-008
+    system: inv
+    gdd: design/gdd/inventory.md
+    requirement: "Scrap part yields SCRAP_YIELD[rarity], tier-independent (total sink MVP)"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-inv-009
+    system: inv
+    gdd: design/gdd/inventory.md
+    requirement: "Scrap blocked if equipped (Workshop's equipped set queried via accessor)"
+    domain: Events
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-inv-010
+    system: inv
+    gdd: design/gdd/inventory.md
+    requirement: "Consumable decrement blocked at 0 (never negative)"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-inv-011
+    system: inv
+    gdd: design/gdd/inventory.md
+    requirement: "next_instance_id serialized, never rebuilt from max(live_ids)+1 on load"
+    domain: SaveLoad
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-inv-012
+    system: inv
+    gdd: design/gdd/inventory.md
+    requirement: "Save/Load clamps stale over-cap consumable count <= max_stack on deserialize"
+    domain: SaveLoad
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-inv-013
+    system: inv
+    gdd: design/gdd/inventory.md
+    requirement: "Unknown part_id/consumable_id on add rejected + logged, never stored"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-inv-014
+    system: inv
+    gdd: design/gdd/inventory.md
+    requirement: "Absent consumable key equivalent to 0 (no null return)"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-inv-015
+    system: inv
+    gdd: design/gdd/inventory.md
+    requirement: "Four stores serialized: part_instances, consumable_stacks, scrap, next_instance_id"
+    domain: SaveLoad
+    created: 2026-07-13
+    revised: ""
+    status: active
+
+  # --- Core Progression (design/gdd/symbot-core-progression.md) ---
+  - id: TR-cp-001
+    system: cp
+    gdd: design/gdd/symbot-core-progression.md
+    requirement: "Persist CoreProgressionRecord.cumulative_xp; level re-derived on load (never stored)"
+    domain: SaveLoad
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-cp-002
+    system: cp
+    gdd: design/gdd/symbot-core-progression.md
+    requirement: "CoreProgressionRecord keyed by core_instance_id (Inventory instance_id)"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-cp-003
+    system: cp
+    gdd: design/gdd/symbot-core-progression.md
+    requirement: "Level derived via CP-F1 XP-to-level threshold lookup (pure integer lookup, no float)"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-cp-004
+    system: cp
+    gdd: design/gdd/symbot-core-progression.md
+    requirement: "Max level cap: level-10 cores discard XP beyond threshold[10]"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-cp-005
+    system: cp
+    gdd: design/gdd/symbot-core-progression.md
+    requirement: "XP award split: deployed=full_xp, benched=floor(full_xp*BENCH_XP_SHARE)"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-cp-006
+    system: cp
+    gdd: design/gdd/symbot-core-progression.md
+    requirement: "Bench-level cap: benched_level >= enemy_level+BENCH_LEVEL_LEAD_CAP -> earn 0 XP"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-cp-007
+    system: cp
+    gdd: design/gdd/symbot-core-progression.md
+    requirement: "Boss completion bonus awarded only if is_first_boss_defeat=true (once-per-boss)"
+    domain: Events
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-cp-008
+    system: cp
+    gdd: design/gdd/symbot-core-progression.md
+    requirement: "level_requirement equip gate: core.level < part.level_requirement blocks equip"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-cp-009
+    system: cp
+    gdd: design/gdd/symbot-core-progression.md
+    requirement: "level_growth dictionary on CORE-slot parts only; non-CORE ignored"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-cp-010
+    system: cp
+    gdd: design/gdd/symbot-core-progression.md
+    requirement: "Power stats forbidden in level_growth (physical_power, energy_power)"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-cp-011
+    system: cp
+    gdd: design/gdd/symbot-core-progression.md
+    requirement: "CP-F3 stat contribution applied after SA-F1, before SYN-F4 (pipeline order)"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-cp-012
+    system: cp
+    gdd: design/gdd/symbot-core-progression.md
+    requirement: "Core swap: over-level parts flagged invalid; not auto-unequipped"
+    domain: UI
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-cp-013
+    system: cp
+    gdd: design/gdd/symbot-core-progression.md
+    requirement: "Register core on Inventory add; duplicate register no-op + warning"
+    domain: Events
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-cp-014
+    system: cp
+    gdd: design/gdd/symbot-core-progression.md
+    requirement: "Unknown level_growth stat key skipped + warning (mirrors SA-EC-05)"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-cp-015
+    system: cp
+    gdd: design/gdd/symbot-core-progression.md
+    requirement: "Negative cumulative_xp on load clamped to 0 + error"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-cp-016
+    system: cp
+    gdd: design/gdd/symbot-core-progression.md
+    requirement: "Multi-level XP gain: single core_leveled_up signal with (old, new) span"
+    domain: Events
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-cp-017
+    system: cp
+    gdd: design/gdd/symbot-core-progression.md
+    requirement: "No XP on DEFEAT or FLED outcome"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-cp-018
+    system: cp
+    gdd: design/gdd/symbot-core-progression.md
+    requirement: "Injected logger (not global push_warning/error) for unit-test capture"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-cp-019
+    system: cp
+    gdd: design/gdd/symbot-core-progression.md
+    requirement: "CP-F4: xp_value=(XP_BASE+enemy_level*XP_PER_ENEMY_LEVEL)*role_multiplier"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-cp-020
+    system: cp
+    gdd: design/gdd/symbot-core-progression.md
+    requirement: "BENCH_XP_SHARE must be power-of-2 (0.5) or epsilon-guarded"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+
+  # --- Turn-Based Combat (design/gdd/turn-based-combat.md) ---
+  - id: TR-tbc-001
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Three-Symbot team structure: exactly 1 active, 2 benched; only active acts/targeted"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-002
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Assembly final_stat snapshot at battle start, immutable for battle duration"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-003
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Synergy evaluate_silent() called once per Symbot, frozen cached_bonus_block contract"
+    domain: Events
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-004
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "battle_ended 8-field payload: outcome, enemy_id, fired_break_events, xp_value, completion_bonus_xp, is_first_boss_defeat, enemy_level, deployed_symbot_ids"
+    domain: Events
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-005
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Synchronous battle_ended emit; runtime state discarded only after all subscribers return"
+    domain: Events
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-006
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Initiative recomputed every round start; tiebreak player acts first"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-007
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Turn phases ordered: heat decay, energy recharge, status ticks, action, turn-end decrement"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-008
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Overheat skips action only; sets heat 20 carry-in; preserves turn bookkeeping except decay"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-009
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Energy recharge: min(capacity, current+10+recharge_stat) per turn start"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-010
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Basic Attack 0 energy always available; move 4 may be null; no soft-lock"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-011
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Damage pipeline: DF-1 -> MOVE-F1 power-tier -> Stagger reduction -> break-bias routing"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-012
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "SYN-F4 clamped stat on both sides before DF-1; passive aura frozen at BATTLE_INIT"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-013
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "hit_resolved(move, damage, target, sub_target) 4-arg hook post-Stagger carries sub_target"
+    domain: Events
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-014
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Benched Symbots: frozen heat/energy/statuses per Symbot; resume on return"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-015
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Forced switch free on DOWNED; voluntary switch consumes turn"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-016
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Flee WILD-only; consumes action; no drops/XP"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-017
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Status decrement at turn-end; expire at 0; Burn ticks at turn-start"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-018
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Reapplication newest-wins: refresh duration AND re-snapshot processing"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-019
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Unknown passive effect ID logged error, skipped, no crash"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-020
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Move pool: Basic Attack + WEAPON + HEAD + ARMS; slot 4 nullable"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-021
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Three statuses: Shock(Volt,2T), Burn(Thermal,2T), Stagger(Kinetic,2T); no stacking"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-022
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Heat: cap 100; Overheat 10% self-damage + skip turn + carry 20"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-023
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Repair: max(5, floor(energy_power*0.17+5+eps)); capped max_structure; costs always apply"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-024
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Enemy: .get(stat,0) reads; no heat/energy; moves always available"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-025
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "is_build_valid() precondition called pre-snapshot; invalid build refuses entry with battle_start_refused"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-026
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Type multiplier T baked into DF-1 output before Stagger/break-bias"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-027
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Burn bypasses DF-1: fixed potency damage; armor/resistance/type never reduce"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-028
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "SCAN no-op: costs paid, heat applied, action consumed, no damage/status"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-029
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Item use: targets living Symbot; success consumes turn; rejection pre-gates, no cost"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-030
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Item action: zero heat, zero energy cost; Overheat prevents use preventively"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-031
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Victory checked before heat gain; kill+self-down = VICTORY, no self-damage"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-032
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Overheat-skip turn: status ticks run; turn-end decrements; turn bookkeeping except decay"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-033
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "SYNERGY_POWER_BUDGET=40, SYNERGY_DEFENSE_BUDGET=50; DF-1 range [1,225] boss ceiling 164"
+    domain: Perf
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-034
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "DOWNED clears all statuses; benched status frozen mid-battle"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-035
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Passive ON_HIT at hit_resolved; ON_BATTLE_START once at BATTLE_INIT; PERSISTENT no re-fire"
+    domain: Events
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-036
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "PERSISTENT aura captured at BATTLE_INIT into frozen_passive_aura; held whole battle"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-037
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Registry dispatch: alphabetical effect ID order; stacking_policy controls per-source refires"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-038
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Shock magnitude positive; TBC-F1 subtracts it (never pre-negate)"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-039
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Enemy AI request_move(battle_state) returns one legal move at ACTION_PENDING"
+    domain: Events
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-040
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "is_battle_active() true BATTLE_INIT -> battle_ended emission, false otherwise"
+    domain: Events
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-041
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Battle end: all runtime state discarded; fresh snapshots/evaluate_silent next battle"
+    domain: SaveLoad
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-tbc-042
+    system: tbc
+    gdd: design/gdd/turn-based-combat.md
+    requirement: "Consumed turn -> next combatant by initiative; free action does not advance turn order"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+
+  # --- Part-Break (design/gdd/part-break.md) ---
+  - id: TR-pb-001
+    system: pb
+    gdd: design/gdd/part-break.md
+    requirement: "Structure pool (kill) independent from region break_hp pools (harvest)"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-pb-002
+    system: pb
+    gdd: design/gdd/part-break.md
+    requirement: "Region sub-target selection free (no cost), closed set {STRUCTURE} + {unbroken regions}"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-pb-003
+    system: pb
+    gdd: design/gdd/part-break.md
+    requirement: "Move break_bias: STRUCTURE_HEAVY(1.25,0.55), BALANCED(1.00,1.00), BREAK_HEAVY(0.70,1.40)"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-pb-004
+    system: pb
+    gdd: design/gdd/part-break.md
+    requirement: "Region hit: break_mult to pool + 20% spillover to Structure; Structure hit: structure_mult only"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-pb-005
+    system: pb
+    gdd: design/gdd/part-break.md
+    requirement: "Deterministic break: current_break_hp<=0 -> BROKEN, emit key, increment enrage, max once/region"
+    domain: Events
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-pb-006
+    system: pb
+    gdd: design/gdd/part-break.md
+    requirement: "Already-broken hit redirected Structure at structure_mult; no spillover, no re-break"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-pb-007
+    system: pb
+    gdd: design/gdd/part-break.md
+    requirement: "Enrage multiplier x(1.0 + broken_region_count * 0.12); max +36% at 3 breaks"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-pb-008
+    system: pb
+    gdd: design/gdd/part-break.md
+    requirement: "Region state battle-local: fresh INTACT at battle start; discarded at end"
+    domain: SaveLoad
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-pb-009
+    system: pb
+    gdd: design/gdd/part-break.md
+    requirement: "Break keys must exactly match Drop System vocabulary (region_broken, all_boss_parts_broken)"
+    domain: Events
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-pb-010
+    system: pb
+    gdd: design/gdd/part-break.md
+    requirement: "Closed target set: constructed from enemy.break_regions, rebuilt live excluding broken"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-pb-011
+    system: pb
+    gdd: design/gdd/part-break.md
+    requirement: "Region pool init EDB-1: max(5, floor(enemy_structure * fraction + eps)); [5,330] range"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-pb-012
+    system: pb
+    gdd: design/gdd/part-break.md
+    requirement: "DAMAGE_FLOOR 1 on all break formulas; every hit makes progress"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-pb-013
+    system: pb
+    gdd: design/gdd/part-break.md
+    requirement: "Region damage uses full pipeline DF-1 -> MOVE-F1 -> Stagger before break_mult applies"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-pb-014
+    system: pb
+    gdd: design/gdd/part-break.md
+    requirement: "Enrage applied post-Stagger enemy damage; ordering non-commutative, determines output"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+
+  # --- Part Database (design/gdd/part-database.md) ---
+  - id: TR-part-001
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "Sympart schema fields and types including StringName id, String display_name, enum slot_type, nullable chassis_archetype"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-part-002
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "stat_bonuses constrained to 11 canonical keys; non-zero recharge only CORE/ENERGY_CELL parts"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-part-003
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "Rarity gates skills/passives: Common none; Rare+ skill (non-Core) or passive (Core); Core blocks active skills always"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-part-004
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "Prototype parts require >=1 negative stat; Formula 2b reduces toward zero via tier scaling, never positive"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-part-005
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "synergy_tags mandatory: element tag all parts; manufacturer tag non-wild only; wild exclude manufacturer tags"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-part-006
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "chassis_archetype non-null CHASSIS only; valid enum (LIGHT/HEAVY/BALANCED/GUARDIAN/ARTILLERY)"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-part-007
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "Boss-grade parts need >=1 drop_conditions entry multiplier >=500 to reach 50% effective rate"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-part-008
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "Formula 2b: independent per-stat drawback reduction via max(0, 1-tier/3) scale; clamp mandatory before negation"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-part-009
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "Formula 1: composes Formula 2/2b outputs from 8 parts, applies chassis modifier, floors, clamps to 0+"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-part-010
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "Upgrade tiers: Common +0..+3 hard-cap; Rare/Boss/Proto +0..+5; multipliers x1.00..x2.00"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-part-011
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "level_requirement field: rarity floors (C1/R3/B6/P8); individual parts can exceed, never lower"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-part-012
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "level_growth (per-level flat bonus): non-null only CORE slots; Assembly ignores elsewhere"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-part-013
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "Skill/passive IDs referential integrity: active_skill_id, passive_id must resolve valid Move/Passive DB entries"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-part-014
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "Rare primary floor >= Common primary cap: guarantees Rare+0 beats Common+3 in slot primary stat"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-part-015
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "heat_generation range [0,40]; null active_skill_id must have heat=0; THERMAL element +5 bonus"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-part-016
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "Formula 3 drop rate: conditions multiply base rate; clamp [0.0,1.0]; base rates C 0.70 / R 0.25 / B 0.001 / P 0.05"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-part-017
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "Prototype gradient: >=3 conditions product >=3.0 reach 15-20% optimal; partial fire partial rate"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-part-018
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "drop_enabled=false excludes drop tables, preserves inventory validity (seasonal/retired mechanism)"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-part-019
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "Part variants: same part_family, distinct id/rarity/stats/skills across Common/Rare/Boss-grade"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-part-020
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "sprite_id non-null non-empty all parts; asset identifier for renderer sprite-swap"
+    domain: Engine
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-part-021
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "upgrade_effects array tiers 1-5: {tier, effect_type, description, skill_id}; types SKILL_UNLOCK/ENHANCE"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-part-022
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "Prototype concentration: >=70% positive budget in 1-2 stats; at x2.0 exceeds spread Boss-grade focus"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-part-023
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "Formula 2 epsilon non-discriminating MVP ranges, Formula 2b load-bearing; retain both for safety"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-part-024
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "Numeric precision: floor() not round/ceil; Formula 2b double-negation max(0,...) guard tier >=4 mandatory"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-part-025
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "Reserved Full Vision fields null MVP: motherboard_slot_type, ram_cost, weight_class, modification_slots, critical_output, firewall"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+
+  # --- Enemy Database (design/gdd/enemy-database.md) ---
+  - id: TR-edb-001
+    system: edb
+    gdd: design/gdd/enemy-database.md
+    requirement: "Enemy schema: StringName id, String display_name, WILD|BOSS class, tier=1 always MVP, nullable core_element, 11-stat Dictionary"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-edb-002
+    system: edb
+    gdd: design/gdd/enemy-database.md
+    requirement: "break_hp stored-equals-derived invariant: max(BREAK_HP_MIN, floor(structure*fraction+0.0001)); validated on import"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-edb-003
+    system: edb
+    gdd: design/gdd/enemy-database.md
+    requirement: "break_hp epsilon load-bearing: valid-range inputs produce wrong results without +0.0001 nudge"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-edb-004
+    system: edb
+    gdd: design/gdd/enemy-database.md
+    requirement: "Break region validity (EDB-3): break_hp < structure AND break_event matches >=1 pool part's drop_conditions"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-edb-005
+    system: edb
+    gdd: design/gdd/enemy-database.md
+    requirement: "WILD power cap: physical/energy_power <= 39 prevents one-shot on zero-armor player super-effective scenario"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-edb-006
+    system: edb
+    gdd: design/gdd/enemy-database.md
+    requirement: "WILD power derivation: A=39 D=0 T=1.5 -> 58 dmg < 60 min Structure safe; A=40 -> one-shot violates intent"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-edb-007
+    system: edb
+    gdd: design/gdd/enemy-database.md
+    requirement: "TTK calibration (EDB-2): computed check normative, not static ranges; jointly bounds structure x defense"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-edb-008
+    system: edb
+    gdd: design/gdd/enemy-database.md
+    requirement: "Boss-grade exclusivity: BOSS pools 1-2 exclusives; WILD pools forbid Boss-grade (Part DB Rule 8 cross-system)"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-edb-009
+    system: edb
+    gdd: design/gdd/enemy-database.md
+    requirement: "Floor loot rarity: Common ungated valid; Rare/Boss-grade must carry >=1 break condition per Part DB"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-edb-010
+    system: edb
+    gdd: design/gdd/enemy-database.md
+    requirement: "Harvest-decision rule (hard): loot_pool.size() > break_regions.size(); equality fails (non-degenerate choice)"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-edb-011
+    system: edb
+    gdd: design/gdd/enemy-database.md
+    requirement: "Stat keys use Part DB 11-name vocabulary; A/D stats constrained [0,110] (DF-1 verified range)"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-edb-012
+    system: edb
+    gdd: design/gdd/enemy-database.md
+    requirement: "Dead-data warning: enemies no Heat/Energy MVP (TBC Rule 8); cooling/energy_capacity/recharge warn if non-zero"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-edb-013
+    system: edb
+    gdd: design/gdd/enemy-database.md
+    requirement: "Boss-grade product invariant: BASE_DROP_BOSS_GRADE x multiplier >= 0.5; at base 0.001 requires x500"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-edb-014
+    system: edb
+    gdd: design/gdd/enemy-database.md
+    requirement: "region_fraction bounds [0.15,0.55]: opener/mid/expert commit tiers; 0.55 preserves break-cheaper margin"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-edb-015
+    system: edb
+    gdd: design/gdd/enemy-database.md
+    requirement: "xp_value stored-equals-derived: equals CP-F4 (XP_BASE+level*XP_PER_LEVEL)*role_mult; validation fails on divergence"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-edb-016
+    system: edb
+    gdd: design/gdd/enemy-database.md
+    requirement: "completion_bonus_xp: >=0, zero for WILD, BOSS non-zero; added to xp_value on first boss defeat only (CP guard)"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-edb-017
+    system: edb
+    gdd: design/gdd/enemy-database.md
+    requirement: "level field: >=1 <=10; zone [level_floor,level_roof] must include value (authoring validation)"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-edb-018
+    system: edb
+    gdd: design/gdd/enemy-database.md
+    requirement: "loot_pool entries must exist in Part DB; duplicates deduplicated with warning; all-disabled pool fails"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-edb-019
+    system: edb
+    gdd: design/gdd/enemy-database.md
+    requirement: "skills.size() >= 1 blocking; > 4 advisory warn (MVP 2-4 intent)"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-edb-020
+    system: edb
+    gdd: design/gdd/enemy-database.md
+    requirement: "Null core_element density: NULL_ELEMENT_MAX_WILD=1 per zone; 2+ warns; null -> x1.0 type effectiveness"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-edb-021
+    system: edb
+    gdd: design/gdd/enemy-database.md
+    requirement: "Region break events set semantics: same break_event from multiple regions fires once; Drop deduplicates"
+    domain: Events
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-edb-022
+    system: edb
+    gdd: design/gdd/enemy-database.md
+    requirement: "Minimum 1 break region (EC-ED-01); MVP 2-3; zero violates Pillar 2 (no harvest target)"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-edb-023
+    system: edb
+    gdd: design/gdd/enemy-database.md
+    requirement: "Ungated pool parts must be Common rarity; Rare/Boss-grade ungated undermines Pillar 2 Harvest Goal"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-edb-024
+    system: edb
+    gdd: design/gdd/enemy-database.md
+    requirement: ">=2 break-gated parts advisory: <2 warns (degenerate harvest choice)"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+
+  # --- Move Database (design/gdd/move-database.md) ---
+  - id: TR-mdb-001
+    system: mdb
+    gdd: design/gdd/move-database.md
+    requirement: "Every move references MOVE-CONTRACT-1 schema: id, display_name, behavior, power_tier, damage_type, element, energy_cost, targeting, break_bias"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-mdb-002
+    system: mdb
+    gdd: design/gdd/move-database.md
+    requirement: "DAMAGE moves require non-null power_tier mapping to damage multiplier {0.70, 0.80, 1.00, 1.20, 1.40} per tier"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-mdb-003
+    system: mdb
+    gdd: design/gdd/move-database.md
+    requirement: "STATUS moves' status_proc.status_id must match move element (Volt->Shock, Thermal->Burn, Kinetic->Stagger)"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-mdb-004
+    system: mdb
+    gdd: design/gdd/move-database.md
+    requirement: "DAMAGE moves' energy_cost within power_tier band: LIGHT 5-8, STANDARD 12-18, HEAVY 22-30, SIGNATURE 32-40"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-mdb-005
+    system: mdb
+    gdd: design/gdd/move-database.md
+    requirement: "REPAIR moves must author energy_cost > BASE_ENERGY_REGEN (>=11 at current 10) for anti-stall Energy-brake"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-mdb-006
+    system: mdb
+    gdd: design/gdd/move-database.md
+    requirement: "UTILITY Vent moves reduce current_heat by vent_amount, floored at 0; only MVP UTILITY behavior"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-mdb-007
+    system: mdb
+    gdd: design/gdd/move-database.md
+    requirement: "SCAN moves' scan_payload=BREAK_REGIONS delivers enemy break_regions and drop hints, persistent for battle"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-mdb-008
+    system: mdb
+    gdd: design/gdd/move-database.md
+    requirement: "Move power multiplier (MOVE-F1) applies post-DF-1 output with epsilon 0.0001 for IEEE 754 rounding"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-mdb-009
+    system: mdb
+    gdd: design/gdd/move-database.md
+    requirement: "Non-DAMAGE moves must not carry innate status riders; riders only via passives through TBC Rule 13 registry"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-mdb-010
+    system: mdb
+    gdd: design/gdd/move-database.md
+    requirement: "Core parts must not carry SKILL_UNLOCK upgrade effects per Part DB Core exception"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+
+  # --- Passive Database (design/gdd/passive-database.md) ---
+  - id: TR-pdb-001
+    system: pdb
+    gdd: design/gdd/passive-database.md
+    requirement: "Every passive declares behavior_class (STATUS_RIDER/STAT_AURA/RESOURCE_EFFECT/STRUCTURAL_EFFECT) and trigger_category; behavior_class is runtime resolution axis"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-pdb-002
+    system: pdb
+    gdd: design/gdd/passive-database.md
+    requirement: "Trigger x behavior legality matrix enforced (STATUS_RIDER+ON_HIT only; STAT_AURA+PERSISTENT only; etc.)"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-pdb-003
+    system: pdb
+    gdd: design/gdd/passive-database.md
+    requirement: "ON_HIT scope=WEAPON_ONLY fires only on WEAPON-slot DAMAGE moves; ANY_DAMAGE fires on all DAMAGE moves"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-pdb-004
+    system: pdb
+    gdd: design/gdd/passive-database.md
+    requirement: "Stacking policies by behavior_class: STATUS_RIDER->UNIQUE_PER_TRIGGER, STAT_AURA->UNIQUE, STRUCTURAL->UNIQUE, RESOURCE->STACKABLE"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-pdb-005
+    system: pdb
+    gdd: design/gdd/passive-database.md
+    requirement: "Three MVP status riders authored: volt_shock_on_hit, thermal_burn_on_weapon, kinetic_stagger_on_hit"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-pdb-006
+    system: pdb
+    gdd: design/gdd/passive-database.md
+    requirement: "STAT_AURA behavior_params={stat: StringName, delta: int} via SYN-F4 clamp; RESOURCE_EFFECT={resource, amount} clamped by cap"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-pdb-007
+    system: pdb
+    gdd: design/gdd/passive-database.md
+    requirement: "STRUCTURAL_EFFECT amount non-negative for both targets; negative amounts rejected at authoring"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-pdb-008
+    system: pdb
+    gdd: design/gdd/passive-database.md
+    requirement: "Core passives restricted to ON_BATTLE_START/ON_OVERHEAT/PERSISTENT; no ON_HIT (rider domain of Weapon/Arms)"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+
+  # --- Consumable Database (design/gdd/consumable-database.md) ---
+  - id: TR-cdb-001
+    system: cdb
+    gdd: design/gdd/consumable-database.md
+    requirement: "Every consumable declares effect_type with matching effect_params schema (RESTORE_STRUCTURE/REDUCE_HEAT/RESTORE_ENERGY/BOOST_DROP/MODIFY_ENCOUNTER_RATE)"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-cdb-002
+    system: cdb
+    gdd: design/gdd/consumable-database.md
+    requirement: "Use context (BATTLE/WORLD/BOTH) gates pre-action validation; rejected use consumes no turn, no decrement"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-cdb-003
+    system: cdb
+    gdd: design/gdd/consumable-database.md
+    requirement: "RESTORE_* targets living team Symbot (Structure > 0), active or benched; downed never valid"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-cdb-004
+    system: cdb
+    gdd: design/gdd/consumable-database.md
+    requirement: "BOOST_DROP (Salvage Beacon) per-battle flag; one per battle, spent on flee/loss, applies only on victory"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-cdb-005
+    system: cdb
+    gdd: design/gdd/consumable-database.md
+    requirement: "MODIFY_ENCOUNTER_RATE modifier frozen during battle (no step countdown); resumes after battle"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-cdb-006
+    system: cdb
+    gdd: design/gdd/consumable-database.md
+    requirement: "buy_price > sell_price strictly for every entry to prevent arbitrage faucet (BLOCKING validation)"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-cdb-007
+    system: cdb
+    gdd: design/gdd/consumable-database.md
+    requirement: "REDUCE_HEAT cannot rescue already-Overheated Symbot (preventive-only)"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-cdb-008
+    system: cdb
+    gdd: design/gdd/consumable-database.md
+    requirement: "Effect magnitudes flat integers (not %-of-max); pure integer clamps, no floor/ceil"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+
+  # --- Damage Formula (design/gdd/damage-formula.md) ---
+  - id: TR-df-001
+    system: df
+    gdd: design/gdd/damage-formula.md
+    requirement: "Pure stateless function: no runtime state, inputs -> output only"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-df-002
+    system: df
+    gdd: design/gdd/damage-formula.md
+    requirement: "Type effectiveness multiplier applied before floor(), not after"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-df-003
+    system: df
+    gdd: design/gdd/damage-formula.md
+    requirement: "RNG injection: crit_mult must be passable parameter, not hardcoded internally"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-df-004
+    system: df
+    gdd: design/gdd/damage-formula.md
+    requirement: "Float division required: cast A, D to float before dividing to avoid integer truncation"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-df-005
+    system: df
+    gdd: design/gdd/damage-formula.md
+    requirement: "Damage floor applies after floor(), via max(DAMAGE_FLOOR, result)"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-df-006
+    system: df
+    gdd: design/gdd/damage-formula.md
+    requirement: "Division-by-zero guard: if A==0 AND D==0, return DAMAGE_FLOOR before division"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+
+  # --- Symbot Assembly (design/gdd/symbot-assembly.md) ---
+  - id: TR-sa-001
+    system: sa
+    gdd: design/gdd/symbot-assembly.md
+    requirement: "Stat derivation pipeline (SA-F1) is sole executor of Part DB Formula 1/2/2b"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-sa-002
+    system: sa
+    gdd: design/gdd/symbot-assembly.md
+    requirement: "Per-part upgrades: Formula 2 (base>=0) or Formula 2b (base<0) applied then summed"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-sa-003
+    system: sa
+    gdd: design/gdd/symbot-assembly.md
+    requirement: "Chassis modifier applied to summed stats, then floor() post-multiplication"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-sa-004
+    system: sa
+    gdd: design/gdd/symbot-assembly.md
+    requirement: "CP-F3 level-growth added post-chassis-multiply, pre-synergy (Rule 6 step 4b)"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-sa-005
+    system: sa
+    gdd: design/gdd/symbot-assembly.md
+    requirement: "SA-F2 delta preview requires full hypothetical recompute (all 8 parts, not partial diff)"
+    domain: UI
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-sa-006
+    system: sa
+    gdd: design/gdd/symbot-assembly.md
+    requirement: "Final stats locked at battle start; no recomputation during combat"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-sa-007
+    system: sa
+    gdd: design/gdd/symbot-assembly.md
+    requirement: "No empty slots permitted: equip is atomic, slots always filled via replacement"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-sa-008
+    system: sa
+    gdd: design/gdd/symbot-assembly.md
+    requirement: "Move pool fixed ordering: Basic, WEAPON skill, HEAD skill, ARMS skill (may be null)"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-sa-009
+    system: sa
+    gdd: design/gdd/symbot-assembly.md
+    requirement: "Passive pool order: CORE, LEGS, then remaining slots in slot-type order"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+
+  # --- Synergy System (design/gdd/synergy-system.md) ---
+  - id: TR-syn-001
+    system: syn
+    gdd: design/gdd/synergy-system.md
+    requirement: "Tag count is pure sum per SYN-F1; each part contributes all tags including duplicates"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-syn-002
+    system: syn
+    gdd: design/gdd/synergy-system.md
+    requirement: "Tier activation (SYN-F2) requires ALL constituent tag counts met (AND logic)"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-syn-003
+    system: syn
+    gdd: design/gdd/synergy-system.md
+    requirement: "Bonus blocks cumulative at all active tiers; both 3-piece and 5-piece stack"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-syn-004
+    system: syn
+    gdd: design/gdd/synergy-system.md
+    requirement: "Combined synergies stack additively with constituent bonuses, not replacement"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-syn-005
+    system: syn
+    gdd: design/gdd/synergy-system.md
+    requirement: "Effect deduplication keep-first in registration order (alphabetical tier ID)"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-syn-006
+    system: syn
+    gdd: design/gdd/synergy-system.md
+    requirement: "Registration order determined by alphabetical tier-ID sort, not content-file order"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-syn-007
+    system: syn
+    gdd: design/gdd/synergy-system.md
+    requirement: "Tier with empty requirements or min_count<1 skipped with content error logged"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-syn-008
+    system: syn
+    gdd: design/gdd/synergy-system.md
+    requirement: "Cached bonus block frozen during battle (behavioral contract, not self-lock)"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-syn-009
+    system: syn
+    gdd: design/gdd/synergy-system.md
+    requirement: "preview() call is pure read-only: no cache write, no signal emit"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-syn-010
+    system: syn
+    gdd: design/gdd/synergy-system.md
+    requirement: "SYN-F4 effective stat formula: max(0, base + synergy_delta) \u2014 consumer responsibility"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-syn-011
+    system: syn
+    gdd: design/gdd/synergy-system.md
+    requirement: "evaluate() always emits signal per Rule 7, even if bonus_block identical"
+    domain: Events
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-syn-012
+    system: syn
+    gdd: design/gdd/synergy-system.md
+    requirement: "active_synergies list must be Array[StringName] never null, including empty build"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-syn-013
+    system: syn
+    gdd: design/gdd/synergy-system.md
+    requirement: "Null synergy_tags treated as [] (no tags); iteration must guard against null"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-syn-014
+    system: syn
+    gdd: design/gdd/synergy-system.md
+    requirement: "Unregistered effect IDs pass through unfiltered; skip-and-log is TBC responsibility"
+    domain: Events
+    created: 2026-07-13
+    revised: ""
+    status: active
+
+  # --- Enemy AI (design/gdd/enemy-ai.md) ---
+  - id: TR-eai-001
+    system: eai
+    gdd: design/gdd/enemy-ai.md
+    requirement: "Profile resolution: StringName to Profile, O(1) lookup registry"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-eai-002
+    system: eai
+    gdd: design/gdd/enemy-ai.md
+    requirement: "Profiles data-driven Resource, not hardcoded; loaded once at startup (ED4)"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-eai-003
+    system: eai
+    gdd: design/gdd/enemy-ai.md
+    requirement: "EnemyDef.ai_profile StringName resolution to AI profile (O(1) lookup)"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-eai-004
+    system: eai
+    gdd: design/gdd/enemy-ai.md
+    requirement: "Seeded RNG injected per call, fresh instance, no persistent state"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-eai-005
+    system: eai
+    gdd: design/gdd/enemy-ai.md
+    requirement: "Pure function of (battle_state, profile, seed); deterministic tiebreak"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-eai-006
+    system: eai
+    gdd: design/gdd/enemy-ai.md
+    requirement: "DF-1 preview includes MOVE-F1 power-tier multiply for lethal accuracy"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-eai-007
+    system: eai
+    gdd: design/gdd/enemy-ai.md
+    requirement: "Effective post-SYN-F4 defense stat used in preview, not raw stat"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-eai-008
+    system: eai
+    gdd: design/gdd/enemy-ai.md
+    requirement: "Phase shift derived from battle state, no persistent AI state"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-eai-009
+    system: eai
+    gdd: design/gdd/enemy-ai.md
+    requirement: "Fallback to AGGRESSIVE profile on unknown ai_profile, never crashes"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+
+  # --- Enemy Level & Zone Scaling (design/gdd/enemy-level-zone-scaling.md) ---
+  - id: TR-elzs-001
+    system: elzs
+    gdd: design/gdd/enemy-level-zone-scaling.md
+    requirement: "Enemy level field manually authored, not formula-generated stat"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-elzs-002
+    system: elzs
+    gdd: design/gdd/enemy-level-zone-scaling.md
+    requirement: "xp_value stored-equals-derived from CP-F4, recomputed on constant retune"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-elzs-003
+    system: elzs
+    gdd: design/gdd/enemy-level-zone-scaling.md
+    requirement: "Zone level band [floor, roof] fields, content validation membership check"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-elzs-004
+    system: elzs
+    gdd: design/gdd/enemy-level-zone-scaling.md
+    requirement: "DS-F-LEVEL level_rarity_mult factor injected into Drop System effective_drop_rate"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-elzs-005
+    system: elzs
+    gdd: design/gdd/enemy-level-zone-scaling.md
+    requirement: "LEVEL_RARITY_MULTS lookup table (level_band x rarity) data-driven"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-elzs-006
+    system: elzs
+    gdd: design/gdd/enemy-level-zone-scaling.md
+    requirement: "MAX_ENEMY_LEVEL = 10 cap enforced, matches MAX_CORE_LEVEL"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-elzs-007
+    system: elzs
+    gdd: design/gdd/enemy-level-zone-scaling.md
+    requirement: "level_band(level) sub-function, deterministic boundary at LEVEL_BAND_MID_FLOOR/HIGH_FLOOR"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+
+  # --- Zone & World Map (design/gdd/zone-world-map.md) ---
+  - id: TR-zwm-001
+    system: zwm
+    gdd: design/gdd/zone-world-map.md
+    requirement: "WorldMap resource authority for zone graph: zones array + current_zone_id runtime field"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-zwm-002
+    system: zwm
+    gdd: design/gdd/zone-world-map.md
+    requirement: "Persist win_count/boss_progress (incl. defeated_once); zone states re-derived on load, never stored"
+    domain: SaveLoad
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-zwm-003
+    system: zwm
+    gdd: design/gdd/zone-world-map.md
+    requirement: "ZoneNode.zone_id one-to-one StringName reference to Encounter Zone"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-zwm-004
+    system: zwm
+    gdd: design/gdd/zone-world-map.md
+    requirement: "win_count incremented on encounter_resolved(result=WIN, type=WILD) relay, WILD-only"
+    domain: Events
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-zwm-005
+    system: zwm
+    gdd: design/gdd/zone-world-map.md
+    requirement: "Boss-gate delegation: Encounter Zone gate-check passed win_count + boss_progress"
+    domain: Events
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-zwm-006
+    system: zwm
+    gdd: design/gdd/zone-world-map.md
+    requirement: "Zone state (LOCKED/ACCESSIBLE/CLEARED) derived via ZWM-F2 reachability BFS"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-zwm-007
+    system: zwm
+    gdd: design/gdd/zone-world-map.md
+    requirement: "CLEARED does not guarantee reachability; can_travel validates traversable edge + state"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-zwm-008
+    system: zwm
+    gdd: design/gdd/zone-world-map.md
+    requirement: "zone_states_changed(transitions) broadcast only when states differ from prior pass"
+    domain: Events
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-zwm-009
+    system: zwm
+    gdd: design/gdd/zone-world-map.md
+    requirement: "Transitions array format {zone_id, from_state, to_state} consumed by World Map UI"
+    domain: UI
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-zwm-010
+    system: zwm
+    gdd: design/gdd/zone-world-map.md
+    requirement: "ZWM-F2: all_bosses_defeated returns false for zero-boss zones, never auto-CLEARED"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+
+  # --- Drop System (design/gdd/drop-system.md) ---
+  - id: TR-drop-001
+    system: drop
+    gdd: design/gdd/drop-system.md
+    requirement: "RNG draws seeded, deterministic, part-ID-ascending roll order for reproducibility"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-drop-002
+    system: drop
+    gdd: design/gdd/drop-system.md
+    requirement: "Pool part-ID deduplication: one roll per unique ID; duplicates contribute zero extra rolls"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-drop-003
+    system: drop
+    gdd: design/gdd/drop-system.md
+    requirement: "Pity counters persist across sessions (Prototype credit, Boss-grade break counter)"
+    domain: SaveLoad
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-drop-004
+    system: drop
+    gdd: design/gdd/drop-system.md
+    requirement: "Consumes battle_ended VICTORY-only; fired_break_events as deduplicated Set from Part-Break"
+    domain: Events
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-drop-005
+    system: drop
+    gdd: design/gdd/drop-system.md
+    requirement: "Pity-guaranteed drops skip RNG draw; stream position stays synchronized with non-guaranteed rolls"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-drop-006
+    system: drop
+    gdd: design/gdd/drop-system.md
+    requirement: "Unknown condition keys logged as content error, skipped, no crash; multiplier not applied"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-drop-007
+    system: drop
+    gdd: design/gdd/drop-system.md
+    requirement: "Prototype pity: credit threshold = N_PROTO_PITY x C (C = condition count); increments by conditions fired"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-drop-008
+    system: drop
+    gdd: design/gdd/drop-system.md
+    requirement: "Boss-grade pity: M_BOSS_PITY = 8 consecutive qualifying-break failures triggers guarantee"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-drop-009
+    system: drop
+    gdd: design/gdd/drop-system.md
+    requirement: "Scrap yield per-rarity ordering invariant: Common < Rare < Prototype < Boss-grade, never inverted"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-drop-010
+    system: drop
+    gdd: design/gdd/drop-system.md
+    requirement: "Drop output: new part instances at upgrade_tier=0, handed to Inventory; pity counter reset/updated"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-drop-011
+    system: drop
+    gdd: design/gdd/drop-system.md
+    requirement: "Beacon multiplier (2.0) injected into effective_drop_rate on VICTORY when beacon_used_this_battle"
+    domain: Events
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-drop-012
+    system: drop
+    gdd: design/gdd/drop-system.md
+    requirement: "Level-rarity multiplier (DS-F-LEVEL) injected into DS-1 before condition multipliers; Prototype row = 1.0"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+
+  # --- Encounter Zone (design/gdd/encounter-zone.md) ---
+  - id: TR-ez-001
+    system: ez
+    gdd: design/gdd/encounter-zone.md
+    requirement: "Zone defines terrain patches, each with weighted spawn pool (enemy_id, spawn_weight, is_farmable_target)"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-ez-002
+    system: ez
+    gdd: design/gdd/encounter-zone.md
+    requirement: "Enemy subpool validation: exclude entries with spawn_enabled=false, wrong enemy_class, weight<=0"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-ez-003
+    system: ez
+    gdd: design/gdd/encounter-zone.md
+    requirement: "EZ-1 encounter-rate modifier hook: effective_rate = clamp(encounter_rate x active_modifier, 0, 1)"
+    domain: Events
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-ez-004
+    system: ez
+    gdd: design/gdd/encounter-zone.md
+    requirement: "Boss gate re-evaluated on encounter_resolved + boss-approach query; never mid-battle"
+    domain: Events
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-ez-005
+    system: ez
+    gdd: design/gdd/encounter-zone.md
+    requirement: "WIN_COUNT counter cumulative, all-time, zone-wide, never-resetting; wins-only (fled/lost excluded)"
+    domain: SaveLoad
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-ez-006
+    system: ez
+    gdd: design/gdd/encounter-zone.md
+    requirement: "Boss 2 requires_defeated sequencing: gate met only when win threshold AND named boss defeated_once"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-ez-007
+    system: ez
+    gdd: design/gdd/encounter-zone.md
+    requirement: "LIGHTER_REGATE delta-measured: win_count - wins_at_last_defeat (snapshot per-boss per defeat)"
+    domain: SaveLoad
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-ez-008
+    system: ez
+    gdd: design/gdd/encounter-zone.md
+    requirement: "Boss gate defaults LOCKED on missing gate_params, unresolvable prerequisite, or reserved gate type"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-ez-009
+    system: ez
+    gdd: design/gdd/encounter-zone.md
+    requirement: "Identity-enemy invariant per terrain: each patch has >=1 enemy_id appearing in no other patch in zone"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-ez-010
+    system: ez
+    gdd: design/gdd/encounter-zone.md
+    requirement: "Farmable-target weight floor: is_farmable_target=true entries >=20% of patch total_weight, else warning"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+
+  # --- World Loot (design/gdd/world-loot.md) ---
+  - id: TR-wl-001
+    system: wl
+    gdd: design/gdd/world-loot.md
+    requirement: "Loot node defs are authored content; loot_id uniqueness violation is fatal at load (returns {ok:false})"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-wl-002
+    system: wl
+    gdd: design/gdd/world-loot.md
+    requirement: "Collected loot_id Set persists (snapshot/restore via Exploration Progress domain contract)"
+    domain: SaveLoad
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-wl-003
+    system: wl
+    gdd: design/gdd/world-loot.md
+    requirement: "Collection one-time permanent; derived state (UNCOLLECTED/COLLECTED) readable via get_node_state()"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-wl-004
+    system: wl
+    gdd: design/gdd/world-loot.md
+    requirement: "node_collected(loot_id) signal on successful collection; collect_refused signal with reason on reject"
+    domain: Events
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-wl-005
+    system: wl
+    gdd: design/gdd/world-loot.md
+    requirement: "Inventory deposit check (SCRAP_MAX ceiling, stack space) delegated to Inventory; refusal leaves no residue"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-wl-006
+    system: wl
+    gdd: design/gdd/world-loot.md
+    requirement: "Snapshot returns fresh Dictionary {collected: [sorted StringName Array]} per call (no aliasing)"
+    domain: Data
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-wl-007
+    system: wl
+    gdd: design/gdd/world-loot.md
+    requirement: "Double-collect idempotent (silent no-op logic; presentation owned by Overworld Navigation)"
+    domain: Core
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-wl-008
+    system: wl
+    gdd: design/gdd/world-loot.md
+    requirement: "Phantom nodes (bad payload, bad reward_type, unresolved zone_id) logged, treated as uncollectable"
+    domain: Content-Val
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-wl-009
+    system: wl
+    gdd: design/gdd/world-loot.md
+    requirement: "Orphaned collected IDs on restore preserved, never dropped; one warning logged on load"
+    domain: SaveLoad
+    created: 2026-07-13
+    revised: ""
+    status: active
+
+  # --- UI (cross-cutting) (.claude/docs/technical-preferences.md) ---
+  - id: TR-ui-001
+    system: ui
+    gdd: .claude/docs/technical-preferences.md
+    requirement: "All UI touch-first: minimum 44x44pt tap targets, no hover-only interactions"
+    domain: UI
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-ui-002
+    system: ui
+    gdd: .claude/docs/technical-preferences.md
+    requirement: "Dual input support: keyboard/mouse (Mac dev/launch) and touch (iOS primary) for every interaction"
+    domain: UI
+    created: 2026-07-13
+    revised: ""
+    status: active
+
+  # --- Performance (cross-cutting) (.claude/docs/technical-preferences.md) ---
+  - id: TR-perf-001
+    system: perf
+    gdd: .claude/docs/technical-preferences.md
+    requirement: "60 fps / 16.6 ms frame budget on target devices"
+    domain: Perf
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-perf-002
+    system: perf
+    gdd: .claude/docs/technical-preferences.md
+    requirement: "iOS 512 MB memory ceiling; persistence budget 2 MiB blob / 50 ms write"
+    domain: Perf
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-perf-003
+    system: perf
+    gdd: .claude/docs/technical-preferences.md
+    requirement: "Draw-call budget 200 (conservative mobile 2D)"
+    domain: Perf
+    created: 2026-07-13
+    revised: ""
+    status: active
+
+  # --- Engine (cross-cutting) (.claude/docs/technical-preferences.md) ---
+  - id: TR-eng-001
+    system: eng
+    gdd: .claude/docs/technical-preferences.md
+    requirement: "Post-cutoff FileAccess.store_* bool return handled on every write (Godot 4.4+)"
+    domain: Engine
+    created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-eng-002
+    system: eng
+    gdd: .claude/docs/technical-preferences.md
+    requirement: "Every post-cutoff engine API verified against docs/engine-reference before use"
+    domain: Engine
+    created: 2026-07-13
+    revised: ""
+    status: active
+
+  # --- Testing (cross-cutting) (.claude/docs/coding-standards.md) ---
+  - id: TR-test-001
+    system: test
+    gdd: .claude/docs/coding-standards.md
+    requirement: "GUT framework; >=80% coverage on logic systems; deterministic, isolated, injection-friendly tests"
+    domain: Engine
+    created: 2026-07-13
+    revised: ""
+    status: active

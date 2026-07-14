@@ -1,7 +1,7 @@
 # ADR-0004: Scene Management & Boot / Initialization Order
 
 ## Status
-Proposed
+Accepted (2026-07-13, via `/architecture-review` follow-up — review report `architecture-review-2026-07-13.md`)
 
 ## Date
 2026-07-13
@@ -21,7 +21,7 @@ Proposed
 
 | Field | Value |
 |-------|-------|
-| **Depends On** | ADR-0001 (two-phase restore contract, REFUSE semantics, save quiesce); ADR-0002 (EventBus FIRST in autoload order; CONNECT_DEFERRED autosave sites; synchronous-emit teardown contract); ADR-0003 (catalog loading via `load_catalog(catalog, log_sink)`; dev-boot ContentValidator gate) |
+| **Depends On** | ADR-0001 (**Accepted 2026-07-13** — two-phase restore contract, REFUSE semantics, save quiesce); ADR-0002 (**Accepted 2026-07-13** — EventBus FIRST in autoload order; CONNECT_DEFERRED autosave sites; synchronous-emit teardown contract); ADR-0003 (**Accepted 2026-07-13** — catalog loading via `load_catalog(catalog, log_sink)`; dev-boot ContentValidator gate) |
 | **Enables** | Coding start — this is the last of the four Foundation ADRs; every implementation epic boots through this sequence |
 | **Blocks** | All implementation epics (nothing runs without boot); Overworld Navigation GDD #16 (must author against the ScreenManager battle-entry contract defined here) |
 | **Ordering Note** | This ADR sequences what ADR-0001/0002/0003 defined; it introduces no new data contracts, only lifecycle and ordering. |
@@ -142,6 +142,8 @@ func run_boot() -> void:
 
 **Failure policy**: any fatal step routes to `_fail_boot(code, detail)` — LogSink.error + a `BootError` screen showing the code. There is no partial boot: a game that cannot load its content does not reach the menu. (Release builds skip step 3 but steps 2's structural failures — missing catalog, null entry, duplicate ID — still fail loud.)
 
+**BootError render rule**: the `BootError` screen must render with **zero content-DB reads** — no localized strings from a content catalog, no part/enemy names, no DB-driven theming. It exists precisely because the DBs may have failed to load; any DB read on this path is a crash inside the error handler. It uses only the error `code`/`detail` it was handed and engine-built-in UI.
+
 ### 5. New Game / Continue — one restore path
 
 Save restore does **not** happen during boot. The Main Menu offers:
@@ -187,7 +189,10 @@ func close_workshop() -> void
 
 # SaveLoad boot hooks:
 func register_provider(key: StringName, provider: Object) -> void
-func connect_autosave_triggers() -> void         # the project's only CONNECT_DEFERRED sites
+func connect_autosave_triggers() -> void         # the project's only CONNECT_DEFERRED sites;
+                                                 # callables target the SaveLoad autoload ITSELF
+                                                 # (permanent lifetime) — never a scene-tree node,
+                                                 # or the engine silently skips the freed target
 ```
 
 ## Alternatives Considered
@@ -233,7 +238,7 @@ func connect_autosave_triggers() -> void         # the project's only CONNECT_DE
 | A hidden-but-alive Overworld still processes input or physics | Verification item #1: inertness test asserts no `_process`/`_physics_process`/`_unhandled_input` **and no `_input`** delivery while disabled; Overworld code standard: `_unhandled_input` only, never `_input` (exceptions must `set_process_input(false)` on battle entry) |
 | Someone frees the Battle screen with `free()` during the `battle_ended` cascade | The ADR-0002 teardown contract + `queue_free()`-only rule here; code review flag + the miswire auditor can grep for `\.free()` on screens |
 | A future `encounter_resolved` subscriber runs after ScreenManager and dereferences the Battle node | The node is still alive but `is_queued_for_deletion() == true`; ADR-0002's payload-self-sufficiency rule already forbids reaching into the emitter's scene — enforce it in review; subscribers consume the payload only |
-| iOS suspends the app mid-battle, between `battle_ended` and the deferred autosave | The `Game` root implements `_notification()` for `NOTIFICATION_APPLICATION_PAUSED` and triggers a **synchronous** save of provider state, bypassing the CONNECT_DEFERRED path (exact iOS notification name is a pre-implementation verification item — medium drift risk) |
+| iOS suspends the app mid-battle, between `battle_ended` and the deferred autosave | The `Game` root implements `_notification()` for `NOTIFICATION_APPLICATION_PAUSED` and calls **`SaveLoad.save_emergency()`** (ADR-0001 File Rule 8 — synchronous, same envelope + atomic write), bypassing the CONNECT_DEFERRED path (exact iOS notification name is a pre-implementation verification item — medium drift risk) |
 | Keyboard/gamepad focus survives under the TransitionLayer or a hidden Overworld (4.6 dual-focus) | `gui_release_focus()` on TransitionLayer activation and on battle entry (Decision §2/§3); verification item #2 |
 | Boot steps silently reorder as the sequence grows | The boot integration test asserts the step order via LogSink breadcrumbs (each step logs a `boot_step` info entry) |
 | A future screen bypasses ScreenManager (`add_child` from gameplay code) | Forbidden pattern registered (`unowned_scene_transition`); static grep test for `change_scene_to` anywhere in `src/` |

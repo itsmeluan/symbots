@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted (2026-07-13, via `/architecture-review` follow-up — review report `architecture-review-2026-07-13.md`)
 
 ## Date
 
@@ -37,7 +37,7 @@ Symbots' systems communicate through named signals, and the blueprint's single h
 
 | Field | Value |
 |-------|-------|
-| **Depends On** | ADR-0001 (Save/Load — Proposed): this ADR defines the save-trigger quiesce points ADR-0001 explicitly deferred here. Both must be Accepted before coding. |
+| **Depends On** | ADR-0001 (Save/Load — **Accepted 2026-07-13**): this ADR defines the save-trigger quiesce points ADR-0001 explicitly deferred here. |
 | **Enables** | ADR-0004 (Scene/boot — the autoload set and its order, including "EventBus first", land there), ADR-0007 (TBC FSM — its emission points implement this ADR's teardown contract) |
 | **Blocks** | Overworld Navigation GDD (#16) — must ratify the `encounter_resolved` relay contract defined here; Production coding of any signal producer or subscriber |
 | **Ordering Note** | Second of the four Foundation ADRs. The `encounter_resolved` rename is propagated to zone-world-map.md and encounter-zone.md in the same pass as this ADR (cross-review C-1 remainder). |
@@ -131,6 +131,7 @@ A **quiesce point** is: `TBC.is_battle_active() == false` AND no signal cascade 
 
 - **Autosave**: Save/Load connects to `EventBus.encounter_resolved` and `EventBus.zone_entered` with **`CONNECT_DEFERRED`** — the deferred callable is queued and executes at the next engine idle poll *after the entire synchronous cascade unwinds* (win_count++, gate re-eval, `defeated_once` flip, XP award, drop payout all complete). The snapshot therefore always sees consistent post-cascade world state, regardless of connection order. This is the **only** sanctioned `CONNECT_DEFERRED` use in the project.
 - **Manual save**: permitted whenever `is_battle_active() == false` (Save/Load queries TBC; refuses during battle).
+- **`is_battle_active` lives on the TBC autoload orchestrator, never on the Battle scene node.** The Battle scene is `queue_free()`d at teardown (ADR-0004) — a query routed through the scene node would race its deletion (`is_queued_for_deletion()` window). The autoload flips the flag as part of its own FSM, independent of scene lifetime.
 
 ### 5. Injected LogSink (project-wide diagnostics contract)
 

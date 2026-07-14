@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted (2026-07-13, via `/architecture-review` follow-up — review report `architecture-review-2026-07-13.md`)
 
 ## Date
 
@@ -118,6 +118,8 @@ The `progression` provider is Exploration Progress itself: its `snapshot()` is `
 5. **Atomic write.** Serialize → check byte length < budget → write to `user://<slot>.json.tmp`, verifying the **full failure surface** (`get_open_error()` after open, the `store_string()` bool, and `get_error()` after write) and **calling `flush()` before `close()` (mandatory — `close()` does not guarantee an OS-level flush on iOS)** → on success, rotate current file to `user://<slot>.json.bak` and `rename_absolute()` tmp → final. A failed write leaves the previous save fully intact (tmp is discarded). Every early-return path must `close()` the handle — a leaked open handle to `.tmp` blocks later writes.
 6. **Never destroy an unparseable save.** If the primary file fails to parse: attempt `.bak`. If both fail: surface to the player-facing error path (owned with ADR-0002/UI), and **do not overwrite** the bytes. Missing file (not corrupt) → new game.
 7. **Injected logger.** All warnings/errors route through an injected sink (never global `push_warning`/`push_error`) — GUT-testable, consistent with EP Rule 3a.3 and the Event Bus principle.
+8. **Emergency save (iOS lifecycle).** `save_emergency()` is the API behind ADR-0004's `NOTIFICATION_APPLICATION_PAUSED` mitigation: a synchronous save to the active slot using the identical envelope and atomic-write path (no special format, no shortcuts — a corrupted emergency save would be worse than none). It may only be invoked from the app-lifecycle notification handler on the `Game` root; gameplay code always goes through the normal quiesce-point `save(slot)`. If the OS grants too little time and the write is cut off mid-tmp, the atomic-write design already guarantees the prior save survives.
+9. **Accepted risk — force-kill data loss.** If the player force-kills the app (or it crashes) between quiesce-point saves and no lifecycle notification fires, progress since the last completed save is lost. This is **accepted** at MVP: the quiesce-point cadence (event boundaries, ADR-0002) bounds the loss window to roughly one battle/collection action, and no journaling/write-ahead scheme is worth its complexity for a single-player game at this scale.
 
 ### Durable-State Manifest (first deliverable — the enumerated contract)
 
@@ -170,6 +172,11 @@ func snapshot() -> Dictionary             # plain data only; no side effects
 func restore(data: Dictionary) -> void    # Phase 1: raw facts, no cross-provider reads
 func rederive() -> void                   # Phase 2: provider-local recompute
 
+# Emergency save (iOS lifecycle — see rule 8 below)
+func save_emergency() -> Dictionary       # synchronous save to the active slot; same envelope,
+                                          # same atomic write; called ONLY from the app-lifecycle
+                                          # notification path, never from gameplay code
+
 # Persistence budget (constants)
 const SAVE_FORMAT_VERSION := 1
 const MAX_SAVE_BYTES := 2_097_152         # 2 MiB — hard budget asserted before write
@@ -202,6 +209,7 @@ const MAX_WRITE_MS := 50                  # target ceiling for the synchronous w
       return {ok = false, reason = "budget_exceeded"}   # fires in Release too
   ```
   Log `part_instances` count as telemetry every save (the growth watch — see QQ-04).
+  Note: `to_utf8_buffer()` allocates the full byte buffer just to measure it — fine once per save at the 2 MiB budget, but never call it per-frame or in a loop.
 - **No part-instance cap at MVP.** Watch via telemetry; revisit only if real saves approach the budget.
 - **Save timing is not decided here** — Save/Load only exposes `save(slot)`. *When* it fires (event-boundary quiesce points) is resolved with ADR-0002 and EP OQ-EP-2. This ADR guarantees only that whatever reaches `save()` round-trips correctly.
 
@@ -290,6 +298,7 @@ Greenfield — no existing saves to migrate. The migration *machinery* (SL-PRED-
 - [ ] The oversized-save budget guard rejects the write in a **Release** export build (not only under `assert`).
 - [ ] Measured save size and write time on a physical iOS device are within budget.
 - [ ] Reserved `key_items` provider registers and persists without changing `save_format_version`.
+- [ ] `save_emergency()` produces a file indistinguishable from a normal `save(slot)` (same envelope, loadable by SL-PRED-1), and an interrupted emergency write leaves the prior save intact.
 
 ## GDD Requirements Addressed
 

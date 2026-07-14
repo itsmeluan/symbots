@@ -1,7 +1,8 @@
 # ADR-0003: Content Resource Loading & Schema Mapping
 
 ## Status
-Proposed
+Accepted (2026-07-13, via `/architecture-review` follow-up — review report `architecture-review-2026-07-13.md`).
+**Acceptance does NOT waive the verification gate**: Engine Compatibility → Verification Required item (2) (`Dictionary[StringName, int]` `.tres` round-trip) must still pass before any content authoring begins; a failed gate triggers the documented fallback via explicit ADR amendment.
 
 ## Date
 2026-07-13
@@ -21,7 +22,7 @@ Proposed
 
 | Field | Value |
 |-------|-------|
-| **Depends On** | ADR-0001 (saves reference content by ID only — `live_resource_in_save_snapshot` is forbidden); ADR-0002 (validation gate reports through the injected LogSink — `global_push_diagnostics` is forbidden) |
+| **Depends On** | ADR-0001 (**Accepted 2026-07-13** — saves reference content by ID only; `live_resource_in_save_snapshot` is forbidden); ADR-0002 (**Accepted 2026-07-13** — validation gate reports through the injected LogSink; `global_push_diagnostics` is forbidden) |
 | **Enables** | ADR-0004 (boot order: catalogs load before any consumer autoload); ADR-0005 (stat pipeline reads `PartDef` fields); content authoring can begin once this ADR is Accepted |
 | **Blocks** | All 6 database implementation epics (Part/Enemy/Move/Passive/Consumable/World-Loot); any story that reads content data |
 | **Ordering Note** | Third of the four Foundation ADRs. ADR-0004 finalizes autoload wiring; this ADR fixes the catalog format, class shapes, and validation gate that ADR-0004 sequences. |
