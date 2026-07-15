@@ -127,9 +127,9 @@ resolves lower-right** near where the enemy lives.
 
 *Turn-order ribbon: `▶` marks the active combatant; entries left→right = next to act
 (ordered by `effective_mobility`, TBC-F1). On a Shock reorder the affected chip flashes
-element-colored, gains a Shock glyph, and slides to its new slot **before** the displaced
-combatant acts (V3-2). Downed combatants are removed; an Overheat turn-skip greys/bypasses
-the skipped chip (V3-8).*
+element-colored, gains a Shock glyph, and animates to its **projected next-round** slot
+(Rule 3: initiative recomputes only at `ROUND_START`, so the new order commits next round).
+Downed combatants are removed; an Overheat turn-skip greys/bypasses the skipped chip (V3-8).*
 
 **Move-selected state** (tap `▶ MOVES` → 4-move panel replaces the action cluster;
 the TARGET list populates only for DAMAGE moves; tapping a target resolves with no
@@ -181,7 +181,7 @@ UX-level decision (turn pacing) is captured below the table.
 | **Overheat beat** | Heat hits 100 (Rule 5) or enters turn Overheated (Rule 4) | V3-8: steam flash, gauge slams 0→20 (two-step), self-damage number in heat register, turn-skip greys/bypasses the skipped combatant's **ribbon chip** (V3-8); screen-shake (**reserved for this + DOWNED only**) |
 | **Enrage escalation** | `broken_region_count` → 1 / 2 / 3 (TBC-F7) | Enrage indicator steps +12 / +24 / +36%; enemy card gains a persistent "angrier" state (central beat — must telegraph) |
 | **Switch-in** | Player picks `⇄ SWITCH`, or active Symbot downed | Player card swaps to the bench Symbot; bench portraits reorder |
-| **Initiative reorder (Shock)** | A Shock lands / expires and changes `effective_mobility` order (TBC-F4 → TBC-F1) | Affected ribbon chip flashes element-colored + gains a Shock glyph, slides to its new position **before the displaced combatant acts** (V3-2); ribbon re-sorts at `ROUND_START` |
+| **Initiative reorder (Shock)** | A Shock lands / expires and changes `effective_mobility` (TBC-F4 → TBC-F1) | Per **Rule 3, initiative is fixed within a round and recomputed only at `ROUND_START`** — a mid-round Shock changes the **next** round's order, not the current one. On apply / expire the affected chip flashes element-colored + gains a Shock glyph and animates to its **projected next-round** slot, so the player sees the coming reorder before that combatant next acts (V3-2). The new order **commits** at the next `ROUND_START`. |
 | **Turn hand-off** | `TURN_ACTIVE` moves to the next combatant | Active-turn `▶` marker advances along the ribbon; the active chip is highlighted |
 | **Boss variant** | Entered from a boss gate | `⚑ FLEE` greyed/absent for the whole battle |
 | **Battle-init** | `BATTLE_INIT` snapshot freeze | Brief intro (enemy reveal); no input yet |
@@ -323,7 +323,7 @@ delivered via subscribed signals — never polled (`_process`-free per ADR-0008)
 | Enemy `current_structure` | BattleController runtime | Read | Real-time |
 | Break regions (cur/max, broken flag, "N hits") | BattleController pools (init from Enemy DB) | Read | Real-time |
 | `broken_region_count` / enrage % | BattleController (TBC-F7) | Read | Real-time |
-| Initiative order + active index (`effective_mobility` per combatant, Shock magnitude) | BattleController runtime (TBC-F1 / F4) | Read | Real-time; re-sorted on `ROUND_START` and on Shock apply / expire |
+| Initiative order + active index (`effective_mobility` per combatant, Shock magnitude) | BattleController runtime (TBC-F1 / F4) | Read | Order **commits at `ROUND_START`** (Rule 3); the ribbon reflects a *pending* Shock-driven reorder on apply / expire (projected next-round order) |
 | **Effectiveness hint (▲ / ▼)** | Damage Formula type table (DF-1) | Read | Pre-commit — **DF must expose `type_mult` pre-commit (DF OQ-1)** |
 | Bench Symbots ×2 | CombatantSnapshot (team) | Read | Frozen; inspect only |
 | Item list | Consumable DB + inventory | Read | For the Item action |
@@ -397,7 +397,7 @@ accessibility flash-rate gate. Each AC traces to a locked decision.
 | AC-14 | Heat gauge shows a ⚠ threshold marker + numeric at 70 and 90 | ADVISORY |
 | **AC-15** | **All pulsing / looping effects stay <3 flashes/sec** | **BLOCKING** (inherits a11y §1.4) |
 | AC-16 | A persistent turn-order ribbon is visible in the default state, ordered by `effective_mobility` (TBC-F1), with the active combatant unambiguously marked by a non-color signal (`▶` caret + highlight) | ADVISORY |
-| AC-17 | When a Shock changes initiative order, the affected chip is telegraphed (flash + Shock glyph + reposition) **before** the displaced combatant acts (V3-2); an Overheat turn-skipped combatant is greyed / bypassed in the ribbon | ADVISORY |
+| AC-17 | When a Shock changes initiative order, the affected chip is telegraphed (flash + Shock glyph + reposition to projected next-round slot) on apply, and the new order takes effect at the next `ROUND_START` (Rule 3) — never mid-round; an Overheat turn-skipped combatant is greyed / bypassed in the ribbon | ADVISORY |
 | AC-18 | Battle enters from the Overworld within the transition budget (enter wipe ≤0.5s to `ACTION_PENDING`) and holds 60fps / ≤16.6ms frame time during resolution with the feedback layer active | ADVISORY |
 | AC-19 | The screen renders correctly in landscape at the project reference resolution with all zones inside the iOS safe-area insets; all touch targets remain ≥44×44pt after the virtual-px→pt calibration (OQ-4) | ADVISORY |
 
