@@ -1,6 +1,14 @@
 # Active Session State
 
-## Current Task — COMPLETE: `/architecture-review` full pass → ADR-0007 + ADR-0008 ACCEPTED (2026-07-14b)
+## Current Task — COMPLETE: `/create-control-manifest` → `docs/architecture/control-manifest.md` written (2026-07-14)
+- **Manifest Version**: 2026-07-14. Covers all 8 Accepted ADRs (0001–0008). Layered rules sheet: Foundation 11 req / 9 forbidden / 1 guardrail · Core 11 / 7 / 1 · Feature 2 / 1 / — · Presentation 5 / 4 / 2 · Global (6 naming, 4 budgets, full deprecated-API table, GUT approved, 5 cross-cutting).
+- **Director gate**: TD-MANIFEST spawned on **Opus** (one-off; global mode stays `lean`). Verdict **CONCERNS → resolved**. Confirmed all 21 registry forbidden_patterns present with correct source-ADR + layer. 3 fixes folded in before write: (1) Forbidden-APIs section now mirrors `deprecated-apis.md` row-for-row (was "~20"; added omitted `Compositor`/`CompositorEffect` row); (2) `duplicate()`→`duplicate_deep()` call-out warns it NEVER applies to content defs (cross-links `runtime_content_mutation`); (3) Feature rule 2 retagged "ADR-0007 / registry `rng_vending`" (Drop-vend = forward constraint).
+- **Note**: earlier general-purpose extraction subagent died on a 1M-context credit error → extraction done directly (no large-context subagents). technical-director ran fine in standard context.
+- **NEXT**: `/test-setup` (user's chosen sequence was "manifest first, then test-setup"). Then `/ux-design`. Both still BLOCK the Technical Setup → Pre-Production gate.
+
+---
+
+## Prior — COMPLETE: `/architecture-review` full pass → ADR-0007 + ADR-0008 ACCEPTED (2026-07-14b)
 - **Verdict**: CONCERNS → **ACCEPT**. All 8 planned ADRs (0001–0008) are now **Accepted**. Coverage **251/277 (91%), 0 gaps, 2 partial** (TR-zwm-001 WorldMap catalog, TR-eng-002 engine-verification discipline). Architecture phase complete.
 - **Report**: `docs/architecture/architecture-review-2026-07-14-adr0007-0008.md` (new; suffixed to preserve the earlier same-day 0005/0006 review).
 - **Coverage verified**: ADR-0007 closes its 45 gap TRs (32 tbc + 11 pb + eai-008/009); ADR-0008 closes its 6 (cp-012, sa-005, zwm-009, ui-001, ui-002, perf-003). Partials TR-eai-006/007 + TR-perf-001 flipped to Covered.
