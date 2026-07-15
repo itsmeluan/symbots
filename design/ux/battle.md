@@ -1,6 +1,6 @@
 # UX Spec: Battle Screen
 
-> **Status**: Draft complete — pending `/ux-review battle`
+> **Status**: Revised post-`/ux-review battle` (2026-07-15) — turn-order display added (V3-2 gap), performance/resolution ACs added; re-run `/ux-review battle` to confirm
 > **Author**: Luan + ux-designer
 > **Last Updated**: 2026-07-15
 > **Journey Phase(s)**: Core loop — Encounter / Combat (no player-journey.md yet; inferred)
@@ -78,7 +78,7 @@ state persists between encounters.
 What the eye should hit first → last:
 
 1. **Enemy break-pips + enrage indicator** and **my available moves** — these drive the turn decision (the harvest dilemma).
-2. **My Structure / Energy / Heat** — can I act, and am I safe? (Heat is the self-inflicted third resource; it must read *in advance*.)
+2. **My Structure / Energy / Heat** *and* the **turn-order ribbon** — can I act, am I safe, and **who acts next** (can a Shock flip initiative before my next turn?). Heat is the self-inflicted third resource; it must read *in advance*.
 3. **Both combatants' status badges** — what's ticking on each side.
 4. **Damage / effectiveness feedback** — the result of the last action.
 5. **Combat log & bench** — reference, discoverable, lower priority.
@@ -91,6 +91,7 @@ resolves lower-right** near where the enemy lives.
 
 - **Top-left — Player card**: identity + the three resource readouts + statuses + bench.
 - **Top-right — Enemy card**: identity + Structure + element + statuses + break pips + enrage.
+- **Top-center — Turn-order ribbon**: persistent initiative display; combatants ordered by `effective_mobility` (TBC-F1), active combatant marked, Shock-driven reorders animated. Sits above the center feedback layer so floating damage never occludes it.
 - **Center — Feedback layer**: floating damage, effectiveness pop, status pops, break-pop VFX + hit-stop.
 - **Bottom-left — Action cluster**: Moves / Switch / Flee / Item; expands to the 4-move panel.
 - **Bottom-right — Target list**: appears only when a DAMAGE move is selected (STRUCTURE + unbroken regions).
@@ -102,8 +103,8 @@ resolves lower-right** near where the enemy lives.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│ ┌─PLAYER────────────┐                    ┌─ENEMY───────────┐  │
-│ │ [◐] Voltbot   L12 │                    │  Scrap Golem  L14│ │
+│ ┌─PLAYER────────────┐  ┌─TURN ORDER────┐ ┌─ENEMY───────────┐  │
+│ │ [◐] Voltbot   L12 │  │ ▶Voltbot·Golem │ │  Scrap Golem  L14│ │
 │ │ STR ▓▓▓▓▓▓▓░░ 84/120                   │ STR ▓▓▓▓▓▓▓▓ 210 │ │
 │ │ EN  ▓▓▓▓░░ 40/60  │      ~ feedback ~   │ ⚡Volt           │ │
 │ │ HEAT ▓▓▓▓▓▓▓▒ 78 ⚠│    "SUPER          │ ┌─BREAK REGIONS─┐│ │
@@ -123,6 +124,12 @@ resolves lower-right** near where the enemy lives.
 │ └─────────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────────┘
 ```
+
+*Turn-order ribbon: `▶` marks the active combatant; entries left→right = next to act
+(ordered by `effective_mobility`, TBC-F1). On a Shock reorder the affected chip flashes
+element-colored, gains a Shock glyph, and slides to its new slot **before** the displaced
+combatant acts (V3-2). Downed combatants are removed; an Overheat turn-skip greys/bypasses
+the skipped chip (V3-8).*
 
 **Move-selected state** (tap `▶ MOVES` → 4-move panel replaces the action cluster;
 the TARGET list populates only for DAMAGE moves; tapping a target resolves with no
@@ -144,6 +151,7 @@ confirm step):
 |---|---|
 | **Player card** | name / level / sprite · Structure bar + numeric · Energy bar + numeric · **Heat gauge + overheat warning** · element icon · ≤3 status badges (name + duration) · bench portraits ×2 |
 | **Enemy card** | name / level / sprite · Structure bar + numeric · element icon · ≤3 status badges · **2–3 break pips** (each cur/max + "N hits" hint; BROKEN pips greyed/struck) · **enrage indicator** (+12/24/36%) |
+| **Turn-order ribbon** | ordered initiative chips (one per living combatant: portrait/name + side tint) · **active-turn marker** (`▶` caret + highlight, not color alone) · Shock-reorder flash + Shock glyph on a displaced chip · downed combatants removed; Overheat turn-skip greyed/bypassed. Reads `effective_mobility` order from `BattleController` (TBC-F1), recomputed each `ROUND_START` (Rule 3) |
 | **Action cluster** | Moves · Switch · Flee (**greyed on boss**) · Item (greyed if no valid item) |
 | **4-move panel** | per move: name · element icon · energy cost · status-rider badge · affordable/greyed state (● / ○) · "Heat!" flag if the move risks overheat · `‹ back` |
 | **Target list** | STRUCTURE + each unbroken region, with break progress; labelled buttons (≥44pt) |
@@ -154,7 +162,7 @@ confirm step):
 resource bar (Structure/Energy) · capped gauge w/ threshold warning (Heat) ·
 segmented progress pip (break regions) · status badge w/ duration · affordable /
 disabled action button · labelled target-list picker · floating feedback text ·
-event log.
+event log · ordered initiative ribbon w/ active-turn marker.
 
 ---
 
@@ -170,9 +178,11 @@ UX-level decision (turn pacing) is captured below the table.
 | **Move-selected** | Tap `▶ MOVES` | 4-move panel replaces the action cluster; target list populates for DAMAGE moves |
 | **Resolving** | Action committed (`TURN_ACTIVE`) | Inputs locked; feedback layer plays; log updates |
 | **Enemy turn** | `TURN_ACTIVE(enemy)` | Inputs locked; enemy telegraph + attack VFX; Structure / status update |
-| **Overheat beat** | Heat hits 100 (Rule 5) or enters turn Overheated (Rule 4) | V3-8: steam flash, gauge slams 0→20 (two-step), self-damage number in heat register, turn-skip shown in turn order; screen-shake (**reserved for this + DOWNED only**) |
+| **Overheat beat** | Heat hits 100 (Rule 5) or enters turn Overheated (Rule 4) | V3-8: steam flash, gauge slams 0→20 (two-step), self-damage number in heat register, turn-skip greys/bypasses the skipped combatant's **ribbon chip** (V3-8); screen-shake (**reserved for this + DOWNED only**) |
 | **Enrage escalation** | `broken_region_count` → 1 / 2 / 3 (TBC-F7) | Enrage indicator steps +12 / +24 / +36%; enemy card gains a persistent "angrier" state (central beat — must telegraph) |
 | **Switch-in** | Player picks `⇄ SWITCH`, or active Symbot downed | Player card swaps to the bench Symbot; bench portraits reorder |
+| **Initiative reorder (Shock)** | A Shock lands / expires and changes `effective_mobility` order (TBC-F4 → TBC-F1) | Affected ribbon chip flashes element-colored + gains a Shock glyph, slides to its new position **before the displaced combatant acts** (V3-2); ribbon re-sorts at `ROUND_START` |
+| **Turn hand-off** | `TURN_ACTIVE` moves to the next combatant | Active-turn `▶` marker advances along the ribbon; the active chip is highlighted |
 | **Boss variant** | Entered from a boss gate | `⚑ FLEE` greyed/absent for the whole battle |
 | **Battle-init** | `BATTLE_INIT` snapshot freeze | Brief intro (enemy reveal); no input yet |
 | **Victory** | Enemy Structure = 0 (Rule 12) | Freeze → results overlay (breaks, XP, loot) → Overworld |
@@ -211,6 +221,7 @@ post-MVP, all targets ≥44×44pt, no hover-only affordances.
 | Target row | Tap | Touch / click | **Resolves immediately (no confirm)** | Commits action → `Resolving` |
 | Move / region / status | **Long-press** (hold) | Touch hold / Mac hover-or-hold | Detail popover (description, rider math, break math) | Read-only; release / tap-away dismisses |
 | Bench portrait | Tap | Touch / click | Inspect popover | Previews benched Symbot (read-only) |
+| Turn-order chip | **Long-press** (hold) | Touch hold / Mac hover-or-hold | Inspect popover (combatant name, current `effective_mobility`, active Shock magnitude) | Read-only; the ribbon is otherwise **display-only** — never a commit target |
 | Combat log | Swipe / scroll | Touch / wheel | Scrolls history | — |
 | Beat tap-to-continue | Tap anywhere | Touch / click | Advances the paused beat | Resumes auto-flow |
 
@@ -312,6 +323,7 @@ delivered via subscribed signals — never polled (`_process`-free per ADR-0008)
 | Enemy `current_structure` | BattleController runtime | Read | Real-time |
 | Break regions (cur/max, broken flag, "N hits") | BattleController pools (init from Enemy DB) | Read | Real-time |
 | `broken_region_count` / enrage % | BattleController (TBC-F7) | Read | Real-time |
+| Initiative order + active index (`effective_mobility` per combatant, Shock magnitude) | BattleController runtime (TBC-F1 / F4) | Read | Real-time; re-sorted on `ROUND_START` and on Shock apply / expire |
 | **Effectiveness hint (▲ / ▼)** | Damage Formula type table (DF-1) | Read | Pre-commit — **DF must expose `type_mult` pre-commit (DF OQ-1)** |
 | Bench Symbots ×2 | CombatantSnapshot (team) | Read | Frozen; inspect only |
 | Item list | Consumable DB + inventory | Read | For the Item action |
@@ -339,7 +351,8 @@ application:
   - Break pips — fill level + "BROKEN" strike/label, not color alone.
   - Enrage — `[!]` icon + "+24%" numeric + text, not color alone.
   - **Heat gauge — numeric value + ⚠ threshold marker** at 70 / 90, so "riding the edge" reads without the amber/orange fill (V3-7 color = enhancement, not sole signal).
-- **Screen reader / AccessKit** — deferred, door kept open (§5): interactive elements are Button subclasses; icon-only controls (element, status, enrage) carry `accessibility_name`.
+- **Turn order is not color-only** (§1 *color-never-sole*) — the active combatant is marked with a `▶` caret + highlight (not side-tint alone); a Shock reorder pairs its element-colored flash with a **Shock glyph + slide motion**, so the reorder reads without color perception. Ribbon chip labels ≥13pt floor; the long-press inspect target is ≥44×44pt.
+- **Screen reader / AccessKit** — deferred, door kept open (§5): interactive elements are Button subclasses; icon-only controls (element, status, enrage, turn-order chips) carry `accessibility_name`.
 - **Motion** — Reduce-Motion deferred; **<3 flashes/sec BLOCKING**; screen-shake reserved for Overheat + DOWNED (§1.4 / §6.2).
 - **Keyboard nav** — post-MVP (§2); ADR-0008 dual-focus split keeps the door open; touch/mouse is the MVP path.
 - **No timing pressure** — turn-based; the hybrid pacing's beat-pauses are player-advanced, never auto-timeout (§2.3).
@@ -383,6 +396,10 @@ accessibility flash-rate gate. Each AC traces to a locked decision.
 | AC-13 | Victory shows breaks / XP / loot before returning to Overworld; Defeat leaves inventory + equipped parts unchanged | ADVISORY |
 | AC-14 | Heat gauge shows a ⚠ threshold marker + numeric at 70 and 90 | ADVISORY |
 | **AC-15** | **All pulsing / looping effects stay <3 flashes/sec** | **BLOCKING** (inherits a11y §1.4) |
+| AC-16 | A persistent turn-order ribbon is visible in the default state, ordered by `effective_mobility` (TBC-F1), with the active combatant unambiguously marked by a non-color signal (`▶` caret + highlight) | ADVISORY |
+| AC-17 | When a Shock changes initiative order, the affected chip is telegraphed (flash + Shock glyph + reposition) **before** the displaced combatant acts (V3-2); an Overheat turn-skipped combatant is greyed / bypassed in the ribbon | ADVISORY |
+| AC-18 | Battle enters from the Overworld within the transition budget (enter wipe ≤0.5s to `ACTION_PENDING`) and holds 60fps / ≤16.6ms frame time during resolution with the feedback layer active | ADVISORY |
+| AC-19 | The screen renders correctly in landscape at the project reference resolution with all zones inside the iOS safe-area insets; all touch targets remain ≥44×44pt after the virtual-px→pt calibration (OQ-4) | ADVISORY |
 
 ---
 
@@ -396,3 +413,7 @@ accessibility flash-rate gate. Each AC traces to a locked decision.
 6. **Move-4 null slot** — GDD allows Move 4 = null; confirm the 4-move panel renders 3 moves gracefully (collapsed vs. empty slot).
 7. **Localization-lead** — confirm English-only MVP launch scope.
 8. **Analytics-engineer** — confirm the combat-telemetry deferral; `battle_started` / `battle_ended(outcome, enemy_id, turn_count)` as the eventual first hooks.
+
+**Resolved by the 2026-07-15 revision:**
+- **V3-2 turn-order display** (was an uncovered TBC GDD hard requirement) — now specced as a persistent top-center ribbon (Layout Zones, Component Inventory, States `Initiative reorder` / `Turn hand-off`, Data Requirements, AC-16/AC-17). **Residual:** the ribbon shows **living combatants only** (in MVP typically 1 active player Symbot + 1 enemy → a 2-chip ribbon); benched Symbots are represented on the player card, not the ribbon. Flag to revisit if benched Symbots should appear in the initiative display.
+- **Performance / resolution ACs** — added as AC-18 (enter budget + 60fps hold) and AC-19 (landscape reference resolution + safe-area + ≥44pt post-calibration).
