@@ -15,7 +15,7 @@ Proposed
 | **Knowledge Risk** | MEDIUM — the API used (`RandomNumberGenerator`, `.seed`, `.randi()`, `.randomize()`) is 4.0-era stable, **but** the underlying PCG32 sequence for a given seed changed across 4.4→4.6 (verified: `enemy-ai.md` AC-EAI-06 records the algorithm shift). Any hard-coded seed→sequence expectation is engine-version-fragile |
 | **References Consulted** | `docs/engine-reference/godot/VERSION.md`, `breaking-changes.md` (no RNG entry), `deprecated-apis.md` (no RNG entry), `design/gdd/enemy-ai.md` AC-EAI-06 |
 | **Post-Cutoff APIs Used** | None. `RandomNumberGenerator` and all methods used predate the cutoff. The *risk* is a post-cutoff behavioral change (seed→sequence mapping), not a new API |
-| **Verification Required** | (1) **Pinned-seed sequence** — on Godot 4.6, confirm that a given `RandomNumberGenerator.seed` yields a stable, reproducible `randi()`/`randi_range()` sequence within one engine build, and that setting `.seed` fully resets state (deterministic reset, not additive). (2) **AC-EAI-06 hard-coded seeds** (`SEED_A`/`SEED_B`) must be computed against the pinned 4.6 `randi_range(0, tied_count-1)` and re-verified on any engine bump — this ADR inherits that obligation as a standing determinism note. (3) `randomize()` sets a readable `.seed` that can be logged (confirm `.seed` is populated after `randomize()` on 4.6) |
+| **Verification Required** | (1) **State-reset semantics — CONFIRMED** (godot-specialist, 2026-07-14): setting `.seed` fully resets the PCG32 state deterministically (`.state` defaults to `0` after a `.seed` assignment; not additive). No separate `.state` handling is needed for this design. Retained as a regression check on engine bumps. (2) **AC-EAI-06 hard-coded seeds** (`SEED_A`/`SEED_B`) — **OPEN, standing obligation**: must be computed against the pinned 4.6 `randi_range(0, tied_count-1)` and re-verified on any engine bump. This is the one genuinely open determinism gate this ADR inherits. (3) **`.seed` readable after `randomize()` — CONFIRMED** (godot-specialist, 2026-07-14): `randomize()` writes the entropy value to `.seed` immediately, so `_root_seed = _root.seed` is correct. Retained as an engine-bump regression check |
 
 ## ADR Dependencies
 
@@ -45,7 +45,8 @@ No document decides *where the entropy comes from*, *how production seeds are ge
 - **No global diagnostics** (ADR-0002 `global_push_diagnostics`) — the root-seed log uses the injected `LogSink`.
 - **No RNG state in the save** (ADR-0001) — the reproducibility model is already fixed to per-resolution seeding; this ADR must **not** reopen it by persisting stream state.
 - **80% GUT coverage; DI over singletons; deterministic, isolated, injection-friendly tests** (TR-test-001) — the service must be **fully bypassable**: no test should be forced to route through it.
-- **Determinism is engine-version-scoped** — the PCG32 sequence changed 4.4→4.6; determinism guarantees hold *within one engine build*, not across upgrades.
+- **Determinism is engine-version-scoped** — the PCG32 sequence changed 4.4→4.6; determinism guarantees hold *within one engine build*, not across upgrades. (Internal PRNG changes may not surface in user-facing breaking-change logs — the engine reference is silent on RNG — so treat all seed→sequence stability as within-build only regardless of patch notes.)
+- **`randi()` output space is 2³²** — `RandomNumberGenerator.randi()` returns a 32-bit unsigned value in `[0, 2³²−1]` zero-extended to a GDScript `int` (always non-negative, never above 4,294,967,295). Seed space is therefore 2³², not 2⁶⁴ — entirely adequate for short single-player sessions, and it confirms a vended `0` is a valid seed (no sentinel needed).
 
 ### Requirements
 
@@ -181,7 +182,8 @@ func make_rng(label := &"") -> RandomNumberGenerator:
 - **PCG32 sequence drift across engine versions** — *Mitigation*: Verification Required note (1)/(2); AC-EAI-06's pinned seeds are re-verified on every engine bump; determinism guarantees are documented as within-build only.
 - **A developer reaches for `@GlobalScope` `randf()` out of habit** — *Mitigation*: `global_rng_access` forbidden pattern + a static test that greps `src/` for `randf(`/`randi(`/`randf_range(`/`randi_range(` calls that are not method calls on an injected `RandomNumberGenerator` (mirrors ADR-0002's connection-auditor test strategy).
 - **Formula/pure code imports the `RngService` autoload** — *Mitigation*: `rng_service_in_formula_code` forbidden pattern; `src/core/` must not reference the autoload symbol.
-- **`randomize()` `.seed` readback differs on 4.6** — *Mitigation*: Verification Required note (3); if `.seed` is not populated post-`randomize()`, capture the root seed by explicitly drawing one `randi()` into a nonzero root seed at init instead.
+- **`randomize()` `.seed` readback** — *Resolved* (godot-specialist, 2026-07-14): `.randomize()` writes the entropy value to `.seed` on 4.6, so `_root_seed = _root.seed` is correct; retained only as an engine-bump regression check (Verification Required 3). No fallback path needed.
+- **Root RNG passed across a thread boundary** — `RandomNumberGenerator` is not thread-safe; concurrent `randi()` on one instance is undefined. The design is single-threaded (all vends on the main thread from orchestrators), so this is implicitly safe today. *Mitigation*: if threaded AI batch evaluation is ever added, each thread must receive a pre-vended `int` seed (which Enemy AI already takes) and build its own RNG — never share the root instance or call `next_seed()` off-thread.
 
 ## GDD Requirements Addressed
 
