@@ -57,13 +57,13 @@ on any exit.
 
 | Entry Source | Trigger | Player carries this context |
 |---|---|---|
-| Overworld — wild encounter | Step into encounter zone / random trigger | `enemy_id`, frozen team snapshot (3 Symbots), encounter modifiers (Jammer/Lure countdown frozen during battle) |
+| Overworld — wild encounter | Step into encounter zone / random trigger | `enemy_id`, frozen team snapshot (1–3 Symbots), encounter modifiers (Jammer/Lure countdown frozen during battle) |
 | Overworld — boss gate | Interact with a boss gate | boss `enemy_id`, gate context (**Flee disabled**) |
 
 | Exit Destination | Trigger | Notes |
 |---|---|---|
 | Victory results → Overworld | Enemy Structure = 0 | Shows fired break events, XP, loot; **irreversible reward grant** (parts/Scrap/consumables added to inventory) |
-| Defeat screen → Retry / Overworld | All 3 Symbots downed | **No penalty** — inventory & equipped parts untouched; only lost time + pending loot forfeited |
+| Defeat screen → Retry / Overworld | All fielded Symbots downed | **No penalty** — inventory & equipped parts untouched; only lost time + pending loot forfeited |
 | Overworld (Fled) | Flee (wild only) | No rewards, no XP; runtime state discarded |
 
 All exits discard the battle runtime state at `BATTLE_END` (ADR-0007). No battle
@@ -158,11 +158,23 @@ confirm step):
 | **Center feedback layer** | floating damage number · effectiveness pop ("Super effective!" / "Not very effective") · status-application pop ("Shocked!") · **break-pop VFX + 100–200ms hit-stop** · overheat overlay |
 | **Combat log** | last ~3 action lines |
 
+**Status-badge overflow.** MVP has exactly three status types (Shock / Burn / Stagger),
+so **≤3 concurrent badges is the natural ceiling** and the common case fits. If a future
+status set ever exceeds 3 on one combatant, the card shows the **3 highest-priority
+badges + a `+N` chip**; the full list is available via long-press inspect — no status is
+ever silently dropped, and the `+N` overflow indicator is text (color-independent).
+
+**Variable team size.** The player may field **1–3 Symbots** (Rule 1 caps the roster at 3,
+but early-game rosters can be smaller). The bench renders only the **living benched
+Symbots (0–2 portraits)** — empty roster slots are not drawn (no placeholder tiles).
+Defeat (Rule 12) fires when **all fielded Symbots are DOWNED**, whatever the fielded count
+— not a hardcoded 3. A one-Symbot team simply has an empty bench.
+
 **New interaction patterns this screen contributes to `interaction-patterns.md`:**
 resource bar (Structure/Energy) · capped gauge w/ threshold warning (Heat) ·
-segmented progress pip (break regions) · status badge w/ duration · affordable /
-disabled action button · labelled target-list picker · floating feedback text ·
-event log · ordered initiative ribbon w/ active-turn marker.
+segmented progress pip (break regions) · status badge w/ duration + `+N` overflow ·
+affordable / disabled action button · labelled target-list picker · floating feedback
+text · event log · ordered initiative ribbon w/ active-turn marker.
 
 ---
 
@@ -186,7 +198,7 @@ UX-level decision (turn pacing) is captured below the table.
 | **Boss variant** | Entered from a boss gate | `⚑ FLEE` greyed/absent for the whole battle |
 | **Battle-init** | `BATTLE_INIT` snapshot freeze | Brief intro (enemy reveal); no input yet |
 | **Victory** | Enemy Structure = 0 (Rule 12) | Freeze → results overlay (breaks, XP, loot) → Overworld |
-| **Defeat** | All 3 Symbots DOWNED (Rule 12) | DOWNED shake; defeat screen (Retry / Overworld); **inventory untouched** |
+| **Defeat** | All fielded Symbots DOWNED (Rule 12) | DOWNED shake; defeat screen (Retry / Overworld); **inventory untouched** |
 | **Heat zones** *(component variant)* | Heat 0–69 / 70–89 / 90–100 (V3-7) | Gauge: cool fill → amber pulse → orange-red faster pulse |
 
 **Turn pacing — hybrid auto-advance.** Routine action → resolution → next-turn
@@ -200,6 +212,22 @@ the turn it steps.
 **Input-lock scope.** During `Resolving` and `Enemy turn`, action inputs are
 locked; the **combat log and bench remain readable** (scroll/inspect only, no
 commit). The lock releases on return to `ACTION_PENDING`.
+
+**Error & failure handling.** This screen has **no async fetch** — all data is local
+and frozen at `BATTLE_INIT` (ADR-0005), so there is no loading-spinner or network-error
+state. The real failure modes are handled *before* the screen renders:
+
+- **Invalid build / over-level part** — TBC refuses the encounter at `BATTLE_INIT` and
+  emits `battle_start_refused(invalid_symbot_ids, offending_parts)` (TBC Rule 2.0); the
+  **Overworld** surfaces the reason (Workshop-level warning) and the battle screen is
+  **never entered**. No half-loaded battle renders.
+- **Malformed enemy / content data** — caught at boot by the ADR-0003 `ContentValidator`,
+  not at battle time; a battle never starts against an unvalidated enemy def.
+- **Runtime signal desync** (defensive) — if the screen ever receives an inconsistent
+  runtime state (e.g. a break-region pool absent from a live enemy), it **fails safe**:
+  freeze inputs, log the fault, and route to the Defeat/exit path rather than soft-lock
+  the turn. This should be unreachable given the validation gates above; it exists so a
+  bug degrades to a clean exit, not a stuck battle.
 
 ---
 
@@ -400,6 +428,8 @@ accessibility flash-rate gate. Each AC traces to a locked decision.
 | AC-17 | When a Shock changes initiative order, the affected chip is telegraphed (flash + Shock glyph + reposition to projected next-round slot) on apply, and the new order takes effect at the next `ROUND_START` (Rule 3) — never mid-round; an Overheat turn-skipped combatant is greyed / bypassed in the ribbon | ADVISORY |
 | AC-18 | Battle enters from the Overworld within the transition budget (enter wipe ≤0.5s to `ACTION_PENDING`) and holds 60fps / ≤16.6ms frame time during resolution with the feedback layer active | ADVISORY |
 | AC-19 | The screen renders correctly in landscape at the project reference resolution with all zones inside the iOS safe-area insets; all touch targets remain ≥44×44pt after the virtual-px→pt calibration (OQ-4) | ADVISORY |
+| AC-20 | The battle screen renders for a fielded team of 1, 2, or 3 Symbots — the bench shows only living benched Symbots (0–2 portraits, no placeholder tiles); Defeat fires when **all fielded** Symbots are DOWNED, not a hardcoded 3 | ADVISORY |
+| AC-21 | An invalid build (over-level part) never produces a half-loaded battle — TBC's `battle_start_refused` (Rule 2.0) is surfaced by the Overworld and the battle screen is not entered | ADVISORY |
 
 ---
 
@@ -417,3 +447,5 @@ accessibility flash-rate gate. Each AC traces to a locked decision.
 **Resolved by the 2026-07-15 revision:**
 - **V3-2 turn-order display** (was an uncovered TBC GDD hard requirement) — now specced as a persistent top-center ribbon (Layout Zones, Component Inventory, States `Initiative reorder` / `Turn hand-off`, Data Requirements, AC-16/AC-17). **Residual:** the ribbon shows **living combatants only** (in MVP typically 1 active player Symbot + 1 enemy → a 2-chip ribbon); benched Symbots are represented on the player card, not the ribbon. Flag to revisit if benched Symbots should appear in the initiative display.
 - **Performance / resolution ACs** — added as AC-18 (enter budget + 60fps hold) and AC-19 (landscape reference resolution + safe-area + ≥44pt post-calibration).
+- **Reorder-timing ambiguity** — clarified against TBC Rule 3: initiative is fixed within a round and recomputed only at `ROUND_START`; a mid-round Shock telegraphs a *projected next-round* reorder and commits at the next round start (States row, wireframe caption, Data Requirements, AC-17).
+- **Three review advisories closed** — (a) **error/failure handling** documented (no async fetch; invalid-build refusal via `battle_start_refused` Rule 2.0 + ADR-0003 ContentValidator + defensive runtime-desync fail-safe); (b) **status-badge overflow** (`+N` chip + inspect; ≤3 is the MVP ceiling); (c) **variable team size** (1–3 fielded; bench 0–2; Defeat = all *fielded* downed). ACs AC-20 / AC-21 added; "3 Symbots" hardcoding removed from Entry/Exit + Defeat rows.
