@@ -142,8 +142,17 @@ items pass or are explicitly marked N/A with a stated reason.
 
 ### Scope Clarity
 
-- [ ] **Estimate present**: The story includes a size estimate (hours,
-  points, or a t-shirt size). A story with no estimate cannot be planned.
+- [ ] **Timebox present for spikes / HIGH-risk stories** *(auto-pass otherwise)*:
+  Numeric/point estimates are OPTIONAL for this solo-dev project — their
+  absence is NOT a gap. EXCEPTION: if the story is a spike (title or body
+  contains "spike") OR the header declares `Risk: HIGH`, it MUST carry a
+  **timebox** (e.g. "timeboxed 4h"). A timebox is a stop-loss trigger, not a
+  planning estimate: without one, an open-ended spike has no defined point to
+  cut losses and escalate. PASS if such a story has a timebox or any size
+  estimate; NEEDS WORK if it has neither. Auto-pass for every non-spike,
+  non-HIGH-risk story regardless of whether an estimate is present.
+  Fix: add a timebox to the Estimate field, e.g.
+  `Estimate: S — timeboxed 4h (spike; escalate to ADR amendment if unresolved)`.
 - [ ] **In-scope / Out-of-scope boundary stated**: The story states what
   it does NOT include, either in an explicit Out of Scope section or in
   language that makes the boundary unambiguous. Without this, scope creep

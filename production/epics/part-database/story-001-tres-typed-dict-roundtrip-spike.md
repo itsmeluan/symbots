@@ -4,7 +4,7 @@
 > **Status**: Ready
 > **Layer**: Foundation
 > **Type**: Integration
-> **Estimate**: TBD (fill at sprint planning)
+> **Estimate**: S — timeboxed 4h (spike; if the round-trip isn't resolved within the box, stop and escalate to an ADR-0003 amendment rather than grinding)
 > **Manifest Version**: 2026-07-14
 > **Last Updated**: (set by /dev-story when implementation begins)
 

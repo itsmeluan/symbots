@@ -188,7 +188,7 @@ For each story, write `production/epics/[epic-slug]/story-[NNN]-[slug].md`:
 > **Status**: Ready
 > **Layer**: [Foundation / Core / Feature / Presentation]
 > **Type**: [Logic | Integration | Visual/Feel | UI | Config/Data]
-> **Estimate**: [hours or t-shirt size — fill before sprint planning]
+> **Estimate**: [optional — omit for normal stories; spikes / Risk: HIGH require a timebox, e.g. "timeboxed 4h"]
 > **Manifest Version**: [date from control-manifest.md header]
 > **Last Updated**: [set by /dev-story when implementation begins]
 
