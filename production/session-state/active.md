@@ -2,8 +2,8 @@
 
 <!-- STATUS -->
 Epic: Pre-Production
-Feature: Sprint Zero
-Task: Break Foundation epics into stories
+Feature: Sprint Zero — Part Database
+Task: Story 002 CLOSED — next is Story 003 (PartDB loader)
 <!-- /STATUS -->
 
 > **This file is a lean checkpoint, not a changelog.** Keep it small — current
@@ -73,3 +73,10 @@ Task: Break Foundation epics into stories
 - 5 remaining Foundation epics (move / passive / consumable / enemy / damage-formula)
   are unstoried.
 - Optional cleanup: refresh `docs/architecture/architecture.md` stale traceability block.
+
+## Session Extract — /story-done 2026-07-15
+- Verdict: **COMPLETE WITH NOTES**
+- Story: `production/epics/part-database/story-002-partdef-schema-enums-catalog.md` — PartDef schema + enums + PartCatalog. Status → **Complete**.
+- Evidence: 18/18 part_database suite green (119 asserts, Godot 4.7 + GUT 9.7.1). `/code-review` APPROVED; enum `=0` sentinel confirmed warning-free via headless `--check-only`.
+- Tech debt logged: 1 item — GDD↔TR reserved-field drift (4 vs 6) → `docs/tech-debt-register.md`.
+- Next recommended: **Story 003 — PartDB loader/singleton** (`load_catalog`, `get_part`/`has_part`), unblocked by 002. Run `/story-readiness` on it first.

@@ -1,7 +1,7 @@
 # Story 002: PartDef schema + enums + PartCatalog
 
 > **Epic**: Part Database
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: TBD (fill at sprint planning)
@@ -100,7 +100,7 @@ This story is data-shape only: NO formula logic (Stories 004–006), NO validati
 **Required evidence**:
 - `tests/unit/part_database/part_def_schema_test.gd` — must exist and pass (field presence, types, enum integer values, catalog typing)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing — `tests/unit/part_database/part_def_schema_test.gd` (13 tests green; full part_database suite 18/18, 119 asserts, Godot 4.7 + GUT 9.7.1)
 
 ---
 
@@ -108,3 +108,10 @@ This story is data-shape only: NO formula logic (Stories 004–006), NO validati
 
 - Depends on: Story 001 (typed-dict `.tres` verdict determines whether `stat_bonuses` stays `Dictionary[StringName, int]` or takes the ADR-0003 fallback)
 - Unlocks: Story 003, Story 004, Story 006, Story 007
+
+## Completion Notes
+**Completed**: 2026-07-15
+**Criteria**: 9/9 (8 verified via tests + code review; AC "upgrade_effects entry shape" correctly DEFERRED to Story 009 validator — schema ships `Array[Dictionary]`, per-entry shape not enforceable at schema level)
+**Deviations**: ADVISORY — reserved fields = 6 in code (`+critical_output, +firewall`, per TR-part-025 source-of-truth) vs 4 named in GDD Rule 1 / story AC. Code is correct; GDD/story text is the stale side. Logged to tech-debt register.
+**Test Evidence**: Logic — `tests/unit/part_database/part_def_schema_test.gd` (18/18 suite green, 119 asserts). BLOCKING gate satisfied.
+**Code Review**: Complete — `/code-review` APPROVED (no blocking issues). Enum `= 0` sentinel confirmed warning-free under Godot 4.7 via headless `--check-only`.
