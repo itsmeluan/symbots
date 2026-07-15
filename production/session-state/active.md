@@ -1,6 +1,17 @@
 # Active Session State
 
-## Current Task — COMPLETE: `/test-setup` → project bootstrapped + GUT wired + CI green (2026-07-14)
+## Current Task — IN PROGRESS: UX foundation (approved order, 2026-07-14)
+**Approved sequence** (user OK'd the "constraint-first, extract-not-invent" order):
+1. **`design/accessibility-requirements.md`** ← IN PROGRESS (via accessibility-specialist). Formalizes a11y tier + specifics; foundation constraint everything downstream inherits. Clears gate blocker #1.
+2. **`design/ux/battle.md`** — core combat-loop screen spec (grounds real patterns). Via `/ux-design battle`.
+3. **`design/ux/interaction-patterns.md`** — extract vocabulary FROM the battle screen + touch primitives (real, not speculative). Clears gate blocker #2. Via `/ux-design patterns`.
+4. **`/gate-check pre-production`** — both blockers exist + library grounded.
+5. Remaining screens (build/assembly, HUD, menus) in Pre-Production.
+- **Context**: no `design/ux/` yet (first UX artifact); no player-journey.md; no art bible; 21 GDDs available. Input = touch-first iOS + Mac KB/mouse, NO gamepad, ≥44×44pt, no hover-only. Godot 4.6 has native accessibility (AccessKit, added 4.5).
+
+---
+
+## Prior — COMPLETE: `/test-setup` → project bootstrapped + GUT wired + CI green (2026-07-14)
 - **Order executed** (per user): `project.godot` → GUT install → test-setup scaffold. Adapted the skill's Godot template from **GdUnit4 → GUT** (project's chosen framework).
 - **`project.godot` created** — Godot 4.6, `gl_compatibility` renderer (2D/iOS), GUT plugin enabled. First time the repo is an actual Godot project (none existed before).
 - **GUT v9.6.1 vendored** into `addons/gut/` (git clone of `bitwes/Gut` @ v9.6.1 → copied in; committed, not a submodule). No manual AssetLib step needed.
