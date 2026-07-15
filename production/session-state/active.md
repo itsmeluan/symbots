@@ -2,8 +2,8 @@
 
 ## Current Task — IN PROGRESS: UX foundation (approved order, 2026-07-14)
 **Approved sequence** (user OK'd the "constraint-first, extract-not-invent" order):
-1. **`design/accessibility-requirements.md`** ← IN PROGRESS (via accessibility-specialist). Formalizes a11y tier + specifics; foundation constraint everything downstream inherits. Clears gate blocker #1.
-2. **`design/ux/battle.md`** — core combat-loop screen spec (grounds real patterns). Via `/ux-design battle`.
+1. **`design/ux/accessibility-requirements.md`** ✅ COMPLETE (2026-07-14). GAG Basic tier. 5 decisions locked: (1) screen-reader deferred+door-open, (2) single large-text toggle +4pt, (3) safe palette by default, (4) synergy/enrage visual state-change required, (5) virtual-px→pt calibration verified first UI story. **Gate blocker #1 CLEARED.** Forward flags to Art Director: colorblind-safe elemental palette (Kinetic = non-red) + document active/inactive visual states for synergy/enrage.
+2. **`design/ux/battle.md`** ← NEXT — core combat-loop screen spec (grounds real patterns). Via `/ux-design battle`.
 3. **`design/ux/interaction-patterns.md`** — extract vocabulary FROM the battle screen + touch primitives (real, not speculative). Clears gate blocker #2. Via `/ux-design patterns`.
 4. **`/gate-check pre-production`** — both blockers exist + library grounded.
 5. Remaining screens (build/assembly, HUD, menus) in Pre-Production.
