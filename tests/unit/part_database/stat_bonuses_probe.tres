@@ -1,0 +1,10 @@
+[gd_resource type="Resource" format=3]
+
+[ext_resource type="Script" path="res://tests/unit/part_database/stat_bonuses_probe.gd" id="1_5yvbq"]
+
+[resource]
+script = ExtResource("1_5yvbq")
+stat_bonuses = Dictionary[StringName, int]({
+&"armor": 5,
+&"structure": 10
+})

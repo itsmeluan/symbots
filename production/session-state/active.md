@@ -30,25 +30,29 @@ Task: Break Foundation epics into stories
   `/create-stories move-database` (5 Foundation epics still unstoried), OR
   `/sprint-plan new` (Part-DB-only sprint for now).
 
-## Session Extract — /dev-story story-001 (2026-07-15)
+## Session Extract — Story 001 spike ✅ PASSED (2026-07-15)
 
-- **Engine re-pinned 4.6 → 4.7** (user decision): only `4.7.stable.official` is
-  installed; running a version-specific gate on the wrong engine would invalidate
-  the finding. Authoritative pins updated: `project.godot`, `VERSION.md`,
-  `technical-preferences.md`, `CLAUDE.md`, and story-001 Engine field/notes.
-  4.7 research: migration guide documents **no** typed-`Dictionary` `.tres`
-  breaking change (round-trip expected to hold; spike still must prove it).
-  GH-115763 (typed-return inheritance) affects overrides only — AC-2 unaffected.
-- **DEFERRED to `/architecture-review`**: 8 ADRs + architecture docs still say
-  "4.6" — need engine-compat *re-validation*, not a label swap. Not swept inline.
-- **`/story-readiness` + `/create-stories` skills edited** (Option A): numeric
-  estimates now optional; spikes / Risk:HIGH still require a timebox. story-001
-  timebox set (S / 4h). Verdict: READY.
-- **SPIKE BLOCKED — did not run.** dev-story spawned `godot-gdscript-specialist`
-  to build + run the headless round-trip test; subagent died on
-  `API Error: Usage credits required for 1M context`. 0 files created, 0 tool
-  uses. **Next**: enable `/usage-credits` OR `/model` → standard context, then
-  re-run `/dev-story story-001` (or re-spawn just the implementer).
+- **SPIKE RE-RUN & PASSED.** Ran directly in-session (not via subagent — the
+  prior attempt's subagent died on `API Error: Usage credits`). Godot
+  `4.7.stable.official.5b4e0cb0f` at `/Applications/Godot.app/Contents/MacOS/Godot`.
+  Headless GUT (v9.6.1) via the CI command → **7/7 tests, 27 asserts, 0 fail.**
+  - Result: `Dictionary[StringName, int]` `.tres` round-trip **holds on 4.7** —
+    StringName keys do NOT degrade to String; int values stay int; typed
+    `get_bonus() -> int` returns usable int; missing-key → 0; empty dict OK.
+  - Verified on BOTH the committed editor-format fixture (load path) and a fresh
+    `ResourceSaver.save` → reload round-trip.
+  - **ADR-0003 verification gate item (2) CLOSED (PASS)** — no ADR amendment;
+    typed schema stands. **Story 002 + all content authoring UNBLOCKED.**
+  - Artifacts: `tests/unit/part_database/tres_typed_dict_roundtrip_test.gd`,
+    `stat_bonuses_probe.{gd,tres}` (throwaway probe), finding note
+    `production/epics/part-database/story-001-FINDING.md`. Story + EPIC marked Done.
+- **Engine already re-pinned 4.6 → 4.7** (prior session): authoritative pins
+  (`project.godot`, `VERSION.md`, `technical-preferences.md`, `CLAUDE.md`) updated.
+- **STILL DEFERRED to `/architecture-review`**: 8 ADRs + architecture docs still
+  say "4.6" — need engine-compat *re-validation*, not a label swap. Not swept.
+- **Next**: Story 002 (PartDef schema + enums + PartCatalog) is now the gate-open
+  next build step — `/dev-story story-002`. Or story the 5 remaining Foundation
+  epics. Or `/sprint-plan`.
 
 ## Open Threads (not yet captured elsewhere)
 

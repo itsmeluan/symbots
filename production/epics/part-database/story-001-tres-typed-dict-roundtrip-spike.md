@@ -1,7 +1,7 @@
 # Story 001: Engine spike — typed-dict `.tres` round-trip gate
 
 > **Epic**: Part Database
-> **Status**: Ready
+> **Status**: Done — ✅ gate PASSED 2026-07-15 (see `story-001-FINDING.md`)
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: S — timeboxed 4h (spike; if the round-trip isn't resolved within the box, stop and escalate to an ADR-0003 amendment rather than grinding)
@@ -31,11 +31,11 @@
 
 *From ADR-0003 Verification Required item (2) + Validation Criteria, scoped to this spike:*
 
-- [ ] `@export var stat_bonuses: Dictionary[StringName, int]` authors correctly in the Godot 4.7 inspector (typed key/value editing)
-- [ ] After writing to a `.tres` file and reloading via `ResourceLoader.load()`, every key is still `StringName` (NOT `String`-coerced) and every value is still `int`
-- [ ] A typed function returning the dict's value type (e.g. `func get_bonus(k: StringName) -> int: return stat_bonuses.get(k, 0)`) compiles and returns a usable `int` (not `Variant`)
-- [ ] The round-trip is exercised **headless** (`godot --headless`) so editor-cache Resource instances never contaminate the result
-- [ ] Finding is documented (PASS → proceed to Story 002; FAIL → ADR-0003 amendment required before any content authoring)
+- [x] `@export var stat_bonuses: Dictionary[StringName, int]` authors correctly (typed dict persists to `.tres` as `Dictionary[StringName, int]({...})` with `&`-prefixed keys — see FINDING serialization block; inspector authoring not driven headlessly, but the on-disk form it produces is verified)
+- [x] After writing to a `.tres` file and reloading via `ResourceLoader.load()`, every key is still `StringName` (NOT `String`-coerced) and every value is still `int` — proven on both the committed-fixture load path and a fresh save→reload round-trip
+- [x] A typed function returning the dict's value type (`func get_bonus(k: StringName) -> int`) compiles and returns a usable `int` (not `Variant`), usable in arithmetic without a cast
+- [x] The round-trip is exercised **headless** (`godot --headless -s addons/gut/gut_cmdln.gd`) so editor-cache Resource instances never contaminate the result
+- [x] Finding documented: **PASS** → Story 002 unblocked (`story-001-FINDING.md`)
 
 ---
 
@@ -84,7 +84,7 @@ This finding is **reused across the other four content-DB epics** (Move/Passive/
 - `tests/unit/part_database/tres_typed_dict_roundtrip_test.gd` — headless GUT test asserting the type-preservation above — must exist and pass
 - A short finding note (PASS/FAIL + any coercion observed) recorded for reuse by the other content-DB epics
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created & PASSING — `tests/unit/part_database/tres_typed_dict_roundtrip_test.gd` (7/7 tests, 27 asserts, Godot 4.7.stable headless). Finding: `story-001-FINDING.md` (verdict PASS — no coercion observed; StringName keys + int values preserved).
 
 ---
 

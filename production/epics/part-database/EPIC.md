@@ -63,9 +63,10 @@ This epic is complete when:
 - All stories are implemented, reviewed, and closed via `/story-done`
 - All acceptance criteria from `design/gdd/part-database.md` are verified
 - All Logic and Integration stories have passing test files in `tests/`
-- The typed-dict `.tres` round-trip is verified on Godot 4.6 (StringName keys survive
-  serialization) — **the load-bearing Foundation engine spike; resolve here first and
-  reuse the finding across the other content-DB epics**
+- ✅ **DONE** — the typed-dict `.tres` round-trip is verified on Godot 4.7 (StringName
+  keys + int values survive serialization; PASS 2026-07-15, `story-001-FINDING.md`) —
+  **the load-bearing Foundation engine spike; reuse the finding across the other
+  content-DB epics (no per-DB re-verification needed)**
 - Formulas 1/2/2b/3 have GUT unit tests using discriminating fixtures (floor ≠ round ≠ ceil)
 - The ContentValidator rejects every authoring-rule violation above (CI + dev-boot)
 
@@ -73,7 +74,7 @@ This epic is complete when:
 
 | # | Story | Type | Status | ADR |
 |---|-------|------|--------|-----|
-| 001 | Engine spike — typed-dict `.tres` round-trip gate | Integration | Ready | ADR-0003 |
+| 001 | Engine spike — typed-dict `.tres` round-trip gate | Integration | ✅ Done (PASS) | ADR-0003 |
 | 002 | PartDef schema + enums + PartCatalog | Logic | Ready | ADR-0003 |
 | 003 | PartDB singleton — load / index / expose read-only | Integration | Ready | ADR-0003 |
 | 004 | Formula 2 + 2b — per-part upgrade pipeline | Logic | Ready | ADR-0005 / ADR-0003 |
