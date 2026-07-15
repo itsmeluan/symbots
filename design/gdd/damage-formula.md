@@ -1,8 +1,8 @@
 # Damage Formula System
 
-> **Status**: Approved (Round 2) — errata applied 2026-07-10 (DF-1 input/output ranges updated per TBC re-derivation under SYNERGY_POWER_BUDGET=40)
+> **Status**: Approved (Round 2) — errata applied 2026-07-10 (DF-1 input/output ranges updated per TBC re-derivation under SYNERGY_POWER_BUDGET=40); erratum 2026-07-15 (DF2 extended with a **pre-commit** type-effectiveness read point for the Combat UI effectiveness telegraph — see the Combat UI dependency rows + OQ-1; sourced from `design/ux/battle.md` PG-06 / AC-06)
 > **Author**: Luan + Claude Code (systems-designer)
-> **Last Updated**: 2026-07-10
+> **Last Updated**: 2026-07-15
 > **Implements Pillar**: Pillar 2 (Every Battle Has a Harvest Goal), Pillar 3 (Build Depth Over Content Breadth)
 
 ## Overview
@@ -109,7 +109,7 @@ The Damage Formula System has no runtime state. It is a stateless pure function:
 | **Part Database** | Defines type effectiveness chart (×1.5/×1.0/×0.75) and type chart (Volt/Thermal/Kinetic). Values are locked — this system reads and applies them, does not redefine. | Upstream constraint |
 | **Enemy Database** *(not yet designed)* | Must expose `core_element` per enemy definition — this is a hard interface requirement from the type effectiveness rule. Enemy Database GDD cannot be approved without this field. | Upstream → this system |
 | **Move Database** *(not yet designed)* | In MVP, the skill's `damage_type` and element come from the equipped part's own `damage_type` and `element` fields (not from a move-level override). Move Database does not need to define per-move base power for stat-only model. **Hard constraint (DF1):** If a future move needs a damage-type or element override different from the part's fields, that override must be defined in the Move Database GDD and passed to this system — do not add per-move damage fields to Part Database. | Downstream constraint |
-| **Combat UI** | Displays damage numbers and type-effectiveness indicator ("Super effective!", damage color). Reads final_damage integer and type_mult from this system's output. | Downstream reader |
+| **Combat UI** | Displays damage numbers and type-effectiveness indicator ("Super effective!", damage color). Reads final_damage integer and type_mult from this system's output. **Two read points (DF2):** (1) *post-resolution* — final_damage + type_mult from the damage resolution event; (2) *pre-commit* — type_mult alone, for a hypothetical `(skill_element, target_core_element)` pairing, to telegraph effectiveness on the target picker BEFORE the player commits (battle PG-06 / AC-06). The pre-commit read uses the pure type-chart lookup (below), not `compute_damage`. | Downstream reader |
 
 ## Formulas
 
@@ -231,7 +231,7 @@ If a Full Vision implementation applies `crit_mult` after `floor()` — e.g., `f
 | System | What It Uses | Notes |
 |--------|-------------|-------|
 | **Turn-Based Combat System** | Calls `compute_damage(attacker_stats, skill_damage_type, skill_element, target_stats, target_core_element)` and applies the returned integer to target's current Structure. Only caller in MVP. Owns accuracy resolution and status effects — resolved before calling this system. | |
-| **Combat UI** | Reads `final_damage` for floating damage number display. Also needs `T` (or a type indicator) for "Super effective!" feedback and damage color. **Hard constraint (DF2):** Combat UI GDD must specify the interface for reading both `final_damage` and `type_mult` from a single damage resolution event. | |
+| **Combat UI** | Reads `final_damage` for floating damage number display. Also needs `T` (or a type indicator) for "Super effective!" feedback and damage color, at **two** points. **Hard constraint (DF2):** the Combat UI GDD must specify **both** read points: (1) *post-resolution* — reading `final_damage` + `type_mult` from a single damage resolution event; (2) *pre-commit* — reading `type_mult` for a hypothetical `(skill_element, target_core_element)` pairing to telegraph effectiveness on the target picker before commit (battle `PG-06` / `AC-06`). The pre-commit read MUST call the pure type-effectiveness lookup — the same chart `T` binds to in DF-1 — never `compute_damage` and never a view-side reimplementation of the chart (ADR-0008 `inline_stat_composition`). | |
 
 ### Bidirectionality Note
 
@@ -318,6 +318,12 @@ Zero failures across all 9 assertions. **Test type**: Unit (9 sub-assertions; ma
 
 ## Open Questions
 
-1. **Combat UI type effectiveness interface (DF2):** How does the Combat UI read the type effectiveness multiplier `T` from a damage resolution event? Two approaches: (a) `compute_damage()` returns a struct `{final_damage, type_mult}` instead of a bare integer; (b) Turn-Based Combat independently looks up T and passes it alongside the damage integer to Combat UI. Decision belongs in the Combat UI GDD and the Turn-Based Combat call contract. Unblock when Combat UI GDD is drafted.
+1. **Combat UI type effectiveness interface (DF2):** How does the Combat UI read the type effectiveness multiplier `T`? There are **two read points** (erratum 2026-07-15, surfaced by `design/ux/battle.md` PG-06 / AC-06):
+
+   **(A) Post-resolution** — reading `{final_damage, type_mult}` after a hit resolves. Two approaches: (a) `compute_damage()` returns a struct `{final_damage, type_mult}` instead of a bare integer; (b) Turn-Based Combat independently looks up `T` and passes it alongside the damage integer to Combat UI. Decision belongs in the Combat UI GDD and the Turn-Based Combat call contract.
+
+   **(B) Pre-commit** — the target-list picker must show a per-target effectiveness glyph (▲/▼/–) *before* the player commits, so the read cannot depend on a resolution event. `type_mult` here is a pure function of `(skill_element, target_core_element)` via the Rule 2 chart and needs no attacker/defender stats and no `compute_damage` call.
+
+   **Recommended resolution (both points, one source of truth):** expose the type-chart lookup as a standalone pure function — e.g. `type_effectiveness(skill_element, target_core_element) -> float` — that DF-1 uses internally to bind `T` *and* the UI calls directly for the pre-commit telegraph. This keeps the pre-commit glyph and the post-resolution "Super effective!" reading from a single implementation (they can never disagree) and forbids the view from reimplementing the chart (ADR-0008 `inline_stat_composition`). The struct-vs-passed-alongside choice for point (A) still belongs in the Combat UI GDD; point (B) is settled by this pure lookup. Unblock when the Combat UI GDD is drafted.
 
 2. **Status effect damage routing:** If Turn-Based Combat adds status effects that deal damage per turn (e.g., "burning" deals 5 damage/turn), does that damage go through Formula DF-1 or bypass it? Likely bypass (status damage is fixed, not stat-scaled), but the Turn-Based Combat GDD must clarify. If a bypass path exists, it must be explicitly documented — Formula DF-1 should be the only path for skill damage.

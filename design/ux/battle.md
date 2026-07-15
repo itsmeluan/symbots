@@ -1,6 +1,6 @@
 # UX Spec: Battle Screen
 
-> **Status**: Revised post-`/ux-review battle` (2026-07-15) — turn-order display added (V3-2 gap), performance/resolution ACs added; re-run `/ux-review battle` to confirm
+> **Status**: Revised post-`/ux-review battle` (2026-07-15) — turn-order display added (V3-2 gap), performance/resolution ACs added; three advisories closed; **components back-linked to `interaction-patterns.md` pattern IDs (PC-01/02, PG-01…09)**
 > **Author**: Luan + ux-designer
 > **Last Updated**: 2026-07-15
 > **Journey Phase(s)**: Core loop — Encounter / Combat (no player-journey.md yet; inferred)
@@ -170,11 +170,23 @@ Symbots (0–2 portraits)** — empty roster slots are not drawn (no placeholder
 Defeat (Rule 12) fires when **all fielded Symbots are DOWNED**, whatever the fielded count
 — not a hardcoded 3. A one-Symbot team simply has an empty bench.
 
-**New interaction patterns this screen contributes to `interaction-patterns.md`:**
-resource bar (Structure/Energy) · capped gauge w/ threshold warning (Heat) ·
-segmented progress pip (break regions) · status badge w/ duration + `+N` overflow ·
-affordable / disabled action button · labelled target-list picker · floating feedback
-text · event log · ordered initiative ribbon w/ active-turn marker.
+**Pattern-library mapping** — every interactive component above is catalogued in
+`design/ux/interaction-patterns.md` (seeded from this screen, 2026-07-15). Cite the ID;
+do not re-specify behavior here:
+
+| Component (this screen) | Pattern ID |
+|---|---|
+| Structure / Energy bars | **PG-01** Resource Bar |
+| Heat gauge + overheat warning | **PG-02** Capped Gauge w/ Threshold Warning |
+| Break pips (per region) | **PG-03** Segmented Progress Pip |
+| Status badges (name + duration, `+N` overflow) | **PG-04** Status Badge w/ Duration |
+| 4-move panel buttons (affordable / greyed / "Heat!") | **PG-05** Affordable / Disabled Action Button |
+| Target list (STRUCTURE + unbroken regions) | **PG-06** Labelled Target-List Picker |
+| Center feedback layer (damage / effectiveness / status pops) | **PG-07** Floating Feedback Text |
+| Combat log | **PG-08** Event Log |
+| Turn-order ribbon | **PG-09** Ordered Initiative Ribbon w/ Active-Turn Marker |
+| Action cluster · Switch · Flee · Item · `‹ back` | **PC-01** Button (touch press-release) |
+| Long-press inspect (move / region / status / bench / chip) | **PC-02** Long-press Inspect Popover |
 
 ---
 
