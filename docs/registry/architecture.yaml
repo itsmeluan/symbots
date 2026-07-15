@@ -252,6 +252,7 @@ interfaces:
       (4.6 dual-focus)."
     referenced_by:
       - docs/architecture/adr-0004-scene-boot.md
+      - docs/architecture/adr-0008-ui-architecture.md   # ADR-0008 defines what a Screen IS; all screens receive the manager injected + request transitions
     added: 2026-07-13
     revised: ""
 
@@ -270,6 +271,7 @@ interfaces:
     referenced_by:
       - docs/architecture/adr-0005-stat-pipeline.md
       - docs/architecture/adr-0007-tbc-state-machine.md   # TBC reads the frozen snapshot for damage + initiative; held in BattleContext
+      - docs/architecture/adr-0008-ui-architecture.md   # Combat UI reads the frozen CombatantSnapshot for stat displays (never the live build)
     added: 2026-07-14
     revised: ""
 
@@ -290,6 +292,7 @@ interfaces:
       - docs/architecture/adr-0005-stat-pipeline.md
       - docs/architecture/adr-0006-rng-service.md   # crit roll lives in TBC (next_seed(&"crit")); crit_mult passed IN, DF-1 stays deterministic
       - docs/architecture/adr-0007-tbc-state-machine.md   # TBC is the sole crit-roller — passes crit_mult into compute_damage
+      - docs/architecture/adr-0008-ui-architecture.md   # Workshop UI damage preview calls compute_damage — same MOVE-F1 chain, no reimplementation
     added: 2026-07-14
     revised: ""
 
@@ -309,6 +312,7 @@ interfaces:
     referenced_by:
       - docs/architecture/adr-0005-stat-pipeline.md
       - docs/architecture/adr-0007-tbc-state-machine.md   # TBC calls evaluate_silent() once at BATTLE_INIT (no spurious UI emit)
+      - docs/architecture/adr-0008-ui-architecture.md   # Workshop UI calls preview() (pure) + subscribes synergy_changed
     added: 2026-07-14
     revised: ""
 
@@ -331,6 +335,7 @@ interfaces:
     referenced_by:
       - docs/architecture/adr-0005-stat-pipeline.md
       - docs/architecture/adr-0007-tbc-state-machine.md   # is_build_valid is TBC's battle-start precondition; the meta-progression subscriber calls apply_battle_result on battle_ended
+      - docs/architecture/adr-0008-ui-architecture.md   # Workshop UI queries is_build_valid for the TR-cp-012 invalid-build banner; subscribes core_leveled_up
     added: 2026-07-14
     revised: ""
 
@@ -374,6 +379,29 @@ interfaces:
       then drops the BattleContext ref."
     referenced_by:
       - docs/architecture/adr-0007-tbc-state-machine.md
+      - docs/architecture/adr-0008-ui-architecture.md   # Combat UI calls submit_action(action) + reads is_battle_active; subscribes the battle signals
+    added: 2026-07-14
+    revised: ""
+
+  - contract: screen_contract
+    status: active
+    pattern: direct_call       # ScreenManager calls setup(ctx) once at instantiation; views then subscribe owner signals
+    producer: presentation     # the Screen base class (extends Control) + the ServiceContext bundle
+    consumers:
+      - main-menu
+      - workshop-ui
+      - combat-ui
+      - world-map-ui
+      - all-screens            # every screen extends Screen and receives the SAME ServiceContext at instantiation
+    adr: docs/architecture/adr-0008-ui-architecture.md
+    signal_signature: "Screen.setup(ctx: ServiceContext) -> void  # called ONCE by ScreenManager at
+      instantiation, before the screen is shown; caches deps + connects owner signals; MUST disconnect
+      on NOTIFICATION_EXIT_TREE. ServiceContext (RefCounted) bundles: screens: ScreenManager, build:
+      SymbotBuild, synergy: SynergyEvaluator, progression: CoreProgression, log: LogSink. BattleController
+      is read as the slot-11 autoload (NOT in the bundle); content via the DB autoloads. A view is a pure
+      function of the last signal payload — no _process polling."
+    referenced_by:
+      - docs/architecture/adr-0008-ui-architecture.md
     added: 2026-07-14
     revised: ""
 
@@ -490,6 +518,7 @@ api_decisions:
     referenced_by:
       - docs/architecture/adr-0002-event-bus.md
       - docs/architecture/adr-0004-scene-boot.md   # EventBus-first constraint discharged (autoload #1 of 10)
+      - docs/architecture/adr-0008-ui-architecture.md   # World Map UI subscribes zone_states_changed for the TR-zwm-009 {zone_id, from_state, to_state} transitions array
     added: 2026-07-13
     revised: ""
 
@@ -836,6 +865,60 @@ forbidden_patterns:
       The event-driven park keeps every transition synchronous and each stop-point testable.
       (ADR-0007 Decision §4.)"
     adr: docs/architecture/adr-0007-tbc-state-machine.md
+    added: 2026-07-14
+
+  - pattern: view_state_polling
+    status: active
+    description: "A view (Screen or child Control) must NOT poll model state in _process/
+      _physics_process. Views subscribe to owner signals (stats_changed, synergy_changed,
+      core_leveled_up, the battle signals, zone_states_changed) and render as a pure function
+      of the last payload received. State is pushed by signal, never pulled per-frame."
+    why: "Per-frame polling burns the 16.6 ms budget, fights the 200 draw-call target, and
+      re-reads state the self-sufficient-signal contract already delivers (ADR-0002). Signal-driven
+      views update only on change. (ADR-0008 Decision §2.)"
+    adr: docs/architecture/adr-0008-ui-architecture.md
+    added: 2026-07-14
+
+  - pattern: undisconnected_view_subscription
+    status: active
+    description: "A screen connecting to a signal on a persistent owner (CoreProgression,
+      SynergyEvaluator, or any object outliving the screen) MUST disconnect on
+      NOTIFICATION_EXIT_TREE. The Screen base's _connect_owned(sig, callable) helper does this
+      automatically and binds named-method Callables (Callable(self, \"_on_x\")), NEVER lambdas
+      that close over self/ctx."
+    why: "Godot 4 does NOT reliably auto-drop a connection when the subscriber is freed
+      (specialist-confirmed on 4.6): the persistent owner then emits into a freed node — a crash
+      or 'call on freed object' error. A closure capturing ctx also silently extends the
+      ServiceContext lifetime past the screen. A leak test frees a screen and asserts zero
+      dangling owner connections. (ADR-0008 Decision §2 / Risks.)"
+    adr: docs/architecture/adr-0008-ui-architecture.md
+    added: 2026-07-14
+
+  - pattern: hover_only_affordance
+    status: active
+    description: "No interactive affordance may be discoverable or triggerable ONLY via hover
+      (mouse_entered / tooltip) or ONLY via keyboard/gamepad focus (grab_focus). Every action
+      fires from the unified press release that both a mouse click and a touch tap raise; hover
+      and tooltips are enhancement-only. Interactive Controls set custom_minimum_size >=
+      Vector2(44, 44) (virtual px at the reference resolution — verify against the content scale)."
+    why: "Touch has no hover, and in Godot 4.6 mouse/touch focus is SEPARATE from keyboard/gamepad
+      focus — grab_focus() drives keyboard/gamepad focus only, so a keyboard-only or hover-only
+      path is invisible/unusable on iOS. The dual-input GUT test must synthesize InputEventScreenTouch
+      (not InputEventMouseButton, which mouse-emulation would satisfy). (ADR-0008 Decision §3;
+      TR-ui-001/002.)"
+    adr: docs/architecture/adr-0008-ui-architecture.md
+    added: 2026-07-14
+
+  - pattern: ui_unique_material_batch_break
+    status: active
+    description: "UI nodes must not carry per-widget unique material/shader instances. Styling
+      goes through one shared project Theme (assets/ui/theme.tres) with shared StyleBoxes. Also
+      watch three further batch-breakers: clip_contents = true (isolates a CanvasItem), nested
+      CanvasLayer nodes (each starts a new draw layer), and per-frame RichTextLabel/BBCode updates."
+    why: "Each unique material breaks 2D CanvasItem batching, and every break adds draw calls
+      against the 200 budget (TR-perf-003). A shared Theme keeps widgets batchable; the per-screen
+      draw-call smoke check is the gate. (ADR-0008 Decision §5.)"
+    adr: docs/architecture/adr-0008-ui-architecture.md
     added: 2026-07-14
 
 # Example:
