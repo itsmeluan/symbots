@@ -6,7 +6,7 @@
 > **Type**: Integration
 > **Estimate**: S — timeboxed 4h (spike; if the round-trip isn't resolved within the box, stop and escalate to an ADR-0003 amendment rather than grinding)
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-15
 
 ## Context
 
@@ -17,8 +17,8 @@
 **ADR Governing Implementation**: ADR-0003: Content Resource Loading & Schema Mapping
 **ADR Decision Summary**: Content ships as typed `.tres` Resource entries with every field `@export`ed and statically typed; `stat_bonuses` is a `Dictionary[StringName, int]`. ADR-0003 is Accepted **but its acceptance does not waive verification gate item #2** — this story IS that gate.
 
-**Engine**: Godot 4.6 | **Risk**: HIGH
-**Engine Notes**: `Dictionary[StringName, int]` `@export` inspector authoring and `.tres` round-trip are **post-cutoff (4.4+) and UNVERIFIED**. Known failure modes: keys may deserialize as `String` not `StringName`; typed-dict `.get()` may return `Variant` under a typed function return. This is the single load-bearing Foundation engine unknown. **If the gate fails, the fallback (untyped `Dictionary` + validator-enforced schema) requires an explicit ADR-0003 amendment — never a silent in-place downgrade** (ADR-0003 Risks table).
+**Engine**: Godot 4.7 | **Risk**: HIGH
+**Engine Notes**: `Dictionary[StringName, int]` `@export` inspector authoring and `.tres` round-trip are **post-cutoff (typed dicts landed 4.4; project targets 4.7) and empirically UNVERIFIED**. Known failure modes: keys may deserialize as `String` not `StringName`; typed-dict `.get()` may return `Variant` under a typed function return. This is the single load-bearing Foundation engine unknown. The Godot 4.7 migration guide documents **no breaking change** to typed-Dictionary serialization or StringName-key handling (keys were *optimized*, not changed) — so the round-trip is *expected* to hold, but this spike is what proves it on the 4.7 toolchain. Note **GH-115763** (4.7): inherited typed-return methods now require an explicit `return`; the AC-2 accessor `get_bonus` is not an override, so it is unaffected. **If the gate fails, the fallback (untyped `Dictionary` + validator-enforced schema) requires an explicit ADR-0003 amendment — never a silent in-place downgrade** (ADR-0003 Risks table).
 
 **Control Manifest Rules (this layer)**:
 - Required: Content ships as typed `.tres` defs resolved through explicit catalog reference chains via `ResourceLoader`; content-def `@export` enums declare explicit integer values starting at 1 and are APPEND-ONLY — source: ADR-0003
@@ -31,7 +31,7 @@
 
 *From ADR-0003 Verification Required item (2) + Validation Criteria, scoped to this spike:*
 
-- [ ] `@export var stat_bonuses: Dictionary[StringName, int]` authors correctly in the Godot 4.6 inspector (typed key/value editing)
+- [ ] `@export var stat_bonuses: Dictionary[StringName, int]` authors correctly in the Godot 4.7 inspector (typed key/value editing)
 - [ ] After writing to a `.tres` file and reloading via `ResourceLoader.load()`, every key is still `StringName` (NOT `String`-coerced) and every value is still `int`
 - [ ] A typed function returning the dict's value type (e.g. `func get_bonus(k: StringName) -> int: return stat_bonuses.get(k, 0)`) compiles and returns a usable `int` (not `Variant`)
 - [ ] The round-trip is exercised **headless** (`godot --headless`) so editor-cache Resource instances never contaminate the result

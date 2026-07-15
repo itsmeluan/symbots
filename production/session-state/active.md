@@ -30,6 +30,26 @@ Task: Break Foundation epics into stories
   `/create-stories move-database` (5 Foundation epics still unstoried), OR
   `/sprint-plan new` (Part-DB-only sprint for now).
 
+## Session Extract — /dev-story story-001 (2026-07-15)
+
+- **Engine re-pinned 4.6 → 4.7** (user decision): only `4.7.stable.official` is
+  installed; running a version-specific gate on the wrong engine would invalidate
+  the finding. Authoritative pins updated: `project.godot`, `VERSION.md`,
+  `technical-preferences.md`, `CLAUDE.md`, and story-001 Engine field/notes.
+  4.7 research: migration guide documents **no** typed-`Dictionary` `.tres`
+  breaking change (round-trip expected to hold; spike still must prove it).
+  GH-115763 (typed-return inheritance) affects overrides only — AC-2 unaffected.
+- **DEFERRED to `/architecture-review`**: 8 ADRs + architecture docs still say
+  "4.6" — need engine-compat *re-validation*, not a label swap. Not swept inline.
+- **`/story-readiness` + `/create-stories` skills edited** (Option A): numeric
+  estimates now optional; spikes / Risk:HIGH still require a timebox. story-001
+  timebox set (S / 4h). Verdict: READY.
+- **SPIKE BLOCKED — did not run.** dev-story spawned `godot-gdscript-specialist`
+  to build + run the headless round-trip test; subagent died on
+  `API Error: Usage credits required for 1M context`. 0 files created, 0 tool
+  uses. **Next**: enable `/usage-credits` OR `/model` → standard context, then
+  re-run `/dev-story story-001` (or re-spawn just the implementer).
+
 ## Open Threads (not yet captured elsewhere)
 
 - `design/ux/battle.md` still **Draft** → run `/ux-review battle`.

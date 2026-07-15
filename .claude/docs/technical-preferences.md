@@ -5,7 +5,7 @@
 
 ## Engine & Language
 
-- **Engine**: Godot 4.6
+- **Engine**: Godot 4.7
 - **Language**: GDScript
 - **Rendering**: Godot built-in 2D renderer (CanvasItem)
 - **Physics**: Godot Physics 2D (turn-based game — physics minimal, no collision-heavy simulation)

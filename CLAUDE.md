@@ -5,7 +5,7 @@ Each agent owns a specific domain, enforcing separation of concerns and quality.
 
 ## Technology Stack
 
-- **Engine**: Godot 4.6
+- **Engine**: Godot 4.7
 - **Language**: GDScript
 - **Version Control**: Git with trunk-based development
 - **Build System**: SCons (engine), Godot Export Templates
