@@ -1,7 +1,9 @@
 # ADR-0006: RNG Service & Determinism
 
 ## Status
-Proposed
+Accepted (2026-07-14)
+
+> Accepted by architecture-review 2026-07-14: covers TR-df-003, TR-eai-004/005, TR-drop-001/005 (+ TR-test-001 determinism); engine-safe on Godot 4.6 (RandomNumberGenerator APIs stable, PCG32 within-build-only determinism correctly scoped); dependencies (ADR-0002, ADR-0004) Accepted, no cycles. Root-seed logging depends on `LogSink.info`, added to ADR-0002 §5 (conflict C-2) as part of acceptance. Open item retained: AC-EAI-06 pinned seeds re-verify on engine bump. TR-eai-006/007/008/009 are NOT RNG concerns and are re-pointed to ADR-0007 in the traceability index.
 
 ## Date
 2026-07-14

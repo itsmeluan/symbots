@@ -123,13 +123,17 @@ func run_boot() -> void:
         var catalog := load(db.catalog_path)               #    ResourceLoader — no DirAccess
         if catalog == null or not db.host.load_catalog(catalog, log):
             return _fail_boot(&"boot_catalog_failed", {"db": db.name})
+    _balance_config = load(BALANCE_CONFIG_PATH)            # 2b. load BalanceConfig (ADR-0005) —
+    if _balance_config == null:                            #     one tuning .tres, NOT a content catalog
+        return _fail_boot(&"boot_balance_config_failed", {})
     if OS.is_debug_build():                                # 3. content-validation gate (dev only)
-        var report := ContentValidator.new().validate(_catalogs(), log)
-        if not report.ok:
+        var report := ContentValidator.new().validate(_catalogs(), _balance_config, log)
+        if not report.ok:                                  #    validator gains a BalanceConfig section
             return _fail_boot(&"boot_content_invalid", {"errors": report.errors.size()})
     RngService.init()                                      # 4. RNG factory ready (ADR-0006)
-    for p in _save_providers():                            # 5. register providers (ADR-0001)
-        SaveLoad.register_provider(p.key, p.provider)
+    _state_owners = _construct_state_owners(_balance_config, log)  # 4b. DI stat owners (ADR-0005) —
+    for p in _save_providers():                            #     built BEFORE registration so their
+        SaveLoad.register_provider(p.key, p.provider)      # 5.  ledgers ride in the save blob
     SaveLoad.connect_autosave_triggers()                   # 6. EventBus.encounter_resolved +
                                                            #    zone_entered, CONNECT_DEFERRED —
                                                            #    the project's ONLY deferred sites
@@ -282,4 +286,5 @@ None — greenfield. Implementation order: Game root + ScreenManager + BootScree
 - ADR-0002 — Event bus (EventBus-first constraint discharged; teardown contract applied to Battle; ScreenManager as `encounter_resolved` consumer)
 - ADR-0003 — Content resources (catalog loading + dev-boot validation gate sequenced as boot steps 2–3)
 - ADR-0006 — RNG strategy (RngService init slot reserved at boot step 4)
+- ADR-0005 — Stat pipeline (BalanceConfig loads at boot step 2b; DI state owners constructed at step 4b, before provider registration — added by architecture-review 2026-07-14, resolving conflict C-1)
 - docs/architecture/architecture.md — §Data Flow 4 (initialization order made concrete)

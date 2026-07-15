@@ -139,11 +139,12 @@ Generalizes ADR-0001 File Rule 7 to every system:
 
 ```gdscript
 @abstract class_name LogSink                       # GDScript 4.5+ @abstract, valid in 4.6
+@abstract func info(code: StringName, detail: Dictionary) -> void    # non-error breadcrumbs
 @abstract func warn(code: StringName, detail: Dictionary) -> void
 @abstract func error(code: StringName, detail: Dictionary) -> void
 ```
 
-- Production implementation wraps `push_warning`/`push_error`; GUT tests inject a spy.
+- Production implementation wraps `print` (info) / `push_warning` (warn) / `push_error` (error); GUT tests inject a spy. The `info` channel carries non-error breadcrumbs — the ADR-0004 boot-step order trace (`boot_step`) and the ADR-0006 root-seed / `rng_seed_issued` log lines depend on it; it is not a warning and must not route through `warn`.
 - Direct `push_warning`/`push_error` calls in system code are **banned** (`global_push_diagnostics`, registered forbidden pattern). CI greps `src/` for them.
 - Test spies/stubs are **`preload()`-ed, not `class_name`-declared** — a `class_name` in `tests/` enters the global class registry of production builds (name pollution, wasted memory).
 

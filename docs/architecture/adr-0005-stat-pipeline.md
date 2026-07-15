@@ -1,7 +1,9 @@
 # ADR-0005: Stat Pipeline & Battle Snapshot
 
 ## Status
-Proposed
+Accepted (2026-07-14)
+
+> Accepted by architecture-review 2026-07-14: all 36 gap TRs covered; engine-safe on Godot 4.6; dependencies (ADR-0001..0004) all Accepted, no cycles. Boot-step references corrected to sub-steps 2b/4b (conflict C-1) as part of acceptance; ADR-0004 amended to match.
 
 ## Date
 2026-07-14
@@ -75,7 +77,7 @@ Static-function classes. No state, no signals, no autoload registration. Constan
 | `SynergyEvaluator` | exactly one mutable field: `cached_bonus_block`, initialized to the empty block (valid zero-bonus before any call) | `evaluate(parts)` — recompute + always emit `synergy_changed(active_synergies, bonus_block)`; `evaluate_silent(parts)` — recompute + cache, **no emit** (battle baseline); `preview(candidate, slot, parts)` — pure read-only: no cache write, no emit (TR-syn-009); out-of-range slot → `log.error` + empty block; null candidate = unequip preview, never dereferenced. `active_synergies` is always `Array[StringName]`, never null (TR-syn-012) |
 | `CoreProgression` | ledger `Dictionary[int, CoreProgressionRecord]` (`cumulative_xp` authoritative; `level` a display cache always re-derived via CP-F1) | `register_core(id)` — duplicate → `log.warn` no-op; `can_equip(core_instance_id, part) -> bool` (TR-cp-008); `is_build_valid(build) -> bool` (TBC Rule 2.0 precondition); `apply_battle_result(outcome, xp_value, completion_bonus_xp, is_first_boss_defeat, enemy_level, deployed_symbot_ids)` — consumes the 8-field `battle_ended` payload fields verbatim (registry contract `combat_battle_end`): first-defeat bonus guard, bench split via `ProgressionMath`, bench-lead cap `benched.level >= enemy_level + cfg.bench_level_lead_cap` → 0 (TR-cp-006), level-10 XP discard (TR-cp-004); emits `core_leveled_up(id, old_level, new_level)` once per gain span. `level_growth` read only from CORE-slot parts; non-CORE `level_growth` ignored with content warning (TR-cp-009) |
 
-**Construction & wiring.** BootScreen constructs `CoreProgression` (and the other player-state owners) during boot step 5, immediately before save-provider registration; its ledger rides **inside** the exploration-progress provider blob as plain data (ADR-0001; CP GDD Interactions). `SymbotBuild` instances and the `SynergyEvaluator` belong to the Workshop domain and persist via the workshop provider. Screens receive these objects via ScreenManager injection at instantiation (ADR-0004) — no autoload lookups, no `get_parent()` climbing. All constructors take `(cfg: BalanceConfig, log: LogSink)` plus their collaborators — every owner is constructible in GUT with a spy sink and a test config.
+**Construction & wiring.** BootScreen constructs `CoreProgression` (and the other player-state owners) at boot step 4b (ADR-0004 §4), immediately before save-provider registration (step 5); its ledger rides **inside** the exploration-progress provider blob as plain data (ADR-0001; CP GDD Interactions). `SymbotBuild` instances and the `SynergyEvaluator` belong to the Workshop domain and persist via the workshop provider. Screens receive these objects via ScreenManager injection at instantiation (ADR-0004) — no autoload lookups, no `get_parent()` climbing. All constructors take `(cfg: BalanceConfig, log: LogSink)` plus their collaborators — every owner is constructible in GUT with a spy sink and a test config.
 
 ### Layer 3 — `CombatantSnapshot` (typed, immutable-by-construction)
 
@@ -109,7 +111,7 @@ static func build_enemy(def: EnemyDef) -> CombatantSnapshot: ...
 
 ### Layer 4 — `BalanceConfig` (single typed tuning Resource)
 
-`class_name BalanceConfig extends Resource`, authored as one `.tres` (`assets/data/balance_config.tres`), loaded by BootScreen in boot step 2 alongside the six catalogs (fatal-on-missing → BootError), validated by ContentValidator, injected into every Layer-1/2 constructor.
+`class_name BalanceConfig extends Resource`, authored as one `.tres` (`assets/data/balance_config.tres`), loaded by BootScreen at boot step 2b (ADR-0004 §4), immediately after the six content catalogs (fatal-on-missing → BootError), validated by ContentValidator, injected into every Layer-1/2 constructor.
 
 | Group | Fields (all `@export`) |
 |-------|------------------------|
@@ -215,7 +217,7 @@ Methods (contracts other ADRs consume):
 
 - **CPU**: `derive` is ~88 integer mul/floor ops + dictionary access — microseconds; runs once per equip and twice per Workshop hover (SA-F2 hypothetical + synergy preview). BATTLE_INIT builds 4 snapshots (3 player + 1 enemy): 4 `derive`-scale copies. Nothing runs per-frame. Negligible against the 16.6 ms budget.
 - **Memory**: snapshots ≈ a few KB each, freed with the battle. `BalanceConfig` < 10 KB resident. Ledger: one small record per owned core.
-- **Load Time**: +1 `.tres` load at boot step 2 (BalanceConfig) — immaterial next to six catalogs.
+- **Load Time**: +1 `.tres` load at boot step 2b (BalanceConfig) — immaterial next to six catalogs.
 - **Network**: n/a.
 
 ## Migration Plan

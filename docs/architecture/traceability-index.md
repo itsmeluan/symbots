@@ -1,5 +1,5 @@
 # Architecture Traceability Index
-Last Updated: 2026-07-13
+Last Updated: 2026-07-14
 Engine: Godot 4.6
 
 > First population — produced by `/architecture-review` (full mode). Requirement
@@ -12,10 +12,15 @@ Engine: Godot 4.6
 
 ## Coverage Summary
 - Total requirements: 277
-- Covered by a written ADR (0001-0004): 145 (52%)
+- Covered by a written ADR (0001-0006): 197 (71%)
 - System-internal (no ADR required): 24 (9%)
-- Partial: 14
-- Gaps (await planned ADR-0005..0008): 94 (34%)
+- Partial: 5
+- Gaps (await planned ADR-0007..0008): 51 (18%)
+
+> Update 2026-07-14 (architecture-review): ADR-0005 and ADR-0006 both **Accepted**; their
+> gap TRs closed, coverage rose 145 -> 197. Remaining 51 gaps are owned entirely by planned
+> ADR-0007 (45) + ADR-0008 (6). TR-eai-006/007/008/009 were re-pointed off ADR-0006 (they are
+> not RNG concerns): 006/007 -> ADR-0005-provides / ADR-0007-consumes (Partial), 008/009 -> ADR-0007 (Gap).
 
 ## Full Matrix
 
@@ -55,15 +60,15 @@ Engine: Godot 4.6
 | TR-inv-015 | inv | Four stores serialized: part_instances, consumable_stacks, scrap, next_instance_id | ADR-0001 | ✅ Covered |
 | TR-cp-001 | cp | Persist CoreProgressionRecord.cumulative_xp; level re-derived on load (never stored) | ADR-0001 | ✅ Covered |
 | TR-cp-002 | cp | CoreProgressionRecord keyed by core_instance_id (Inventory instance_id) | ADR-0001 | ✅ Covered |
-| TR-cp-003 | cp | Level derived via CP-F1 XP-to-level threshold lookup (pure integer lookup, no float) | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-cp-004 | cp | Max level cap: level-10 cores discard XP beyond threshold[10] | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-cp-005 | cp | XP award split: deployed=full_xp, benched=floor(full_xp*BENCH_XP_SHARE) | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-cp-006 | cp | Bench-level cap: benched_level >= enemy_level+BENCH_LEVEL_LEAD_CAP -> earn 0 XP | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
+| TR-cp-003 | cp | Level derived via CP-F1 XP-to-level threshold lookup (pure integer lookup, no float) | ADR-0005 | ✅ Covered |
+| TR-cp-004 | cp | Max level cap: level-10 cores discard XP beyond threshold[10] | ADR-0005 | ✅ Covered |
+| TR-cp-005 | cp | XP award split: deployed=full_xp, benched=floor(full_xp*BENCH_XP_SHARE) | ADR-0005 | ✅ Covered |
+| TR-cp-006 | cp | Bench-level cap: benched_level >= enemy_level+BENCH_LEVEL_LEAD_CAP -> earn 0 XP | ADR-0005 | ✅ Covered |
 | TR-cp-007 | cp | Boss completion bonus awarded only if is_first_boss_defeat=true (once-per-boss) | ADR-0002 | ✅ Covered |
-| TR-cp-008 | cp | level_requirement equip gate: core.level < part.level_requirement blocks equip | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-cp-009 | cp | level_growth dictionary on CORE-slot parts only; non-CORE ignored | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
+| TR-cp-008 | cp | level_requirement equip gate: core.level < part.level_requirement blocks equip | ADR-0005 | ✅ Covered |
+| TR-cp-009 | cp | level_growth dictionary on CORE-slot parts only; non-CORE ignored | ADR-0005 | ✅ Covered |
 | TR-cp-010 | cp | Power stats forbidden in level_growth (physical_power, energy_power) | ADR-0003 | ✅ Covered |
-| TR-cp-011 | cp | CP-F3 stat contribution applied after SA-F1, before SYN-F4 (pipeline order) | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
+| TR-cp-011 | cp | CP-F3 stat contribution applied after SA-F1, before SYN-F4 (pipeline order) | ADR-0005 | ✅ Covered |
 | TR-cp-012 | cp | Core swap: over-level parts flagged invalid; not auto-unequipped | ADR-0008 (planned: UI architecture & screen contracts) | ❌ Gap |
 | TR-cp-013 | cp | Register core on Inventory add; duplicate register no-op + warning | ADR-0002 | ✅ Covered |
 | TR-cp-014 | cp | Unknown level_growth stat key skipped + warning (mirrors SA-EC-05) | ADR-0003 | ✅ Covered |
@@ -71,10 +76,10 @@ Engine: Godot 4.6
 | TR-cp-016 | cp | Multi-level XP gain: single core_leveled_up signal with (old, new) span | ADR-0002 | ✅ Covered |
 | TR-cp-017 | cp | No XP on DEFEAT or FLED outcome | System-internal (GDD rules + unit tests; no ADR required) | ✅ System-internal |
 | TR-cp-018 | cp | Injected logger (not global push_warning/error) for unit-test capture | ADR-0002 | ✅ Covered |
-| TR-cp-019 | cp | CP-F4: xp_value=(XP_BASE+enemy_level*XP_PER_ENEMY_LEVEL)*role_multiplier | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-cp-020 | cp | BENCH_XP_SHARE must be power-of-2 (0.5) or epsilon-guarded | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
+| TR-cp-019 | cp | CP-F4: xp_value=(XP_BASE+enemy_level*XP_PER_ENEMY_LEVEL)*role_multiplier | ADR-0005 | ✅ Covered |
+| TR-cp-020 | cp | BENCH_XP_SHARE must be power-of-2 (0.5) or epsilon-guarded | ADR-0005 | ✅ Covered |
 | TR-tbc-001 | tbc | Three-Symbot team structure: exactly 1 active, 2 benched; only active acts/targeted | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-002 | tbc | Assembly final_stat snapshot at battle start, immutable for battle duration | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
+| TR-tbc-002 | tbc | Assembly final_stat snapshot at battle start, immutable for battle duration | ADR-0005 | ✅ Covered |
 | TR-tbc-003 | tbc | Synergy evaluate_silent() called once per Symbot, frozen cached_bonus_block contract | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
 | TR-tbc-004 | tbc | battle_ended 8-field payload: outcome, enemy_id, fired_break_events, xp_value, completion_bonus_xp, is_first_boss_defeat, enemy_level, deployed_symbot_ids | ADR-0002 | ✅ Covered |
 | TR-tbc-005 | tbc | Synchronous battle_ended emit; runtime state discarded only after all subscribers return | ADR-0002 | ✅ Covered |
@@ -84,7 +89,7 @@ Engine: Godot 4.6
 | TR-tbc-009 | tbc | Energy recharge: min(capacity, current+10+recharge_stat) per turn start | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
 | TR-tbc-010 | tbc | Basic Attack 0 energy always available; move 4 may be null; no soft-lock | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
 | TR-tbc-011 | tbc | Damage pipeline: DF-1 -> MOVE-F1 power-tier -> Stagger reduction -> break-bias routing | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-012 | tbc | SYN-F4 clamped stat on both sides before DF-1; passive aura frozen at BATTLE_INIT | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
+| TR-tbc-012 | tbc | SYN-F4 clamped stat on both sides before DF-1; passive aura frozen at BATTLE_INIT | ADR-0005 | ✅ Covered |
 | TR-tbc-013 | tbc | hit_resolved(move, damage, target, sub_target) 4-arg hook post-Stagger carries sub_target | ADR-0002 | ✅ Covered |
 | TR-tbc-014 | tbc | Benched Symbots: frozen heat/energy/statuses per Symbot; resume on return | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
 | TR-tbc-015 | tbc | Forced switch free on DOWNED; voluntary switch consumes turn | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
@@ -136,9 +141,9 @@ Engine: Godot 4.6
 | TR-part-005 | part | synergy_tags mandatory: element tag all parts; manufacturer tag non-wild only; wild exclude manufacturer tags | ADR-0003 | ✅ Covered |
 | TR-part-006 | part | chassis_archetype non-null CHASSIS only; valid enum (LIGHT/HEAVY/BALANCED/GUARDIAN/ARTILLERY) | ADR-0003 | ✅ Covered |
 | TR-part-007 | part | Boss-grade parts need >=1 drop_conditions entry multiplier >=500 to reach 50% effective rate | ADR-0003 | ✅ Covered |
-| TR-part-008 | part | Formula 2b: independent per-stat drawback reduction via max(0, 1-tier/3) scale; clamp mandatory before negation | ADR-0003 (validation) / ADR-0005 (execution — planned) | ⚠️ Partial |
-| TR-part-009 | part | Formula 1: composes Formula 2/2b outputs from 8 parts, applies chassis modifier, floors, clamps to 0+ | ADR-0003 (validation) / ADR-0005 (execution — planned) | ⚠️ Partial |
-| TR-part-010 | part | Upgrade tiers: Common +0..+3 hard-cap; Rare/Boss/Proto +0..+5; multipliers x1.00..x2.00 | ADR-0003 (validation) / ADR-0005 (execution — planned) | ⚠️ Partial |
+| TR-part-008 | part | Formula 2b: independent per-stat drawback reduction via max(0, 1-tier/3) scale; clamp mandatory before negation | ADR-0003 (validation) + ADR-0005 (execution) | ✅ Covered |
+| TR-part-009 | part | Formula 1: composes Formula 2/2b outputs from 8 parts, applies chassis modifier, floors, clamps to 0+ | ADR-0003 (validation) + ADR-0005 (execution) | ✅ Covered |
+| TR-part-010 | part | Upgrade tiers: Common +0..+3 hard-cap; Rare/Boss/Proto +0..+5; multipliers x1.00..x2.00 | ADR-0003 (validation) + ADR-0005 (execution) | ✅ Covered |
 | TR-part-011 | part | level_requirement field: rarity floors (C1/R3/B6/P8); individual parts can exceed, never lower | ADR-0003 | ✅ Covered |
 | TR-part-012 | part | level_growth (per-level flat bonus): non-null only CORE slots; Assembly ignores elsewhere | ADR-0003 | ✅ Covered |
 | TR-part-013 | part | Skill/passive IDs referential integrity: active_skill_id, passive_id must resolve valid Move/Passive DB entries | ADR-0003 | ✅ Covered |
@@ -151,20 +156,20 @@ Engine: Godot 4.6
 | TR-part-020 | part | sprite_id non-null non-empty all parts; asset identifier for renderer sprite-swap | ADR-0003 | ✅ Covered |
 | TR-part-021 | part | upgrade_effects array tiers 1-5: {tier, effect_type, description, skill_id}; types SKILL_UNLOCK/ENHANCE | ADR-0003 | ✅ Covered |
 | TR-part-022 | part | Prototype concentration: >=70% positive budget in 1-2 stats; at x2.0 exceeds spread Boss-grade focus | ADR-0003 | ✅ Covered |
-| TR-part-023 | part | Formula 2 epsilon non-discriminating MVP ranges, Formula 2b load-bearing; retain both for safety | ADR-0003 (validation) / ADR-0005 (execution — planned) | ⚠️ Partial |
-| TR-part-024 | part | Numeric precision: floor() not round/ceil; Formula 2b double-negation max(0,...) guard tier >=4 mandatory | ADR-0003 (validation) / ADR-0005 (execution — planned) | ⚠️ Partial |
+| TR-part-023 | part | Formula 2 epsilon non-discriminating MVP ranges, Formula 2b load-bearing; retain both for safety | ADR-0003 (validation) + ADR-0005 (execution) | ✅ Covered |
+| TR-part-024 | part | Numeric precision: floor() not round/ceil; Formula 2b double-negation max(0,...) guard tier >=4 mandatory | ADR-0003 (validation) + ADR-0005 (execution) | ✅ Covered |
 | TR-part-025 | part | Reserved Full Vision fields null MVP: motherboard_slot_type, ram_cost, weight_class, modification_slots, critical_output, firewall | ADR-0003 | ✅ Covered |
 | TR-edb-001 | edb | Enemy schema: StringName id, String display_name, WILD\|BOSS class, tier=1 always MVP, nullable core_element, 11-stat Dictionary | ADR-0003 | ✅ Covered |
 | TR-edb-002 | edb | break_hp stored-equals-derived invariant: max(BREAK_HP_MIN, floor(structure*fraction+0.0001)); validated on import | ADR-0003 | ✅ Covered |
-| TR-edb-003 | edb | break_hp epsilon load-bearing: valid-range inputs produce wrong results without +0.0001 nudge | ADR-0003 (validation) / ADR-0005 (execution — planned) | ⚠️ Partial |
+| TR-edb-003 | edb | break_hp epsilon load-bearing: valid-range inputs produce wrong results without +0.0001 nudge | ADR-0003 (validation) + ADR-0005 (execution) | ✅ Covered |
 | TR-edb-004 | edb | Break region validity (EDB-3): break_hp < structure AND break_event matches >=1 pool part's drop_conditions | ADR-0003 | ✅ Covered |
 | TR-edb-005 | edb | WILD power cap: physical/energy_power <= 39 prevents one-shot on zero-armor player super-effective scenario | ADR-0003 | ✅ Covered |
-| TR-edb-006 | edb | WILD power derivation: A=39 D=0 T=1.5 -> 58 dmg < 60 min Structure safe; A=40 -> one-shot violates intent | ADR-0003 (validation) / ADR-0005 (execution — planned) | ⚠️ Partial |
-| TR-edb-007 | edb | TTK calibration (EDB-2): computed check normative, not static ranges; jointly bounds structure x defense | ADR-0003 (validation) / ADR-0005 (execution — planned) | ⚠️ Partial |
+| TR-edb-006 | edb | WILD power derivation: A=39 D=0 T=1.5 -> 58 dmg < 60 min Structure safe; A=40 -> one-shot violates intent | ADR-0003 (validation) + ADR-0005 (execution) | ✅ Covered |
+| TR-edb-007 | edb | TTK calibration (EDB-2): computed check normative, not static ranges; jointly bounds structure x defense | ADR-0003 (validation) + ADR-0005 (execution) | ✅ Covered |
 | TR-edb-008 | edb | Boss-grade exclusivity: BOSS pools 1-2 exclusives; WILD pools forbid Boss-grade (Part DB Rule 8 cross-system) | ADR-0003 | ✅ Covered |
 | TR-edb-009 | edb | Floor loot rarity: Common ungated valid; Rare/Boss-grade must carry >=1 break condition per Part DB | ADR-0003 | ✅ Covered |
 | TR-edb-010 | edb | Harvest-decision rule (hard): loot_pool.size() > break_regions.size(); equality fails (non-degenerate choice) | ADR-0003 | ✅ Covered |
-| TR-edb-011 | edb | Stat keys use Part DB 11-name vocabulary; A/D stats constrained [0,110] (DF-1 verified range) | ADR-0003 (validation) / ADR-0005 (execution — planned) | ⚠️ Partial |
+| TR-edb-011 | edb | Stat keys use Part DB 11-name vocabulary; A/D stats constrained [0,110] (DF-1 verified range) | ADR-0003 (validation) + ADR-0005 (execution) | ✅ Covered |
 | TR-edb-012 | edb | Dead-data warning: enemies no Heat/Energy MVP (TBC Rule 8); cooling/energy_capacity/recharge warn if non-zero | ADR-0003 | ✅ Covered |
 | TR-edb-013 | edb | Boss-grade product invariant: BASE_DROP_BOSS_GRADE x multiplier >= 0.5; at base 0.001 requires x500 | ADR-0003 | ✅ Covered |
 | TR-edb-014 | edb | region_fraction bounds [0.15,0.55]: opener/mid/expert commit tiers; 0.55 preserves break-cheaper margin | ADR-0003 | ✅ Covered |
@@ -185,7 +190,7 @@ Engine: Godot 4.6
 | TR-mdb-005 | mdb | REPAIR moves must author energy_cost > BASE_ENERGY_REGEN (>=11 at current 10) for anti-stall Energy-brake | ADR-0003 | ✅ Covered |
 | TR-mdb-006 | mdb | UTILITY Vent moves reduce current_heat by vent_amount, floored at 0; only MVP UTILITY behavior | ADR-0003 | ✅ Covered |
 | TR-mdb-007 | mdb | SCAN moves' scan_payload=BREAK_REGIONS delivers enemy break_regions and drop hints, persistent for battle | ADR-0003 | ✅ Covered |
-| TR-mdb-008 | mdb | Move power multiplier (MOVE-F1) applies post-DF-1 output with epsilon 0.0001 for IEEE 754 rounding | ADR-0003 (validation) / ADR-0005 (execution — planned) | ⚠️ Partial |
+| TR-mdb-008 | mdb | Move power multiplier (MOVE-F1) applies post-DF-1 output with epsilon 0.0001 for IEEE 754 rounding | ADR-0003 (validation) + ADR-0005 (execution) | ✅ Covered |
 | TR-mdb-009 | mdb | Non-DAMAGE moves must not carry innate status riders; riders only via passives through TBC Rule 13 registry | ADR-0003 | ✅ Covered |
 | TR-mdb-010 | mdb | Core parts must not carry SKILL_UNLOCK upgrade effects per Part DB Core exception | ADR-0003 | ✅ Covered |
 | TR-pdb-001 | pdb | Every passive declares behavior_class (STATUS_RIDER/STAT_AURA/RESOURCE_EFFECT/STRUCTURAL_EFFECT) and trigger_category; behavior_class is runtime resolution axis | ADR-0003 | ✅ Covered |
@@ -204,44 +209,44 @@ Engine: Godot 4.6
 | TR-cdb-006 | cdb | buy_price > sell_price strictly for every entry to prevent arbitrage faucet (BLOCKING validation) | ADR-0003 | ✅ Covered |
 | TR-cdb-007 | cdb | REDUCE_HEAT cannot rescue already-Overheated Symbot (preventive-only) | ADR-0003 | ✅ Covered |
 | TR-cdb-008 | cdb | Effect magnitudes flat integers (not %-of-max); pure integer clamps, no floor/ceil | ADR-0003 | ✅ Covered |
-| TR-df-001 | df | Pure stateless function: no runtime state, inputs -> output only | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-df-002 | df | Type effectiveness multiplier applied before floor(), not after | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-df-003 | df | RNG injection: crit_mult must be passable parameter, not hardcoded internally | ADR-0006 (planned: RNG service & determinism) | ❌ Gap |
-| TR-df-004 | df | Float division required: cast A, D to float before dividing to avoid integer truncation | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-df-005 | df | Damage floor applies after floor(), via max(DAMAGE_FLOOR, result) | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-df-006 | df | Division-by-zero guard: if A==0 AND D==0, return DAMAGE_FLOOR before division | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-sa-001 | sa | Stat derivation pipeline (SA-F1) is sole executor of Part DB Formula 1/2/2b | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-sa-002 | sa | Per-part upgrades: Formula 2 (base>=0) or Formula 2b (base<0) applied then summed | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-sa-003 | sa | Chassis modifier applied to summed stats, then floor() post-multiplication | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-sa-004 | sa | CP-F3 level-growth added post-chassis-multiply, pre-synergy (Rule 6 step 4b) | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
+| TR-df-001 | df | Pure stateless function: no runtime state, inputs -> output only | ADR-0005 | ✅ Covered |
+| TR-df-002 | df | Type effectiveness multiplier applied before floor(), not after | ADR-0005 | ✅ Covered |
+| TR-df-003 | df | RNG injection: crit_mult must be passable parameter, not hardcoded internally | ADR-0006 | ✅ Covered |
+| TR-df-004 | df | Float division required: cast A, D to float before dividing to avoid integer truncation | ADR-0005 | ✅ Covered |
+| TR-df-005 | df | Damage floor applies after floor(), via max(DAMAGE_FLOOR, result) | ADR-0005 | ✅ Covered |
+| TR-df-006 | df | Division-by-zero guard: if A==0 AND D==0, return DAMAGE_FLOOR before division | ADR-0005 | ✅ Covered |
+| TR-sa-001 | sa | Stat derivation pipeline (SA-F1) is sole executor of Part DB Formula 1/2/2b | ADR-0005 | ✅ Covered |
+| TR-sa-002 | sa | Per-part upgrades: Formula 2 (base>=0) or Formula 2b (base<0) applied then summed | ADR-0005 | ✅ Covered |
+| TR-sa-003 | sa | Chassis modifier applied to summed stats, then floor() post-multiplication | ADR-0005 | ✅ Covered |
+| TR-sa-004 | sa | CP-F3 level-growth added post-chassis-multiply, pre-synergy (Rule 6 step 4b) | ADR-0005 | ✅ Covered |
 | TR-sa-005 | sa | SA-F2 delta preview requires full hypothetical recompute (all 8 parts, not partial diff) | ADR-0008 (planned: UI architecture & screen contracts) | ❌ Gap |
-| TR-sa-006 | sa | Final stats locked at battle start; no recomputation during combat | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-sa-007 | sa | No empty slots permitted: equip is atomic, slots always filled via replacement | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-sa-008 | sa | Move pool fixed ordering: Basic, WEAPON skill, HEAD skill, ARMS skill (may be null) | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-sa-009 | sa | Passive pool order: CORE, LEGS, then remaining slots in slot-type order | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-syn-001 | syn | Tag count is pure sum per SYN-F1; each part contributes all tags including duplicates | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-syn-002 | syn | Tier activation (SYN-F2) requires ALL constituent tag counts met (AND logic) | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-syn-003 | syn | Bonus blocks cumulative at all active tiers; both 3-piece and 5-piece stack | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-syn-004 | syn | Combined synergies stack additively with constituent bonuses, not replacement | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-syn-005 | syn | Effect deduplication keep-first in registration order (alphabetical tier ID) | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-syn-006 | syn | Registration order determined by alphabetical tier-ID sort, not content-file order | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-syn-007 | syn | Tier with empty requirements or min_count<1 skipped with content error logged | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-syn-008 | syn | Cached bonus block frozen during battle (behavioral contract, not self-lock) | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-syn-009 | syn | preview() call is pure read-only: no cache write, no signal emit | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-syn-010 | syn | SYN-F4 effective stat formula: max(0, base + synergy_delta) — consumer responsibility | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
+| TR-sa-006 | sa | Final stats locked at battle start; no recomputation during combat | ADR-0005 | ✅ Covered |
+| TR-sa-007 | sa | No empty slots permitted: equip is atomic, slots always filled via replacement | ADR-0005 | ✅ Covered |
+| TR-sa-008 | sa | Move pool fixed ordering: Basic, WEAPON skill, HEAD skill, ARMS skill (may be null) | ADR-0005 | ✅ Covered |
+| TR-sa-009 | sa | Passive pool order: CORE, LEGS, then remaining slots in slot-type order | ADR-0005 | ✅ Covered |
+| TR-syn-001 | syn | Tag count is pure sum per SYN-F1; each part contributes all tags including duplicates | ADR-0005 | ✅ Covered |
+| TR-syn-002 | syn | Tier activation (SYN-F2) requires ALL constituent tag counts met (AND logic) | ADR-0005 | ✅ Covered |
+| TR-syn-003 | syn | Bonus blocks cumulative at all active tiers; both 3-piece and 5-piece stack | ADR-0005 | ✅ Covered |
+| TR-syn-004 | syn | Combined synergies stack additively with constituent bonuses, not replacement | ADR-0005 | ✅ Covered |
+| TR-syn-005 | syn | Effect deduplication keep-first in registration order (alphabetical tier ID) | ADR-0005 | ✅ Covered |
+| TR-syn-006 | syn | Registration order determined by alphabetical tier-ID sort, not content-file order | ADR-0005 | ✅ Covered |
+| TR-syn-007 | syn | Tier with empty requirements or min_count<1 skipped with content error logged | ADR-0005 | ✅ Covered |
+| TR-syn-008 | syn | Cached bonus block frozen during battle (behavioral contract, not self-lock) | ADR-0005 | ✅ Covered |
+| TR-syn-009 | syn | preview() call is pure read-only: no cache write, no signal emit | ADR-0005 | ✅ Covered |
+| TR-syn-010 | syn | SYN-F4 effective stat formula: max(0, base + synergy_delta) — consumer responsibility | ADR-0005 | ✅ Covered |
 | TR-syn-011 | syn | evaluate() always emits signal per Rule 7, even if bonus_block identical | ADR-0002 | ✅ Covered |
-| TR-syn-012 | syn | active_synergies list must be Array[StringName] never null, including empty build | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
-| TR-syn-013 | syn | Null synergy_tags treated as [] (no tags); iteration must guard against null | ADR-0005 (planned: stat pipeline & battle snapshot) | ❌ Gap |
+| TR-syn-012 | syn | active_synergies list must be Array[StringName] never null, including empty build | ADR-0005 | ✅ Covered |
+| TR-syn-013 | syn | Null synergy_tags treated as [] (no tags); iteration must guard against null | ADR-0005 | ✅ Covered |
 | TR-syn-014 | syn | Unregistered effect IDs pass through unfiltered; skip-and-log is TBC responsibility | ADR-0002 | ✅ Covered |
 | TR-eai-001 | eai | Profile resolution: StringName to Profile, O(1) lookup registry | ADR-0003 | ✅ Covered |
 | TR-eai-002 | eai | Profiles data-driven Resource, not hardcoded; loaded once at startup (ED4) | ADR-0003 | ✅ Covered |
 | TR-eai-003 | eai | EnemyDef.ai_profile StringName resolution to AI profile (O(1) lookup) | ADR-0003 | ✅ Covered |
-| TR-eai-004 | eai | Seeded RNG injected per call, fresh instance, no persistent state | ADR-0006 (planned: RNG service & determinism) | ❌ Gap |
-| TR-eai-005 | eai | Pure function of (battle_state, profile, seed); deterministic tiebreak | ADR-0006 (planned: RNG service & determinism) | ❌ Gap |
-| TR-eai-006 | eai | DF-1 preview includes MOVE-F1 power-tier multiply for lethal accuracy | ADR-0006 (planned: RNG service & determinism) | ❌ Gap |
-| TR-eai-007 | eai | Effective post-SYN-F4 defense stat used in preview, not raw stat | ADR-0006 (planned: RNG service & determinism) | ❌ Gap |
-| TR-eai-008 | eai | Phase shift derived from battle state, no persistent AI state | ADR-0006 (planned: RNG service & determinism) | ❌ Gap |
-| TR-eai-009 | eai | Fallback to AGGRESSIVE profile on unknown ai_profile, never crashes | ADR-0006 (planned: RNG service & determinism) | ❌ Gap |
+| TR-eai-004 | eai | Seeded RNG injected per call, fresh instance, no persistent state | ADR-0006 | ✅ Covered |
+| TR-eai-005 | eai | Pure function of (battle_state, profile, seed); deterministic tiebreak | ADR-0006 | ✅ Covered |
+| TR-eai-006 | eai | DF-1 preview includes MOVE-F1 power-tier multiply for lethal accuracy | ADR-0005 (DamageFormula/effective_stat contract) / ADR-0007 (AI preview consumption — planned) | ⚠️ Partial |
+| TR-eai-007 | eai | Effective post-SYN-F4 defense stat used in preview, not raw stat | ADR-0005 (DamageFormula/effective_stat contract) / ADR-0007 (AI preview consumption — planned) | ⚠️ Partial |
+| TR-eai-008 | eai | Phase shift derived from battle state, no persistent AI state | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
+| TR-eai-009 | eai | Fallback to AGGRESSIVE profile on unknown ai_profile, never crashes | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
 | TR-elzs-001 | elzs | Enemy level field manually authored, not formula-generated stat | ADR-0003 | ✅ Covered |
 | TR-elzs-002 | elzs | xp_value stored-equals-derived from CP-F4, recomputed on constant retune | ADR-0003 | ✅ Covered |
 | TR-elzs-003 | elzs | Zone level band [floor, roof] fields, content validation membership check | ADR-0003 | ✅ Covered |
@@ -259,11 +264,11 @@ Engine: Godot 4.6
 | TR-zwm-008 | zwm | zone_states_changed(transitions) broadcast only when states differ from prior pass | ADR-0002 | ✅ Covered |
 | TR-zwm-009 | zwm | Transitions array format {zone_id, from_state, to_state} consumed by World Map UI | ADR-0008 (planned: UI architecture & screen contracts) | ❌ Gap |
 | TR-zwm-010 | zwm | ZWM-F2: all_bosses_defeated returns false for zero-boss zones, never auto-CLEARED | System-internal (GDD rules + unit tests; no ADR required) | ✅ System-internal |
-| TR-drop-001 | drop | RNG draws seeded, deterministic, part-ID-ascending roll order for reproducibility | ADR-0006 (planned: RNG service & determinism) | ❌ Gap |
+| TR-drop-001 | drop | RNG draws seeded, deterministic, part-ID-ascending roll order for reproducibility | ADR-0006 | ✅ Covered |
 | TR-drop-002 | drop | Pool part-ID deduplication: one roll per unique ID; duplicates contribute zero extra rolls | System-internal (GDD rules + unit tests; no ADR required) | ✅ System-internal |
 | TR-drop-003 | drop | Pity counters persist across sessions (Prototype credit, Boss-grade break counter) | ADR-0001 | ✅ Covered |
 | TR-drop-004 | drop | Consumes battle_ended VICTORY-only; fired_break_events as deduplicated Set from Part-Break | ADR-0002 | ✅ Covered |
-| TR-drop-005 | drop | Pity-guaranteed drops skip RNG draw; stream position stays synchronized with non-guaranteed rolls | ADR-0006 (planned: RNG service & determinism) | ❌ Gap |
+| TR-drop-005 | drop | Pity-guaranteed drops skip RNG draw; stream position stays synchronized with non-guaranteed rolls | ADR-0006 | ✅ Covered |
 | TR-drop-006 | drop | Unknown condition keys logged as content error, skipped, no crash; multiplier not applied | System-internal (GDD rules + unit tests; no ADR required) | ✅ System-internal |
 | TR-drop-007 | drop | Prototype pity: credit threshold = N_PROTO_PITY x C (C = condition count); increments by conditions fired | System-internal (GDD rules + unit tests; no ADR required) | ✅ System-internal |
 | TR-drop-008 | drop | Boss-grade pity: M_BOSS_PITY = 8 consecutive qualifying-break failures triggers guarantee | System-internal (GDD rules + unit tests; no ADR required) | ✅ System-internal |
@@ -297,29 +302,28 @@ Engine: Godot 4.6
 | TR-perf-003 | perf | Draw-call budget 200 (conservative mobile 2D) | ADR-0008 (planned: UI architecture & screen contracts) | ❌ Gap |
 | TR-eng-001 | eng | Post-cutoff FileAccess.store_* bool return handled on every write (Godot 4.4+) | ADR-0001 | ✅ Covered |
 | TR-eng-002 | eng | Every post-cutoff engine API verified against docs/engine-reference before use | Engine Compatibility section mandatory per ADR (discipline in force across ADR-0001..0004) | ⚠️ Partial |
-| TR-test-001 | test | GUT framework; >=80% coverage on logic systems; deterministic, isolated, injection-friendly tests | ADR-0003 (CI-blocking validator); determinism contract pending ADR-0006 | ⚠️ Partial |
+| TR-test-001 | test | GUT framework; >=80% coverage on logic systems; deterministic, isolated, injection-friendly tests | ADR-0003 (CI-blocking validator) + ADR-0006 (determinism contract) | ✅ Covered |
 
 ## Known Gaps
 
-All gaps are owned by the four planned-but-unwritten ADRs (expected at this phase):
+All remaining gaps are owned by the two planned-but-unwritten ADRs (expected at this phase):
 
-### ADR-0005 (planned: stat pipeline & battle snapshot) — 36 requirements
-TR-cp-003, TR-cp-004, TR-cp-005, TR-cp-006, TR-cp-008, TR-cp-009, TR-cp-011, TR-cp-019, TR-cp-020, TR-tbc-002, TR-tbc-012, TR-df-001, TR-df-002, TR-df-004, TR-df-005, TR-df-006, TR-sa-001, TR-sa-002, TR-sa-003, TR-sa-004, TR-sa-006, TR-sa-007, TR-sa-008, TR-sa-009, TR-syn-001, TR-syn-002, TR-syn-003, TR-syn-004, TR-syn-005, TR-syn-006, TR-syn-007, TR-syn-008, TR-syn-009, TR-syn-010, TR-syn-012, TR-syn-013
-
-### ADR-0006 (planned: RNG service & determinism) — 9 requirements
-TR-df-003, TR-eai-004, TR-eai-005, TR-eai-006, TR-eai-007, TR-eai-008, TR-eai-009, TR-drop-001, TR-drop-005
-
-### ADR-0007 (planned: TBC finite state machine) — 43 requirements
-TR-tbc-001, TR-tbc-003, TR-tbc-006, TR-tbc-007, TR-tbc-008, TR-tbc-009, TR-tbc-010, TR-tbc-011, TR-tbc-014, TR-tbc-015, TR-tbc-016, TR-tbc-017, TR-tbc-018, TR-tbc-019, TR-tbc-020, TR-tbc-021, TR-tbc-022, TR-tbc-023, TR-tbc-024, TR-tbc-025, TR-tbc-026, TR-tbc-027, TR-tbc-028, TR-tbc-029, TR-tbc-030, TR-tbc-031, TR-tbc-032, TR-tbc-034, TR-tbc-036, TR-tbc-037, TR-tbc-038, TR-tbc-042, TR-pb-001, TR-pb-002, TR-pb-003, TR-pb-004, TR-pb-006, TR-pb-007, TR-pb-010, TR-pb-011, TR-pb-012, TR-pb-013, TR-pb-014
+### ADR-0007 (planned: TBC finite state machine) — 45 requirements
+TR-tbc-001, TR-tbc-003, TR-tbc-006, TR-tbc-007, TR-tbc-008, TR-tbc-009, TR-tbc-010, TR-tbc-011, TR-tbc-014, TR-tbc-015, TR-tbc-016, TR-tbc-017, TR-tbc-018, TR-tbc-019, TR-tbc-020, TR-tbc-021, TR-tbc-022, TR-tbc-023, TR-tbc-024, TR-tbc-025, TR-tbc-026, TR-tbc-027, TR-tbc-028, TR-tbc-029, TR-tbc-030, TR-tbc-031, TR-tbc-032, TR-tbc-034, TR-tbc-036, TR-tbc-037, TR-tbc-038, TR-tbc-042, TR-pb-001, TR-pb-002, TR-pb-003, TR-pb-004, TR-pb-006, TR-pb-007, TR-pb-010, TR-pb-011, TR-pb-012, TR-pb-013, TR-pb-014, TR-eai-008, TR-eai-009
 
 ### ADR-0008 (planned: UI architecture & screen contracts) — 6 requirements
 TR-cp-012, TR-sa-005, TR-zwm-009, TR-ui-001, TR-ui-002, TR-perf-003
 
+## Partial Coverage (5 requirements)
+
+- **TR-eai-006, TR-eai-007** — ADR-0005 provides the `DamageFormula` + `effective_stat` contract; the AI-side preview consumption (MOVE-F1 inclusion, post-SYN-F4 defense) is owned by ADR-0007. Flips to Covered when ADR-0007 lands.
+- **TR-zwm-001** — WorldMap catalog not yet in ADR-0003's def roster; extend at implementation.
+- **TR-perf-001** — per-system frame budgets pending ADR-0007/0008 (ADR-0004 covers the transition-hitch path).
+- **TR-eng-002** — engine-verification discipline is in force across ADR-0001..0006 but has no single owning ADR.
+
 Suggested creation order (most foundational first):
-1. `/architecture-decision Stat pipeline & battle snapshot` (ADR-0005)
-2. `/architecture-decision RNG service & determinism` (ADR-0006)
-3. `/architecture-decision Turn-based combat state machine` (ADR-0007)
-4. `/architecture-decision UI architecture & screen contracts` (ADR-0008)
+1. `/architecture-decision Turn-based combat state machine` (ADR-0007) — 45 TRs; MUST resolve the `battle_ended`-host seam (conflict C-3: ADR-0002 puts `is_battle_active` on a TBC autoload that ADR-0004's roster lacks)
+2. `/architecture-decision UI architecture & screen contracts` (ADR-0008) — 6 TRs
 
 ## Superseded Requirements
 
