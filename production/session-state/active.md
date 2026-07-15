@@ -1,6 +1,21 @@
 # Active Session State
 
-## Current Task — IN PROGRESS: UX foundation (approved order, 2026-07-14)
+<!-- STATUS -->
+Epic: Pre-Production
+Feature: Sprint Zero
+Task: Plan first sprint from Accepted ADRs
+<!-- /STATUS -->
+
+## Current Task — COMPLETE: Technical Setup → Pre-Production GATE PASSED (2026-07-15)
+- **Gate verdict: PASS.** `/gate-check pre-production` (lean). All 15 required artifacts present; **Director Panel 4/4 READY** (Creative, Technical, Producer, Art). `production/stage.txt` flipped **Technical Setup → Pre-Production**.
+- **Last blocker cleared this session**: **art bible §1–4 (Visual Identity Foundation) COMPLETE** — `design/art/art-bible.md`. §4 Color System written (7 world colors; 3 element colors Volt-cyan/Thermal-amber/Kinetic-silver each with a mandatory glyph Fork/Chevron/Ring; Kinetic-white problem solved via glyph-first + chrome-finish + dark-plate badge; ochre/amber-vs-Thermal collision resolved via glyph-is-signal; semantic vocab, rarity tiers, UI chrome + element-badge sub-spec = the CORE-invisible enemy-element read from §3.3, colorblind pass). Status effect names Shock/Burn/Stagger verified canonical (TBC Rule 11). §5–9 deferred by design.
+- **MVP SCOPE FROZEN** (producer GO-condition, user-accepted): new record `production/mvp-scope-freeze.md` (frozen system set + OUT list + Exceptions log). Memory [[project-symbots-mvp-scope-freeze]] updated: recommendation → ENACTED 2026-07-15.
+- **Carry-forward into Pre-Production sprint-zero (NOT gate blockers):** (1) art bible **§8 Asset Standards** before any scratch assets commissioned; (2) **faction-name sync** with narrative before faction concept art (§3.8 placeholders Smoothshell/Hardform/Wirework/Fluxform); (3) `design/ux/battle.md` still Draft → `/ux-review battle`; (4) 11 items in `production/errata-backlog.md` + pending **CD sign-off OQ-CP-6**.
+- **NEXT (Pre-Production):** create `production/sprints/` first sprint plan from Accepted ADRs · `/create-epics layer:foundation` + `layer:core` → `/create-stories` · `/vertical-slice` (recommended before committing full Production scope) · finish remaining UX screens (build/HUD/menus). Optional cleanup: refresh `architecture.md` stale traceability block.
+
+---
+
+## Prior — IN PROGRESS: UX foundation (approved order, 2026-07-14)
 **Approved sequence** (user OK'd the "constraint-first, extract-not-invent" order):
 1. **`design/ux/accessibility-requirements.md`** ✅ COMPLETE (2026-07-14). GAG Basic tier. 5 decisions locked: (1) screen-reader deferred+door-open, (2) single large-text toggle +4pt, (3) safe palette by default, (4) synergy/enrage visual state-change required, (5) virtual-px→pt calibration verified first UI story. **Gate blocker #1 CLEARED.** Forward flags to Art Director: colorblind-safe elemental palette (Kinetic = non-red) + document active/inactive visual states for synergy/enrage.
 2. **`design/ux/battle.md`** ✅ DRAFT COMPLETE (2026-07-15) — all 15 sections written; Status flipped to "Draft complete — pending /ux-review battle". Locked decisions: Landscape · Move-first→target list · No-confirm · hybrid turn-pacing (auto-flow + tap on Overheat/Break/Defeat beats) · long-press→popover inspect · **effectiveness telegraphed pre-commit (resolves DF OQ-1 → erratum flag for Damage Formula GDD)** · no MVP analytics (defer) · input-lock leaves log+bench readable. Extraction-heavy (GDD Rules 4/5/12, TBC-F7, V3-7/8/9/11, a11y §1.4/§6.2). **Open Questions carry 8 flags** incl. 4 unspecced dependency surfaces (Victory results overlay, Defeat screen, Switch picker, Item picker) + Art Director/localization/analytics forward-flags. **NEXT: `/ux-review battle`**, then step 3.
