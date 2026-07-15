@@ -1,7 +1,7 @@
 # ADR-0008: UI Architecture & Screen Contracts
 
 ## Status
-Proposed
+Accepted
 
 ## Date
 2026-07-14

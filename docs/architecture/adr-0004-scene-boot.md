@@ -58,6 +58,9 @@ Three prior Foundation ADRs defined *what* exists — save providers, the EventB
 | 3–8 | `PartDB`, `EnemyDB`, `MoveDB`, `PassiveDB`, `ConsumableDB`, `WorldLootDB` | content lookup hosts (ADR-0003) | **none — catalogs are NOT loaded here** |
 | 9 | `RngService` | injected-seed RNG factory (spec: ADR-0006) | none |
 | 10 | `SaveLoad` | provider registry + save/load engine (ADR-0001) | none — providers register and bus connections happen in boot step 6 |
+| 11 | `BattleController` | turn-based-combat FSM authority + `is_battle_active` (ADR-0007) | none — FSM driven only by `start_battle()`; slot 11 is order-immune |
+
+> **Amended 2026-07-14 (ADR-0007, review C-4):** roster grew 10 → 11 to host the TBC orchestrator. Slot 11 does no `_ready` work, so its position is a display convention, not a dependency — ADR-0002 §4 requires `is_battle_active` to live on a persistent autoload host, never on the `queue_free()`d Battle scene node.
 
 **Rule: autoloads do no work in `_ready`.** No I/O, no catalog loads, no signal connections, no cross-autoload reads. They are containers whose *initialization* is driven explicitly by the Boot screen (below). This makes the boot order reviewable code instead of editor-settings order, lets every failure reach a visible error screen, and keeps each host trivially constructible in GUT. EventBus stays first regardless — it must exist before anything *can* connect, and its zero-logic design makes it order-immune in both directions.
 
@@ -164,6 +167,7 @@ TR-ep-004 is satisfied structurally: derivation is a phase that only ever runs a
 ┌──────────────────────────────────┐   ┌──────────────────────────────────────────┐
 │ 1 EventBus   2 Log   3-8 six DBs │──▶│ catalogs → validate(debug) → RngService  │
 │ 9 RngService 10 SaveLoad         │   │ → providers → autosave connects → MENU   │
+│ 11 BattleController (ADR-0007)   │   │ (slot 11 — order-immune, no _ready work)  │
 └──────────────────────────────────┘   └───────────────┬──────────────────────────┘
                                               fatal? → BootError screen (code + LogSink)
                                                        ▼

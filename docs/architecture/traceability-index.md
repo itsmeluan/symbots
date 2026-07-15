@@ -12,15 +12,25 @@ Engine: Godot 4.6
 
 ## Coverage Summary
 - Total requirements: 277
-- Covered by a written ADR (0001-0006): 197 (71%)
+- Covered by a written ADR (0001-0008): 251 (91%)
 - System-internal (no ADR required): 24 (9%)
-- Partial: 5
-- Gaps (await planned ADR-0007..0008): 51 (18%)
+- Partial: 2
+- Gaps: 0
 
 > Update 2026-07-14 (architecture-review): ADR-0005 and ADR-0006 both **Accepted**; their
 > gap TRs closed, coverage rose 145 -> 197. Remaining 51 gaps are owned entirely by planned
 > ADR-0007 (45) + ADR-0008 (6). TR-eai-006/007/008/009 were re-pointed off ADR-0006 (they are
 > not RNG concerns): 006/007 -> ADR-0005-provides / ADR-0007-consumes (Partial), 008/009 -> ADR-0007 (Gap).
+>
+> Update 2026-07-14b (architecture-review): ADR-0007 and ADR-0008 both **Accepted**; their 51
+> gap TRs closed (ADR-0007: 45, ADR-0008: 6), coverage rose 197 -> 251. TR-eai-006/007 flipped
+> Partial -> Covered (ADR-0007 now consumes ADR-0005's DamageFormula/effective_stat in AI
+> preview); TR-perf-001 flipped Partial -> Covered (per-system frame posture now complete —
+> ADR-0007 event-driven FSM + ADR-0008 200-draw-call/no-_process discipline + ADR-0004
+> transition path). Remaining 2 partials: TR-zwm-001 (WorldMap catalog not yet in ADR-0003
+> def roster) + TR-eng-002 (engine-verification discipline, no single ADR owner). **0 gaps** —
+> every Foundation/Core/Presentation TR now has a named owner. ADR-0004 §1 roster amended
+> 10 -> 11 (BattleController slot 11) in the same pass (review conflict C-4).
 
 ## Full Matrix
 
@@ -69,7 +79,7 @@ Engine: Godot 4.6
 | TR-cp-009 | cp | level_growth dictionary on CORE-slot parts only; non-CORE ignored | ADR-0005 | ✅ Covered |
 | TR-cp-010 | cp | Power stats forbidden in level_growth (physical_power, energy_power) | ADR-0003 | ✅ Covered |
 | TR-cp-011 | cp | CP-F3 stat contribution applied after SA-F1, before SYN-F4 (pipeline order) | ADR-0005 | ✅ Covered |
-| TR-cp-012 | cp | Core swap: over-level parts flagged invalid; not auto-unequipped | ADR-0008 (planned: UI architecture & screen contracts) | ❌ Gap |
+| TR-cp-012 | cp | Core swap: over-level parts flagged invalid; not auto-unequipped | ADR-0008 (UI architecture & screen contracts) | ✅ Covered |
 | TR-cp-013 | cp | Register core on Inventory add; duplicate register no-op + warning | ADR-0002 | ✅ Covered |
 | TR-cp-014 | cp | Unknown level_growth stat key skipped + warning (mirrors SA-EC-05) | ADR-0003 | ✅ Covered |
 | TR-cp-015 | cp | Negative cumulative_xp on load clamped to 0 + error | System-internal (GDD rules + unit tests; no ADR required) | ✅ System-internal |
@@ -78,62 +88,62 @@ Engine: Godot 4.6
 | TR-cp-018 | cp | Injected logger (not global push_warning/error) for unit-test capture | ADR-0002 | ✅ Covered |
 | TR-cp-019 | cp | CP-F4: xp_value=(XP_BASE+enemy_level*XP_PER_ENEMY_LEVEL)*role_multiplier | ADR-0005 | ✅ Covered |
 | TR-cp-020 | cp | BENCH_XP_SHARE must be power-of-2 (0.5) or epsilon-guarded | ADR-0005 | ✅ Covered |
-| TR-tbc-001 | tbc | Three-Symbot team structure: exactly 1 active, 2 benched; only active acts/targeted | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
+| TR-tbc-001 | tbc | Three-Symbot team structure: exactly 1 active, 2 benched; only active acts/targeted | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
 | TR-tbc-002 | tbc | Assembly final_stat snapshot at battle start, immutable for battle duration | ADR-0005 | ✅ Covered |
-| TR-tbc-003 | tbc | Synergy evaluate_silent() called once per Symbot, frozen cached_bonus_block contract | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
+| TR-tbc-003 | tbc | Synergy evaluate_silent() called once per Symbot, frozen cached_bonus_block contract | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
 | TR-tbc-004 | tbc | battle_ended 8-field payload: outcome, enemy_id, fired_break_events, xp_value, completion_bonus_xp, is_first_boss_defeat, enemy_level, deployed_symbot_ids | ADR-0002 | ✅ Covered |
 | TR-tbc-005 | tbc | Synchronous battle_ended emit; runtime state discarded only after all subscribers return | ADR-0002 | ✅ Covered |
-| TR-tbc-006 | tbc | Initiative recomputed every round start; tiebreak player acts first | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-007 | tbc | Turn phases ordered: heat decay, energy recharge, status ticks, action, turn-end decrement | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-008 | tbc | Overheat skips action only; sets heat 20 carry-in; preserves turn bookkeeping except decay | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-009 | tbc | Energy recharge: min(capacity, current+10+recharge_stat) per turn start | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-010 | tbc | Basic Attack 0 energy always available; move 4 may be null; no soft-lock | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-011 | tbc | Damage pipeline: DF-1 -> MOVE-F1 power-tier -> Stagger reduction -> break-bias routing | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
+| TR-tbc-006 | tbc | Initiative recomputed every round start; tiebreak player acts first | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-tbc-007 | tbc | Turn phases ordered: heat decay, energy recharge, status ticks, action, turn-end decrement | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-tbc-008 | tbc | Overheat skips action only; sets heat 20 carry-in; preserves turn bookkeeping except decay | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-tbc-009 | tbc | Energy recharge: min(capacity, current+10+recharge_stat) per turn start | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-tbc-010 | tbc | Basic Attack 0 energy always available; move 4 may be null; no soft-lock | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-tbc-011 | tbc | Damage pipeline: DF-1 -> MOVE-F1 power-tier -> Stagger reduction -> break-bias routing | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
 | TR-tbc-012 | tbc | SYN-F4 clamped stat on both sides before DF-1; passive aura frozen at BATTLE_INIT | ADR-0005 | ✅ Covered |
 | TR-tbc-013 | tbc | hit_resolved(move, damage, target, sub_target) 4-arg hook post-Stagger carries sub_target | ADR-0002 | ✅ Covered |
-| TR-tbc-014 | tbc | Benched Symbots: frozen heat/energy/statuses per Symbot; resume on return | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-015 | tbc | Forced switch free on DOWNED; voluntary switch consumes turn | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-016 | tbc | Flee WILD-only; consumes action; no drops/XP | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-017 | tbc | Status decrement at turn-end; expire at 0; Burn ticks at turn-start | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-018 | tbc | Reapplication newest-wins: refresh duration AND re-snapshot processing | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-019 | tbc | Unknown passive effect ID logged error, skipped, no crash | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-020 | tbc | Move pool: Basic Attack + WEAPON + HEAD + ARMS; slot 4 nullable | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-021 | tbc | Three statuses: Shock(Volt,2T), Burn(Thermal,2T), Stagger(Kinetic,2T); no stacking | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-022 | tbc | Heat: cap 100; Overheat 10% self-damage + skip turn + carry 20 | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-023 | tbc | Repair: max(5, floor(energy_power*0.17+5+eps)); capped max_structure; costs always apply | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-024 | tbc | Enemy: .get(stat,0) reads; no heat/energy; moves always available | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-025 | tbc | is_build_valid() precondition called pre-snapshot; invalid build refuses entry with battle_start_refused | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-026 | tbc | Type multiplier T baked into DF-1 output before Stagger/break-bias | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-027 | tbc | Burn bypasses DF-1: fixed potency damage; armor/resistance/type never reduce | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-028 | tbc | SCAN no-op: costs paid, heat applied, action consumed, no damage/status | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-029 | tbc | Item use: targets living Symbot; success consumes turn; rejection pre-gates, no cost | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-030 | tbc | Item action: zero heat, zero energy cost; Overheat prevents use preventively | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-031 | tbc | Victory checked before heat gain; kill+self-down = VICTORY, no self-damage | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-032 | tbc | Overheat-skip turn: status ticks run; turn-end decrements; turn bookkeeping except decay | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
+| TR-tbc-014 | tbc | Benched Symbots: frozen heat/energy/statuses per Symbot; resume on return | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-tbc-015 | tbc | Forced switch free on DOWNED; voluntary switch consumes turn | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-tbc-016 | tbc | Flee WILD-only; consumes action; no drops/XP | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-tbc-017 | tbc | Status decrement at turn-end; expire at 0; Burn ticks at turn-start | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-tbc-018 | tbc | Reapplication newest-wins: refresh duration AND re-snapshot processing | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-tbc-019 | tbc | Unknown passive effect ID logged error, skipped, no crash | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-tbc-020 | tbc | Move pool: Basic Attack + WEAPON + HEAD + ARMS; slot 4 nullable | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-tbc-021 | tbc | Three statuses: Shock(Volt,2T), Burn(Thermal,2T), Stagger(Kinetic,2T); no stacking | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-tbc-022 | tbc | Heat: cap 100; Overheat 10% self-damage + skip turn + carry 20 | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-tbc-023 | tbc | Repair: max(5, floor(energy_power*0.17+5+eps)); capped max_structure; costs always apply | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-tbc-024 | tbc | Enemy: .get(stat,0) reads; no heat/energy; moves always available | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-tbc-025 | tbc | is_build_valid() precondition called pre-snapshot; invalid build refuses entry with battle_start_refused | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-tbc-026 | tbc | Type multiplier T baked into DF-1 output before Stagger/break-bias | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-tbc-027 | tbc | Burn bypasses DF-1: fixed potency damage; armor/resistance/type never reduce | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-tbc-028 | tbc | SCAN no-op: costs paid, heat applied, action consumed, no damage/status | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-tbc-029 | tbc | Item use: targets living Symbot; success consumes turn; rejection pre-gates, no cost | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-tbc-030 | tbc | Item action: zero heat, zero energy cost; Overheat prevents use preventively | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-tbc-031 | tbc | Victory checked before heat gain; kill+self-down = VICTORY, no self-damage | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-tbc-032 | tbc | Overheat-skip turn: status ticks run; turn-end decrements; turn bookkeeping except decay | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
 | TR-tbc-033 | tbc | SYNERGY_POWER_BUDGET=40, SYNERGY_DEFENSE_BUDGET=50; DF-1 range [1,225] boss ceiling 164 | System-internal (GDD rules + unit tests; no ADR required) | ✅ System-internal |
-| TR-tbc-034 | tbc | DOWNED clears all statuses; benched status frozen mid-battle | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
+| TR-tbc-034 | tbc | DOWNED clears all statuses; benched status frozen mid-battle | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
 | TR-tbc-035 | tbc | Passive ON_HIT at hit_resolved; ON_BATTLE_START once at BATTLE_INIT; PERSISTENT no re-fire | ADR-0002 | ✅ Covered |
-| TR-tbc-036 | tbc | PERSISTENT aura captured at BATTLE_INIT into frozen_passive_aura; held whole battle | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-037 | tbc | Registry dispatch: alphabetical effect ID order; stacking_policy controls per-source refires | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-tbc-038 | tbc | Shock magnitude positive; TBC-F1 subtracts it (never pre-negate) | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
+| TR-tbc-036 | tbc | PERSISTENT aura captured at BATTLE_INIT into frozen_passive_aura; held whole battle | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-tbc-037 | tbc | Registry dispatch: alphabetical effect ID order; stacking_policy controls per-source refires | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-tbc-038 | tbc | Shock magnitude positive; TBC-F1 subtracts it (never pre-negate) | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
 | TR-tbc-039 | tbc | Enemy AI request_move(battle_state) returns one legal move at ACTION_PENDING | ADR-0002 | ✅ Covered |
 | TR-tbc-040 | tbc | is_battle_active() true BATTLE_INIT -> battle_ended emission, false otherwise | ADR-0002 | ✅ Covered |
 | TR-tbc-041 | tbc | Battle end: all runtime state discarded; fresh snapshots/evaluate_silent next battle | ADR-0001 | ✅ Covered |
-| TR-tbc-042 | tbc | Consumed turn -> next combatant by initiative; free action does not advance turn order | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-pb-001 | pb | Structure pool (kill) independent from region break_hp pools (harvest) | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-pb-002 | pb | Region sub-target selection free (no cost), closed set {STRUCTURE} + {unbroken regions} | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-pb-003 | pb | Move break_bias: STRUCTURE_HEAVY(1.25,0.55), BALANCED(1.00,1.00), BREAK_HEAVY(0.70,1.40) | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-pb-004 | pb | Region hit: break_mult to pool + 20% spillover to Structure; Structure hit: structure_mult only | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
+| TR-tbc-042 | tbc | Consumed turn -> next combatant by initiative; free action does not advance turn order | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-pb-001 | pb | Structure pool (kill) independent from region break_hp pools (harvest) | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-pb-002 | pb | Region sub-target selection free (no cost), closed set {STRUCTURE} + {unbroken regions} | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-pb-003 | pb | Move break_bias: STRUCTURE_HEAVY(1.25,0.55), BALANCED(1.00,1.00), BREAK_HEAVY(0.70,1.40) | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-pb-004 | pb | Region hit: break_mult to pool + 20% spillover to Structure; Structure hit: structure_mult only | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
 | TR-pb-005 | pb | Deterministic break: current_break_hp<=0 -> BROKEN, emit key, increment enrage, max once/region | ADR-0002 | ✅ Covered |
-| TR-pb-006 | pb | Already-broken hit redirected Structure at structure_mult; no spillover, no re-break | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-pb-007 | pb | Enrage multiplier x(1.0 + broken_region_count * 0.12); max +36% at 3 breaks | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
+| TR-pb-006 | pb | Already-broken hit redirected Structure at structure_mult; no spillover, no re-break | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-pb-007 | pb | Enrage multiplier x(1.0 + broken_region_count * 0.12); max +36% at 3 breaks | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
 | TR-pb-008 | pb | Region state battle-local: fresh INTACT at battle start; discarded at end | ADR-0001 | ✅ Covered |
 | TR-pb-009 | pb | Break keys must exactly match Drop System vocabulary (region_broken, all_boss_parts_broken) | ADR-0002 | ✅ Covered |
-| TR-pb-010 | pb | Closed target set: constructed from enemy.break_regions, rebuilt live excluding broken | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-pb-011 | pb | Region pool init EDB-1: max(5, floor(enemy_structure * fraction + eps)); [5,330] range | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-pb-012 | pb | DAMAGE_FLOOR 1 on all break formulas; every hit makes progress | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-pb-013 | pb | Region damage uses full pipeline DF-1 -> MOVE-F1 -> Stagger before break_mult applies | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-pb-014 | pb | Enrage applied post-Stagger enemy damage; ordering non-commutative, determines output | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
+| TR-pb-010 | pb | Closed target set: constructed from enemy.break_regions, rebuilt live excluding broken | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-pb-011 | pb | Region pool init EDB-1: max(5, floor(enemy_structure * fraction + eps)); [5,330] range | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-pb-012 | pb | DAMAGE_FLOOR 1 on all break formulas; every hit makes progress | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-pb-013 | pb | Region damage uses full pipeline DF-1 -> MOVE-F1 -> Stagger before break_mult applies | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-pb-014 | pb | Enrage applied post-Stagger enemy damage; ordering non-commutative, determines output | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
 | TR-part-001 | part | Sympart schema fields and types including StringName id, String display_name, enum slot_type, nullable chassis_archetype | ADR-0003 | ✅ Covered |
 | TR-part-002 | part | stat_bonuses constrained to 11 canonical keys; non-zero recharge only CORE/ENERGY_CELL parts | ADR-0003 | ✅ Covered |
 | TR-part-003 | part | Rarity gates skills/passives: Common none; Rare+ skill (non-Core) or passive (Core); Core blocks active skills always | ADR-0003 | ✅ Covered |
@@ -219,7 +229,7 @@ Engine: Godot 4.6
 | TR-sa-002 | sa | Per-part upgrades: Formula 2 (base>=0) or Formula 2b (base<0) applied then summed | ADR-0005 | ✅ Covered |
 | TR-sa-003 | sa | Chassis modifier applied to summed stats, then floor() post-multiplication | ADR-0005 | ✅ Covered |
 | TR-sa-004 | sa | CP-F3 level-growth added post-chassis-multiply, pre-synergy (Rule 6 step 4b) | ADR-0005 | ✅ Covered |
-| TR-sa-005 | sa | SA-F2 delta preview requires full hypothetical recompute (all 8 parts, not partial diff) | ADR-0008 (planned: UI architecture & screen contracts) | ❌ Gap |
+| TR-sa-005 | sa | SA-F2 delta preview requires full hypothetical recompute (all 8 parts, not partial diff) | ADR-0008 (UI architecture & screen contracts) | ✅ Covered |
 | TR-sa-006 | sa | Final stats locked at battle start; no recomputation during combat | ADR-0005 | ✅ Covered |
 | TR-sa-007 | sa | No empty slots permitted: equip is atomic, slots always filled via replacement | ADR-0005 | ✅ Covered |
 | TR-sa-008 | sa | Move pool fixed ordering: Basic, WEAPON skill, HEAD skill, ARMS skill (may be null) | ADR-0005 | ✅ Covered |
@@ -243,10 +253,10 @@ Engine: Godot 4.6
 | TR-eai-003 | eai | EnemyDef.ai_profile StringName resolution to AI profile (O(1) lookup) | ADR-0003 | ✅ Covered |
 | TR-eai-004 | eai | Seeded RNG injected per call, fresh instance, no persistent state | ADR-0006 | ✅ Covered |
 | TR-eai-005 | eai | Pure function of (battle_state, profile, seed); deterministic tiebreak | ADR-0006 | ✅ Covered |
-| TR-eai-006 | eai | DF-1 preview includes MOVE-F1 power-tier multiply for lethal accuracy | ADR-0005 (DamageFormula/effective_stat contract) / ADR-0007 (AI preview consumption — planned) | ⚠️ Partial |
-| TR-eai-007 | eai | Effective post-SYN-F4 defense stat used in preview, not raw stat | ADR-0005 (DamageFormula/effective_stat contract) / ADR-0007 (AI preview consumption — planned) | ⚠️ Partial |
-| TR-eai-008 | eai | Phase shift derived from battle state, no persistent AI state | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
-| TR-eai-009 | eai | Fallback to AGGRESSIVE profile on unknown ai_profile, never crashes | ADR-0007 (planned: TBC finite state machine) | ❌ Gap |
+| TR-eai-006 | eai | DF-1 preview includes MOVE-F1 power-tier multiply for lethal accuracy | ADR-0005 (DamageFormula/effective_stat contract) / ADR-0007 (AI preview consumption) | ✅ Covered |
+| TR-eai-007 | eai | Effective post-SYN-F4 defense stat used in preview, not raw stat | ADR-0005 (DamageFormula/effective_stat contract) / ADR-0007 (AI preview consumption) | ✅ Covered |
+| TR-eai-008 | eai | Phase shift derived from battle state, no persistent AI state | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
+| TR-eai-009 | eai | Fallback to AGGRESSIVE profile on unknown ai_profile, never crashes | ADR-0007 (TBC FSM & battle orchestrator) | ✅ Covered |
 | TR-elzs-001 | elzs | Enemy level field manually authored, not formula-generated stat | ADR-0003 | ✅ Covered |
 | TR-elzs-002 | elzs | xp_value stored-equals-derived from CP-F4, recomputed on constant retune | ADR-0003 | ✅ Covered |
 | TR-elzs-003 | elzs | Zone level band [floor, roof] fields, content validation membership check | ADR-0003 | ✅ Covered |
@@ -262,7 +272,7 @@ Engine: Godot 4.6
 | TR-zwm-006 | zwm | Zone state (LOCKED/ACCESSIBLE/CLEARED) derived via ZWM-F2 reachability BFS | System-internal (GDD rules + unit tests; no ADR required) | ✅ System-internal |
 | TR-zwm-007 | zwm | CLEARED does not guarantee reachability; can_travel validates traversable edge + state | System-internal (GDD rules + unit tests; no ADR required) | ✅ System-internal |
 | TR-zwm-008 | zwm | zone_states_changed(transitions) broadcast only when states differ from prior pass | ADR-0002 | ✅ Covered |
-| TR-zwm-009 | zwm | Transitions array format {zone_id, from_state, to_state} consumed by World Map UI | ADR-0008 (planned: UI architecture & screen contracts) | ❌ Gap |
+| TR-zwm-009 | zwm | Transitions array format {zone_id, from_state, to_state} consumed by World Map UI | ADR-0008 (UI architecture & screen contracts) | ✅ Covered |
 | TR-zwm-010 | zwm | ZWM-F2: all_bosses_defeated returns false for zero-boss zones, never auto-CLEARED | System-internal (GDD rules + unit tests; no ADR required) | ✅ System-internal |
 | TR-drop-001 | drop | RNG draws seeded, deterministic, part-ID-ascending roll order for reproducibility | ADR-0006 | ✅ Covered |
 | TR-drop-002 | drop | Pool part-ID deduplication: one roll per unique ID; duplicates contribute zero extra rolls | System-internal (GDD rules + unit tests; no ADR required) | ✅ System-internal |
@@ -295,35 +305,35 @@ Engine: Godot 4.6
 | TR-wl-007 | wl | Double-collect idempotent (silent no-op logic; presentation owned by Overworld Navigation) | System-internal (GDD rules + unit tests; no ADR required) | ✅ System-internal |
 | TR-wl-008 | wl | Phantom nodes (bad payload, bad reward_type, unresolved zone_id) logged, treated as uncollectable | ADR-0003 | ✅ Covered |
 | TR-wl-009 | wl | Orphaned collected IDs on restore preserved, never dropped; one warning logged on load | ADR-0001 | ✅ Covered |
-| TR-ui-001 | ui | All UI touch-first: minimum 44x44pt tap targets, no hover-only interactions | ADR-0008 (planned: UI architecture & screen contracts) | ❌ Gap |
-| TR-ui-002 | ui | Dual input support: keyboard/mouse (Mac dev/launch) and touch (iOS primary) for every interaction | ADR-0008 (planned: UI architecture & screen contracts) | ❌ Gap |
-| TR-perf-001 | perf | 60 fps / 16.6 ms frame budget on target devices | ADR-0004 (transition hitch path); per-system frame budgets pending ADR-0007/0008 | ⚠️ Partial |
+| TR-ui-001 | ui | All UI touch-first: minimum 44x44pt tap targets, no hover-only interactions | ADR-0008 (UI architecture & screen contracts) | ✅ Covered |
+| TR-ui-002 | ui | Dual input support: keyboard/mouse (Mac dev/launch) and touch (iOS primary) for every interaction | ADR-0008 (UI architecture & screen contracts) | ✅ Covered |
+| TR-perf-001 | perf | 60 fps / 16.6 ms frame budget on target devices | ADR-0004 (transition hitch) + ADR-0007 (event-driven FSM) + ADR-0008 (200 draw-call / no _process) | ✅ Covered |
 | TR-perf-002 | perf | iOS 512 MB memory ceiling; persistence budget 2 MiB blob / 50 ms write | ADR-0001 | ✅ Covered |
-| TR-perf-003 | perf | Draw-call budget 200 (conservative mobile 2D) | ADR-0008 (planned: UI architecture & screen contracts) | ❌ Gap |
+| TR-perf-003 | perf | Draw-call budget 200 (conservative mobile 2D) | ADR-0008 (UI architecture & screen contracts) | ✅ Covered |
 | TR-eng-001 | eng | Post-cutoff FileAccess.store_* bool return handled on every write (Godot 4.4+) | ADR-0001 | ✅ Covered |
 | TR-eng-002 | eng | Every post-cutoff engine API verified against docs/engine-reference before use | Engine Compatibility section mandatory per ADR (discipline in force across ADR-0001..0004) | ⚠️ Partial |
 | TR-test-001 | test | GUT framework; >=80% coverage on logic systems; deterministic, isolated, injection-friendly tests | ADR-0003 (CI-blocking validator) + ADR-0006 (determinism contract) | ✅ Covered |
 
 ## Known Gaps
 
-All remaining gaps are owned by the two planned-but-unwritten ADRs (expected at this phase):
+**None.** All 8 planned ADRs (0001–0008) are written and Accepted. The 51 gaps formerly
+owned by ADR-0007 (45) and ADR-0008 (6) closed when both were promoted Proposed → Accepted
+on 2026-07-14 (architecture-review). Every Foundation, Core, and Presentation TR now has a
+named owning ADR.
 
-### ADR-0007 (planned: TBC finite state machine) — 45 requirements
-TR-tbc-001, TR-tbc-003, TR-tbc-006, TR-tbc-007, TR-tbc-008, TR-tbc-009, TR-tbc-010, TR-tbc-011, TR-tbc-014, TR-tbc-015, TR-tbc-016, TR-tbc-017, TR-tbc-018, TR-tbc-019, TR-tbc-020, TR-tbc-021, TR-tbc-022, TR-tbc-023, TR-tbc-024, TR-tbc-025, TR-tbc-026, TR-tbc-027, TR-tbc-028, TR-tbc-029, TR-tbc-030, TR-tbc-031, TR-tbc-032, TR-tbc-034, TR-tbc-036, TR-tbc-037, TR-tbc-038, TR-tbc-042, TR-pb-001, TR-pb-002, TR-pb-003, TR-pb-004, TR-pb-006, TR-pb-007, TR-pb-010, TR-pb-011, TR-pb-012, TR-pb-013, TR-pb-014, TR-eai-008, TR-eai-009
+## Partial Coverage (2 requirements)
 
-### ADR-0008 (planned: UI architecture & screen contracts) — 6 requirements
-TR-cp-012, TR-sa-005, TR-zwm-009, TR-ui-001, TR-ui-002, TR-perf-003
-
-## Partial Coverage (5 requirements)
-
-- **TR-eai-006, TR-eai-007** — ADR-0005 provides the `DamageFormula` + `effective_stat` contract; the AI-side preview consumption (MOVE-F1 inclusion, post-SYN-F4 defense) is owned by ADR-0007. Flips to Covered when ADR-0007 lands.
 - **TR-zwm-001** — WorldMap catalog not yet in ADR-0003's def roster; extend at implementation.
-- **TR-perf-001** — per-system frame budgets pending ADR-0007/0008 (ADR-0004 covers the transition-hitch path).
-- **TR-eng-002** — engine-verification discipline is in force across ADR-0001..0006 but has no single owning ADR.
+- **TR-eng-002** — engine-verification discipline is in force across ADR-0001..0008 but has no single owning ADR (it is a cross-cutting process requirement, satisfied by every ADR's mandatory Engine Compatibility section rather than one decision).
 
-Suggested creation order (most foundational first):
-1. `/architecture-decision Turn-based combat state machine` (ADR-0007) — 45 TRs; MUST resolve the `battle_ended`-host seam (conflict C-3: ADR-0002 puts `is_battle_active` on a TBC autoload that ADR-0004's roster lacks)
-2. `/architecture-decision UI architecture & screen contracts` (ADR-0008) — 6 TRs
+_Formerly partial, now Covered (2026-07-14b):_ TR-eai-006/007 (ADR-0007 consumes ADR-0005's
+`DamageFormula`/`effective_stat` in AI preview) and TR-perf-001 (per-system frame posture
+complete: ADR-0007 event-driven FSM + ADR-0008 200-draw-call/no-`_process` + ADR-0004
+transition path).
+
+Suggested next steps (no remaining ADR gaps):
+1. Pre-gate blockers before Technical Setup → Pre-Production: `/test-setup` (tests/unit, tests/integration, CI workflow) and `/ux-design` (interaction-patterns, accessibility-requirements).
+2. Fold the engine advisories from the 2026-07-14b review into the ADR-0007/0008 implementation stories' Definition of Done.
 
 ## Superseded Requirements
 

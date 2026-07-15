@@ -1,6 +1,23 @@
 # Active Session State
 
-## Current Task — COMPLETE: ADR-0001 Save/Load written (2026-07-13, Technical Setup, lean)
+## Current Task — COMPLETE: `/architecture-review` full pass → ADR-0007 + ADR-0008 ACCEPTED (2026-07-14b)
+- **Verdict**: CONCERNS → **ACCEPT**. All 8 planned ADRs (0001–0008) are now **Accepted**. Coverage **251/277 (91%), 0 gaps, 2 partial** (TR-zwm-001 WorldMap catalog, TR-eng-002 engine-verification discipline). Architecture phase complete.
+- **Report**: `docs/architecture/architecture-review-2026-07-14-adr0007-0008.md` (new; suffixed to preserve the earlier same-day 0005/0006 review).
+- **Coverage verified**: ADR-0007 closes its 45 gap TRs (32 tbc + 11 pb + eai-008/009); ADR-0008 closes its 6 (cp-012, sa-005, zwm-009, ui-001, ui-002, perf-003). Partials TR-eai-006/007 + TR-perf-001 flipped to Covered.
+- **C-3 RESOLVED**: TBC host = `BattleController` autoload **slot 11** (ADR-0007 §1). ADR-0002 §4 validates the autoload-over-scene-node choice.
+- **C-4 (new, RESOLVED this pass)**: ADR-0004 §1 roster text still showed 10 slots while ADR-0007 + the registry already said 11 — producer-lag drift (mirror of C-1/C-2). Fixed: added slot-11 row + amendment note + diagram entry to ADR-0004. Logged in `consistency-failures.md`.
+- **Engine (godot-specialist, independent pass)**: both ADRs engine-safe, **0 blocking** across 21 findings. 6 advisories → fold into ADR-0007/0008 implementation-story DoD (WeakRef indirect-cycle test; screen-close focus release; **virtual-px vs iOS-pt calibration must gate the first UI story**; recursive MOUSE_FILTER_IGNORE property-name verify; add-to-tree-before-setup(); ServiceContext read-only accessor for SymbotBuild).
+- **Files written this pass**: ADR-0004 (C-4 fix), ADR-0007 (Accepted), ADR-0008 (Accepted), traceability-index.md (197→251/0 gaps), technical-preferences.md (ADR log), consistency-failures.md (C-4), the review report, this file.
+
+### NEXT — Technical Setup → Pre-Production gate (architecture is DONE; these are the remaining gate blockers)
+- **`/test-setup`** — create `tests/unit`, `tests/integration`, `.github/workflows/tests.yml` (all still absent — BLOCKING the gate).
+- **`/ux-design`** — create `design/ux/interaction-patterns.md` + `design/ux/accessibility-requirements.md` (still absent — BLOCKING).
+- **Follow-up doc pass**: refresh `architecture.md`'s stale traceability block (still "0 covered / 148 gaps") or delegate the live count to `traceability-index.md`. Cosmetic, non-blocking.
+- Then implementation stories may begin (ADRs no longer auto-block them).
+
+---
+
+## Prior — COMPLETE: ADR-0001 Save/Load written (2026-07-13, Technical Setup, lean)
 - **File**: `docs/architecture/adr-0001-save-load.md` (312 lines, Status: **Proposed**). First of 4 Foundation ADRs.
 - **Decision**: single-file human-readable JSON per slot; top-level **provider-domain envelope** generalizing the Exploration Progress pattern to the whole save. Providers: `progression` (= entire EP blob, opaque, owns its own `progress_format_version`), `inventory` (part_instances + next_instance_id + scrap + consumables), `workshop` (builds), `drop` (pity), `settings`. Two-layer versioning (`save_format_version` outer / `progress_format_version` inner). Provider contract = EP's `snapshot()/restore()/rederive()`. SL-PRED-1 file version predicate mirrors EP-PRED-1. Atomic write (tmp + `rename_absolute` + `.bak`). **Plain-data-only** (no live Resource in snapshot) — neutralizes the Godot 4.6 Resource-serialization HIGH risk. Budget **2 MiB / 50 ms iOS**. Part instances uncapped — watch via telemetry, no cap (QQ-04 deferred).
 - **User design calls** (ELI5 session): readable JSON ✓ / single file ✓ / watch-don't-cap ✓ / 2 MiB+50 ms ✓.

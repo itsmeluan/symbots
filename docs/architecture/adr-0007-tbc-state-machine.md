@@ -1,7 +1,7 @@
 # ADR-0007: Turn-Based Combat State Machine & Battle Orchestrator
 
 ## Status
-Proposed
+Accepted
 
 ## Date
 2026-07-14
