@@ -61,6 +61,6 @@ All stories must have appropriate test evidence before they can be marked Done:
 - No merge if tests fail — tests are a blocking gate in CI
 - Never disable or skip failing tests to make CI pass — fix the underlying issue
 - Engine-specific CI commands:
-  - **Godot**: `godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests -ginclude_subdirs -gexit` (GUT — matches `technical-preferences.md` framework choice and every ADR's "GUT test" contract)
+  - **Godot**: `godot --headless -s addons/gut/gut_cmdln.gd -gconfig=.gutconfig.json` (GUT — matches `technical-preferences.md` framework choice and every ADR's "GUT test" contract). Discovery is driven by `.gutconfig.json` (`dirs` + `suffix: "_test.gd"`), NOT the bare `-gdir` form — GUT's default discovery uses a `test_` *prefix*, which does not match this project's `[system]_[feature]_test.gd` *suffix* convention.
   - **Unity**: `game-ci/unity-test-runner@v4` (GitHub Actions)
   - **Unreal**: headless runner with `-nullrhi` flag

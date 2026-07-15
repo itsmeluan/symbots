@@ -1,6 +1,17 @@
 # Active Session State
 
-## Current Task — COMPLETE: `/create-control-manifest` → `docs/architecture/control-manifest.md` written (2026-07-14)
+## Current Task — COMPLETE: `/test-setup` → project bootstrapped + GUT wired + CI green (2026-07-14)
+- **Order executed** (per user): `project.godot` → GUT install → test-setup scaffold. Adapted the skill's Godot template from **GdUnit4 → GUT** (project's chosen framework).
+- **`project.godot` created** — Godot 4.6, `gl_compatibility` renderer (2D/iOS), GUT plugin enabled. First time the repo is an actual Godot project (none existed before).
+- **GUT v9.6.1 vendored** into `addons/gut/` (git clone of `bitwes/Gut` @ v9.6.1 → copied in; committed, not a submodule). No manual AssetLib step needed.
+- **Scaffold written**: `tests/README.md`, `tests/unit/example/example_test.gd` (2 real passing tests), `tests/integration/.gitkeep`, `tests/smoke/critical-paths.md`, `tests/evidence/.gitkeep`, `.gutconfig.json`, `.github/workflows/tests.yml` (GUT CI via `chickensoft-games/setup-godot@v2`, Godot 4.6.0).
+- **Bug caught + fixed (discovery mismatch)**: GUT's default discovery uses a `test_` PREFIX; the project's coding-standard names files with a `_test.gd` SUFFIX → bare `-gdir` finds NOTHING. Fixed by driving discovery through `.gutconfig.json` (`prefix:""`, `suffix:"_test.gd"`) and switching the canonical command to `-gconfig=.gutconfig.json` in 3 places: CI workflow, `coding-standards.md` line 64, `tests/README.md`.
+- **Verified locally**: ran `godot --headless -s addons/gut/gut_cmdln.gd -gconfig=.gutconfig.json` → **EXIT 0, 2/2 passing**. (Local Godot is **4.7.stable**, project pinned **4.6** — toolchain mismatch flagged to user; CI uses 4.6.0.)
+- **NEXT**: `/ux-design` (last pre-gate blocker: `design/ux/interaction-patterns.md` + `design/ux/accessibility-requirements.md`). Then `/gate-check` Technical Setup → Pre-Production. Optional: install a matching Godot 4.6 locally; refresh `architecture.md` stale traceability block.
+
+---
+
+## Prior — COMPLETE: `/create-control-manifest` → `docs/architecture/control-manifest.md` written (2026-07-14)
 - **Manifest Version**: 2026-07-14. Covers all 8 Accepted ADRs (0001–0008). Layered rules sheet: Foundation 11 req / 9 forbidden / 1 guardrail · Core 11 / 7 / 1 · Feature 2 / 1 / — · Presentation 5 / 4 / 2 · Global (6 naming, 4 budgets, full deprecated-API table, GUT approved, 5 cross-cutting).
 - **Director gate**: TD-MANIFEST spawned on **Opus** (one-off; global mode stays `lean`). Verdict **CONCERNS → resolved**. Confirmed all 21 registry forbidden_patterns present with correct source-ADR + layer. 3 fixes folded in before write: (1) Forbidden-APIs section now mirrors `deprecated-apis.md` row-for-row (was "~20"; added omitted `Compositor`/`CompositorEffect` row); (2) `duplicate()`→`duplicate_deep()` call-out warns it NEVER applies to content defs (cross-links `runtime_content_mutation`); (3) Feature rule 2 retagged "ADR-0007 / registry `rng_vending`" (Drop-vend = forward constraint).
 - **Note**: earlier general-purpose extraction subagent died on a 1M-context credit error → extraction done directly (no large-context subagents). technical-director ran fine in standard context.

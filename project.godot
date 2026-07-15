@@ -1,0 +1,24 @@
+; Symbots — Godot project configuration
+;
+; Creature-collection RPG: modular robot building, turn-based combat.
+; Engine: Godot 4.6 · Renderer: 2D (gl_compatibility, mobile/iOS target)
+;
+; This file is hand-authored as the project foundation. When first opened in the
+; Godot 4.6 editor it may be rewritten/expanded — that is expected and safe.
+
+config_version=5
+
+[application]
+
+config/name="Symbots"
+config/description="Creature-collection RPG — modular robot building, turn-based combat. Mac launch, iOS primary long-term target."
+config/features=PackedStringArray("4.6", "GL Compatibility")
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/gut/plugin.cfg")
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"

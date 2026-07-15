@@ -1,0 +1,57 @@
+name: Automated Tests
+
+# Runs the GUT (Godot Unit Testing) suite on every push to main and every PR.
+# A failed suite blocks merging — GUT's command-line runner exits non-zero on any
+# test failure. Framework choice + command match .claude/docs/coding-standards.md
+# and .claude/docs/technical-preferences.md (GUT, NOT gdUnit4).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Run GUT Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      # Installs the Godot 4.6 headless binary. GDScript-only project → no .NET.
+      # Verify the version string against docs/engine-reference/godot/VERSION.md
+      # when bumping the engine.
+      - name: Set up Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: "4.6.0"
+          use-dotnet: false
+          include-templates: false
+
+      # Import step builds the resource cache so the runner can resolve res:// paths.
+      # Godot exits non-zero on a clean headless import with no main scene, so this
+      # is best-effort and must not fail the job.
+      - name: Import resources
+        run: godot --headless --import
+        continue-on-error: true
+
+      # Discovery config (dirs + the project's `_test.gd` suffix convention) lives
+      # in .gutconfig.json. The bare -gdir form uses GUT's default `test_` PREFIX,
+      # which does NOT match this project's `[system]_[feature]_test.gd` naming —
+      # so the config is the single source of truth for both CI and local runs.
+      - name: Run GUT tests
+        run: godot --headless -s addons/gut/gut_cmdln.gd -gconfig=.gutconfig.json
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gut-test-results
+          path: |
+            reports/
+            *.xml
+          if-no-files-found: ignore

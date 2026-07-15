@@ -1,0 +1,2 @@
+# Integration tests go here — one subdirectory per system (e.g. tests/integration/save_load/).
+# Cross-system tests and save/load round-trips. Base class: extends GutTest.
