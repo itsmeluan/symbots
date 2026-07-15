@@ -115,7 +115,97 @@ not be contradicted:
 
 ## 2. Mood & Atmosphere
 
-[being authored]
+> Each game state is a distinct emotional room. This section defines the lighting and
+> atmospheric character of each room so that a lighting artist, VFX artist, or UI
+> colorist builds from a shared target rather than personal interpretation.
+>
+> **Accessibility contract (all states):** Color is never the sole mood carrier. Every
+> state below names at least one non-color cue — contrast ratio, motion quality,
+> compositional framing, or pose — that co-carries the feeling for players with
+> color-vision deficiency or poor lighting conditions.
+
+### 2.1 Overworld / Zone Exploration
+
+- **Primary emotional target**: The alert curiosity of a hunter who knows the territory and what they came for. Purposeful scanning, not wandering — the player has a shopping list, the world is the store.
+- **Lighting character**: Ambient mid-range natural light; warm key from upper-right, cool atmospheric fill from below. Soft shadow edges, high ambient lift so Symbot silhouettes never sink into terrain shadow. Reads as mid-morning/mid-afternoon — never dark enough to threaten at the navigation layer.
+- **Adjectives**: Verdant, kinetic, scavenged, expectant, familiar.
+- **Energy**: Measured-active — the world moves (foliage, distant patrols) but the tempo is the player's; nothing is urgent until an encounter triggers.
+- **Mood-carrying element**: Wild Symbots emit a faint idle glow from active parts — a breath, not a spotlight — pulsing ~1 cycle / 2s. The pulse is a **luminosity** cue (greyscale-readable) layered on the element color, so it serves accessibility and atmosphere at once.
+- **Distinction**: Lowest-contrast, most ambient-filled state; wide varied palette (world is the stage). Combat narrows the frame and drops to a limited palette where player + enemy dominate.
+
+### 2.2 Turn-Based Combat
+
+- **Primary emotional target**: The focused intensity of executing a plan while the plan fights back — tactical alertness, not panic. Signature tone (GDD): *"I could finish it this turn — but if I put two more Kinetic hits into that arm first…"*
+- **Lighting character**: Strong directional key from slightly above-center on the combatants; cool rim on the enemy, warm rim on the player's bot. Background lit **below** combatant intensity — a deliberate contrast drop making Symbots, move panel, and break pips the brightest objects in frame. Heavier shadows and crisper edges than exploration.
+- **Adjectives**: Focused, weighted, clinical, pressurized, deliberate.
+- **Energy**: Measured, with micro-tension spikes at each resolution beat. Enemy stays animated during the player's decision phase — it threatens without acting.
+- **Mood-carrying element**: Enemy break regions highlighted via **contrast-ring** outline-pulse on cursor rest — a shape-and-brightness cue, not color alone.
+- **Combat vs. atmosphere yield rule** — when mood and tactical legibility conflict, **legibility wins without negotiation**:
+  - (a) No atmospheric effect may drop UI-to-background contrast below WCAG AA (4.5:1 normal text, 3:1 large/icon).
+  - (b) Dynamic lighting/vignette must never occlude the move panel, break pips, or the active Symbot's silhouette.
+  - (c) Post-processing (bloom, chromatic aberration) is always at a controlled intensity — never procedurally driven by combat state in a way that competes with readability.
+- **Distinction**: Narrower, brighter on focal elements, heavier contrast than exploration. Victory brightens overall; Defeat cools and desaturates; Part-Break spikes above the combat baseline without changing it.
+
+### 2.3 Part-Break Moments
+
+- **Primary emotional target**: The cathartic pop of a plan paying off — the Medabots detachment beat. Earned and spectacular, never decorative. The visual says "you did that."
+- **Lighting character**: A single **located** bright flash at the break point (not screen-wide bloom) — a 3–5 frame blaze that drops back to combat baseline. A dim residual glow/smoke echoes the lost part's position, dimming over ~60 frames. Flash is high-value monochrome-readable (white core, element-tinted edge) so it reads as an event in greyscale.
+- **Adjectives**: Explosive, precise, triumphant, irreversible, punctuating.
+- **Energy**: Frenetic for exactly the flash + detachment (8–12 frames), then immediate return to combat's measured tempo. A beat, not a state.
+- **Mood-carrying element**: The broken part **separates from the silhouette** (Principle 4 made concrete) — detaches or deforms along its seam, hangs 2–3 frames, then ejects out of frame or fades at the seam by part type. Silhouette change = the accessibility contract; detachment motion = the spectacle.
+- **Distinction**: Highest-energy moment in the game and the only state that deliberately competes with tactical readability — but only for its 8–12 frame spike. Sudden and local (one region, one flash) vs. Victory's wide, gradual brightening. Involuntary from the player's view — fires when the pool depletes, not when the player acts.
+
+### 2.4 Victory / Battle Won
+
+- **Primary emotional target**: The warm exhale of a hypothesis confirmed — satisfaction with ownership, not generic celebration. The player chose the build, ran the harvest plan, and the world validated them.
+- **Lighting character**: Combat vignette lifts fully; ambient rises back toward the exploration baseline. Enemy dims out smoothly; the player's bot gets a soft warm key from above, saturation nudged up on the bot **only**. No harsh flash — a slow lift over 30–45 frames.
+- **Adjectives**: Warm, resolved, luminous, owned, spacious.
+- **Energy**: Triumphant but decelerating. Peak is the final kill hit; the loot-drop moment is a secondary reward spike, but the overall arc is release of tension.
+- **Mood-carrying element**: The player's bot idles in its post-battle pose under lifted light, all parts intact and cleanly lit — visual confirmation the machine they built survived.
+- **Non-color cue**: The combat→Victory transition is carried by the vignette lifting and ambient rising — both **luminosity** shifts, greyscale-readable.
+- **Distinction from Defeat**: Victory lifts and warms the frame; Defeat drops and cools it — structurally opposite in luminosity and temperature.
+
+### 2.5 Defeat / Battle Lost
+
+- **Primary emotional target**: The clear-eyed sting of a disproved hypothesis — a failed experiment, not shame. GDD framing: *"Losses are educational, not punishing."* Loss feels like a reset. Weighted but not desolate.
+- **Lighting character**: Combat key desaturates toward cool blue-grey; contrast drops moderately, the scene flattens. Downed Symbots fade to a dimmed, desaturated state — they persist, they are not erased. A pervasive draining of warmth, not a dramatic darkness.
+- **Adjectives**: Still, grey, analytical, quiet, temporary.
+- **Energy**: Contemplative. **No** screen shake, no harsh red flashing, no prolonged failure animation. Energy drops immediately to a low steady state; the player has time to look at what happened.
+- **Mood-carrying element**: The downed team in their defeated pose — the first time the player's own bots render desaturated — read via **pose change (collapsed idle) + light-temperature drop** before palette.
+- **Non-color cue**: Pose change and cool-shift carry the state; desaturation is tertiary reinforcement, not the primary signal.
+- **Distinction from Victory**: Directional opposites on both axes (temperature and contrast), not just different colors.
+
+### 2.6 Workshop / Build Screen
+
+- **Primary emotional target**: The focused pleasure of a mechanic with the machine in front of them — no clock, every option visible. GDD target: *"the workshop as a laboratory."* Nothing should make the player feel rushed or judged.
+- **Lighting character**: Neutral-to-warm indoor workshop light from above and slightly front — an articulated bench lamp. Even, high-ambient, low-shadow; every slot and attachment point clearly lit with no boundary-obscuring shadow. Background darker than subject but controlled and stable — no flicker, no atmospheric motion.
+- **Adjectives**: Focused, warm, exact, unhurried, mine.
+- **Energy**: Contemplative — the **lowest** energy in the game, deliberately. The Workshop is the only space free of time pressure; the lack of urgency is the reward. Visual noise, ambient animation, and urgency-implying dynamic lighting are excluded here.
+- **Mood-carrying element**: The bot rotates slowly on a neutral stand; part-slot boundaries (seams, panel lines, attachment points from Principle 2) carry a subtle **edge highlight** from the good light — actual geometry, not a UI overlay. Hovering a candidate part shows it in-slot with a differential highlight of which stats rise/fall; the reveal slides in unhurried, never pops.
+- **Non-color cue**: Stat-change direction shown by an up/down arrow glyph beside any numeric delta; green/red is reinforcement, not the primary encoding.
+- **Distinction**: Zero vignette, near-zero atmospheric motion, highest ambient-to-key ratio in the game. Combat states are directional, high-contrast, focused on a confrontation; the Workshop is the *absence* of confrontation.
+
+### 2.7 Menus / Meta Screens (Inventory, Part Catalog, Settings)
+
+- **Primary emotional target**: Calm efficiency with character. The player knows what they want; the screen gets out of the way. Same workshop-world register as 2.6, with even less drama — the shelves and drawers of the same lab.
+- **Lighting character**: Flat, high-ambient, neutral; no implied directional source. UI chrome and background share the Workshop's low-saturation substrate so part icons — which carry full saturation — read as the content. The game's most restrained palette; character carried by typography, icon quality, and silhouette, not lighting.
+- **Adjectives**: Organized, clean, catalogued, quiet, complete.
+- **Energy**: Still. No ambient animation except pagination and intentional feedback (equip confirm, sort reorder). Menus earn no more motion than they need to communicate state.
+- **Mood-carrying element**: Part icons at catalog scale (64×64 baseline, per Principle 3's thumbnail test) on a consistent softly-lit neutral tile that recedes. Un-acquired parts show a **silhouette-only locked tile** — shape visible, color not — applying Principle 1's greyscale-first contract at the catalog layer.
+- **Non-color cue**: Locked parts are silhouettes regardless of color-vision ability; equipped status uses a glyph (lock/bracket), not color; rarity uses a tier label/icon alongside the rarity glow from §1's Ratification Notes.
+- **Distinction from Workshop**: The Workshop has a physical subject (the bot) and implies a space; menus are pure catalog and imply a filing system. Workshop = the act of building; meta screens = the record of what exists to build with.
+
+### Mood State Matrix (Quick Reference)
+
+| State | Temperature | Contrast | Saturation | Energy | Primary shift vs. Combat |
+|---|---|---|---|---|---|
+| Overworld | Warm primary, cool fill | Low-medium | Wide, varied | Measured-active | Wider frame, higher ambient, lower focus |
+| Combat | Warm player / cool enemy | High | Player + enemy dominate | Measured, pressurized | — (baseline reference) |
+| Part-Break | Neutral flash, element tint | Spike high → return | Spike, then restore | Frenetic spike → measured | Punctuation event within the combat baseline |
+| Victory | Warm lift | Medium | Player bot boosted | Triumphant, decelerating | Vignette lifts; ambient rises; enemy dims |
+| Defeat | Cool-grey drain | Medium-low | Desaturated slide | Contemplative | Temperature reversal from Victory; no dramatic darkness |
+| Workshop | Warm-neutral indoor | Low (even) | UI neutral; parts saturated | Contemplative | Zero vignette; zero motion urgency; highest ambient lift |
+| Menus | Neutral flat | Low | Near-zero background; parts full | Still | Even flatter than Workshop; no spatial lighting implied |
 
 ---
 
