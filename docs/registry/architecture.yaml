@@ -104,6 +104,26 @@ state_ownership:
     added: 2026-07-14
     revised: ""
 
+  - state: battle_runtime_state
+    status: active
+    owner_system: turn-based-combat
+    adr: docs/architecture/adr-0007-tbc-state-machine.md
+    interface: "BattleController (autoload slot 11) owns is_battle_active: bool + _state:
+      BattleState, and a reference to a per-battle BattleContext (RefCounted). BattleContext
+      holds the frozen player/enemy CombatantSnapshots, per-combatant current_structure/
+      current_energy/current_heat, region break pools, statuses, the beacon flag, and the
+      accumulating deployed_symbot_ids / fired_break_events sets. Created at BATTLE_INIT;
+      the controller drops the reference synchronously AFTER the battle_ended emit() cascade
+      returns (RefCounted — no queue_free). is_battle_active() is the ONLY cross-system read
+      (SaveLoad manual-save quiesce gate, ADR-0002 §4)."
+    write_access: turn-based-combat-only
+    persisted: false             # transient per-battle state — never enters any save provider
+    referenced_by:
+      - docs/architecture/adr-0007-tbc-state-machine.md
+      - docs/architecture/adr-0002-event-bus.md   # is_battle_active() manual-save gate + synchronous-teardown discard point
+    added: 2026-07-14
+    revised: ""
+
 # Example:
 #
 # state_ownership:
@@ -170,6 +190,7 @@ interfaces:
     referenced_by:
       - docs/architecture/adr-0002-event-bus.md
       - docs/architecture/adr-0005-stat-pipeline.md   # CoreProgression.apply_battle_result consumes the 8 payload fields verbatim
+      - docs/architecture/adr-0007-tbc-state-machine.md   # ADR-0007 PLACES the producer: BattleController emits, drops BattleContext after emit() returns
     added: 2026-07-13
     revised: "2026-07-13"  # /architecture-review conflict fix — signature was a bad transcription of Rule 12
 
@@ -248,6 +269,7 @@ interfaces:
       sides (enemy synergy/aura = {}); effective_stat is THE in-battle SYN-F4 composition point"
     referenced_by:
       - docs/architecture/adr-0005-stat-pipeline.md
+      - docs/architecture/adr-0007-tbc-state-machine.md   # TBC reads the frozen snapshot for damage + initiative; held in BattleContext
     added: 2026-07-14
     revised: ""
 
@@ -267,6 +289,7 @@ interfaces:
     referenced_by:
       - docs/architecture/adr-0005-stat-pipeline.md
       - docs/architecture/adr-0006-rng-service.md   # crit roll lives in TBC (next_seed(&"crit")); crit_mult passed IN, DF-1 stays deterministic
+      - docs/architecture/adr-0007-tbc-state-machine.md   # TBC is the sole crit-roller — passes crit_mult into compute_damage
     added: 2026-07-14
     revised: ""
 
@@ -285,6 +308,7 @@ interfaces:
       active_synergies never null; the empty block is a valid zero-bonus state"
     referenced_by:
       - docs/architecture/adr-0005-stat-pipeline.md
+      - docs/architecture/adr-0007-tbc-state-machine.md   # TBC calls evaluate_silent() once at BATTLE_INIT (no spurious UI emit)
     added: 2026-07-14
     revised: ""
 
@@ -306,6 +330,7 @@ interfaces:
       once per gain span"
     referenced_by:
       - docs/architecture/adr-0005-stat-pipeline.md
+      - docs/architecture/adr-0007-tbc-state-machine.md   # is_build_valid is TBC's battle-start precondition; the meta-progression subscriber calls apply_battle_result on battle_ended
     added: 2026-07-14
     revised: ""
 
@@ -326,6 +351,29 @@ interfaces:
       directly). Determinism boundary = the resolution unit; within-engine-build only."
     referenced_by:
       - docs/architecture/adr-0006-rng-service.md
+      - docs/architecture/adr-0007-tbc-state-machine.md   # TBC vends next_seed(&"crit") + next_seed(&"ai") ONLY; drop rng is NOT TBC's (Drop resolver owns make_rng(&"drop"))
+    added: 2026-07-14
+    revised: ""
+
+  - contract: battle_orchestration
+    status: active
+    pattern: direct_call       # global autoload API — callers invoke methods on the BattleController singleton
+    producer: turn-based-combat   # BattleController autoload (slot 11)
+    consumers:
+      - overworld-navigation   # ScreenManager.enter_battle path ultimately drives start_battle(payload)
+      - combat-ui              # submit_action(action) to resume a parked player turn; reads is_battle_active
+      - save-load              # is_battle_active() manual-save quiesce gate (ADR-0002 §4)
+    adr: docs/architecture/adr-0007-tbc-state-machine.md
+    signal_signature: "start_battle(encounter_payload: Dictionary) -> bool  # false + emits
+      battle_start_refused(invalid_symbot_ids, offending_parts) when is_build_valid fails for
+      any fielded build — no runtime state, no battle_ended / is_battle_active() -> bool  # true
+      only across BATTLE_INIT..BATTLE_END; the SaveLoad quiesce gate / submit_action(action) ->
+      void  # no-op unless _state == ACTION_PENDING (re-entrancy guard). FSM parks at
+      ACTION_PENDING (no await/loop); enemy turns call EnemyAI.request_move(snapshot) synchronously
+      through the same _resolve() path. Emits combat_battle_end (battle_ended) synchronously,
+      then drops the BattleContext ref."
+    referenced_by:
+      - docs/architecture/adr-0007-tbc-state-machine.md
     added: 2026-07-14
     revised: ""
 
@@ -451,9 +499,11 @@ api_decisions:
       drives catalogs (6× load_catalog) → ContentValidator gate (debug builds) →
       RngService.init() → save-provider registration → autosave CONNECT_DEFERRED
       connections → Main Menu. Every fatal step routes to a BootError screen via
-      LogSink. Autoload roster, fixed order of 10: EventBus, Log, PartDB, EnemyDB,
-      MoveDB, PassiveDB, ConsumableDB, WorldLootDB, RngService, SaveLoad — all thin
-      hosts. Save restore happens at Main Menu Continue, NOT during boot; New Game
+      LogSink. Autoload roster, fixed order of 11: EventBus, Log, PartDB, EnemyDB,
+      MoveDB, PassiveDB, ConsumableDB, WorldLootDB, RngService, SaveLoad, BattleController
+      — all thin hosts (BattleController added by ADR-0007 as slot 11, the combat orchestrator;
+      inert _ready — its FSM is driven only by start_battle(), never by _ready). Save restore
+      happens at Main Menu Continue, NOT during boot; New Game
       runs the same Phase 2 rederive() as 'restore from nothing'."
     not:                       # explicitly banned for boot/initialization
       - "autoload _ready chain as boot driver — ordering invisible to review, black-screen death on failure, untestable"
@@ -467,8 +517,9 @@ api_decisions:
       - docs/architecture/adr-0004-scene-boot.md
       - docs/architecture/adr-0005-stat-pipeline.md   # BalanceConfig load added to boot step 2; Layer-2 owners constructed at boot step 5
       - docs/architecture/adr-0006-rng-service.md     # RngService.init() at boot step 4 (already named in the roster/sequence)
+      - docs/architecture/adr-0007-tbc-state-machine.md   # roster amended 10 -> 11: BattleController appended as slot 11 (inert _ready)
     added: 2026-07-13
-    revised: ""
+    revised: "2026-07-14"  # ADR-0007 roster amendment (fixed order of 10 -> 11; BattleController added)
 
   - purpose: stat_formula_home
     status: active
@@ -478,7 +529,7 @@ api_decisions:
       SynergyEvaluator, CoreProgression), built by BootScreen step 5 and handed to screens
       via ScreenManager injection. All constructors take (cfg: BalanceConfig, log: LogSink)."
     not:                       # explicitly banned as homes for stat/formula logic
-      - "stat/synergy/progression service autoloads — would amend ADR-0004's fixed roster of 10 and defeat the DI/coverage mandate"
+      - "stat/synergy/progression service autoloads — defeat the DI/coverage mandate. CARVE-OUT (ADR-0007): this ban covers FORMULA-OWNER services only. The combat ORCHESTRATOR (BattleController, slot 11) is a permitted stateful autoload — it owns battle FSM lifecycle + is_battle_active, holds NO stat/synergy/progression math, and reaches formulas only through the same injected pure-core functions everyone else uses."
       - "Node-based stat components — no per-entity scene exists; scene-tree lifecycle risk for pure data math"
     adr: docs/architecture/adr-0005-stat-pipeline.md
     reason: "Every formula is GUT-testable against the GDDs' discriminating worked examples
@@ -486,8 +537,9 @@ api_decisions:
       injection is cheap; honors the fixed-roster and thin-host stances without amendment."
     referenced_by:
       - docs/architecture/adr-0005-stat-pipeline.md
+      - docs/architecture/adr-0007-tbc-state-machine.md   # carve-out: combat orchestrator autoload is NOT a formula-owner service
     added: 2026-07-14
-    revised: ""
+    revised: "2026-07-14"  # ADR-0007 carve-out for the combat orchestrator autoload
 
   - purpose: tuning_constants
     status: active
@@ -743,6 +795,47 @@ forbidden_patterns:
       sequence-consumption hazard enemy-ai Rule 3 forbids, and it breaks the pure-function
       guarantee the seeded ACs rely on. (ADR-0006; enemy-ai Rule 3 / AC-EAI-06.)"
     adr: docs/architecture/adr-0006-rng-service.md
+    added: 2026-07-14
+
+  - pattern: battle_state_on_transient_node
+    status: active
+    description: "is_battle_active and the battle FSM (_state) must live on the persistent
+      BattleController autoload (slot 11), NEVER on the Battle scene node or any transient
+      screen. Per-battle mutable state lives in a RefCounted BattleContext the controller
+      owns, not on a Node in the scene tree."
+    why: "The Battle screen is queue_free()d at teardown (ADR-0004 §3); a query against a
+      state flag on that node races the is_queued_for_deletion() window and returns garbage
+      exactly when SaveLoad asks 'may I save?'. The always-queryable authority must outlive
+      any single battle's scene. (ADR-0007; ADR-0002 §4 is_battle_active contract.)"
+    adr: docs/architecture/adr-0007-tbc-state-machine.md
+    added: 2026-07-14
+
+  - pattern: battle_context_leak_past_teardown
+    status: active
+    description: "No code may retain a reference to the BattleContext (or objects that
+      transitively hold it) past the battle_ended emit() cascade. Subscribers read what they
+      need from the self-sufficient payload and via getters DURING the synchronous emit — they
+      never store the context. CombatantSnapshots inside a BattleContext must not back-reference
+      the context (no RefCounted reference cycle)."
+    why: "GDScript has no cycle collector: a retained ref — a UI field, or a snapshot->context
+      back-reference — silently keeps the whole battle alive for the process lifetime, and
+      defeats the single-teardown-moment guarantee. A WeakRef teardown test asserts the context
+      is actually freed, not merely dereferenced. (ADR-0007; ADR-0002 synchronous-teardown.)"
+    adr: docs/architecture/adr-0007-tbc-state-machine.md
+    added: 2026-07-14
+
+  - pattern: coroutine_park_across_action
+    status: active
+    description: "The battle FSM must NOT await across ACTION_PENDING (no `var action = await
+      ...`, no polling loop). It parks by setting _state and returning; a player turn resumes
+      via BattleController.submit_action(action) (guarded no-op unless _state == ACTION_PENDING),
+      an enemy turn via a synchronous EnemyAI.request_move(snapshot) fed through the same
+      _resolve() path."
+    why: "A coroutine suspended across the park holds live state through teardown, the save
+      quiesce point, and re-entrancy — a mid-await save or queue_free is a use-after-free class.
+      The event-driven park keeps every transition synchronous and each stop-point testable.
+      (ADR-0007 Decision §4.)"
+    adr: docs/architecture/adr-0007-tbc-state-machine.md
     added: 2026-07-14
 
 # Example:

@@ -63,7 +63,8 @@
 - **ADR-0004** — Scene Management & Boot — **Accepted 2026-07-13** (persistent Game root + ScreenManager, Overworld keep-alive, explicit BootScreen sequencer, fixed 10-autoload roster)
 - **ADR-0005** — Stat Pipeline & Battle Snapshot — **Accepted 2026-07-14** (pure formula core in `src/core/stats/` + DI RefCounted owners, typed `CombatantSnapshot` frozen at BATTLE_INIT with single SYN-F4 composition point, single `BalanceConfig` .tres; no new autoloads)
 - **ADR-0006** — RNG Service & Determinism — **Accepted 2026-07-14** (thin `RngService` autoload slot 9 vends both `next_seed()->int` and `make_rng()->RandomNumberGenerator` from one root; injection discipline keeps `src/core/` pure; root seed logged not persisted; determinism boundary = the resolution unit, within-engine-build only)
-- Planned next (per `architecture-review-2026-07-13.md`): ADR-0007 TBC state machine (must resolve the `battle_ended`-host seam; sole orchestrator consuming ADR-0006's two vends) → ADR-0008 UI architecture
+- **ADR-0007** — Turn-Based Combat State Machine & Battle Orchestrator — **Proposed 2026-07-14** (new `BattleController` autoload **slot 11** [roster 10→11] hosting `is_battle_active` + an enum-`match` FSM; per-battle `BattleContext` RefCounted, dropped synchronously after the `battle_ended` cascade; event-driven action seam [`submit_action` park + synchronous `EnemyAI.request_move`]; TBC vends `crit`+`ai` only, Drop owns its own vend; resolves the C-3 host seam; amends `boot_initialization` [10→11] + adds `stat_formula_home` carve-out. godot-specialist validated — no blocking issues)
+- Planned next (per `architecture-review-2026-07-13.md`): ADR-0008 UI architecture (consumes ADR-0007's `submit_action` + `is_battle_active` + battle signals) — the last Core→Presentation ADR
 
 ## Engine Specialists
 
