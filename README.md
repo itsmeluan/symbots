@@ -9,7 +9,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/status-in%20design%20(18%20MVP%20GDDs%20approved)-yellow" alt="Status: In Design — 18 MVP GDDs approved">
+  <img src="https://img.shields.io/badge/status-pre--production-brightgreen" alt="Status: Pre-Production">
+  <img src="https://img.shields.io/badge/GDDs-19%20MVP%20approved-blue" alt="19 MVP GDDs approved">
+  <img src="https://img.shields.io/badge/architecture-8%20ADRs%20accepted-blue" alt="8 ADRs accepted">
   <img src="https://img.shields.io/badge/engine-Godot%204.6-478cbf?logo=godotengine&logoColor=white" alt="Godot 4.6">
   <img src="https://img.shields.io/badge/platform-Mac%20%7C%20iOS-lightgrey" alt="Mac | iOS">
 </p>
@@ -48,22 +50,34 @@ Full detail in [`design/gdd/game-concept.md`](design/gdd/game-concept.md).
 
 ## Project Status
 
-Currently in **Design phase** (pre-production). The core build/hunt loop has
-been validated in a throwaway concept prototype ([findings](prototypes/symbot-build-loop-concept/REPORT.md) —
-verdict: **PROCEED**). MVP system design is in its final stretch — **all 18
-authored MVP system GDDs are approved**, each through a multi-agent
-`/design-review`:
+Currently in **Pre-Production** — the Technical Setup → Pre-Production phase gate
+**passed** on 2026-07-15 (all four directors READY), and the MVP scope is now
+[frozen](production/mvp-scope-freeze.md). The core build/hunt loop was validated
+in a throwaway concept prototype ([findings](prototypes/symbot-build-loop-concept/REPORT.md) —
+verdict: **PROCEED**). Design, architecture, and the visual foundation are all in
+place; implementation (`src/`) has not yet begun.
+
+**Design — 19 MVP system GDDs approved**, each through a multi-agent `/design-review`:
 
 | Layer | Systems | Status |
 | ---- | ---- | ---- |
 | **Foundation** | Part Database · Move Database · Passive Database · Consumable Database · Enemy Database · Damage Formula | ✅ Approved (6) |
 | **Gameplay** | Symbot Assembly · Synergy · Turn-Based Combat · Part-Break · Enemy AI · Symbot Core Progression | ✅ Approved (6) |
-| **World / Economy** | Encounter Zone · Enemy Level & Zone Scaling · Zone & World Map · Drop System · Inventory · Exploration Progress | ✅ Approved (6) |
-| **Integration · Presentation** | World Loot, Workshop, Overworld Navigation, Save/Load, Workshop/Combat/Map UIs, Audio, Main Menu | ⏳ Not started |
+| **World / Economy** | Encounter Zone · Enemy Level & Zone Scaling · Zone & World Map · Drop System · Inventory · Exploration Progress · World Loot | ✅ Approved (7) |
+| **Integration · Presentation** | Workshop · Overworld Navigation · Save/Load · Workshop/Combat/Map UIs · Audio · Main Menu | ⏳ Implementation-tier (specced during production) |
 
-Next up: **World Loot System** (#13) — its persistence contract is already
-pre-defined in the Exploration Progress GDD. Full breakdown, dependency map,
-and design order in [`design/gdd/systems-index.md`](design/gdd/systems-index.md).
+**Architecture — complete.** 8 Accepted ADRs (0001–0008) cover Foundation, Core,
+and Presentation tiers; requirements traceability sits at 251/277 with **zero
+Foundation gaps**. See [`docs/architecture/`](docs/architecture/).
+
+**Visual identity — foundation locked.** Art bible Sections 1–4 (Visual Identity
+Statement, Mood & Atmosphere, Shape Language, Color System) are complete; Sections
+5–9 are deferred to production. See [`design/art/art-bible.md`](design/art/art-bible.md).
+
+Next up: the **first Pre-Production sprint** — Foundation/Core epics and stories
+generated from the Accepted ADRs, then a vertical slice to validate the full core
+loop is fun before committing to full Production. Full system breakdown, dependency
+map, and design order in [`design/gdd/systems-index.md`](design/gdd/systems-index.md).
 
 ## Tech Stack
 
