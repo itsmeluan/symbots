@@ -1,12 +1,12 @@
 # Story 002: PartDef schema + enums + PartCatalog
 
 > **Epic**: Part Database
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: TBD (fill at sprint planning)
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-15
 
 ## Context
 
