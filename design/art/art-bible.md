@@ -211,7 +211,258 @@ not be contradicted:
 
 ## 3. Shape Language
 
-[being authored]
+> This is the section the whole identity leans on: Section 1 committed that **silhouette
+> carries function-meaning, not color** (accessibility-load-bearing). This section defines
+> the geometric vocabulary that makes that promise deliverable. Slot taxonomy is the real
+> 8-slot set from `symbot-assembly.md`: CORE, CHASSIS, CHIPSET, ENERGY_CELL, HEAD, ARMS,
+> LEGS, WEAPON.
+
+### 3.1 The Governing Problem: Two Reads, One Silhouette
+
+Every Symbot must deliver two readable signals from its silhouette alone:
+
+- **Read A — Slot identity.** "That region is the HEAD. That is a WEAPON. Those are LEGS."
+  A *structural* read — positional and proportional. The player scanning a bot at 64×64px
+  must locate any slot in under a second.
+- **Read B — Role identity.** "This bot is a striker. That one is a tank." A *gestalt* read
+  — the bot's mass, stance, and geometry as a whole. The player must identify the functional
+  archetype before a move is made.
+
+These could conflict (a striker's wide, forward-angled geometry vs. the HEAD's need to sit
+distinctly on top). §3.2 resolves it; everything after must serve that resolution.
+
+### 3.2 Resolving the Dual Read: Vertical Axis Owns Slot Identity, Overall Mass Owns Role Identity
+
+**The rule**: Slot identity is encoded in **vertical position and proportional height** on the
+bot's vertical axis. Role identity is encoded in **overall mass distribution and stance** —
+wide vs. narrow, forward-heavy vs. rear-heavy, high vs. low center of mass. The two channels
+are **orthogonal** — they cannot compete by construction.
+
+**Vertical axis — slot signature map:**
+
+| Zone | Slots | Canonical geometry |
+|---|---|---|
+| **Upper (head zone)** | HEAD | Compact, vertically distinct, elevated above everything; a horizontal sensor feature (visor band / lens cluster / forward crest). Always the topmost distinct element. |
+| **Mid (torso zone)** | CHASSIS, ARMS, + embedded CHIPSET / ENERGY_CELL / CORE | The widest zone; carries the bulk of mass. CHASSIS is the defining shape; ARMS extend laterally. CHIPSET, ENERGY_CELL, and CORE are internal/embedded — **not** distinct silhouette protrusions. |
+| **Lower (stance zone)** | LEGS | Ground-contacting; the widest or most complex lower element — the bot's foundation. |
+
+**Mass distribution — role signature:** Within those zones, proportional width and forward/aft
+lean encode role. Striker = wide, forward-angled arms + forward-lean. Defense = massive mid that
+compresses head and legs toward the center of gravity. Speed = tapers from wide LEGS to narrow
+HEAD in a swept line. Utility = near-symmetric, balanced, compact.
+
+**The sandwich model:** HEAD always on top, LEGS always on bottom, mid-mass always between them.
+The relative *sizes* of the three layers vary by role; the vertical *order* never varies. The slot
+read is the order; the role read is the proportions.
+
+**Tertiary identifier — the part identity icon (UI contexts only):** Every part also carries a
+small identity icon (a slot glyph, plus element where relevant). This icon appears **only** in UI
+surfaces — the inventory, the Workshop, and the battle target-picker when the player is selecting
+a target/region. It is **never** painted onto the part's in-world or in-battle silhouette: the
+in-play read stays shape-only (clean, per §3.2). The icon is a redundant precision label for
+menu/targeting contexts where exact identification matters (comparing parts, aiming at a specific
+region) — a backup to the silhouette read, never a replacement for it.
+
+**Greyscale test for the dual read** — at 64×64px in greyscale, with no icons, a well-designed
+Symbot must pass both:
+1. A player who has never seen this bot identifies HEAD / MID / LOWER zones by position alone. (Slot read)
+2. Shown three bots (striker, defense, speed), a player sorts them by role from silhouette alone. (Role read)
+
+If either fails, the part needs a silhouette revision before the palette is touched.
+
+### 3.3 Per-Slot Shape Signature
+
+Shape contracts for each slot. An outsourced part artist must produce a silhouette satisfying the
+signature below; the visual-dev team reviews against these descriptors.
+
+**CHASSIS — The Body Architecture**
+- Establishes overall mass distribution; carries the role identity (§3.2 mass read) more than any other slot.
+- Always the single widest element in the mid-zone; its outer edge defines "shoulder width," the reference boundary every other part fits within or around.
+- Archetype variation: defense = wide, convex, blocklike with chamfered corners; speed = narrow, angled flanks, aerodynamic taper; striker = broad shoulder, slight forward-cant, aggressive flat planes.
+- **Panel-line anchor**: all other mid-zone parts continue their panel lines from/to the CHASSIS boundary (Principle 2); lines cross the CHASSIS-to-ARM seam as if the joint were continuous.
+
+**HEAD — The Sensor Crest**
+- Highest distinct element; must have a visual mass break from CHASSIS (neck-gap or narrowing) so the zone transition reads at 64×64px.
+- Always narrower than CHASSIS shoulder width — the wide-chassis/compact-head contrast is the primary upper-zone cue.
+- Built around a dominant **horizontal** sensor feature (visor / lens cluster / forward crest); a head without one fails the slot read. Scanner heads = wider/lower; ranged-support heads = taller with antenna/elevated optic — the horizontal feature is always present, only proportions shift.
+
+**ARMS — The Power Limbs**
+- Extend laterally from CHASSIS; the widest point of a striker or defense build. On speed builds, flush and narrow to preserve the taper.
+- Never extend vertically above the CHASSIS top line — they sit in the mid-zone. Wide arms = the striker "wide at the equator" silhouette cue (Principle 1).
+- May be mirrored (reads balanced/utility) or have a dominant primary arm (a personality signal — encouraged).
+- ARM-to-CHASSIS seam shows a continuation line/matching groove, not a hard discontinuity.
+
+**WEAPON — The Forward Extension**
+- Attaches at the forearm/hand zone; the only slot with a pronounced **forward** extension — it reaches toward the target.
+- The only slot expected to break the CHASSIS silhouette boundary outward (forward/horizontal); all other parts stay within it or sit above/below on the vertical axis.
+- Angle = function cue: melee angles down-and-inward, ranged angles forward-horizontal, area/support aims forward-and-up. At 64×64px the weapon must be the part that "points" — the direction of threat must read.
+
+**LEGS — The Stance Foundation**
+- Ground contact; defines posture and stability. Most complex lower element, but never extends above the CHASSIS base line — owns the lower zone entirely.
+- Archetype variation: heavy = wide, planted, squat, multiple ground contacts; speed = narrow, raised-heel/digitigrade, coiled; standard = symmetric upright bipedal.
+- **Mass-drop rule**: LEGS carry more visual weight at the bottom than the CHASSIS — this "bottom-heavy" quality gives the bot gravity, planted-in-the-world.
+
+**CORE — The Internal Component**
+- CORE is housed **inside** the CHASSIS. It is **not visible in the overworld or in battle** and contributes **nothing** to the bot's in-play silhouette.
+- Visible in only two contexts: the **Workshop** (building/inspecting the bot) and as a **catalog/UI icon**.
+- Visual form: a **sphere with an internal design** — reads like a spherical power core. CORE variants (element, tier) differentiate through the *internal design*, seen only when building.
+- **No glow, no emission, no silhouette contribution** in world or battle.
+- Element-signalling consequence: because CORE is invisible in battle, an enemy's element is **not** read from the model. In-battle element identity is carried entirely by the **UI element badge** on the target picker (`interaction-patterns.md` PG-06) — see Section 4 for the element icon/color system.
+
+**CHIPSET & ENERGY_CELL — Embedded Indicators**
+- Do not produce distinct silhouette protrusions. Visible as small flush indicator panels within the CHASSIS zone.
+- Supporting detail, not hero shapes: at 64×64px they may be below the resolution threshold (correct); at Workshop/catalog scale they read as fine detail rewarding scrutiny.
+- **Constraint**: never designed with protruding geometry that could be confused with ARMS or WEAPON. Flush-to-chassis is the rule.
+
+### 3.4 The Organic-Engineered Tension: What Curves and What Cuts
+
+Section 1's rule — *"every part looks like it grew into its job"* — creates a paradox: machines are
+built, not grown; nature curves, engineering corners. **Resolution: organic contour, engineered seam.**
+
+- **Primary silhouette contour = organic**, in the sense of *functional* form. A defense chassis's
+  curve is the shape a shell takes to distribute impact; a speed leg's taper is the shape a running
+  limb takes. Purposeful biology transposed into metal (the Horizon reference). **Curvature is earned
+  by function, never applied for softness** — a part rounded for no functional reason reads as soft-toy,
+  not bio-mechanical machine.
+- **Interior geometry (panel lines, seams, fasteners) = engineered**: hard-edged, angular, precise.
+  Panel lines straight or gently beveled; seams crisp right-angle or chamfered cuts; fasteners
+  hexagonal/circular/square, never organic. The Gunpla vocabulary — every surface says "manufactured."
+- **The joint/seam is always a hard-edge meeting.** This is what makes Principle 2 achievable: seams
+  are hard-edged lines that can be designed to align and continue across part boundaries.
+
+**The Medabots synthesis**: rounded, soft, creature-like primary bodies covered in panel lines and
+mechanical surface detail — roundness makes them lovable and character-forward, surface engineering
+makes them machines. That is the exact register Symbots must hit.
+
+**Faction differentiation via ratio**: factions (§3.8) may shift the organic↔engineered ratio (one
+squarer/more geometric, one more fluid), but neither axis ever disappears — no faction is purely
+organic (that is fauna) or purely geometric (that is industrial equipment, not a character).
+
+**Greyscale test**: interior panel-line geometry must read as crisp manufactured lines on a contoured
+surface, not surface noise. At 64×64px panel lines may vanish (correct) — at thumbnail only the organic
+silhouette reads, which is the read that matters for character recognition.
+
+### 3.5 Environment Shape Grammar
+
+**Subordination principle** (Section 2: "bots are characters, world is the stage"): the wilderness
+must communicate zone type and danger while never competing with Symbot silhouettes for the eye.
+
+Environment uses **organic, irregular** shapes — rock angular-but-random, vegetation curved-but-layered.
+The language is *naturally complex*, the compositional opposite of the Symbot's *purposefully complex*
+shapes. The key property: the environment is **irregular repetition** of a few base forms; Symbots are
+**intentional composition** of distinct differentiated parts. The eye reads irregular repetition as
+background and intentional composition as subject — figure/ground working for the Symbots.
+
+Three rules for environment vs. Symbot silhouette:
+1. **No hard-vertical background elements at bot height** — same-height verticals cause figure/ground ambiguity; background verticals are clearly shorter or clearly taller.
+2. **Environment = low-frequency contours; Symbots = high-frequency contours** — many articulated segments read as figure, large smooth curves read as ground.
+3. **Background contrast is capped** below the Symbot's mid-tones (reinforces Section 2.2's combat lighting rules — shape and light directives work together).
+
+**Zone differentiation**: encounter zones use different environmental shape vocabularies (crystalline
+rock / trailing vegetation / industrial debris) to vary background *texture* without changing the
+figure/ground relationship with Symbots.
+
+### 3.6 UI Shape Grammar
+
+**Recommendation: a distinct-but-related HUD language — engineered seam without organic contour.**
+
+Rationale (Gestalt similarity): if UI chrome uses the same organic-contour curves as Symbots, the eye
+groups UI *with* the bots instead of letting it recede — directly impairing the combat tactical read
+(Section 2.2 yield rule: legibility wins without negotiation). So UI takes only the **engineered-seam**
+vocabulary — geometric, angular, precise — leaving organic contour exclusively to Symbots and
+environment. Result: **curves = game-world content; hard edges = UI chrome.**
+
+- **Panel shapes**: straight lines, chamfered corners (45° cuts, not rounded), hard right angles. No flowing curves.
+- **Chamfer = the UI's signature** — reads "machined," a visual bridge to the Symbot's engineered-seam interior language without borrowing the bot's organic contour.
+- **Touch targets**: the chamfer is visual only; the ≥44×44pt target (accessibility-requirements.md §2.1) applies to the full bounding box, not the chamfered visual boundary. Confirm with the UI programmer at implementation.
+- **Move panel & break pips** (the most read-critical combat UI): highest contrast against background and bot colors; move buttons = rectilinear chamfered panels; **break pips = small rectilinear indicators, never circular** (circles read too close to bot sensor/joint shapes, creating figure/ground ambiguity).
+- **Part identity icons** (§3.2 tertiary identifier) live in this UI layer — inventory, Workshop, and target-picker only.
+- **Workshop UI** may use slightly softer *ambient framing* (the bench-lamp metaphor, Section 2.6), but interactive elements (buttons, slot frames, stat bars) stay chamfered — softening is decoration, not functional chrome.
+
+**Greyscale test for UI**: in combat at 64×64px bot scale with color removed, a player must identify
+(a) which shapes are bot parts, (b) which are UI, and (c) which UI element is the active move selector.
+If any needs color to answer, the shape grammar has failed. Rectilinear-chamfered UI vs. organic-contour
+bot silhouette is the differentiator.
+
+### 3.7 Hero Shapes vs. Supporting Shapes: The Read Hierarchy
+
+Combat attention hierarchy: **whole bot → active/targeted part → break region**, guided by shape without color.
+
+- **Level 1 — Whole bot (immediate)**: the role silhouette (§3.2 mass read) catches first — large, high-frequency, contoured against the low-frequency background. Under half a second: "striker" or "tank."
+- **Level 2 — Active/targeted part (directed)**: on cursor-rest/target-select, the part steps forward via a **contrast-ring pulse** (Section 2.2) — a luminosity cue, greyscale-readable. This requires each part to have a silhouette boundary clearly differentiable from its neighbours *at the seam*; Principle 2's "panel lines continue across boundaries" is the enabling structure — the seam is the visual address the ring lights up.
+- **Level 3 — Break region (post-event)**: the broken part's silhouette disappears from the outline (Principle 4); the bot's outline is now *wrong* in a specific, locatable way. Parts must be designed with **break-contribution in mind** — a part whose loss doesn't change the outline fails Principle 4. This is a design constraint on the four silhouette-extending slots (HEAD, ARMS, LEGS, WEAPON); CHIPSET/ENERGY_CELL/CORE are exempt (internal/embedded).
+
+**Supporting shapes — what recedes**: background environment (§3.5), UI chrome, and embedded internal
+components (CHIPSET, ENERGY_CELL) must not draw the eye at levels 1–2. Enforced by low-frequency contours
+(environment), rectilinear/chamfered geometry (UI), and flush-embedded treatment (internal slots). A part
+artist must never design an embedded indicator that competes with CHASSIS/ARMS/LEGS/HEAD/WEAPON.
+
+### 3.8 Faction Shape Vocabularies
+
+> **⚠ Placeholder names — DECISION PENDING.** The four names below (Smoothshell, Hardform, Wirework,
+> Fluxform) are **shape-vocabulary labels only**, not final. They must be renamed with the narrative
+> team **before faction art production begins**. (Tracked as a deferred decision.)
+
+**Constraint (Principle 2)**: every faction's parts share the **universal attachment grammar** — joint
+seams align, slot positions are standardized, panel lines can continue across faction boundaries. Faction
+vocabulary is *surface language*, not structural language.
+
+**Extensible scheme** — a faction is defined by four variables: (1) primary contour character, (2)
+panel-line cadence, (3) fastener/detail language, (4) mass-distribution tendency. Any new faction is
+specified by setting these four; the result is coherent and distinct without violating the grammar.
+
+| Faction (placeholder) | Contour | Panel-line cadence | Fasteners | Mass tendency | Reads at 64×64px as |
+|---|---|---|---|---|---|
+| **Smoothshell** | High organic curve; shells/carapaces/seeds; low corner incidence | Sparse, sweeping, following the contour | Absent / flush-countersunk (seamless at a glance) | Centered, compact, "compressed" | Softest, most organic — the "alive" faction |
+| **Hardform** | Geometric, faceted, planar; curves only where function demands | Dense perpendicular grids, hard-ruled straight lines | Prominent hex bolts/rivets, readable at icon scale | Blocky, anchored, heavy | Most armored/industrial |
+| **Wirework** | Skeletal; visible structural members, designed negative space/voids | None — beams, struts, cables; structural not decorative | Cable ties, locking rings, field-assembled look | Light, extended, long/fragile | Lightest, most unusual — voids read instantly |
+| **Fluxform** | Asymmetric, directional, looks mid-motion at rest; mixed organic/angular | Diagonal ~45° slash-directional lines | Quick-release clasps, slide-locks | Forward-weighted, never centered; rear-sweeping legs | Most aggressive — asymmetry/forward-lean reads at thumbnail |
+
+*Wirework attachment note*: because its silhouettes have voids, the seam regions must be **solid
+structural nodes** carrying the universal attachment geometry; the voids sit between nodes, not at them.
+
+**Cross-faction mix rule**: when a build mixes factions, the seam honors the universal attachment grammar
+(matching joint cuts, compatible slot geometry). The contour/panel contrast then reads as *deliberate
+cross-faction engineering* (the player chose this) rather than accidental mismatch — "two materials
+carefully joined," not "broken." At 64×64px a single-faction bot reads coherent; a two-faction bot reads
+as intentional.
+
+### 3.9 Shape Design Checklist for Part Artists
+
+An outsourced artist must verify all of the following before delivery:
+
+**Slot & role read (§3.2–3.3)**
+- [ ] Slot type identifiable from silhouette alone (reads as HEAD, ARMS, WEAPON, etc.).
+- [ ] With same-role parts in other slots, the assembled bot suggests the correct role archetype.
+- [ ] Part stays within its assigned vertical zone (head-top / torso-mid / stance-bottom).
+
+**Organic-engineered tension (§3.4)**
+- [ ] Primary silhouette contour follows functional-organic form (curves serve mechanical purpose).
+- [ ] Surface detailing uses straight, geometric, hard-edged language.
+- [ ] No organic curves in the interior seam/joint geometry (joints always hard-edged).
+
+**Greyscale / thumbnail test (§3.1–3.2)**
+- [ ] Greyscale at 64×64px: slot zone identifiable by position.
+- [ ] Greyscale at 64×64px: role contribution visible (striker mass / defense width / speed taper / utility balance).
+- [ ] Greyscale at 64×64px: WEAPON's direction of "pointing" is readable.
+- [ ] If HEAD: horizontal sensor feature present and visible at 64×64px greyscale.
+
+**Connection grammar (§3.2, §3.8)**
+- [ ] Seam at every slot boundary is a hard-edged, geometrically precise cut.
+- [ ] Panel lines at boundaries run toward the seam, designed to continue across it.
+- [ ] Universal attachment geometry present and unmodified by faction vocabulary.
+
+**Break legibility (§3.7, Principle 4)**
+- [ ] Silhouette-contributing slot (HEAD/ARMS/LEGS/WEAPON)? Then removal must visibly change the bot outline. Flush/internal (CHIPSET/ENERGY_CELL/CORE) → exempt.
+- [ ] Distinct silhouette boundary from adjacent parts (a contrast-ring could light the seam cleanly).
+
+**Part identity icon (§3.2, §3.6)**
+- [ ] Part has a UI identity icon (slot glyph + element where relevant) for inventory / Workshop / target-picker — **not** applied to the in-world/in-battle model.
+
+**Faction vocabulary (§3.8)**
+- [ ] Part belongs to an identified faction (or explicit cross-faction "generic").
+- [ ] Contour, panel-line cadence, and fastener language match the faction's four variables.
+- [ ] Faction-crossing builds: seam region is solid and carries standard attachment geometry (even if the silhouette is otherwise skeletal/void).
 
 ---
 
