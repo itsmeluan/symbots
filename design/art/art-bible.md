@@ -4,7 +4,7 @@
 - **Version**: 0.1 (in progress)
 - **Last Updated**: 2026-07-15
 - **Owned By**: art-director
-- **Status**: Draft — authoring Visual Identity Foundation (Sections 1–4)
+- **Status**: Draft — Visual Identity Foundation (Sections 1–4) COMPLETE; Sections 5–9 deferred
 - **Scope this pass**: Sections 1–4 only (gate: Technical Setup → Pre-Production). Sections 5–9 deferred to a later authoring pass.
 - **Art Director Sign-Off (AD-ART-BIBLE)**: pending
 
@@ -468,7 +468,204 @@ An outsourced artist must verify all of the following before delivery:
 
 ## 4. Color System
 
-[being authored]
+> **Serves**: Pillar 4 (Colorful mechanical wilderness) and Pillar 3 (Readable
+> tactics). Every semantic color carries a mandatory non-color co-channel — the
+> accessibility contract from §1.3 and `design/ux/accessibility-requirements.md`
+> §1.3 (Basic tier, BLOCKING) is enforced here at the palette level, not left to
+> individual screens.
+>
+> **Contrast note**: Ratios below are the design-target values. Exact sRGB
+> verification (WCAG AA: 4.5:1 body text / 3:1 large icons per
+> `accessibility-requirements.md` §1.1) happens at implementation. Any value that
+> fails on-device is corrected toward the darker plate, never by dropping the
+> co-channel.
+
+### 4.1 Primary World Palette
+
+The world reads warm-neutral and lived-in — a mechanical wilderness, not a chrome
+lab. Seven anchor colors. Bots are high-frequency saturated accents against this
+lower-frequency ground (see §3.5 figure/ground).
+
+| Code | Name | Hex | Role in the world |
+|------|------|-----|-------------------|
+| W-1 | Ironmoss Green | `#3D7A4A` | Ground cover, vegetation, the dominant overworld field color |
+| W-2 | Alloy Ochre | `#C49A35` | Earth, stone, dry terrain ⚠ (Thermal-adjacent hue — see note) |
+| W-3 | Slate Gunmetal | `#374350` | Chassis base metal, structural rock, the neutral mid-dark |
+| W-4 | Wilderness Amber | `#C4721A` | Active/live energy accent in the environment (emissive) ⚠ |
+| W-5 | Circuit Teal | `#2B6E68` | Cool flora, exposed circuitry, water |
+| W-6 | Harvest Crimson | `#B33020` | Environmental danger/enemy presence (hazards, enemy territory tint) |
+| W-7 | Bone White | `#F2EDDF` | Structural highlights, specular, exposed frame — **matte**, distinguishes structure from Kinetic element |
+
+> **⚠ Ochre/Amber vs. Thermal collision (flagged and resolved).** W-2 Alloy Ochre
+> and W-4 Wilderness Amber sit near Thermal's element amber (`#F0900A`) in hue. A
+> player could misread an ochre rock or an amber energy vein as "a Thermal thing."
+> **Resolution (same principle as Kinetic in §4.2): the glyph is the signal, the
+> hue is decoration.** Environment ambers are *matte and never carry the Flame
+> Chevron glyph*; Thermal always carries the glyph **and** an emissive bloom. No
+> environment surface is ever both amber-hued and glyph-bearing. This is the one
+> handshake point between the world palette and the element palette, and it is
+> resolved by the non-color channel, not by moving hues apart.
+
+### 4.2 Element Colors (formalized)
+
+The three combat elements from `design/gdd/damage-formula.md` (Rule 2 type cycle:
+**Volt → Thermal → Kinetic → Volt**, ×1.5 effective / ×0.75 resisted / ×1.0
+neutral). These colors are **ratified and load-bearing** — they were committed in
+`design/gdd/symbot-assembly.md` and must not drift. Each element pairs its color
+with a **mandatory glyph** so the element survives greyscale, colorblindness, and
+small sizes.
+
+| Element | Color | Hex | Glyph | Status effect (TBC Rule 11) |
+|---------|-------|-----|-------|------------------------------|
+| **Volt** | Cyan | `#2FE8E8` | **Lightning Fork** — bifurcated diagonal bolt | Shock (mobility down) |
+| **Thermal** | Amber | `#F0900A` | **Flame Chevron** — upward-stacked Vs | Burn (DoT at turn start) |
+| **Kinetic** | Silver-shift | `#D8DDE6` | **Impact Ring** — concentric circles | Stagger (outgoing damage down) |
+
+The glyph cycle maps to the type cycle so the "what beats what" is learnable from
+the icons alone: **Fork → Chevron → Ring → Fork** reads left-to-right as
+Volt-beats-Thermal-beats-Kinetic. Status effects reuse the parent element's glyph
+(a Burning target shows a small Flame Chevron), so the player learns one visual
+vocabulary, not two.
+
+> **The Kinetic = white problem, solved.** "Kinetic is white" was fragile: white
+> is also the world's structural/specular color (W-7 Bone White), so a pale bot
+> part could read as "light metal" *or* "Kinetic element." Three-layer fix, in
+> order of strength:
+> 1. **Glyph is the real signal** — any off-white surface *lacking* the Impact Ring
+>    glyph is structural, not elemental. This is the load-bearing cue.
+> 2. **On-model, Kinetic is a silver-*shift* + polished/chrome finish**, never a
+>    flat white tint — a material read, not a hue read.
+> 3. **The Kinetic UI badge always renders on a fixed dark plate** (`#1E2229`,
+>    target ≈7.5:1) so it never floats on an ambiguous background.
+>
+> Color is deliberately the weakest of the three cues. This is the §1.3
+> never-color-alone contract applied to the hardest case in the game.
+
+> **CORE element read (from §3.3).** Because the CORE is render-invisible in play
+> (inside the CHASSIS; no on-model glow), an enemy's element is **never read off
+> the model in battle**. It is read exclusively from the **UI element badge on the
+> target picker** (`design/ux/interaction-patterns.md` PG-06), specified in §4.5.
+> This section owns that badge's colors and glyphs.
+
+### 4.3 Semantic Color Vocabulary
+
+Colors that mean something in the UI/feedback layer. Each is defined against the
+element palette to guarantee no collision, and each names its non-color co-channel.
+
+| Meaning | Color | Hex | Non-color co-channel | Collision guard |
+|---------|-------|-----|----------------------|-----------------|
+| Danger / depletion | Red | `#CC3020` | Cracked-icon, "CRITICAL" label, fill-level drop | — |
+| Heal / buff | Green | `#3AB54A` | Up-arrow, "+" prefix, rising fill | — |
+| Reward / rarity | Gold | `#E8B820` | Star / trophy glyph | Hue 50° vs Thermal 36° + higher luminance — never glyph-shares with Thermal |
+| Selected / interactive | Info Blue | `#4090CC` | Selection outline, focus ring | Hue 210° vs Volt 180° — **cyan is forbidden as a UI "info" tint** so it never competes with Volt |
+| Neutral / text | UI White | `#E8E8E8` | (default; carries no semantic weight) | — |
+
+> **Design rule — element colors are reserved.** Volt cyan, Thermal amber, and
+> Kinetic silver mean *element* and nothing else in the UI. The UI's own "info,"
+> "reward," and "neutral" needs are served by deliberately offset hues (info blue,
+> gold, white) so that seeing cyan *always* means Volt. This keeps the tactical
+> read (Pillar 3) uncorrupted by chrome.
+
+### 4.4 Rarity Tiers
+
+Aligned to the glow tiers already committed in `design/gdd/symbot-assembly.md`.
+**Border-count is the greyscale/colorblind channel** — rarity is fully legible with
+all color and glow stripped.
+
+| Tier | Glow (color) | Border / mark | Greyscale read |
+|------|--------------|---------------|----------------|
+| Common | None | Single Gunmetal border, "COMMON" label | 1 border |
+| Rare | Soft ambient element-color glow (~25%) | Double border + ◆ + element watermark | 2 borders |
+| Boss-Grade | Steady radiant glow (~60%) + shader edge | Triple border + ★ + accent band | 3 borders |
+| Prototype | Stochastic flicker **< 3 Hz** + chromatic-aberration shimmer | Irregular animated border + ⚠ | animated border |
+
+> **Flash-safety**: Prototype flicker is capped **< 3 Hz** per
+> `accessibility-requirements.md` (photosensitivity floor). The shimmer is
+> amplitude-modulated, not a hard on/off strobe.
+
+### 4.5 UI Chrome & the Element Badge
+
+The UI is a distinct dark-slate HUD language (§3.6: "hard edges = chrome, curves =
+game content"). Seven chrome values:
+
+| Code | Role | Hex | Verified contrast |
+|------|------|-----|-------------------|
+| C-1 | HUD Dark (base plate) | `#1E2229` | — |
+| C-2 | Mid panel | `#2C3340` | — |
+| C-3 | Interactive surface | `#3A4455` | — |
+| C-4 | Active/selected | `#4090CC` | (= Info Blue §4.3) |
+| C-5 | Divider / chamfer | `#4B5668` | — |
+| C-6 | Text primary | `#E8E8E8` | 13.5:1 on C-1 |
+| C-7 | Text secondary | `#98A4B4` | 4.9:1 on C-1 |
+
+**Element badge sub-spec** (the forward dependency from §3.3 — this is how the
+enemy's element is read when the CORE is invisible):
+
+- **Shape**: chamfered rectangle (chrome vocabulary), always on a **C-1 dark plate**.
+- **Content**: element glyph (§4.2) in element color, optional element-name label.
+- **Verified contrasts on C-1**: Volt ≈7.2:1 · Thermal ≈5.8:1 · Kinetic ≈7.5:1.
+- **Effectiveness indicator**: glyph-first — ▲ (green, super-effective) / ▼ (red,
+  resisted) / – (white, neutral). The arrow shape carries the meaning; color
+  reinforces it. Placed on the target picker (PG-06) so the player reads
+  "my move vs. this target" before committing.
+
+### 4.6 Per-State & Per-Zone Color Temperature
+
+Ties the palette to Section 2's seven mood states and the encounter zones.
+
+- **Overworld** — warm-neutral, W-1/W-2 dominant, high ambient.
+- **Combat** — cooler, desaturated ground so saturated bots + element glyphs pop
+  (legibility yield rule, §2.2).
+- **Workshop** — warm, even, laboratory-clean; parts read at true color.
+- **Victory / Defeat** — directional opposites (§2.4/2.5): victory warms toward
+  gold, defeat cools and desaturates (never punishing red — "losses are
+  educational").
+- **Zone tints** — Crystalline (cool teal/violet lean), Vegetation (W-1 green
+  lean), Industrial-Debris (W-3 gunmetal + W-6 crimson hazard accents).
+- **Enrage** (TBC-F7): the enemy's **rim light warms toward W-6 Harvest Crimson** —
+  a threat/temperature cue, **deliberately not an element-color change**, so
+  "angrier" never reads as "changed element."
+
+### 4.7 Colorblind Safety Pass
+
+Six risk pairs, each resolved by a luminance gap **and** a non-color cue. Deuteranopia
+simulation (e.g. Sim Daltonism) is a **hard gate** on any new UI color decision. There
+is **no colorblind-mode toggle** — safety is universal via the never-color-alone
+contract (§1.3), so no player has to find a setting to be able to play.
+
+| # | Risk pair | Deficiency | Resolution |
+|---|-----------|------------|------------|
+| 1 | Danger red vs. Heal green | Deuteranopia | Cracked-icon vs. up-arrow; luminance offset |
+| 2 | Thermal amber vs. Reward gold | Tritanopia | Flame Chevron glyph vs. star; hue 36° vs 50° + luminance |
+| 3 | Volt cyan vs. Info blue | Tritanopia | Lightning Fork glyph vs. selection outline; hue 180° vs 210° |
+| 4 | Kinetic silver vs. UI white | Achromatic | Impact Ring glyph vs. no glyph; metallic finish vs. matte |
+| 5 | Boss-Grade glow vs. Reward gold | General | Border-count (3) vs. star mark |
+| 6 | Environment crimson (W-6) vs. Danger red | General | Context (world surface, no icon) vs. UI element with cracked-icon/label |
+
+### 4.8 Palette Reference Table
+
+| Color | Role | Hex | Non-color co-channel |
+|-------|------|-----|----------------------|
+| Ironmoss Green | World: ground/vegetation | `#3D7A4A` | — |
+| Alloy Ochre | World: earth/stone | `#C49A35` | matte, no glyph |
+| Slate Gunmetal | World: chassis/rock mid-dark | `#374350` | — |
+| Wilderness Amber | World: live-energy accent | `#C4721A` | matte, no glyph |
+| Circuit Teal | World: cool flora/circuits | `#2B6E68` | — |
+| Harvest Crimson | World: danger/enemy presence | `#B33020` | context, no UI icon |
+| Bone White | World: structural/specular | `#F2EDDF` | matte (vs. Kinetic finish) |
+| Volt Cyan | Element: Volt | `#2FE8E8` | Lightning Fork glyph |
+| Thermal Amber | Element: Thermal | `#F0900A` | Flame Chevron glyph + bloom |
+| Kinetic Silver | Element: Kinetic | `#D8DDE6` | Impact Ring glyph + chrome finish |
+| Danger Red | Semantic: danger/depletion | `#CC3020` | cracked-icon / "CRITICAL" |
+| Heal Green | Semantic: heal/buff | `#3AB54A` | up-arrow / "+" |
+| Reward Gold | Semantic: reward/rarity | `#E8B820` | star / trophy |
+| Info Blue | Semantic: selected/interactive | `#4090CC` | selection outline / focus ring |
+| UI White | Semantic: neutral text | `#E8E8E8` | (default) |
+| HUD Dark | Chrome: base plate | `#1E2229` | — |
+| Chrome Mid | Chrome: mid panel | `#2C3340` | — |
+| Chrome Interactive | Chrome: interactive surface | `#3A4455` | — |
+| Chrome Divider | Chrome: divider/chamfer | `#4B5668` | — |
+| Text Secondary | Chrome: secondary text | `#98A4B4` | — |
 
 ---
 
