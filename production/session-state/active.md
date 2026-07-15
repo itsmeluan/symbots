@@ -54,6 +54,15 @@ Task: Break Foundation epics into stories
   next build step — `/dev-story story-002`. Or story the 5 remaining Foundation
   epics. Or `/sprint-plan`.
 
+## Session Extract — /dev-story story-002 (2026-07-15)
+
+- Story: `part-database/story-002` — PartDef schema + enums + PartCatalog. **Implemented** (In Progress → ready for `/code-review` + `/story-done`).
+- Files: `src/core/content/part_def.gd` (first code in `src/`; establishes `src/core/content/`), `src/core/content/part_catalog.gd`, `tests/unit/part_database/part_def_schema_test.gd` (13 tests).
+- Suite GREEN: **20/20 tests, 121 asserts** headless (Godot 4.7 + GUT). AC-3 typed-array rejection uses GUT `[ExpectedError]` trap (invalid append pushes 2 engine errors, element not added).
+- Decisions/deviations: (1) **Option A** — all 5 enum fields default `= 0` (reserved/invalid sentinel per ADR-0003 + AC-2), so a fresh `PartDef` is validator-catchable. (2) **Reserved fields = 6** (`motherboard_slot_type, ram_cost, weight_class, modification_slots, critical_output, firewall`) per TR-part-025 source-of-truth; **GDD Rule 1 + story AC name only 4** → GDD↔TR drift worth a later cleanup. (3) `chassis_archetype` nullability = enum 0 (non-CHASSIS); required-when-CHASSIS deferred to validator Story 009. (4) Element +CRYO/CORROSIVE/DATA, DamageType +DATA/TRUE appended as reserved (append-only).
+- Routing: single implementer `godot-gdscript-specialist` (pure typed-GDScript schema; project file-extension routing owns `.gd`) — no engine-programmer to avoid write races.
+- Next: `/code-review src/core/content/part_def.gd src/core/content/part_catalog.gd` → `/story-done story-002`. Then Story 003 (PartDB loader).
+
 ## Open Threads (not yet captured elsewhere)
 
 - `design/ux/battle.md` still **Draft** → run `/ux-review battle`.

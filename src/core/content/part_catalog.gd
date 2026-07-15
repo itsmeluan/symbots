@@ -1,0 +1,18 @@
+## PartCatalog — the explicit manifest of every PartDef that ships in a build.
+##
+## Authored as a single .tres asset (assets/data/catalogs/part_catalog.tres).
+## An entry not in this array does not exist in the game — the catalog IS the
+## reviewable manifest of what ships. Directory scanning via DirAccess is
+## forbidden in the content load path (ADR-0003: DirAccess returns .remap stubs
+## in exported PCKs, making *.tres scans silently return nothing post-export).
+##
+## To add a new part: create its .tres file under assets/data/parts/, then append
+## the reference here. This makes the diff entry-scoped and always reviewable.
+##
+## This is a frozen shared instance — never mutate entries at runtime (ADR-0003).
+class_name PartCatalog
+extends Resource
+
+## All PartDef entries shipped in this build. Typed so the inspector enforces
+## that only PartDef resources are dragged in.
+@export var entries: Array[PartDef] = []
