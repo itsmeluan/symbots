@@ -446,7 +446,11 @@ func _check_stat_budget(part: PartDef) -> void:
 					{"id": part.id, "value": v, "cap": MAX_SINGLE_STAT})
 	var by_rarity: Dictionary = _cfg.stat_budgets.get(part.slot_type, {})
 	var bounds: Array = by_rarity.get(part.rarity, [])
-	if bounds.is_empty():
+	# A well-formed budget is a [min, max] pair. An unmapped (empty) or malformed
+	# (<2-element) entry is left to the schema families — never index [1] blind, or
+	# a hand-authored 1-element array would abort the CI gate with an engine panic
+	# instead of a clean content_* error (this validator must fail loud, gracefully).
+	if bounds.size() < 2:
 		return
 	if positive_sum < int(bounds[0]) or positive_sum > int(bounds[1]):
 		_error(&"content_stat_budget_out_of_range",
