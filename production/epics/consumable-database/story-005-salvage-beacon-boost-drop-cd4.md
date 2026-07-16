@@ -1,11 +1,11 @@
 # Story 005: Salvage Beacon per-battle flag & BOOST_DROP (CD-4)
 
 > **Epic**: Consumable Database
-> **Status**: Done
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: *(set by /dev-story when implementation begins)*
+> **Last Updated**: 2026-07-16
 
 ## Context
 
@@ -87,3 +87,12 @@ Two pieces: (1) a pure `boost_drop(base_rate, cond_mults, beacon_multiplier)` cl
 
 - Depends on: Story 001 (schema), Story 004 (reuses the use-transaction gate)
 - Unlocks: Drop System erratum (AC-CD-21)
+
+---
+
+## Completion Notes
+**Completed**: 2026-07-16
+**Criteria**: 3/3 passing — AC-CD-04 (CD-4 inject + clamp: `0.25×2.0=0.5`, `0.70×2.0→1.0`, empty product=1.0), AC-CD-11 (second-Beacon rejected, qty unchanged, flag stays true; fresh battle → OK), AC-CD-12 (spent on flee/loss never refunded, applied only on WIN) — all COVERED by `tests/unit/consumable_database/beacon_boost_drop_test.gd` (11 test fns)
+**Deviations**: None. `multiplier` read from `effect_params` (no hardcoded 2.0); CD-4 clamp math lives in `ConsumableEffects.boost_drop`, flag lifecycle in `BeaconState`; `beacon_qty` never incremented (structural no-refund guarantee); `use_beacon` reuses `ConsumableUse.Outcome`/`Reason` (incl. reserved `SECOND_BEACON`). Real seeded drop roll + drop-condition product correctly deferred to Drop erratum AC-CD-21 (fixtures isolate the Beacon factor with `cond_mults=[]`).
+**Test Evidence**: Logic — `tests/unit/consumable_database/beacon_boost_drop_test.gd`; full GUT suite 452/452 green (Godot 4.7 headless)
+**Code Review**: Complete — `/code-review` on `beacon_state.gd` + `consumable_effects.gd` (CD-4) this session, verdict APPROVED. Reviewed inline as godot-gdscript-specialist (subagents unavailable this session-mode).

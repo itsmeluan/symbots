@@ -1,11 +1,11 @@
 # Story 008: MVP content authoring — 8 consumable `.tres` + catalog
 
 > **Epic**: Consumable Database
-> **Status**: Done
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Config/Data
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: *(set by /dev-story when implementation begins)*
+> **Last Updated**: 2026-07-16
 
 ## Context
 
@@ -85,3 +85,12 @@ Every number is in the GDD — do not invent. Effect magnitudes from the Effect-
 
 - Depends on: Story 001 (schema), Story 007 (validator lints this content)
 - Unlocks: Drop System / TBC / Encounter Zone errata (they read this authored content)
+
+---
+
+## Completion Notes
+**Completed**: 2026-07-16
+**Criteria**: 3/3 passing — all 8 `ConsumableDef` `.tres` authored with the exact GDD values (verified field-by-field against the AC table: rarity/effect_type/use_context/target enum ints, effect_params key sets, buy/sell/max_stack); `target` coherent per entry (restoratives `LIVING_TEAM_MEMBER=1`, Beacon `CURRENT_BATTLE=2`, Jammer/Lure `OVERWORLD=3`); one `ConsumableCatalog` `.tres` references all 8 and the Story-007 validator passes with 0 errors, 0 roster/coherence warnings.
+**Deviations**: None. Every magnitude/price/stack-cap traces to GDD Rule 10 + Tuning Knobs — no invented numbers. No `BOSS_GRADE` entry (reserved). All `buy_price > sell_price` strictly. `effect_params` uses the per-type key set matching sibling `.tres`.
+**Test Evidence**: Config/Data — smoke check `production/qa/smoke-consumables-2026-07-16.md` (validator pass + effect_params round-trip spot-check); CI gate `tests/unit/content/consumable_catalog_ci_test.gd` asserts the real catalog validates with 0 errors AND 0 warnings; full GUT suite 452/452 green (Godot 4.7 headless).
+**Code Review**: Complete — content verified field-by-field against the GDD AC table this session (inline as godot-gdscript-specialist; subagents unavailable this session-mode). No code changes during closure.

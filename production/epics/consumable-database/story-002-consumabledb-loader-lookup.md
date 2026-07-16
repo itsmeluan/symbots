@@ -1,11 +1,11 @@
 # Story 002: ConsumableDB loader & null-safe lookup
 
 > **Epic**: Consumable Database
-> **Status**: Done
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: *(set by /dev-story when implementation begins)*
+> **Last Updated**: 2026-07-16
 
 ## Context
 
@@ -87,3 +87,12 @@ Mirror `passive_db.gd`/`move_db.gd`: a thin host that takes a `ConsumableCatalog
 
 - Depends on: Story 001 (schema)
 - Unlocks: Story 003 (formulas fetch defs), Story 004 (use-transaction fetches defs)
+
+---
+
+## Completion Notes
+**Completed**: 2026-07-16
+**Criteria**: 4/4 passing — AC-1 (index + lookup, unknown-id/`&""`→null), AC-2 (null/empty catalog → null, no crash), AC-3 (shared-instance integrity, no mutation path), plus the read-only-host contract — all COVERED by `tests/unit/consumable_database/consumable_db_loader_test.gd` (8 test fns)
+**Deviations**: None. The story's implementation note left duplicate-id handling as "match whichever the existing loaders do" — verified: PassiveDB and MoveDB both treat duplicate-id **and** null-entry as fatal (`return false` + `content_duplicate_id`/`content_null_entry` via log sink). ConsumableDB is byte-for-byte consistent with that sibling pattern.
+**Test Evidence**: Logic — `tests/unit/consumable_database/consumable_db_loader_test.gd`; full GUT suite 452/452 green (Godot 4.7 headless)
+**Code Review**: Complete — `/code-review` this session, verdict APPROVED (no required changes). Reviewed inline as godot-gdscript-specialist (subagents unavailable this session-mode).

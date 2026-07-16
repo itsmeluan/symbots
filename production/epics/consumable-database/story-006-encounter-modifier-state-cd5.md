@@ -1,11 +1,11 @@
 # Story 006: Encounter modifier state & MODIFY_ENCOUNTER_RATE (CD-5)
 
 > **Epic**: Consumable Database
-> **Status**: Done
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: *(set by /dev-story when implementation begins)*
+> **Last Updated**: 2026-07-16
 
 ## Context
 
@@ -93,3 +93,12 @@ Two pieces: (1) a pure `modify_encounter_rate(base_rate, rate_multiplier)` clamp
 
 - Depends on: Story 001 (schema), Story 004 (reuses `WORLD`-context validation)
 - Unlocks: Encounter Zone + Overworld Navigation erratum (AC-CD-22)
+
+---
+
+## Completion Notes
+**Completed**: 2026-07-16
+**Criteria**: 4/4 passing — AC-CD-09 (Jammer `0.015`, steps 20→17), AC-CD-10 (Lure `0.375`/DENSE `0.875` unclamped), AC-CD-13 (second modifier replaces, latest-wins), AC-CD-14 (sole mutator `on_overworld_step`, structural freeze, no-crash inert query) — all COVERED by `tests/unit/consumable_database/encounter_modifier_state_test.gd` (11 test fns)
+**Deviations**: None. `rate_multiplier`/`duration_steps` read from `effect_params`; CD-5 clamp math in `ConsumableEffects.modify_encounter_rate`, counter lifecycle in `EncounterModifierState`; battle-freeze is structural (no battle-turn handler exists); `apply` replaces (no stacking); `on_overworld_step` never underflows. Live per-step wiring + encounter roll + save/reload persistence correctly deferred to Encounter Zone / Overworld Nav erratum AC-CD-22.
+**Test Evidence**: Logic — `tests/unit/consumable_database/encounter_modifier_state_test.gd`; full GUT suite 452/452 green (Godot 4.7 headless)
+**Code Review**: Complete — `/code-review` on `encounter_modifier_state.gd` + `consumable_effects.gd` (CD-5) this session, verdict APPROVED. Reviewed inline as godot-gdscript-specialist (subagents unavailable this session-mode).

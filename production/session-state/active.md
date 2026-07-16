@@ -1,10 +1,27 @@
 # Active Session State
 
 <!-- STATUS -->
-Epic: Foundation Layer — 5/6 epics IMPLEMENTED (Consumable DB done 2026-07-16)
-Feature: Enemy DB (10 stories) — last unimplemented Foundation epic, Ready
-Task: Implement Enemy DB — /story-readiness → /dev-story on enemy story-001
+Epic: Foundation Layer — 5/6 epics IMPLEMENTED; Consumable DB (8/8) FORMALLY CLOSED via per-story gate 2026-07-16
+Feature: NEXT SESSION → gate Passive DB (7 stories, same closure gap) via per-story /code-review + /story-done
+Task: Then implement Enemy DB (10 stories, last unimplemented) → /story-readiness → /dev-story on enemy story-001
 <!-- /STATUS -->
+
+## ⇒ HANDOFF FOR NEXT SESSION (2026-07-16 EOD) — Passive DB per-story gate
+**Do this first in the new session.** Consumable DB is fully closed (8/8, per-story gate). User will now run the SAME gate on **Passive DB (7 stories)** — implemented + green but stories are marked "Passing"/"Done", never through the formal `/code-review` + `/story-done` closure gate (no verdicts / Completion Notes / code-review evidence). Repeat exactly what was just done for Consumable DB:
+1. **Constraint (still binding):** never spawn Agent/Task subagents this session-mode — they die on "1M-context credits" (memory `project-subagent-model-1m-resolved`). Run everything **lean/inline**; review inline "as godot-gdscript-specialist". Review mode = lean (`production/review-mode.txt`) → `/story-done` Phase 5 records code-review, does not spawn.
+2. **Run the full GUT suite ONCE up front** for the baseline (`/Applications/Godot.app/Contents/MacOS/Godot --headless -s addons/gut/gut_cmdln.gd -gconfig=.gutconfig.json`; expect **452/452 green**). Closure only edits markdown, so one run validates all 7 closures — no per-story runs.
+3. **Stories to gate:** `production/epics/passive-database/story-00[1-7]-*.md`. For each: verify ACs vs `docs/architecture/tr-registry.yaml` (TR-pdb-*) + the GDD, then set `Status: Done`→`Complete`, `Last Updated`→date, append `## Completion Notes` (Completed / Criteria X/Y / Deviations / Test Evidence / Code Review). Watch for AC-vs-implementation gaps the green tests can't catch (the Consumable gate found story-007's missing BOSS_GRADE roster check — log any such gap to `docs/tech-debt-register.md` as advisory, don't block).
+4. **Passive DB scope reminder:** the DB owns NO runtime executor — runtime firing ACs (AC-PDB-02, 04–11, 17) are the **TBC Rule 13 executor epic**, correctly deferred; don't flag their absence as a gap.
+5. **After all 7 closed:** update `production/epics/passive-database/EPIC.md` (Stories table Done→Complete + Next Step: gate done not deferred) and confirm `production/epics/index.md` Passive row = Complete.
+6. **Then forward progress:** Enemy DB is the last unimplemented Foundation epic (10 stories, already storied + Ready) → `/story-readiness production/epics/enemy-database/story-001-*.md` → `/dev-story`. Enemy Story 010 (roster authoring) trails until the Part-DB roster backs its loot pools. After Enemy DB → **Foundation COMPLETE** → `/create-epics layer: core`.
+
+## Session Extract — Consumable DB per-story gate CLOSED (8/8) 2026-07-16
+- **Directive:** "review the last epic's stories so we can close them" → user chose **Full per-story gate** (`/code-review` + `/story-done` on each). Consumable DB was implemented-and-green but stories were only marked "Passing"/"Done", never through the formal closure gate (verdicts/Completion Notes/code-review evidence).
+- **All 8 stories now Status: Complete** with `## Completion Notes` appended. Baseline validated by ONE full GUT run (452/452 green, 3467 asserts) — story-done only edits markdown, so one run covers all 8 closures. Reviewed inline as godot-gdscript-specialist (never-1M constraint: zero Agent/Task subagents).
+- **Gate caught a real gap the green tests could not:** Story 007 (validator family) is MISSING the `BOSS_GRADE` roster check that AC-CD-18 + `consumable_def.gd:26` doc-comment both promise — a BOSS_GRADE consumable validates silently. Closed COMPLETE WITH NOTES; logged to `docs/tech-debt-register.md` (ADVISORY — AC-CD-18 is itself an advisory gate). The exact-count-8 roster check was intentionally replaced by non-brittle family-coverage — accepted, NOT debt. story-008 content verified field-by-field vs GDD AC table (all 8 .tres match exactly).
+- **Insight:** green tests confirm the code does what its tests say, never what the story *said* — the review pass vindicated the user's instinct to close through the gate.
+- EPIC.md Stories table Done→Complete; Next Step updated (gate done, not deferred); index.md already Complete.
+- **NEXT (open decision):** Passive DB (7 stories) has the identical gap (marked Passing, never gated) — offered same treatment. OR return to Enemy DB implementation (last unimplemented Foundation epic). Awaiting user choice.
 
 ## Session Extract — Consumable DB epic IMPLEMENTED (8/8 stories) 2026-07-16
 - **Directive:** "implement all the stories from next epic" — Consumable DB (Foundation, 8 Ready stories). Done inline (never-1M constraint honored, zero Agent/Task subagents; continued across a context compaction).

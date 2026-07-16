@@ -1,11 +1,11 @@
 # Story 004: Use-transaction validation, targeting & resource-neutrality
 
 > **Epic**: Consumable Database
-> **Status**: Done
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: *(set by /dev-story when implementation begins)*
+> **Last Updated**: 2026-07-16
 
 ## Context
 
@@ -103,3 +103,13 @@ Build a `ConsumableUse` transaction (pure, DI). Signature roughly: given a `Cons
 
 - Depends on: Story 001 (schema), Story 003 (CD-1/2/3 formulas)
 - Unlocks: Story 005 (Beacon reuses the transaction gate), Story 006 (encounter items reuse context validation), TBC erratum (AC-CD-20)
+
+---
+
+## Completion Notes
+**Completed**: 2026-07-16
+**Criteria**: 6/6 passing — AC-CD-05 (zero-net rejected / partial allowed), AC-CD-06 (downed rejected), AC-CD-07 (wrong-context rejected, BOTH valid either), AC-CD-08 (qty-0 rejected, no underflow), AC-CD-24 (living-target predicate boundary), AC-CD-25 (resource-neutral) — all COVERED by `tests/unit/consumable_database/consumable_use_transaction_test.gd` (11 test fns)
+**Deviations**: None. Gate order (qty→context→living-target→net-effect) matches GDD Rule 3; rejection is pre-action (no decrement, no resource touch); `_restorative_delta` delegates to Story-003 formulas (single source of truth); resource-neutrality enforced by construction (`heat_generated`/`energy_consumed` literal 0 — no move-pipeline path).
+**Advisory (non-blocking, not logged as debt):** result is an untyped Dictionary (consistent with the `ContentValidator {ok,...}` precedent); a typed `ConsumableUseResult` value object would add compile-time key safety for callers — optional future refactor. AC-CD-25's always-0 fields are a construction guarantee, not a regression-catching runtime test (a wrong caller would live in the future TBC erratum, not here).
+**Test Evidence**: Logic — `tests/unit/consumable_database/consumable_use_transaction_test.gd`; full GUT suite 452/452 green (Godot 4.7 headless)
+**Code Review**: Complete — `/code-review` this session, verdict APPROVED (one non-blocking suggestion noted above). Reviewed inline as godot-gdscript-specialist (subagents unavailable this session-mode).

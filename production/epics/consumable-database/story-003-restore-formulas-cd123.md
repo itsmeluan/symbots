@@ -1,11 +1,11 @@
 # Story 003: Restore effect formulas (CD-1 / CD-2 / CD-3)
 
 > **Epic**: Consumable Database
-> **Status**: Done
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: *(set by /dev-story when implementation begins)*
+> **Last Updated**: 2026-07-16
 
 ## Context
 
@@ -89,3 +89,12 @@ Implement three pure functions (e.g. on a `ConsumableEffects` helper in `src/cor
 
 - Depends on: Story 001 (schema — `effect_params.amount`)
 - Unlocks: Story 004 (use-transaction calls these), TBC erratum (AC-CD-20)
+
+---
+
+## Completion Notes
+**Completed**: 2026-07-16
+**Criteria**: 4/4 passing — CD-1 `restore_structure` (min-cap), CD-2 `reduce_heat` (max-0 floor), CD-3 `restore_energy` (runtime-max cap, incl. mandatory case C `130,147,25→147`), and `amount`-from-params (never a literal) — all COVERED by `tests/unit/consumable_database/restore_formulas_test.gd` (7 test fns)
+**Deviations**: None. Pure integer clamps via `mini`/`maxi` (integer-exact, no `floor()`/`ceil()` per TR-cdb-008); caps + magnitudes are parameters (data-driven, ADR-0003). No target mutation — pure math only, as scoped (application is the deferred TBC erratum AC-CD-20).
+**Test Evidence**: Logic — `tests/unit/consumable_database/restore_formulas_test.gd`; full GUT suite 452/452 green (Godot 4.7 headless)
+**Code Review**: Complete — `/code-review` on `src/core/content/consumable_effects.gd` (CD-1/2/3 functions) this session, verdict APPROVED. Reviewed inline as godot-gdscript-specialist (subagents unavailable this session-mode).

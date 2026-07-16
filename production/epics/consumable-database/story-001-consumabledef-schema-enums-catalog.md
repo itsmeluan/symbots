@@ -1,11 +1,11 @@
 # Story 001: ConsumableDef schema, enums & ConsumableCatalog
 
 > **Epic**: Consumable Database
-> **Status**: Done
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: *(set by /dev-story when implementation begins)*
+> **Last Updated**: 2026-07-16
 
 ## Context
 
@@ -93,3 +93,12 @@ Place `consumable_def.gd` and `consumable_catalog.gd` in `src/core/content/` alo
 
 - Depends on: None (Part-DB Story 001 spike already de-risked typed-field `.tres` round-trips)
 - Unlocks: Story 002 (loader), Story 003 (formulas read the schema), Story 007 (validation reads the schema), Story 008 (content authored against the schema)
+
+---
+
+## Completion Notes
+**Completed**: 2026-07-16
+**Criteria**: 3/3 passing (AC-1 schema shape + bare-instance sentinels, AC-2 enum contiguity-from-1, AC-3 `.tres` round-trip incl. `effect_params` dict) — all COVERED by `tests/unit/consumable_database/consumable_def_schema_test.gd`
+**Deviations**: None. ADR-0003 fully compliant (typed Resource, `@export` typed fields, enums explicit-int from 1 with 0=INVALID sentinel, APPEND-ONLY, `StringName` id with `&""` sentinel, one catalog per DB, no `DirAccess` in load path)
+**Test Evidence**: Logic — `tests/unit/consumable_database/consumable_def_schema_test.gd`; full GUT suite 452/452 green (Godot 4.7 headless)
+**Code Review**: Complete — `/code-review` this session, verdict APPROVED (no required changes, no suggestions). Reviewed inline as godot-gdscript-specialist (subagents unavailable this session-mode per 1M-context constraint).
