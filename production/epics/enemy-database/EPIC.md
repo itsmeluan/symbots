@@ -4,7 +4,7 @@
 > **GDD**: design/gdd/enemy-database.md
 > **Architecture Module**: Content DBs (Part/Move/Passive/Consumable/Enemy)
 > **Status**: Ready
-> **Stories**: Not yet created — run `/create-stories enemy-database`
+> **Stories**: 10 stories — see table below
 
 ## Overview
 
@@ -71,6 +71,39 @@ This epic is complete when:
   contract (no behavior change; a pure structural split with the suite green before and after).
   Provenance: `/code-review` 2026-07-16 file-size watch (validator at 1170 lines after Story-011)
 
+## Stories
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | EnemyDef schema, enums & EnemyCatalog | Logic | Ready | ADR-0003 |
+| 002 | EnemyDB loader & null-safe lookup | Logic | Ready | ADR-0003 |
+| 003 | EDB-1 break_hp derivation formula (epsilon load-bearing) | Logic | Ready | ADR-0003 |
+| 004 | ContentValidator enemy schema-presence family | Logic | Ready | ADR-0003 |
+| 005 | ContentValidator enemy stat-block family | Logic | Ready | ADR-0003 |
+| 006 | ContentValidator break-region family (EDB-3 + stored-equals-derived) | Logic | Ready | ADR-0003 |
+| 007 | ContentValidator loot-pool, rarity & boss-grade gating family | Logic | Ready | ADR-0003 |
+| 008 | ContentValidator harvest-decision, TTK & density/spawn warnings | Logic | Ready | ADR-0003 |
+| 009 | ContentValidator ELZS progression-field family | Logic | Ready | ADR-0003 |
+| 010 | MVP enemy roster content authoring | Config/Data | Ready | ADR-0003 |
+
+10 stories total: 9 Logic (7 Content-Val + 1 formula unit + 1 loader), 1 Config/Data.
+
+**Two implementation seams flagged at storying (2026-07-16):**
+- **Referential seams now live**: Part DB + Move DB are **Complete**, so loot referential
+  integrity (Story 007) and skills referential (Story 010) wire against real lookups.
+  `EnemyAI` is an *approved GDD only* — Story 004 builds `ai_profile` referential as an
+  **injected accept-all predicate seam** (non-empty check active now; `has_profile` wired
+  when EnemyAI lands). No false negatives in the interim.
+- **Story 010 is dependency-gated**: authoring needs a richer Part-DB roster so each
+  `loot_pool` references real part ids with matching `break_event` linkage. It is the
+  epic's trailing story — flagged in the story to stop-and-flag rather than invent ids.
+
+**Deferred cross-system integration (NOT storied here — tracked as errata on the owning epics):**
+AC-ED-11 (Encounter Zone spawn-table exclusion of `spawn_enabled == false`), AC-ED-12 (Drop
+System break-event set dedup at award time), AC-ED-16 (TBC null-`core_element` damage path).
+Each is noted in the relevant story's `## Out of Scope`; the DB owns schema + formulas +
+validation + content only.
+
 ## Next Step
 
-Run `/create-stories enemy-database` to break this epic into implementable stories.
+Run `/story-readiness production/epics/enemy-database/story-001-enemydef-schema-enums-catalog.md` → `/dev-story` to begin implementation. Work stories in dependency order (each story's `Depends on:` field gates it); Story 010 trails until the Part-DB roster can back its loot pools.

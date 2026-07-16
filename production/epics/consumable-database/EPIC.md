@@ -4,7 +4,7 @@
 > **GDD**: design/gdd/consumable-database.md
 > **Architecture Module**: Content DBs (Part/Move/Passive/Consumable/Enemy)
 > **Status**: Ready
-> **Stories**: Not yet created — run `/create-stories consumable-database`
+> **Stories**: 8 stories — see table below
 
 ## Overview
 
@@ -54,6 +54,22 @@ This epic is complete when:
   contract (no behavior change; a pure structural split with the suite green before and after).
   Provenance: `/code-review` 2026-07-16 file-size watch (validator at 1170 lines after Story-011)
 
+## Stories
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | ConsumableDef schema, enums & ConsumableCatalog | Logic | Ready | ADR-0003 |
+| 002 | ConsumableDB loader & null-safe lookup | Logic | Ready | ADR-0003 |
+| 003 | Restore effect formulas (CD-1/2/3) | Logic | Ready | ADR-0003 |
+| 004 | Use-transaction validation, targeting & resource-neutrality | Logic | Ready | ADR-0003 |
+| 005 | Salvage Beacon per-battle flag & BOOST_DROP (CD-4) | Logic | Ready | ADR-0003 |
+| 006 | Encounter modifier state & MODIFY_ENCOUNTER_RATE (CD-5) | Logic | Ready | ADR-0003 |
+| 007 | ContentValidator consumable family | Logic | Ready | ADR-0003 |
+| 008 | MVP content authoring — 8 `.tres` + catalog | Config/Data | Ready | ADR-0003 |
+
+**Deferred cross-system integration (NOT storied here — tracked as errata on the owning epics):**
+AC-CD-20 (TBC use-item 4th action / turn-consume), AC-CD-21 (Drop System consumable channel + Beacon end-to-end), AC-CD-22 (Encounter Zone hook + Overworld step countdown), AC-CD-23 (Inventory `max_stack` overflow). Each is noted in the relevant story's `## Out of Scope`; the DB owns schema + formulas + validation + content only (Rule 9 scope boundary).
+
 ## Next Step
 
-Run `/create-stories consumable-database` to break this epic into implementable stories.
+Run `/story-readiness production/epics/consumable-database/story-001-consumabledef-schema-enums-catalog.md` → `/dev-story` to begin implementation. Work stories in dependency order (each story's `Depends on:` field gates it).
