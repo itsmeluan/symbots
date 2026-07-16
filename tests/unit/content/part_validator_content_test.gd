@@ -373,3 +373,298 @@ func test_warnings_route_through_log_sink() -> void:
 	assert_eq((r["warnings"] as Array).size(), _spy.warns.size(),
 		"every returned warning is mirrored through the injected LogSink")
 	assert_gt(_spy.warns.size(), 0, "the empty Common subgroup produced at least one warning")
+
+
+# ---------------------------------------------------------------------------
+# Helpers for Story-011 fixtures
+# ---------------------------------------------------------------------------
+
+## A valid Prototype CHASSIS: skill + passive; structure is focus (highest positive);
+## structure > 29 (Rare CHASSIS floor); positive budget in [40,55]; ≥1 negative.
+## Three ×1.5 drop conditions → product 3.375 ≥ 3.0 ✓.
+func _proto_chassis(id: StringName, structure: int, armor: int, drawback: int) -> PartDef:
+	var p := PartDef.new()
+	p.id = id
+	p.display_name = "Test %s" % id
+	p.slot_type = PartDef.SlotType.CHASSIS
+	p.rarity = PartDef.Rarity.PROTOTYPE
+	p.chassis_archetype = PartDef.ChassisArchetype.BALANCED_FRAME
+	p.manufacturer = &"boltwell"
+	p.element = PartDef.Element.VOLT
+	p.sprite_id = &"spr_%s" % id
+	p.synergy_tags = [&"volt", &"boltwell"]
+	p.active_skill_id = &"skill_%s" % id
+	p.passive_id = &"passive_%s" % id
+	p.stat_bonuses = _sb({&"structure": structure, &"armor": armor, &"mobility": drawback})
+	p.drop_conditions = [
+		{"condition": &"break_chassis", "multiplier": 1.5},
+		{"condition": &"perfect_win", "multiplier": 1.5},
+		{"condition": &"low_hp_victory", "multiplier": 1.5},
+	]
+	p.max_upgrade_tier = 5
+	p.level_requirement = 8
+	return p
+
+
+# ---------------------------------------------------------------------------
+# AC-25 — Prototype focus = slot primary (Story 011)
+# ---------------------------------------------------------------------------
+
+func test_ac_25_proto_chassis_focus_not_primary_errors() -> void:
+	# GDD discriminating fixture (i): structure=10, armor=30 — armor strictly exceeds
+	# structure (the CHASSIS primary), so (a) fails.
+	# Positive sum = 40 ∈ [40,55]; concentration top_two=40/40=1.0 ✓ — isolated to AC-25.
+	var p := _proto_chassis(&"ac25_fail_a", 10, 30, -8)
+	var r := _one(p)
+	assert_false(r["ok"], "Prototype with off-primary focus fails AC-25(a)")
+	assert_true(_logged(&"content_prototype_focus_not_primary"),
+		"content_prototype_focus_not_primary fires when armor > structure on CHASSIS Prototype")
+	assert_false(_logged(&"content_prototype_focus_below_rare_floor"),
+		"focus-floor sub-check is not reached when focus-not-primary already fires")
+
+
+func test_ac_25_proto_chassis_focus_at_rare_floor_errors() -> void:
+	# GDD discriminating fixture (ii): structure=29, armor=11. structure is highest
+	# positive (29 > 11), so (a) passes. But 29 == Rare CHASSIS floor (29) — not strictly
+	# greater — so (b) fails. A >= implementation would wrongly pass this case.
+	var p := _proto_chassis(&"ac25_fail_b", 29, 11, -8)
+	var r := _one(p)
+	assert_false(r["ok"], "Prototype with structure=29 fails AC-25(b) — 29 is not > floor 29")
+	assert_false(_logged(&"content_prototype_focus_not_primary"),
+		"AC-25(a) does not fire — structure is the highest positive stat")
+	assert_true(_logged(&"content_prototype_focus_below_rare_floor"),
+		"content_prototype_focus_below_rare_floor fires when structure == rare floor")
+
+
+func test_ac_25_proto_chassis_focus_above_floor_passes() -> void:
+	# GDD passing fixture: structure=30 > floor 29 and structure > armor. Both sub-checks pass.
+	var p := _proto_chassis(&"ac25_pass", 30, 10, -8)
+	var r := _one(p)
+	assert_true(r["ok"], "Prototype with structure=30 > floor 29 passes AC-25")
+	assert_false(_logged(&"content_prototype_focus_not_primary"), "no focus-not-primary error")
+	assert_false(_logged(&"content_prototype_focus_below_rare_floor"), "no focus-floor error")
+
+
+func test_ac_25_proto_focus_tie_with_secondary_passes() -> void:
+	# Tie is permitted: AC-25(a) says no other stat STRICTLY exceeds primary.
+	# structure=30 == armor=30; primary=structure=30 ≥ armor=30 → no strict exceeder.
+	# Positive sum = 60 > 55 (over budget) — use HEAD Prototype to avoid that clash.
+	var p := _proto_head(&"ac25_tie")
+	# HEAD primary = targeting. Set targeting = cooling = 30 (tie). Both pass (a).
+	# Positive sum = 60 → over HEAD Prototype budget [28,38]; adjust to keep budget clean.
+	p.stat_bonuses = _sb({&"targeting": 20, &"cooling": 20, &"mobility": -8})
+	# positive=40 > HEAD Prototype max 38; adjust: targeting=18, cooling=18.
+	p.stat_bonuses = _sb({&"targeting": 18, &"cooling": 18, &"mobility": -8})
+	# Positive=36 ∈ [28,38] ✓. Concentration: top_two=36/36=1.0 ✓. Rare HEAD floor=17.
+	# targeting=18 > 17 ✓. cooling=18 ties targeting — neither strictly exceeds.
+	var r := _one(p)
+	assert_true(r["ok"], "a tie between primary and secondary passes AC-25(a)")
+	assert_false(_logged(&"content_prototype_focus_not_primary"), "tie is not treated as a strict exceedance")
+
+
+func test_ac_25_non_prototype_skipped() -> void:
+	# AC-25 runs only on PROTOTYPE; a Rare part must not trigger either code.
+	var p := _rare_head(&"ac25_rare")
+	var r := _one(p)
+	assert_false(_logged(&"content_prototype_focus_not_primary"), "AC-25 skipped for Rare")
+	assert_false(_logged(&"content_prototype_focus_below_rare_floor"), "AC-25 skipped for Rare")
+
+
+# ---------------------------------------------------------------------------
+# AC-26 — Prototype drop conditions ≥3 entries + product ≥3.0 (Story 011)
+# ---------------------------------------------------------------------------
+
+func test_ac_26_proto_too_few_drop_conditions_errors() -> void:
+	# GDD boundary: 2 × ×2.0 → product=4.0 ≥ 3.0 (b passes), but size=2 < 3 → (a) fails.
+	var p := _proto_chassis(&"ac26_few", 30, 10, -8)
+	p.drop_conditions = [
+		{"condition": &"break_chassis", "multiplier": 2.0},
+		{"condition": &"perfect_win", "multiplier": 2.0},
+	]
+	var r := _one(p)
+	assert_false(r["ok"], "2 drop conditions fails AC-26(a)")
+	assert_true(_logged(&"content_prototype_too_few_drop_conditions"),
+		"content_prototype_too_few_drop_conditions fires when size < 3")
+	# (b) product=4.0 ≥ 3.0 → should NOT fire.
+	assert_false(_logged(&"content_prototype_drop_product_low"),
+		"product sub-check (b) does not fire when product >= 3.0")
+
+
+func test_ac_26_proto_product_low_errors() -> void:
+	# GDD boundary: ×1.4 × ×1.4 × ×1.5 = 2.94 < 3.0 → (b) fails; size=3 ✓ → (a) passes.
+	var p := _proto_chassis(&"ac26_low_prod", 30, 10, -8)
+	p.drop_conditions = [
+		{"condition": &"break_chassis", "multiplier": 1.4},
+		{"condition": &"perfect_win", "multiplier": 1.4},
+		{"condition": &"low_hp_victory", "multiplier": 1.5},
+	]
+	var r := _one(p)
+	assert_false(r["ok"], "product 2.94 fails AC-26(b)")
+	assert_false(_logged(&"content_prototype_too_few_drop_conditions"),
+		"size sub-check (a) does not fire when size >= 3")
+	assert_true(_logged(&"content_prototype_drop_product_low"),
+		"content_prototype_drop_product_low fires when product < 3.0")
+
+
+func test_ac_26_proto_both_sub_checks_fail_independently() -> void:
+	# 2 conditions (fails a) with product 1.5×1.5=2.25 < 3.0 (fails b).
+	# Both errors must fire — the checks are independent.
+	var p := _proto_chassis(&"ac26_both_fail", 30, 10, -8)
+	p.drop_conditions = [
+		{"condition": &"break_chassis", "multiplier": 1.5},
+		{"condition": &"perfect_win", "multiplier": 1.5},
+	]
+	var r := _one(p)
+	assert_false(r["ok"], "2 conditions with product < 3.0 fails both (a) and (b)")
+	assert_true(_logged(&"content_prototype_too_few_drop_conditions"),
+		"(a) fires independently")
+	assert_true(_logged(&"content_prototype_drop_product_low"),
+		"(b) fires independently even when (a) already fires")
+
+
+func test_ac_26_proto_three_at_1_5_passes() -> void:
+	# GDD boundary: 3 × ×1.5 = 3.375 ≥ 3.0. _proto_chassis already has this fixture.
+	var p := _proto_chassis(&"ac26_pass", 30, 10, -8)
+	var r := _one(p)
+	assert_true(r["ok"], "3 × ×1.5 (product 3.375) passes AC-26")
+	assert_false(_logged(&"content_prototype_too_few_drop_conditions"), "no size error")
+	assert_false(_logged(&"content_prototype_drop_product_low"), "no product error")
+
+
+func test_ac_26_non_prototype_skipped() -> void:
+	# AC-26 runs only on PROTOTYPE; a Boss-grade with 1 condition must not trigger it.
+	var p := _boss_head(&"ac26_boss")  # 1 drop condition, size=1
+	var r := _one(p)
+	assert_false(_logged(&"content_prototype_too_few_drop_conditions"), "AC-26 skipped for Boss-grade")
+	assert_false(_logged(&"content_prototype_drop_product_low"), "AC-26 skipped for Boss-grade")
+
+
+# ---------------------------------------------------------------------------
+# AC-27 — symmetric negative stat floor −55 (Story 011)
+# ---------------------------------------------------------------------------
+
+func test_ac_27_negative_stat_below_minus_55_errors() -> void:
+	# Discriminating fixture from GDD: structure=40, armor=-60. Total positive = 40;
+	# Boss CHASSIS budget [55,68]: 40 < 55, so this would fail the budget check too.
+	# Use a PROTOTYPE CHASSIS with structure=40, armor=-60 to isolate AC-27:
+	# positive=40 ∈ [40,55] ✓; armor=-60 < -55 → AC-27 fires.
+	var p := _proto_chassis(&"ac27_neg_fail", 40, 0, -60)
+	# _proto_chassis sets structure=40, armor=0, mobility=-60. armor=0 is fine (not negative).
+	# mobility=-60 < -55 → AC-27 must fire.
+	var r := _one(p)
+	assert_false(r["ok"], "a stat of -60 violates the -55 floor")
+	assert_true(_logged(&"content_stat_exceeds_single_cap"),
+		"content_stat_exceeds_single_cap fires for a stat below -55")
+
+
+func test_ac_27_positive_sum_within_budget_does_not_mask_negative_floor() -> void:
+	# The positive sum (structure=40) passes the total-budget check for Prototype CHASSIS
+	# [40,55]; the -60 drawback is NOT counted in the positive budget. AC-27 must still
+	# fire on the negative value, separately from the budget check.
+	var p := _proto_chassis(&"ac27_budget_ok_neg_fail", 40, 0, -60)
+	var r := _one(p)
+	assert_true(_logged(&"content_stat_exceeds_single_cap"), "AC-27 fires independently of budget check")
+	assert_false(_logged(&"content_stat_budget_out_of_range"),
+		"positive budget (40) is within [40,55] — budget error does not fire")
+
+
+func test_ac_27_exactly_minus_55_passes() -> void:
+	# The floor is symmetric: -55 is exactly at the boundary and must pass (< -55 fails, = -55 is fine).
+	var p := _proto_chassis(&"ac27_at_floor", 40, 0, -55)
+	var r := _one(p)
+	assert_false(_logged(&"content_stat_exceeds_single_cap"),
+		"-55 is exactly at the floor (not below it) — no single-cap error fires")
+
+
+func test_ac_27_positive_single_cap_still_enforced() -> void:
+	# AC-27 does not break the existing positive cap — a single stat of +56 still errors.
+	var p := _boss_chassis(&"ac27_pos_cap")
+	p.stat_bonuses = _sb({&"structure": 56, &"armor": 5})  # 56 > 55 positive cap
+	var r := _one(p)
+	assert_true(_logged(&"content_stat_exceeds_single_cap"),
+		"existing positive cap (>55) is still enforced after AC-27 addition")
+
+
+# ---------------------------------------------------------------------------
+# Entry-shape validation — upgrade_effects (Story 011)
+# ---------------------------------------------------------------------------
+
+func test_entry_shape_upgrade_effects_missing_tier_errors() -> void:
+	# An entry with no "tier" key at all should fire content_upgrade_entry_malformed.
+	var p := _rare_head(&"ue_no_tier")
+	p.upgrade_effects = [{"effect_type": &"SKILL_ENHANCE"}]  # tier missing
+	var r := _one(p)
+	assert_false(r["ok"], "a upgrade_effects entry without tier is malformed")
+	assert_true(_logged(&"content_upgrade_entry_malformed"),
+		"content_upgrade_entry_malformed fires for missing tier")
+
+
+func test_entry_shape_upgrade_effects_tier_out_of_range_errors() -> void:
+	# tier=0 is below the [1,5] range.
+	var p := _rare_head(&"ue_tier_zero")
+	p.upgrade_effects = [{"tier": 0, "effect_type": &"SKILL_ENHANCE"}]
+	var r := _one(p)
+	assert_false(r["ok"], "tier=0 is outside [1,5] — malformed")
+	assert_true(_logged(&"content_upgrade_entry_malformed"),
+		"content_upgrade_entry_malformed fires for tier=0")
+
+
+func test_entry_shape_upgrade_effects_missing_effect_type_errors() -> void:
+	# An entry with no "effect_type" key.
+	var p := _rare_head(&"ue_no_type")
+	p.upgrade_effects = [{"tier": 2}]  # effect_type missing
+	var r := _one(p)
+	assert_false(r["ok"], "a upgrade_effects entry without effect_type is malformed")
+	assert_true(_logged(&"content_upgrade_entry_malformed"),
+		"content_upgrade_entry_malformed fires for missing effect_type")
+
+
+func test_entry_shape_upgrade_effects_valid_entry_passes() -> void:
+	# A well-formed entry on a skill-capable slot must not trigger any malformed error.
+	var p := _rare_head(&"ue_valid")
+	p.upgrade_effects = [{"tier": 3, "effect_type": &"SKILL_ENHANCE"}]
+	var r := _one(p)
+	assert_false(_logged(&"content_upgrade_entry_malformed"),
+		"a valid upgrade_effects entry does not trigger malformed error")
+
+
+# ---------------------------------------------------------------------------
+# Entry-shape validation — drop_conditions (Story 011)
+# ---------------------------------------------------------------------------
+
+func test_entry_shape_drop_conditions_missing_condition_errors() -> void:
+	# An entry with no "condition" key (or empty StringName).
+	var p := _boss_head(&"dc_no_cond")
+	p.drop_conditions = [{"multiplier": 500.0}]  # condition key missing
+	var r := _one(p)
+	assert_false(r["ok"], "a drop_conditions entry without condition is malformed")
+	assert_true(_logged(&"content_drop_condition_entry_malformed"),
+		"content_drop_condition_entry_malformed fires for missing condition")
+
+
+func test_entry_shape_drop_conditions_multiplier_at_one_errors() -> void:
+	# multiplier = 1.0 violates Rule 9 / Drop Rule 5a (must be > 1.0).
+	var p := _boss_head(&"dc_mult_one")
+	p.drop_conditions = [{"condition": &"break_head", "multiplier": 1.0}]
+	var r := _one(p)
+	assert_false(r["ok"], "multiplier=1.0 violates the >1.0 invariant")
+	assert_true(_logged(&"content_drop_condition_entry_malformed"),
+		"content_drop_condition_entry_malformed fires for multiplier not above 1.0")
+
+
+func test_entry_shape_drop_conditions_missing_multiplier_errors() -> void:
+	# An entry with no "multiplier" key.
+	var p := _boss_head(&"dc_no_mult")
+	p.drop_conditions = [{"condition": &"break_head"}]  # multiplier missing
+	var r := _one(p)
+	assert_false(r["ok"], "a drop_conditions entry without multiplier is malformed")
+	assert_true(_logged(&"content_drop_condition_entry_malformed"),
+		"content_drop_condition_entry_malformed fires for missing multiplier")
+
+
+func test_entry_shape_drop_conditions_valid_entry_passes_shape_check() -> void:
+	# A well-formed Boss-grade entry with condition+multiplier > 1.0 and >= 500 passes all checks.
+	var p := _boss_head(&"dc_valid")  # already has {"condition": &"break_head", "multiplier": 500.0}
+	var r := _one(p)
+	assert_false(_logged(&"content_drop_condition_entry_malformed"),
+		"a valid drop_conditions entry does not trigger malformed error")

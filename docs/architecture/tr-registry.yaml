@@ -1040,10 +1040,10 @@ requirements:
   - id: TR-part-017
     system: part
     gdd: design/gdd/part-database.md
-    requirement: "Prototype gradient: >=3 conditions product >=3.0 reach 15-20% optimal; partial fire partial rate"
+    requirement: "Prototype gradient: >=3 conditions product >=3.0 reach ~16.9-20% optimal; partial fire partial rate (AC-26)"
     domain: Content-Val
     created: 2026-07-13
-    revised: ""
+    revised: "2026-07-16"
     status: active
   - id: TR-part-018
     system: part
@@ -1107,6 +1107,22 @@ requirements:
     requirement: "Reserved Full Vision fields null MVP: motherboard_slot_type, ram_cost, weight_class, modification_slots, critical_output, firewall"
     domain: Data
     created: 2026-07-13
+    revised: ""
+    status: active
+  - id: TR-part-026
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "AC-25: every Prototype focus stat IS its slot primary stat (arms/weapon by damage_type); stat_bonuses[primary] is highest positive (ties ok) and strictly > rare_primary_floor[slot]"
+    domain: Content-Val
+    created: 2026-07-16
+    revised: ""
+    status: active
+  - id: TR-part-027
+    system: part
+    gdd: design/gdd/part-database.md
+    requirement: "AC-27: symmetric negative stat floor — no single stat_bonuses value < -55; guards Formula 2b -55 input floor; same error code as positive cap"
+    domain: Content-Val
+    created: 2026-07-16
     revised: ""
     status: active
 

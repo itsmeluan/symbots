@@ -332,13 +332,15 @@ func _check_upgrade_effects(part: PartDef) -> void:
 				{"id": part.id, "index": index, "reason": &"not_a_dictionary"})
 			index += 1
 			continue
-		var tier_val: Variant = entry.get(&"tier", null)
+		# String key "tier" — matches the existing SKILL_UNLOCK check and authored .tres convention.
+		var tier_val: Variant = entry.get("tier", null)
 		if not (tier_val is int) or int(tier_val) < 1 or int(tier_val) > 5:
 			_error(&"content_upgrade_entry_malformed",
 				{"id": part.id, "index": index, "reason": &"tier_invalid",
 				"value": tier_val})
-		var effect_type_val: Variant = entry.get(&"effect_type", null)
-		var effect_type: StringName = effect_type_val if (effect_type_val is StringName) else &""
+		# String key "effect_type"; value is a StringName per authored content convention.
+		var effect_type_raw: Variant = entry.get("effect_type", null)
+		var effect_type: StringName = effect_type_raw if (effect_type_raw is StringName) else &""
 		if effect_type == &"":
 			_error(&"content_upgrade_entry_malformed",
 				{"id": part.id, "index": index, "reason": &"effect_type_missing_or_empty"})
@@ -346,7 +348,7 @@ func _check_upgrade_effects(part: PartDef) -> void:
 		if effect_type == &"SKILL_UNLOCK":
 			if not SKILL_CAPABLE_SLOTS.has(part.slot_type):
 				_error(&"content_upgrade_skill_unlock_forbidden",
-					{"id": part.id, "slot": part.slot_type, "tier": entry.get(&"tier", 0)})
+					{"id": part.id, "slot": part.slot_type, "tier": entry.get("tier", 0)})
 		index += 1
 
 
@@ -648,10 +650,11 @@ func _check_prototype_drop_conditions(part: PartDef) -> void:
 			{"id": part.id, "size": part.drop_conditions.size(), "min": 3})
 		# Do NOT return — sub-check (b) is independent and must run even when size fails.
 
-	# Sub-check (b) — product of all multipliers >= 3.0.
+	# Sub-check (b) — product of all multipliers >= 3.0. String key matches authored
+	# .tres convention (same as _check_boss_break_condition uses "multiplier").
 	var product := 1.0
 	for entry: Dictionary in part.drop_conditions:
-		var m: float = float(entry.get(&"multiplier", entry.get("multiplier", 1.0)))
+		var m: float = float(entry.get("multiplier", 1.0))
 		product *= m
 	if product < 3.0 - 1e-9:
 		_error(&"content_prototype_drop_product_low",

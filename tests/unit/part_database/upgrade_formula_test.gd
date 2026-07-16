@@ -108,9 +108,13 @@ func test_upgrade_f2b_base_minus_15_reduces_to_zero() -> void:
 		"F2b base=-15 reduces to 0 by +3 and STAYS 0 at +4/+5 (max(0,…) clamp)")
 
 
-func test_upgrade_f2b_base_minus_1_reduces_to_zero() -> void:
-	assert_eq(_f2b_sequence(-1), [-1, -1, -1, 0, 0, 0] as Array[int],
-		"F2b base=-1 holds at -1 through +2, then 0")
+func test_upgrade_f2b_base_minus_3_reduces_to_zero() -> void:
+	# Round 11: replaces the former base=-1 fixture (non-discriminating — a no-reduction
+	# implementation produces the same [-1,-1,-1,0,0,0] sequence). Base=-3 is
+	# discriminating (python-verified 2026-07-16): correct [-3,-2,-1,0,0,0];
+	# no-reduction [-3,-3,-3,0,0,0]; floor-instead-of-ceil [-2,-1,0,1,1,1].
+	assert_eq(_f2b_sequence(-3), [-3, -2, -1, 0, 0, 0] as Array[int],
+		"F2b base=-3 reduces by one magnitude per tier, reaching 0 at +3 (discriminates no-reduction and floor-instead-of-ceil)")
 
 
 func test_upgrade_f2b_clamp_prevents_positive_at_plus_four_five() -> void:
