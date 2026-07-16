@@ -44,6 +44,17 @@ func _wild(id: StringName = &"rust_hound") -> EnemyDef:
 	e.skills       = [&"basic_slash"]
 	e.ai_profile   = &"AGGRESSIVE"
 	e.flavor_text  = "A scrap-built canine found in industrial ruins."
+	# A valid break region + connected loot entry so the enemy is clean in the
+	# break-region dimension (Story 006) — this isolates the stat check under
+	# test. Without it, the "≥1 region" check errors and flips result.ok,
+	# breaking the advisory-warning assertions here.
+	e.break_regions = [_valid_region(60)]
+	# Two loot entries: Story-008 harvest-decision (2 > 1 region) + WILD density
+	# band (2–4). TTK at structure 60 / armor 10 is 3 — inside the WILD-early band.
+	e.loot_pool     = [_valid_loot_entry(), _floor_loot_entry("scrap_gear")]
+	# Story 009: level 1 in range; xp_value = CP-F4 (35 + 1×10) × 1 = 45 (WILD).
+	e.level         = 1
+	e.xp_value      = XpRewardFormula.derive_xp_value(1, EnemyDef.EnemyClass.WILD)
 	return e
 
 
@@ -65,7 +76,43 @@ func _boss(id: StringName = &"forge_king") -> EnemyDef:
 	e.skills       = [&"hammer_strike", &"molten_wave"]
 	e.ai_profile   = &"TACTICAL"
 	e.flavor_text  = "Ruler of the foundry depths."
+	# Valid break region + connected loot so the fixture is clean in the
+	# break-region dimension (see _wild() note).
+	e.break_regions = [_valid_region(364)]
+	# Four loot entries: Story-008 harvest-decision (4 > 1 region) + BOSS density
+	# band (4–6). structure 364 / armor 30 gives both TTK channels 12 — in band.
+	e.loot_pool     = [_valid_loot_entry(),
+		_floor_loot_entry("scrap_gear"), _floor_loot_entry("scrap_wire"),
+		_floor_loot_entry("scrap_core")]
+	# Story 009: level 1 in range; xp_value = CP-F4 (35 + 1×10) × 2 = 90 (BOSS).
+	e.level         = 1
+	e.xp_value      = XpRewardFormula.derive_xp_value(1, EnemyDef.EnemyClass.BOSS)
 	return e
+
+
+## A minimal valid break region for the given structure. `break_hp` is derived
+## through the Story-003 formula (single source of truth), so it always matches
+## what the Story-006 stored-equals-derived check computes. `region_fraction`
+## 0.15 is the GDD lower bound (in range); `break_event` links to _valid_loot_entry().
+func _valid_region(structure: int, rid: String = "core", event: String = "part_broken") -> Dictionary:
+	return {
+		"region_id": rid,
+		"region_fraction": 0.15,
+		"break_hp": BreakHpFormula.derive_break_hp(structure, 0.15),
+		"break_event": event,
+	}
+
+
+## A minimal enabled loot entry whose drop_condition satisfies the break-region
+## connectivity check for the default "part_broken" event.
+func _valid_loot_entry(event: String = "part_broken") -> Dictionary:
+	return {"id": "scrap_plate", "drop_condition": event, "enabled": true}
+
+
+## An always-eligible (floor) loot entry with no break gating — pads pools to the
+## Story-008 density band without adding another break-region dependency.
+func _floor_loot_entry(id: String) -> Dictionary:
+	return {"id": id, "drop_condition": "", "enabled": true}
 
 
 ## Run validation against a list of EnemyDef entries. Provides an empty

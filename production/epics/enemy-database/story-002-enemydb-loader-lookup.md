@@ -1,7 +1,7 @@
 # Story 002: EnemyDB loader & null-safe lookup
 
 > **Epic**: Enemy Database
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14

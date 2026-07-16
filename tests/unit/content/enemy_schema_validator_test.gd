@@ -40,7 +40,43 @@ func _wild(id: StringName = &"rust_hound") -> EnemyDef:
 	e.skills       = [&"basic_slash"]
 	e.ai_profile   = &"AGGRESSIVE"
 	e.flavor_text  = "A scrap-built canine found in industrial ruins."
+	# Valid break region + connected loot so the fixture is clean in the
+	# break-region dimension (Story 006). Isolates the schema checks under test.
+	e.break_regions = [_valid_region(60)]
+	# Two loot entries so the fixture satisfies Story 008: harvest-decision
+	# (loot 2 > regions 1) AND the WILD density band (2–4 pool parts). The first
+	# entry connects the "part_broken" region; the second is an always-eligible
+	# floor drop. TTK at structure 60 / armor 10 is 3 turns — inside the WILD-early
+	# 2–4 band, so no TTK advisory fires.
+	e.loot_pool     = [_valid_loot_entry(), _floor_loot_entry("scrap_gear")]
+	# Story 009 progression fields: level 1 in [1,10]; xp_value = CP-F4 derived
+	# (35 + 1×10) × 1 = 45 for a WILD; completion_bonus_xp 0 (WILD default).
+	e.level         = 1
+	e.xp_value      = XpRewardFormula.derive_xp_value(1, EnemyDef.EnemyClass.WILD)
 	return e
+
+
+## A minimal valid break region; break_hp derived via the Story-003 formula so
+## it always matches the Story-006 stored-equals-derived check. region_fraction
+## 0.15 is the GDD lower bound; break_event links to _valid_loot_entry().
+func _valid_region(structure: int, rid: String = "core", event: String = "part_broken") -> Dictionary:
+	return {
+		"region_id": rid,
+		"region_fraction": 0.15,
+		"break_hp": BreakHpFormula.derive_break_hp(structure, 0.15),
+		"break_event": event,
+	}
+
+
+## A minimal enabled loot entry satisfying break-region connectivity.
+func _valid_loot_entry(event: String = "part_broken") -> Dictionary:
+	return {"id": "scrap_plate", "drop_condition": event, "enabled": true}
+
+
+## An always-eligible (floor) loot entry with no break gating — used to pad pools
+## to the Story-008 density band without adding another break-region dependency.
+func _floor_loot_entry(id: String) -> Dictionary:
+	return {"id": id, "drop_condition": "", "enabled": true}
 
 
 ## Minimal well-formed BOSS enemy.
@@ -50,7 +86,9 @@ func _boss(id: StringName = &"forge_king") -> EnemyDef:
 	e.display_name = "Forge King"
 	e.enemy_class  = EnemyDef.EnemyClass.BOSS
 	e.tier         = 1
-	e.stats        = {"structure": 200, "armor": 40, "resistance": 40,
+	# structure 400 / armor 40 puts both TTK channels at 14 turns — inside the
+	# BOSS 12–18 band, so the Story-008 TTK advisory stays silent on this fixture.
+	e.stats        = {"structure": 400, "armor": 40, "resistance": 40,
 	                  "physical_power": 39, "energy_power": 39,
 	                  "mobility": 20, "processing": 50,
 	                  "cooling": 0, "energy_capacity": 0, "recharge": 0,
@@ -58,6 +96,17 @@ func _boss(id: StringName = &"forge_king") -> EnemyDef:
 	e.skills       = [&"hammer_strike", &"molten_wave"]
 	e.ai_profile   = &"TACTICAL"
 	e.flavor_text  = "Ruler of the foundry depths."
+	e.break_regions = [_valid_region(400)]
+	# Four loot entries: harvest-decision (4 > 1 region) AND the BOSS density band
+	# (4–6 pool parts). First connects the region; the rest are floor drops.
+	e.loot_pool     = [_valid_loot_entry(),
+		_floor_loot_entry("scrap_gear"), _floor_loot_entry("scrap_wire"),
+		_floor_loot_entry("scrap_core")]
+	# Story 009 progression fields: level 1; xp_value = CP-F4 (35 + 1×10) × 2 = 90
+	# for a BOSS; completion_bonus_xp left 0 (a positive bonus is BOSS-legal but not
+	# needed for these schema fixtures — 0 is valid for every class).
+	e.level         = 1
+	e.xp_value      = XpRewardFormula.derive_xp_value(1, EnemyDef.EnemyClass.BOSS)
 	return e
 
 

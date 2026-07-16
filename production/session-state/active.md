@@ -397,3 +397,19 @@ Task: RESUME HERE → /dev-story Story 003 (damage-type routing + full routed co
 - Also this session: consumable-DB post-close cleanups — consumable_def.gd:26 doc-comment "roster error"->"warning"; new test_both_context_item_valid_in_world (AC-CD-07 world half). Consumable dir suite 58/58 green. BOSS_GRADE tech-debt (register:34) stays open.
 - Blockers: None. Note: implementer subagent died once on transient "1M-context credits" error (0 tokens/497ms), succeeded on immediate retry — model:sonnet pin correct.
 - Next: /code-review src/core/content/enemy_def.gd src/core/content/enemy_catalog.gd then /story-done production/epics/enemy-database/story-001-enemydef-schema-enums-catalog.md
+
+## Session Extract — enemy-database Stories 008/009/010 2026-07-16
+- Story 008 (harvest-decision BLOCKING / TTK+density+null-element+boss-spawn ADVISORY): COMPLETE. EDB-2 TTK pure-integer arithmetic (python3-verified zero divergence vs math.ceil, no epsilon). +21 evidence tests. Suite 591→612 green.
+- Story 009 (ELZS level/xp CP-F4/completion_bonus validation, all BLOCKING): COMPLETE. New shared formula home src/core/content/xp_reward_formula.gd (XpRewardFormula.derive_xp_value, pure integer WILD×1/BOSS×2). +11 evidence tests. Suite 612→623 green.
+- Story 010 (MVP roster .tres authoring, Config/Data): **BLOCKED — Part-DB content gate.** Only 2 of 14 parts carry break-gating drop_conditions (scrapjaw_rustcrawler_claw BOSS_GRADE arm_broken [BOSS-only]; wild_overdrive_cannon PROTOTYPE overheat_kill). AC-ED-19 needs ≥2 break-gated parts PER enemy incl. WILD, but only 1 non-boss-grade break-gated part exists → all ~8 WILDs unavoidably warn. 0-warning pass impossible. Flagged per story's own stop-and-flag clause; NO content invented. Status/Blocker written to story-010 file.
+- Stories 001–009 = the delivered Enemy-DB implementation (schema + all validator families, green). 010 gated on Part-DB CONTENT, not Enemy-DB code.
+- AWAITING USER DECISION: (a) accept 010 blocked, treat 001–009 as Enemy-DB deliverable; or (b) co-author minimal break-gated Part set to unblock 010.
+- Deferred batch step: per-story /code-review + /story-done for all 10 enemy stories.
+
+## Session Extract — Enemy-DB batch closure COMPLETE 2026-07-16
+- USER DECISION: "Accept blocked; 001–009 ships." Story 010 stays BLOCKED-on-Part-content.
+- Bookkeeping done: EPIC.md (Status "In Progress — 9/10", story table 001–009 Complete / 010 BLOCKED, Next Step rewritten); epics/index.md (Enemy row + Layer Status + Next Step updated). Foundation *code* complete across all 6 epics.
+- Batch closure done inline (no subagents): fresh GUT 623/623 green; stories 001–006 bumped Ready→Complete (007–009 already Complete); inline code-review PASS, no blocking issues, written to production/qa/enemy-database-code-review-2026-07-16.md. No sprint-status.yaml exists (nothing to update there).
+- Validator surface 1284 lines (content_validator 345 + enemy_validator 939) — under 1500 DoD split trigger.
+- **NEXT (two tracks):** (1) `/create-epics layer: core` to begin Core layer; (2) optional — flesh out break-gated Part-DB roster to later unblock Story 010.
+- Constraint still binding: never spawn Agent/Task subagents (1M-context deaths); python3-scan every new floor/ceil formula.

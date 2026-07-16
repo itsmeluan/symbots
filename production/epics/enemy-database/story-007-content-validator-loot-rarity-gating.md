@@ -1,11 +1,11 @@
 # Story 007: ContentValidator loot-pool, rarity & boss-grade gating family
 
 > **Epic**: Enemy Database
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: *(set by /dev-story when implementation begins)*
+> **Last Updated**: 2026-07-16
 
 ## Context
 
@@ -93,7 +93,7 @@ Add to the Story-004 family: `_check_enemy_loot_referential` (injected Part-DB `
 **Story Type**: Logic
 **Required evidence**: `tests/unit/content/enemy_loot_validator_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/content/enemy_loot_validator_test.gd` (19 tests, all green in the 591-test suite). Boss-grade product boundary python3-verified (`0.001×500.0 == 0.5`, `0.001×499.0 == 0.499` — no epsilon needed). Part-DB seam is DI and inert until injected (proven by `test_loot_family_inert_without_part_lookup`). **Divergence flagged:** AC-ED-19 (min break-gated) implemented per GDD *every-enemy* semantics, not the story's inline BOSS-only note — GDD is source of truth; advisory-only, safe to narrow in review if preferred.
 
 ---
 

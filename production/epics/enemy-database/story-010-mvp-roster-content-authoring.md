@@ -1,11 +1,40 @@
 # Story 010: MVP enemy roster content authoring
 
 > **Epic**: Enemy Database
-> **Status**: Ready
+> **Status**: BLOCKED — Part-DB content gate (see Blocker below)
 > **Layer**: Foundation
 > **Type**: Config/Data
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: *(set by /dev-story when implementation begins)*
+> **Last Updated**: 2026-07-16
+
+## ⛔ Blocker (2026-07-16) — insufficient break-gated Part-DB content
+
+The dependency gate (line 22) has tripped at implementation time. The story's own
+pass condition is **0 errors AND 0 roster/coherence warnings** (AC line 40) with
+**each enemy gating ≥2 parts behind breaks** (AC-ED-19, AC line 38). A full scan of
+the 14 authored parts in `assets/data/parts/` finds only **two** with non-empty
+`drop_conditions`:
+
+| Part | Rarity | Break condition | Legal on |
+|---|---|---|---|
+| `scrapjaw_rustcrawler_claw` | 3 (BOSS_GRADE) | `arm_broken` | BOSS only (boss-grade on WILD → BLOCKING error, Story 007) |
+| `wild_overdrive_cannon` | 4 (PROTOTYPE) | `overheat_kill` | any |
+
+The four authored RARE parts have **empty** `drop_conditions` → they cannot appear
+in any loot pool without an AC-ED-18 (un-gated Rare) warning.
+
+**Consequence:** every WILD needs ≥2 break-gated parts, but only ONE non-boss-grade
+break-gated part exists (`wild_overdrive_cannon`) → all ~8 WILD entries trip
+AC-ED-19. Zero-warning authoring is impossible against the current Part roster.
+Per the story's explicit instruction, we stop and flag rather than invent part ids
+the validator would reject. Stories 001–009 (schema + all validator families) are
+**Complete and green** — this trailing content-authoring story is the only gated
+item, and it is gated on Part-DB *content*, not on any Enemy-DB code.
+
+**Unblock paths:** (a) flesh out the Part-DB roster with break-gated parts across a
+small break-event vocabulary (arm/leg/head/overheat/core), then author this roster;
+or (b) co-author a minimal matching break-gated part set alongside the enemy roster.
+Both cross into Part-DB *content* authoring, which this story lists as Out of Scope.
 
 ## Context
 
@@ -75,7 +104,7 @@ Every number is in the GDD — do not invent. Stats from the roster table; `leve
 **Story Type**: Config/Data
 **Required evidence**: smoke check pass — `production/qa/smoke-enemies-[date].md`
 
-**Status**: [ ] Not yet created
+**Status**: [ ] BLOCKED — cannot produce a 0-warning smoke pass; only 2 break-gated parts exist in the Part DB (see Blocker above). No content authored (would require inventing part ids the validator rejects).
 
 ---
 

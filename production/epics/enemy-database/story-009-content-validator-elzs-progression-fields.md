@@ -1,11 +1,11 @@
 # Story 009: ContentValidator ELZS progression-field family (level / xp_value / completion_bonus_xp)
 
 > **Epic**: Enemy Database
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: *(set by /dev-story when implementation begins)*
+> **Last Updated**: 2026-07-16
 
 ## Context
 
@@ -30,11 +30,11 @@
 
 *From ELZS AC-ELZS-01/02 realized in the Enemy schema, TR-edb-015/016/017:*
 
-- [ ] **level range** (TR-edb-017): `level < 1` or `level > 10` → error naming the id; `1` and `10` boundaries → no error
-- [ ] **xp_value stored == derived** (TR-edb-015, CP-F4): authored `xp_value` ≠ `derive_xp_value(level, role)` → error naming id + both values; a correctly-authored value → no error
-- [ ] **completion_bonus_xp ≥ 0** (TR-edb-016): negative → error
-- [ ] **completion_bonus_xp BOSS-only** (TR-edb-016): a non-BOSS with `completion_bonus_xp > 0` → error; a BOSS with a positive bonus → no error; any enemy with `0` → no error
-- [ ] Error codes: `content_enemy_progression_level_range`, `content_enemy_progression_xp_mismatch`, `content_enemy_progression_bonus_negative`, `content_enemy_progression_bonus_non_boss`
+- [x] **level range** (TR-edb-017): `level < 1` or `level > 10` → error naming the id; `1` and `10` boundaries → no error — `enemy_validator.gd:_check_enemy_level_range`, tests `test_level_*`
+- [x] **xp_value stored == derived** (TR-edb-015, CP-F4): authored `xp_value` ≠ `derive_xp_value(level, role)` → error naming id + both values; a correctly-authored value → no error — `XpRewardFormula.derive_xp_value` (single formula home) + `_check_enemy_xp_value`, tests `test_xp_value_*`
+- [x] **completion_bonus_xp ≥ 0** (TR-edb-016): negative → error — `_check_enemy_completion_bonus`, `test_completion_bonus_negative_errors`
+- [x] **completion_bonus_xp BOSS-only** (TR-edb-016): a non-BOSS with `completion_bonus_xp > 0` → error; a BOSS with a positive bonus → no error; any enemy with `0` → no error — `_check_enemy_completion_bonus`, tests `test_completion_bonus_*`
+- [x] Error codes: `content_enemy_progression_level_range`, `content_enemy_progression_xp_mismatch`, `content_enemy_progression_bonus_negative`, `content_enemy_progression_bonus_non_boss`
 
 ---
 
@@ -81,7 +81,7 @@ Add to the Story-004 family: `_check_enemy_level_range`, `_check_enemy_xp_value`
 **Story Type**: Logic
 **Required evidence**: `tests/unit/content/enemy_progression_validator_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created — 11 test functions, all green. Full suite 623/623 passing (+11 this story; sibling enemy fixtures across schema/stat/break/loot/density tests updated to author CP-F4-valid `level`/`xp_value`). CP-F4 lives in a new shared formula home `src/core/content/xp_reward_formula.gd` (`XpRewardFormula.derive_xp_value`) — the validator imports it (no re-implementation, mirroring EDB-1's `BreakHpFormula`). Pure integer arithmetic (WILD ×1, BOSS ×2) — no epsilon; boundary xp values python3-verified (WILD lvl3=65, BOSS lvl3=130).
 
 ---
 

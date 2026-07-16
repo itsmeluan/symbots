@@ -1,11 +1,11 @@
 # Story 008: ContentValidator harvest-decision, TTK & density/spawn warnings
 
 > **Epic**: Enemy Database
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: *(set by /dev-story when implementation begins)*
+> **Last Updated**: 2026-07-16
 
 ## Context
 
@@ -30,12 +30,12 @@
 
 *From GDD AC-ED-14 (TTK), AC-ED-15 (density + harvest-decision), AC-ED-17 (spawn-disabled BOSS):*
 
-- [ ] **Harvest-decision** (AC-ED-15c/TR-edb-010, BLOCKING): `loot_pool.size() ≤ break_regions.size()` → error naming the id; strictly-greater → no error
-- [ ] **EDB-2 TTK band** (AC-ED-14, ADVISORY): computed dual-channel TTK outside the GDD pacing band → warning naming id + computed TTK (armor and resist channels each evaluated)
-- [ ] **Content density** (AC-ED-15a/b, ADVISORY): pool/region density counts outside the GDD guideline → warning
-- [ ] **Null-element density** (AC-ED-15d/TR-edb-020, ADVISORY): null-`core_element` enemy count over the GDD cap → warning
-- [ ] **Spawn-disabled BOSS** (AC-ED-17, ADVISORY): a BOSS with `spawn_enabled == false` → progression warning
-- [ ] Error code `content_enemy_harvest_decision`; warn codes `content_enemy_ttk_out_of_band`, `content_enemy_density_guideline`, `content_enemy_null_element_density`, `content_enemy_boss_spawn_disabled`
+- [x] **Harvest-decision** (AC-ED-15c/TR-edb-010, BLOCKING): `loot_pool.size() ≤ break_regions.size()` → error naming the id; strictly-greater → no error — `enemy_validator.gd:762`, tests `test_harvest_*`
+- [x] **EDB-2 TTK band** (AC-ED-14, ADVISORY): computed dual-channel TTK outside the GDD pacing band → warning naming id + computed TTK (armor and resist channels each evaluated) — `enemy_validator.gd:787`, tests `test_ttk_*`
+- [x] **Content density** (AC-ED-15a/b, ADVISORY): pool/region density counts outside the GDD guideline → warning — `enemy_validator.gd:839`, tests `test_density_*`
+- [x] **Null-element density** (AC-ED-15d/TR-edb-020, ADVISORY): null-`core_element` enemy count over the GDD cap → warning — `enemy_validator.gd:874`, tests `test_null_element_*`
+- [x] **Spawn-disabled BOSS** (AC-ED-17, ADVISORY): a BOSS with `spawn_enabled == false` → progression warning — `enemy_validator.gd:862`, tests `test_spawn_*`
+- [x] Error code `content_enemy_harvest_decision`; warn codes `content_enemy_ttk_out_of_band`, `content_enemy_density_guideline`, `content_enemy_null_element_density`, `content_enemy_boss_spawn_disabled`
 
 ---
 
@@ -85,7 +85,7 @@ Add to the Story-004 family: `_check_enemy_harvest_decision` (the sole BLOCKING 
 **Story Type**: Logic
 **Required evidence**: `tests/unit/content/enemy_density_validator_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created — 21 test functions, all green. Full suite 612/612 passing (was 591; +21 this story, sibling fixtures repaired for the new BLOCKING harvest-decision + WILD/BOSS density bands). TTK integer-ceil arithmetic python3-verified (zero divergences vs `math.ceil`; reproduces both GDD worked fixtures dmg 48→TTK 9, dmg 24→TTK 17).
 
 ---
 

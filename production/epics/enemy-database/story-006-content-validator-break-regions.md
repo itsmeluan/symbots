@@ -1,7 +1,7 @@
 # Story 006: ContentValidator break-region family (EDB-3 + stored-equals-derived)
 
 > **Epic**: Enemy Database
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14

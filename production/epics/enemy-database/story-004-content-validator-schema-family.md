@@ -1,7 +1,7 @@
 # Story 004: ContentValidator enemy schema-presence family
 
 > **Epic**: Enemy Database
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14

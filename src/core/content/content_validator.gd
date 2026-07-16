@@ -188,6 +188,12 @@ var _passive_ids: Dictionary = {}
 ## dependency on a not-yet-existing class.
 var _ai_profile_checker: Callable = func(_p: StringName) -> bool: return true
 
+## Part-DB referential seam (Enemy-DB Story 007). Signature: `(id: StringName) -> PartDef`
+## (`null` for an unresolved id). Default is an INVALID Callable — the enemy loot family
+## stays inert until injected, so fixtures that mount no Part DB stay green. Inject via
+## [method set_part_lookup]. Kept DI (no hard PartDatabase singleton) per Control Manifest.
+var _part_lookup: Callable = Callable()
+
 # ---------------------------------------------------------------------------
 # Composed per-DB helper instances (lazy-allocated once, reused across calls).
 # ---------------------------------------------------------------------------
@@ -267,6 +273,15 @@ func set_ai_profile_checker(checker: Callable) -> void:
 		_enemy_validator.set_ai_profile_checker(checker)
 
 
+## Wire the Part-DB referential seam (Enemy-DB Story 007) so tests (and eventually the
+## real boot) can inject a live `(StringName) -> PartDef` lookup. Call before `validate()`.
+func set_part_lookup(lookup: Callable) -> void:
+	_part_lookup = lookup
+	# Forward to enemy validator if already allocated.
+	if _enemy_validator != null:
+		_enemy_validator.set_part_lookup(lookup)
+
+
 # ---------------------------------------------------------------------------
 # Helper factory — allocate once, wire shared state each call
 # ---------------------------------------------------------------------------
@@ -323,6 +338,7 @@ func _get_enemy_validator() -> RefCounted:
 	if _enemy_validator == null:
 		_enemy_validator = load("res://src/core/content/validators/enemy_validator.gd").new()
 		_enemy_validator.set_ai_profile_checker(_ai_profile_checker)
+		_enemy_validator.set_part_lookup(_part_lookup)
 	_enemy_validator._errors = _errors
 	_enemy_validator._warnings = _warnings
 	_enemy_validator._log = _log

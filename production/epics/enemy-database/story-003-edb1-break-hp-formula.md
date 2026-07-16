@@ -1,7 +1,7 @@
 # Story 003: EDB-1 break_hp derivation formula (epsilon LOAD-BEARING)
 
 > **Epic**: Enemy Database
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
