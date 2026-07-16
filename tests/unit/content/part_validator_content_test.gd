@@ -71,12 +71,18 @@ func _boss_head(id: StringName) -> PartDef:
 
 
 ## A valid Prototype HEAD: skill + passive; ≥1 negative drawback; positive budget
-## [28,38] concentrated ≥70% in 1–2 stats.
+## [28,38] concentrated ≥70% in 1–2 stats; primary (targeting=30) > Rare HEAD
+## floor (17); 3 drop conditions with product 3.375 ≥ 3.0 (AC-26).
 func _proto_head(id: StringName) -> PartDef:
 	var p := _rare_head(id)
 	p.rarity = PartDef.Rarity.PROTOTYPE
 	p.passive_id = &"passive_%s" % id
 	p.stat_bonuses = _sb({&"targeting": 30, &"cooling": 5, &"mobility": -8})  # +35, ratio 1.0
+	p.drop_conditions = [
+		{"condition": &"break_head", "multiplier": 1.5},
+		{"condition": &"perfect_win", "multiplier": 1.5},
+		{"condition": &"low_hp_victory", "multiplier": 1.5},
+	]
 	return p
 
 
@@ -391,6 +397,7 @@ func _proto_chassis(id: StringName, structure: int, armor: int, drawback: int) -
 	p.chassis_archetype = PartDef.ChassisArchetype.BALANCED_FRAME
 	p.manufacturer = &"boltwell"
 	p.element = PartDef.Element.VOLT
+	p.damage_type = PartDef.DamageType.ENERGY  # required when active_skill_id is set
 	p.sprite_id = &"spr_%s" % id
 	p.synergy_tags = [&"volt", &"boltwell"]
 	p.active_skill_id = &"skill_%s" % id

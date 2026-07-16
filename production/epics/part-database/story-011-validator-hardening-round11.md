@@ -1,7 +1,7 @@
 # Story 011: Validator hardening — Round 10/11 review-debt closure (AC-25/26/27 + fixture sync)
 
 > **Epic**: Part Database
-> **Status**: Ready
+> **Status**: Implemented (2026-07-16, godot-gdscript-specialist) — suite 293/293 green (+23 tests); pending `/code-review` + `/story-done`
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: TBD (fill at sprint planning)

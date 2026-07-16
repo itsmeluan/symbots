@@ -314,3 +314,11 @@ Task: RESUME HERE → /dev-story Story 003 (damage-type routing + full routed co
 - Tracking updated: part-database.md header, systems-index.md row 1, review-log Round 11 entry.
 - Production debt CLOSED as story: **production/epics/part-database/story-011-validator-hardening-round11.md** (Ready) — AC-25/26 validators missing, AC-27 negative bound missing, AC-08(b) test fixture sync, Story-009 entry-shape validators, TR-registry re-sync. Part-DB epic Reopened (index.md + EPIC.md updated).
 - Next: implement story-011 (`/create-stories` not needed — story exists; run implementation flow), or continue Foundation epics (Passive/Consumable/Enemy DBs unstoried).
+
+## Session Extract — story-011 implementation 2026-07-16
+- godot-gdscript-specialist implemented story-011 (validator hardening): AC-25 `_check_prototype_focus_floor`, AC-26 `_check_prototype_drop_conditions`, AC-27 negative floor in `_check_stat_budget`, entry-shape validators (`drop_conditions` + `upgrade_effects`), AC-08(b) fixture base −1 → −3, TR-registry synced (TR-part-017 band text; new TR-part-026/027).
+- Suite: 270 → **293/293 green** (+23 tests: AC-25 ×5, AC-26 ×5, AC-27 ×4, entry-shape ×8, F2b −3 swap).
+- Content pass: sole authored Prototype `wild_overdrive_cannon.tres` complies with amended AC-25/26 — no content fixes.
+- Key-convention ruling: String keys for untyped entry dicts (matching `_check_boss_break_condition` + authored .tres); StringName only for `stat_bonuses`/error codes.
+- Story status: Implemented — pending /code-review + /story-done. Epic index/EPIC.md still say "Reopened/Ready" — update at story-done.
+- Next: /code-review src/core/content/content_validator.gd → /story-done production/epics/part-database/story-011-validator-hardening-round11.md
