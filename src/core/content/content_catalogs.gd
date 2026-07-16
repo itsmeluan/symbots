@@ -35,6 +35,13 @@ var passives: PassiveCatalog
 ## fixtures stay green. Same gating discipline as [member moves] / [member passives].
 var consumables: ConsumableCatalog
 
+## The Enemy Database manifest (Enemy-DB Story 004). Null in a validation that mounts
+## no enemy catalog — the Enemy schema family runs ONLY when this is provided, so all
+## prior-story fixtures (Part/Move/Passive/Consumable-only) stay green without any
+## modification. Same gating discipline as [member consumables].
+## APPEND-ONLY: this field is the last slot in the aggregate — never reorder.
+var enemies: EnemyCatalog
+
 ## The single balance tuning Resource (ADR-0005). The content-composition families
 ## (Story 008: stat budgets, primary caps/floors) validate against its tables, so
 ## they only run when it is provided; the schema families (Story 007) do not need
