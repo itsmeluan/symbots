@@ -388,3 +388,12 @@ Task: RESUME HERE → /dev-story Story 003 (damage-type routing + full routed co
 - Naming to mirror: `PassiveDef`/`PassiveCatalog`/`PassiveDB` (matches `MoveDef`/`MoveCatalog`/`MoveDB`). Builder to add: `ContentCatalogs.passive_ids_from(catalog)` mirroring `move_ids_from` (content_catalogs.gd:58). Append `passives: PassiveCatalog` slot to ContentCatalogs (APPEND-ONLY).
 - **NEXT SESSION:** `/story-readiness production/epics/passive-database/story-001-passivedef-schema-enums-catalog.md` → `/dev-story`. Stories 002–007 unlock in dependency order. (Remaining unstoried Foundation: Consumable, Enemy DBs.)
 - **Constraint still binding:** never spawn Agent/Task subagents this session-mode — they die on "1M-context credits". Run everything lean/inline. See memory `project-subagent-model-1m-resolved`.
+
+## Session Extract — /dev-story enemy-database story-001 2026-07-16
+- Story: production/epics/enemy-database/story-001-enemydef-schema-enums-catalog.md — EnemyDef schema, enums & EnemyCatalog
+- Files changed: src/core/content/enemy_def.gd (new, class_name EnemyDef, EnemyClass{INVALID=0,WILD=1,BOSS=2}, 15 @export fields), src/core/content/enemy_catalog.gd (new, EnemyCatalog.entries: Array[EnemyDef]), tests/unit/enemy_database/enemy_def_schema_test.gd (new, 20 test fns)
+- Test written: tests/unit/enemy_database/enemy_def_schema_test.gd — 20/20 green, 100 asserts (import pass confirmed EnemyDef+EnemyCatalog registered; count rose 0->20, no silent-skip)
+- KEY: AC-3 HIGH-RISK nested Array[Dictionary] + StringName-key .tres round-trip PASSED on Godot 4.7.stable.official — ADR-0003 round-trip gate clears for the Enemy DB epic; no escalation needed.
+- Also this session: consumable-DB post-close cleanups — consumable_def.gd:26 doc-comment "roster error"->"warning"; new test_both_context_item_valid_in_world (AC-CD-07 world half). Consumable dir suite 58/58 green. BOSS_GRADE tech-debt (register:34) stays open.
+- Blockers: None. Note: implementer subagent died once on transient "1M-context credits" error (0 tokens/497ms), succeeded on immediate retry — model:sonnet pin correct.
+- Next: /code-review src/core/content/enemy_def.gd src/core/content/enemy_catalog.gd then /story-done production/epics/enemy-database/story-001-enemydef-schema-enums-catalog.md
