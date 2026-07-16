@@ -162,3 +162,15 @@ Task: Part Database EPIC COMPLETE (all 10 stories Done) — next: pick the next 
 - New error codes: `content_effect_capacity_exceeded`, `content_effect_missing`. Retired: `content_active_skill_missing`, `content_passive_forbidden`, `content_passive_missing`. Kept: `content_active_skill_forbidden`.
 - Evidence: **158/158 suite green, 416 asserts** (Godot 4.7). All 14 shipped parts still valid; CI content gate green. Tech-debt item marked RESOLVED; memory `project-rule2-rule8-contradiction` updated to RESOLVED.
 - Rare armor/chipset/legs frames are now authorable. **Skill flavor (attack vs buff/debuff) is authoring-guideline only** — enforceable once Move DB carries a skill category. Not yet run: `/design-review` on the revised GDD.
+
+<!-- STATUS -->
+Epic: Part Database (CLOSED — 10/10 stories Done)
+Feature: Rule 2↔Rule 8 reconciliation — RESOLVED 2026-07-15
+Task: RESUME HERE → run /design-review design/gdd/part-database.md (revised Rule 2 / Rule 8 / AC-01 not yet reviewed)
+<!-- /STATUS -->
+
+## ⏭️ NEXT SESSION — RESUME HERE (as of 2026-07-15, end of Rule2↔Rule8 work)
+- **State: DONE + green + committed.** Rule 2↔Rule 8 contradiction RESOLVED (effect-capacity model). Suite 158/158, all 14 parts valid. Tech-debt marked RESOLVED; memory `project-rule2-rule8-contradiction` = RESOLVED. See the "Rule 2↔Rule 8 RESOLVED" extract above for the full model + file list.
+- **THE ONE PENDING ACTION: run `/design-review design/gdd/part-database.md`** — the revised Rule 2 (slot table + basic-attack note), Rule 8 (effect-capacity rewrite), and AC-01 (new nullability clause) have NOT been through design-review yet. That's exactly what the user is about to /clear and do.
+- If design-review flags issues: the enforcement lives in `src/core/content/content_validator.gd` `_check_nullability` (consts `SKILL_CAPABLE_SLOTS` / `EFFECT_CEILING` / `EFFECT_FLOOR`); tests in `part_validator_schema_test.gd` (unit) + `part_referential_integrity_test.gd` (integration). Re-run: `godot --headless -s addons/gut/gut_cmdln.gd -gconfig=.gutconfig.json`.
+- After review passes: no more Part-DB work. Next Foundation epics unstoried — Move / Passive / Consumable / Enemy / Damage-Formula DBs. (Skill-flavor attack-vs-buff split becomes validator-enforceable once the Move DB carries a skill category — noted as forward work.)
