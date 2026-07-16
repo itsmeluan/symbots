@@ -20,7 +20,10 @@
 ## integrity family (Part→Move / Part→Passive resolution, AC-13) plus the
 ## `level_requirement` rarity-floor and `level_growth` CORE-only structural checks
 ## (TR-part-011/012); that family runs only when a Move/Passive resolution index is
-## mounted via [member ContentCatalogs.references_mounted]. `&""` (empty StringName)
+## mounted via [member ContentCatalogs.references_mounted]. Story 011 closes the
+## Round-10/11 review debt: `_check_prototype_focus_floor` (AC-25), `_check_prototype_drop_conditions`
+## (AC-26), the AC-27 symmetric negative bound on `_check_stat_budget`, and entry-shape
+## validation for `upgrade_effects`/`drop_conditions` arrays. `&""` (empty StringName)
 ## is the null-equivalent (ADR-0003).
 ##
 ## Move-DB Story 004 EXTENDS this same validator with the Move schema family
@@ -249,6 +252,7 @@ func _validate_part(part: PartDef) -> void:
 	_check_required_identity(part)
 	_check_nullability(part)
 	_check_upgrade_effects(part)
+	_check_drop_condition_entries(part)
 	_check_slot_type(part)
 	_check_enums(part)
 	_check_recharge(part)
@@ -264,6 +268,8 @@ func _validate_part(part: PartDef) -> void:
 		_check_stat_budget(part)
 		_check_prototype_concentration(part)
 		_check_primary_stat_bounds(part)
+		_check_prototype_focus_floor(part)
+		_check_prototype_drop_conditions(part)
 	# Referential + level-field family (Story 009) — only when a Move/Passive
 	# resolution index is mounted; prior-story fixtures mount none and skip it.
 	if _refs_mounted:
@@ -313,13 +319,35 @@ func _check_nullability(part: PartDef) -> void:
 ## SKILL_UNLOCK on a CORE / ENERGY_CELL part would inject an active skill at that
 ## tier, bypassing the static `active_skill_id` gate in `_check_nullability`.
 ## SKILL_ENHANCE (which tunes an existing passive) stays legal on support slots.
+## Entry-shape validation (Story 011 — Story 009 promised): each entry must carry
+## `tier` (int in [1,5]), `effect_type` (StringName, non-empty), and — when
+## SKILL_UNLOCK — a non-empty `skill_id` (StringName). A malformed entry emits
+## a clean `content_*` error and never panics.
 func _check_upgrade_effects(part: PartDef) -> void:
-	if SKILL_CAPABLE_SLOTS.has(part.slot_type):
-		return
-	for effect in part.upgrade_effects:
-		if effect.get("effect_type", &"") == &"SKILL_UNLOCK":
-			_error(&"content_upgrade_skill_unlock_forbidden",
-				{"id": part.id, "slot": part.slot_type, "tier": effect.get("tier", 0)})
+	var index := 0
+	for entry in part.upgrade_effects:
+		# --- Entry shape ---
+		if not (entry is Dictionary):
+			_error(&"content_upgrade_entry_malformed",
+				{"id": part.id, "index": index, "reason": &"not_a_dictionary"})
+			index += 1
+			continue
+		var tier_val: Variant = entry.get(&"tier", null)
+		if not (tier_val is int) or int(tier_val) < 1 or int(tier_val) > 5:
+			_error(&"content_upgrade_entry_malformed",
+				{"id": part.id, "index": index, "reason": &"tier_invalid",
+				"value": tier_val})
+		var effect_type_val: Variant = entry.get(&"effect_type", null)
+		var effect_type: StringName = effect_type_val if (effect_type_val is StringName) else &""
+		if effect_type == &"":
+			_error(&"content_upgrade_entry_malformed",
+				{"id": part.id, "index": index, "reason": &"effect_type_missing_or_empty"})
+		# --- SKILL_UNLOCK gate (support-slot rule) ---
+		if effect_type == &"SKILL_UNLOCK":
+			if not SKILL_CAPABLE_SLOTS.has(part.slot_type):
+				_error(&"content_upgrade_skill_unlock_forbidden",
+					{"id": part.id, "slot": part.slot_type, "tier": entry.get(&"tier", 0)})
+		index += 1
 
 
 ## AC-03: `slot_type` is one of the 8 MVP enum values (rejects the 0 sentinel).
@@ -447,10 +475,12 @@ func _check_boss_break_condition(part: PartDef) -> void:
 		{"id": part.id, "min_multiplier": BOSS_BREAK_MIN_MULTIPLIER})
 
 
-## AC-12: positive stat spend within the slot/rarity budget, and no single stat
-## above [constant MAX_SINGLE_STAT]. Negative drawback values are NOT counted in
-## the positive budget. Bounds are read from the injected [BalanceConfig] — an
-## unmapped slot/rarity (e.g. an enum sentinel) is left to the schema families.
+## AC-12 + AC-27: positive stat spend within the slot/rarity budget; no single stat
+## above [constant MAX_SINGLE_STAT] (positive cap); and symmetrically, no single
+## stat below [constant -MAX_SINGLE_STAT] (negative floor — guards Formula 2b's
+## −55 input floor). Negative drawback values are NOT counted in the positive
+## budget. Bounds are read from the injected [BalanceConfig] — an unmapped
+## slot/rarity (e.g. an enum sentinel) is left to the schema families.
 func _check_stat_budget(part: PartDef) -> void:
 	var positive_sum := 0
 	for v in part.stat_bonuses.values():
@@ -459,6 +489,11 @@ func _check_stat_budget(part: PartDef) -> void:
 			if v > MAX_SINGLE_STAT:
 				_error(&"content_stat_exceeds_single_cap",
 					{"id": part.id, "value": v, "cap": MAX_SINGLE_STAT})
+		elif v < -MAX_SINGLE_STAT:
+			# AC-27 symmetric negative floor — same error code, cap field is negative
+			# sentinel to distinguish positive-cap vs negative-floor violations if needed.
+			_error(&"content_stat_exceeds_single_cap",
+				{"id": part.id, "value": v, "cap": -MAX_SINGLE_STAT})
 	var by_rarity: Dictionary = _cfg.stat_budgets.get(part.slot_type, {})
 	var bounds: Array = by_rarity.get(part.rarity, [])
 	# A well-formed budget is a [min, max] pair. An unmapped (empty) or malformed
@@ -560,6 +595,99 @@ func _check_primary_stat_group_coverage(catalog: PartCatalog) -> void:
 			_warn(&"content_primary_group_no_common", {"slot": g["slot"], "stat": g["stat"]})
 		if not g["has_rare"]:
 			_warn(&"content_primary_group_no_rare", {"slot": g["slot"], "stat": g["stat"]})
+
+
+# ---------------------------------------------------------------------------
+# Story 011 — Prototype focus-floor (AC-25) and drop conditions (AC-26)
+# ---------------------------------------------------------------------------
+
+## AC-25 (Round 11): every Prototype's focus stat IS its slot's primary stat. Two
+## sub-checks: (a) `stat_bonuses[primary]` is the highest positive bonus — no other
+## stat strictly exceeds it (ties are legal); (b) `stat_bonuses[primary]` strictly
+## exceeds the slot's Rare primary FLOOR. Reuses [method _primary_stat_for] from
+## AC-23 — an unresolved primary (ARMS/WEAPON with bad damage_type) is skipped here;
+## the enum family already flags it. Runs only on PROTOTYPE parts.
+func _check_prototype_focus_floor(part: PartDef) -> void:
+	if part.rarity != PartDef.Rarity.PROTOTYPE:
+		return
+	var primary: StringName = _primary_stat_for(part)
+	if primary == &"":
+		return  # unresolvable — already flagged by enum family
+	var primary_value: int = part.stat_bonuses.get(primary, 0)
+
+	# (a) primary must be the highest positive stat; no other stat may strictly exceed it.
+	for v: int in part.stat_bonuses.values():
+		if v > primary_value:
+			_error(&"content_prototype_focus_not_primary",
+				{"id": part.id, "primary": primary, "primary_value": primary_value,
+				"exceeding_value": v})
+			return  # one error per part — the first offender is sufficient
+
+	# (b) primary must STRICTLY exceed the Rare primary floor for its slot.
+	var rare_floor: int = _cfg.primary_stat_rare_floors.get(part.slot_type, -1)
+	if rare_floor >= 0 and primary_value <= rare_floor:
+		_error(&"content_prototype_focus_below_rare_floor",
+			{"id": part.id, "primary": primary, "value": primary_value,
+			"slot": part.slot_type, "floor": rare_floor})
+
+
+## AC-26: every Prototype carries ≥3 `drop_conditions` entries and the product of
+## ALL their `multiplier` values is ≥ 3.0. Both sub-checks are independent — a
+## two-entry product ≥ 3.0 still fails (a). Product uses float accumulation;
+## compared with `>= 3.0 − 1e-9` tolerance per the GDD float-equality warning.
+## This check trusts each entry's `multiplier > 1.0` invariant (Rule 9 / Drop System
+## Rule 5a, enforced per-entry by [method _check_drop_condition_entries]); it does NOT
+## re-validate entry shape — that is [method _check_drop_condition_entries]'s concern.
+## Runs only on PROTOTYPE parts.
+func _check_prototype_drop_conditions(part: PartDef) -> void:
+	if part.rarity != PartDef.Rarity.PROTOTYPE:
+		return
+	# Sub-check (a) — size.
+	if part.drop_conditions.size() < 3:
+		_error(&"content_prototype_too_few_drop_conditions",
+			{"id": part.id, "size": part.drop_conditions.size(), "min": 3})
+		# Do NOT return — sub-check (b) is independent and must run even when size fails.
+
+	# Sub-check (b) — product of all multipliers >= 3.0.
+	var product := 1.0
+	for entry: Dictionary in part.drop_conditions:
+		var m: float = float(entry.get(&"multiplier", entry.get("multiplier", 1.0)))
+		product *= m
+	if product < 3.0 - 1e-9:
+		_error(&"content_prototype_drop_product_low",
+			{"id": part.id, "product": product, "min": 3.0})
+
+
+## Entry-shape validator for `drop_conditions` arrays (Story 011 — Story 009 debt).
+## Each entry requires: `condition` (StringName, non-empty), `multiplier` (float > 1.0).
+## A malformed entry emits a clean `content_*` error and never panics with an engine
+## exception on malformed authored content. Runs on ALL rarities (Boss-grade needs
+## `multiplier >= 500`; this check guards the structural invariant that the entry is
+## even readable). Called from [method _validate_part] before rarity-specific checks.
+## Keys use the String convention matching `_check_boss_break_condition` and authored
+## `.tres` content; `condition` VALUE is a StringName.
+func _check_drop_condition_entries(part: PartDef) -> void:
+	var index := 0
+	for entry: Dictionary in part.drop_conditions:
+		# `condition` key — String key, StringName value (per authored .tres convention).
+		var cond_raw: Variant = entry.get("condition", null)
+		var cond_sn: StringName = cond_raw if (cond_raw is StringName) else &""
+		if cond_sn == &"":
+			_error(&"content_drop_condition_entry_malformed",
+				{"id": part.id, "index": index, "reason": &"condition_missing_or_empty"})
+		# `multiplier` key — String key, float value > 1.0 (Rule 9 / Drop Rule 5a).
+		var mult_raw: Variant = entry.get("multiplier", null)
+		if mult_raw == null:
+			_error(&"content_drop_condition_entry_malformed",
+				{"id": part.id, "index": index, "reason": &"multiplier_missing"})
+		elif not (mult_raw is float or mult_raw is int):
+			_error(&"content_drop_condition_entry_malformed",
+				{"id": part.id, "index": index, "reason": &"multiplier_wrong_type"})
+		elif float(mult_raw) <= 1.0:
+			_error(&"content_drop_condition_entry_malformed",
+				{"id": part.id, "index": index, "reason": &"multiplier_not_above_one",
+				"value": float(mult_raw)})
+		index += 1
 
 
 # ---------------------------------------------------------------------------
