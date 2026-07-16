@@ -124,6 +124,12 @@ const MAX_SINGLE_STAT := 55
 ## AC-19 Prototype concentration threshold: `top_two_sum / positive_total >= 0.70`.
 const CONCENTRATION_MIN := 0.70
 
+## AC-DF (Damage-Formula Story 001): `BalanceConfig.damage_floor` must be `>= 0` —
+## a negative floor would let `max(damage_floor, …)` return negative damage. The GDD
+## safe range is 0–5; only the negative case is a hard error (a high floor is a
+## tuning choice, not a schema violation).
+const DAMAGE_FLOOR_MIN := 0
+
 # --- Story 009: cross-DB referential integrity + level fields (run only when a
 # Move/Passive resolution index is mounted via ContentCatalogs.references_mounted) ---
 
@@ -163,6 +169,10 @@ func validate(catalogs: ContentCatalogs, log_sink: LogSink) -> Dictionary:
 	_refs_mounted = catalogs.references_mounted
 	_move_ids = catalogs.move_ids
 	_passive_ids = catalogs.passive_ids
+	# Config-level balance checks (Damage-Formula Story 001) — run once when a
+	# BalanceConfig is injected; validate the config itself before the catalogs.
+	if _cfg != null:
+		_check_balance_config()
 	_validate_part_catalog(catalogs.parts)
 	# Move DB family (Move-DB Stories 004/005) — only when a move catalog is mounted;
 	# Part-only fixtures leave it null and skip it, staying green.
@@ -531,6 +541,20 @@ func _check_primary_stat_group_coverage(catalog: PartCatalog) -> void:
 			_warn(&"content_primary_group_no_common", {"slot": g["slot"], "stat": g["stat"]})
 		if not g["has_rare"]:
 			_warn(&"content_primary_group_no_rare", {"slot": g["slot"], "stat": g["stat"]})
+
+
+# ---------------------------------------------------------------------------
+# Damage-Formula Story 001 — config-level balance check (DF-1 damage_floor)
+# ---------------------------------------------------------------------------
+
+## The injected [BalanceConfig] must carry a non-negative [member
+## BalanceConfig.damage_floor] — the DF-1 `max(damage_floor, floor(...))` clamp
+## would otherwise permit negative damage. Runs once per validation (config-level,
+## not per-part), only when a config is mounted.
+func _check_balance_config() -> void:
+	if _cfg.damage_floor < DAMAGE_FLOOR_MIN:
+		_error(&"content_balance_damage_floor_negative",
+			{"value": _cfg.damage_floor, "min": DAMAGE_FLOOR_MIN})
 
 
 # ---------------------------------------------------------------------------

@@ -1,10 +1,23 @@
 # Active Session State
 
 <!-- STATUS -->
-Epic: Foundation — Move Database (CLOSED — 6/6 stories Done)
-Feature: Move DB implementation
-Task: All 6 Move-DB stories implemented + green (229/229 suite, 2881 asserts, Godot 4.7). Next: pick the next Foundation epic (Passive/Consumable/Enemy/Damage-Formula) or the 4.6→4.7 ADR re-validation sweep
+Epic: Foundation — Damage Formula (3 stories; 001 implemented + green)
+Feature: DF-1 kernel
+Task: Story 001 (compute_damage kernel + damage_floor config) DONE — 243/243 suite green (2907 asserts, Godot 4.7). Next: /code-review then /story-done story-001, then Stories 002 (type_effectiveness) + 003 (routing)
 <!-- /STATUS -->
+
+## Session Extract — /dev-story Damage-Formula 001 (2026-07-16)
+- Story: `production/epics/damage-formula/story-001-df1-kernel-compute-damage.md` — DF-1 kernel `compute_damage()` + `damage_floor` config
+- Implemented INLINE (godot-gdscript-specialist background agent died on the 1M-context credit error — subagents remain unavailable this session).
+- Files changed:
+  - `src/core/stats/damage_formula.gd` — NEW. `class_name DamageFormula`; pure static `compute_damage(a, d, type_mult, cfg, log, crit_mult := 1.0) -> int`. `a==0 and d==0` guard → `cfg.damage_floor` before divide; float cast; T & crit pre-floor; `maxi(cfg.damage_floor, StatMath.floor_eps(pre_floor))`. Reads no state, no RNG.
+  - `src/core/stats/balance_config.gd` — appended `@export var damage_floor: int = 1` (append-only, after `power_tier_multipliers`).
+  - `assets/data/balance_config.tres` — authored `damage_floor = 1`.
+  - `src/core/content/content_validator.gd` — added config-level `_check_balance_config()` (gated `_cfg != null`, runs once in `validate()`); const `DAMAGE_FLOOR_MIN := 0`; error `content_balance_damage_floor_negative`.
+  - `tests/unit/damage-formula/damage_formula_kernel_test.gd` — NEW (14 tests, all 10 kernel ACs + config-floor honoring + validator guard). Plus local `spy_log_sink.gd`.
+- Evidence: **243/243 suite green** (2907 asserts, 19 scripts, Godot 4.7); was 229 → +14. python3 exact-oracle scan: 0 mismatches / 131,769 inputs.
+- Blockers: None.
+- Next: /code-review src/core/stats/damage_formula.gd src/core/content/content_validator.gd then /story-done story-001. Then Story 002 → 003.
 
 ## Session Extract — Move Database epic COMPLETE (2026-07-16)
 

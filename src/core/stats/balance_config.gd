@@ -120,3 +120,10 @@ extends Resource
 ## The tiers must stay STRICTLY ORDERED BASIC < LIGHT < STANDARD < HEAVY < SIGNATURE
 ## or the tier taxonomy loses meaning (GDD Tuning-Knob warning 3).
 @export var power_tier_multipliers: Array[float] = [0.0, 0.70, 0.80, 1.00, 1.20, 1.40]
+
+## DF-1 minimum damage (GDD Formula DF-1 DAMAGE_FLOOR). Every `compute_damage`
+## result is clamped up to at least this via `max(damage_floor, floor(...))`, so a
+## landed hit always deals ≥1 — a chip of damage, never 0. GDD safe range 0–5;
+## ContentValidator rejects a negative value. Default 1 keeps a bare
+## `BalanceConfig.new()` valid for unit-test DI; the authored `.tres` is the source.
+@export var damage_floor: int = 1
