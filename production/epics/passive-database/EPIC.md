@@ -4,7 +4,26 @@
 > **GDD**: design/gdd/passive-database.md
 > **Architecture Module**: Content DBs (Part/Move/Passive/Consumable/Enemy)
 > **Status**: Ready
-> **Stories**: Not yet created — run `/create-stories passive-database`
+> **Stories**: 7 stories created
+
+## Stories
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | PassiveDef schema, enums & PassiveCatalog | Logic | Ready | ADR-0003 |
+| 002 | PassiveDB loader & null-safe lookup | Logic | Ready | ADR-0003 |
+| 003 | Stacking-policy defaults by behavior_class | Logic | Ready | ADR-0003 |
+| 004 | Passive validator — schema-family + legality matrix | Logic | Ready | ADR-0003 |
+| 005 | Passive validator — behavior_params, STRUCTURAL non-negative & Core restriction | Logic | Ready | ADR-0003 |
+| 006 | Passive referential integrity & catalog wiring | Logic | Ready | ADR-0003 |
+| 007 | Three MVP status riders — content authoring | Config/Data | Ready | ADR-0003 |
+
+**Scope boundary**: this epic delivers the schema, catalog, loader, validators, and
+the 3 MVP status-rider content. **Runtime firing** (AC-PDB-02, 04–11, 17 — status
+application, stacking dedup, aura/structure clamps) is owned by the **TBC Rule 13
+executor epic**. The **MVP Core passive roster** (OQ-PDB-1, deferred AC-PDB-D1–D4,
+capped at 5 mechanically-distinct Cores) is a separate critical-path content pass
+with game-designer, not a story here.
 
 ## Overview
 
