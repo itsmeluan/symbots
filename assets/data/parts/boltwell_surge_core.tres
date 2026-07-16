@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="PartDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/part_def.gd" id="1_pb8h5"]
+
+[resource]
+script = ExtResource("1_pb8h5")
+id = &"boltwell_surge_core"
+display_name = "Surge Core"
+slot_type = 1
+rarity = 2
+manufacturer = &"boltwell"
+element = 1
+stat_bonuses = Dictionary[StringName, int]({
+&"energy_capacity": 25,
+&"processing": 5,
+&"recharge": 8
+})
+passive_id = &"pass_overclock"
+synergy_tags = Array[StringName]([&"volt", &"boltwell"])
+max_upgrade_tier = 5
+flavor_text = "Boltwell's tuned reactor. Feeds the greedy builds."
+sprite_id = &"core_surge"
+level_requirement = 3
+level_growth = Dictionary[String, int]({
+"energy_capacity": 2
+})

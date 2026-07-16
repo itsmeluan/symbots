@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="PartDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/part_def.gd" id="1_h46ed"]
+
+[resource]
+script = ExtResource("1_h46ed")
+id = &"scrapjaw_servo_arm"
+display_name = "Servo Arm"
+slot_type = 6
+rarity = 1
+manufacturer = &"scrapjaw"
+element = 3
+damage_type = 1
+stat_bonuses = Dictionary[StringName, int]({
+&"mobility": 3,
+&"physical_power": 11,
+&"structure": 4
+})
+synergy_tags = Array[StringName]([&"kinetic", &"scrapjaw"])
+part_family = &"servo_arm_family"
+flavor_text = "The arm every Symbot starts with. Reliable, replaceable."
+sprite_id = &"arm_servo"

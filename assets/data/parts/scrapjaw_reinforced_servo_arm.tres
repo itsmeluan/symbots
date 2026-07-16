@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="PartDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/part_def.gd" id="1_6jr8q"]
+
+[resource]
+script = ExtResource("1_6jr8q")
+id = &"scrapjaw_reinforced_servo_arm"
+display_name = "Reinforced Servo Arm"
+slot_type = 6
+rarity = 2
+manufacturer = &"scrapjaw"
+element = 3
+damage_type = 1
+stat_bonuses = Dictionary[StringName, int]({
+&"mobility": 4,
+&"physical_power": 22,
+&"structure": 6
+})
+active_skill_id = &"skill_servo_strike"
+synergy_tags = Array[StringName]([&"kinetic", &"scrapjaw"])
+max_upgrade_tier = 5
+part_family = &"servo_arm_family"
+heat_generation = 8
+flavor_text = "The Servo Arm, welded over until it stopped breaking."
+sprite_id = &"arm_servo_reinforced"
+level_requirement = 3

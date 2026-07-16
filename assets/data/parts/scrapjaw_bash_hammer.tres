@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="PartDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/part_def.gd" id="1_it5af"]
+
+[resource]
+script = ExtResource("1_it5af")
+id = &"scrapjaw_bash_hammer"
+display_name = "Bash Hammer"
+slot_type = 8
+rarity = 1
+manufacturer = &"scrapjaw"
+element = 3
+damage_type = 1
+stat_bonuses = Dictionary[StringName, int]({
+&"armor": 3,
+&"physical_power": 13,
+&"structure": 4
+})
+synergy_tags = Array[StringName]([&"kinetic", &"scrapjaw"])
+flavor_text = "A pipe with ambition. Hits things until they stop."
+sprite_id = &"weapon_bash_hammer"

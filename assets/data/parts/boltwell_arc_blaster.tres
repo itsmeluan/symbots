@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="PartDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/part_def.gd" id="1_2061n"]
+
+[resource]
+script = ExtResource("1_2061n")
+id = &"boltwell_arc_blaster"
+display_name = "Arc Blaster"
+slot_type = 8
+rarity = 2
+manufacturer = &"boltwell"
+element = 1
+damage_type = 2
+stat_bonuses = Dictionary[StringName, int]({
+&"energy_capacity": 4,
+&"energy_power": 26,
+&"targeting": 5
+})
+active_skill_id = &"skill_arc_bolt"
+synergy_tags = Array[StringName]([&"volt", &"boltwell"])
+max_upgrade_tier = 5
+heat_generation = 15
+flavor_text = "Lobs a fat blue arc. Smells like a storm afterward."
+sprite_id = &"weapon_arc_blaster"
+level_requirement = 3

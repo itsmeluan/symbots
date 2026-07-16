@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="PartDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/part_def.gd" id="1_atrux"]
+
+[resource]
+script = ExtResource("1_atrux")
+id = &"wild_optic_sensor"
+display_name = "Optic Sensor"
+slot_type = 5
+rarity = 1
+manufacturer = &"wild"
+element = 3
+stat_bonuses = Dictionary[StringName, int]({
+&"mobility": 2,
+&"processing": 3,
+&"targeting": 10
+})
+synergy_tags = Array[StringName]([&"kinetic"])
+flavor_text = "Scavenged lens array. One eye sees a little crooked."
+sprite_id = &"head_optic"

@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="PartDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/part_def.gd" id="1_135c3"]
+
+[resource]
+script = ExtResource("1_135c3")
+id = &"scrapjaw_rustcrawler_claw"
+display_name = "Rustcrawler Claw"
+slot_type = 6
+rarity = 3
+manufacturer = &"scrapjaw"
+element = 3
+damage_type = 1
+stat_bonuses = Dictionary[StringName, int]({
+&"mobility": 6,
+&"physical_power": 34,
+&"structure": 8
+})
+active_skill_id = &"skill_crusher_claw"
+passive_id = &"pass_rend"
+synergy_tags = Array[StringName]([&"kinetic", &"scrapjaw"])
+drop_conditions = Array[Dictionary]([{
+"condition": &"arm_broken",
+"multiplier": 600.0
+}])
+max_upgrade_tier = 5
+part_family = &"servo_arm_family"
+heat_generation = 12
+flavor_text = "Torn from the Rustcrawler boss. Still twitches for a grip."
+sprite_id = &"arm_rustcrawler_claw"
+level_requirement = 6

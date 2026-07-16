@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="PartDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/part_def.gd" id="1_vnn2m"]
+
+[resource]
+script = ExtResource("1_vnn2m")
+id = &"scrapjaw_scrap_core"
+display_name = "Scrap Core"
+slot_type = 1
+rarity = 1
+manufacturer = &"scrapjaw"
+element = 3
+stat_bonuses = Dictionary[StringName, int]({
+&"energy_capacity": 12,
+&"recharge": 4,
+&"structure": 4
+})
+synergy_tags = Array[StringName]([&"kinetic", &"scrapjaw"])
+flavor_text = "A salvaged reactor core. It hums like it's annoyed."
+sprite_id = &"core_scrap"
+level_growth = Dictionary[String, int]({
+"structure": 1
+})

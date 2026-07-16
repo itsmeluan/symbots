@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="PartDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/part_def.gd" id="1_3ulha"]
+
+[resource]
+script = ExtResource("1_3ulha")
+id = &"wild_overdrive_cannon"
+display_name = "Overdrive Cannon"
+slot_type = 8
+rarity = 4
+manufacturer = &"wild"
+element = 2
+damage_type = 2
+stat_bonuses = Dictionary[StringName, int]({
+&"armor": -8,
+&"energy_power": 40,
+&"targeting": 6
+})
+active_skill_id = &"skill_overdrive_blast"
+passive_id = &"pass_meltdown"
+synergy_tags = Array[StringName]([&"thermal"])
+drop_conditions = Array[Dictionary]([{
+"condition": &"overheat_kill",
+"multiplier": 1.5
+}, {
+"condition": &"thermal_finish",
+"multiplier": 1.5
+}, {
+"condition": &"low_hp_victory",
+"multiplier": 1.4
+}])
+max_upgrade_tier = 5
+heat_generation = 40
+flavor_text = "Jury-rigged to overload. Melts targets and itself."
+sprite_id = &"weapon_overdrive_cannon"
+level_requirement = 8

@@ -3,7 +3,7 @@
 <!-- STATUS -->
 Epic: Pre-Production
 Feature: Sprint Zero — Part Database
-Task: Story 009 CLOSED — next is Story 010 (author real content + wire CI mount + verify nested-dict .tres round-trip)
+Task: Part Database EPIC COMPLETE (all 10 stories Done) — next: pick the next Foundation epic (Move/Passive/Consumable/Enemy/Damage-Formula) or the 4.6→4.7 ADR re-validation sweep
 <!-- /STATUS -->
 
 > **This file is a lean checkpoint, not a changelog.** Keep it small — current
@@ -143,3 +143,15 @@ Task: Story 009 CLOSED — next is Story 010 (author real content + wire CI moun
 - Tech debt logged: 4 items → (1) reconcile the move/passive id-set seam when Move/Passive DB epics land; (2) **CONFIRM** the `level_requirement==0` floor-fail semantics; (3) scope drift — `PartDef` comments attribute `drop_conditions`/`upgrade_effects` entry-shape to "Story 009" but the ACs don't; NOT implemented — defer to Story 010 / follow-up + fix comments; (4) stale "Godot 4.6" label.
 - **ContentValidator now spans 3 families**: schema (007, always) + content-composition (008, gated `balance != null`) + referential/level (009, gated `references_mounted`). Story 010 mounts all three on real content at CI/dev-boot.
 - Next: **Story 010 — author real Part content + wire CI mount + verify nested-dict `.tres` round-trip** (`chassis_modifiers`, `stat_budgets`) — the LAST Part-DB story. Also carries: entry-shape drop_conditions/upgrade_effects gap, the 4 balance-table validator assertions (upgrade_multipliers/drop_rate/chassis_modifiers/stat_budgets/caps/floors vs GDD), CI global-class-cache regen for new class_names.
+
+## Session Extract — /story-done 2026-07-15 (Story 010 — CLOSES Part Database epic)
+- Verdict: **COMPLETE WITH NOTES**. Story → **Complete**. **Part Database epic → ✅ Complete (all 10 stories Done).**
+- Story: `production/epics/part-database/story-010-author-content-wire-ci.md` — author MVP part content + wire CI content suite. Config/Data.
+- **Co-design mode** (user chose "Co-design the roster with me"): roster designed section-by-section, approved with full stat spreads shown before authoring.
+- Content shipped (via a throwaway scratchpad generator, `.tres` committed as source-of-truth): **14 `PartDef`** under `assets/data/parts/` (8 Common starters, 1/slot + 4 Rare + 1 Boss `scrapjaw_rustcrawler_claw` + 1 Prototype `wild_overdrive_cannon`); `assets/data/catalogs/part_catalog.tres`; `assets/data/balance_config.tres`. Manufacturers: Ironclad=tank/Thermal-sig, Boltwell=energy/Volt-sig, Scrapjaw=kinetic/Kinetic-sig, wild=junk. `servo_arm_family` chain = Common→Rare→Boss.
+- CI gate: **new** `tests/unit/content/part_catalog_ci_test.gd` (9 tests) — loads real catalog+balance headless (CACHE_MODE_REPLACE), mounts all 3 validator families (balance + refs manifest), asserts `ok==true`, completeness (files==entries), roster structure. Auto-discovered by `.gutconfig.json` subdirs → no workflow edit.
+- Evidence: **153/153 suite green, 410 asserts** (Godot 4.7). Smoke: `production/qa/smoke-part-content-2026-07-15.md`. **Nested-dict `.tres` round-trip VERIFIED on real content** — epic's last open technical unknown, CLOSED. (Isolated spike: `tests/unit/content/balance_config_nested_roundtrip_test.gd`.)
+- 7/7 ACs COVERED. 6 expected AC-23 coverage warnings (advisory, MVP-minimum set).
+- **KEY DISCOVERY → NEEDS USER DECISION**: GDD **Rule 2 ↔ Rule 8 contradiction** — Rule 8 (validator-enforced) requires an active skill on ALL Rare+ non-Core parts; Rule 2 says Chassis/Chipset/Energy-Cell have none + Legs has a passive. MVP content SIDESTEPS by authoring higher-rarity parts only in skill-native slots (Core=passive; Head/Arms/Weapon=active). Blocks Rare armor/chipset frames until reconciled.
+- Tech debt logged (6): Rule2↔Rule8 (DECISION); CI Godot 4.6.0 stale; forward-ref skill/passive ID manifest (5 skill + 3 passive) for Move/Passive epics; Prototype drop-condition rule authoring-only (not validator-enforced); balance-table-equals-GDD assertion STILL OPEN; drop_conditions/upgrade_effects entry-shape still unimplemented + stale PartDef comments.
+- Next: no more Part-DB stories. Options — (a) next Foundation epic (Move/Passive/Consumable/Enemy/Damage-Formula, all unstoried); (b) 4.6→4.7 ADR re-validation sweep; (c) reconcile Rule2↔Rule8. Subagents were DEAD this session (1M-context credit error) — all work done inline/lean.

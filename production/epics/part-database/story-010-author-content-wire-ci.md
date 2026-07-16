@@ -1,12 +1,12 @@
 # Story 010: Author MVP part content + wire CI content suite
 
 > **Epic**: Part Database
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Config/Data
 > **Estimate**: TBD (fill at sprint planning)
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-15
 
 ## Context
 
@@ -93,7 +93,22 @@ The CI test is the capstone: it proves the whole epic end-to-end — schema load
 - `production/qa/smoke-part-content-[date].md` — smoke check: catalog loads, validator green, starter slots all filled
 - Green content CI run (`tests/unit/content/part_catalog_ci_test.gd` passing in `.github/workflows/tests.yml`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created — smoke `production/qa/smoke-part-content-2026-07-15.md`; CI test `tests/unit/content/part_catalog_ci_test.gd` (9 tests, green in the 153/153 suite)
+
+---
+
+## Completion Notes
+**Completed**: 2026-07-15
+**Criteria**: 7/7 passing (no deferrals)
+**Content shipped**: 14 `PartDef` `.tres` (8 Common starters + 4 Rare + 1 Boss + 1 Prototype) under `assets/data/parts/`; `assets/data/catalogs/part_catalog.tres`; `assets/data/balance_config.tres`. `servo_arm_family` chain spans Common→Rare→Boss.
+**Deviations** (all advisory, logged in `docs/tech-debt-register.md`):
+- Higher-rarity parts authored only in skill-native slots (Core/Head/Arms/Weapon) to sidestep the GDD Rule 2↔Rule 8 contradiction — **needs a design decision** before Rare Chassis/Chipset/Energy-Cell/Legs can ship.
+- 6 expected AC-23 coverage warnings (MVP-minimum set).
+- CI workflow still pins Godot 4.6.0 (4.6→4.7 sweep).
+- Forward-ref skill/passive IDs mounted as a hand-maintained CI manifest (reconcile when Move/Passive DB epics land).
+- ContentValidator balance-table-equals-GDD assertion still open; `drop_conditions`/`upgrade_effects` entry-shape still unimplemented.
+**Test Evidence**: Config/Data — smoke check `production/qa/smoke-part-content-2026-07-15.md` + green CI (`part_catalog_ci_test.gd`). Nested-dict `.tres` round-trip verified on real content (epic's last open unknown — closed).
+**Code Review**: Skipped (lean mode) — Config/Data story; the only code is the CI test (simple GDScript). Recommend a `/code-review` pass on `part_catalog_ci_test.gd` before sprint close-out if desired.
 
 ---
 

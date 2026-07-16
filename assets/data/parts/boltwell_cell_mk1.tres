@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="PartDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/part_def.gd" id="1_kmffr"]
+
+[resource]
+script = ExtResource("1_kmffr")
+id = &"boltwell_cell_mk1"
+display_name = "Cell Mk1"
+slot_type = 4
+rarity = 1
+manufacturer = &"boltwell"
+element = 1
+stat_bonuses = Dictionary[StringName, int]({
+&"energy_capacity": 12,
+&"recharge": 4
+})
+synergy_tags = Array[StringName]([&"volt", &"boltwell"])
+flavor_text = "Standard-issue energy cell. Does the one job."
+sprite_id = &"cell_mk1"

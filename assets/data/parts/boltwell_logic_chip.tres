@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="PartDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/part_def.gd" id="1_gv14y"]
+
+[resource]
+script = ExtResource("1_gv14y")
+id = &"boltwell_logic_chip"
+display_name = "Logic Chip"
+slot_type = 3
+rarity = 1
+manufacturer = &"boltwell"
+element = 1
+stat_bonuses = Dictionary[StringName, int]({
+&"cooling": 2,
+&"processing": 10,
+&"targeting": 3
+})
+synergy_tags = Array[StringName]([&"volt", &"boltwell"])
+flavor_text = "Boltwell silicon. Runs cool, thinks fast enough."
+sprite_id = &"chipset_logic"

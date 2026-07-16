@@ -3,7 +3,7 @@
 > **Layer**: Foundation
 > **GDD**: design/gdd/part-database.md
 > **Architecture Module**: Content DBs (Part/Move/Passive/Consumable/Enemy)
-> **Status**: Ready
+> **Status**: ✅ Complete (2026-07-15) — all 10 stories Done; MVP content authored + CI gate green (153/153)
 > **Stories**: 10 stories created (2026-07-15)
 
 ## Overview
@@ -75,15 +75,15 @@ This epic is complete when:
 | # | Story | Type | Status | ADR |
 |---|-------|------|--------|-----|
 | 001 | Engine spike — typed-dict `.tres` round-trip gate | Integration | ✅ Done (PASS) | ADR-0003 |
-| 002 | PartDef schema + enums + PartCatalog | Logic | Ready | ADR-0003 |
-| 003 | PartDB singleton — load / index / expose read-only | Integration | Ready | ADR-0003 |
-| 004 | Formula 2 + 2b — per-part upgrade pipeline | Logic | Ready | ADR-0005 / ADR-0003 |
-| 005 | Formula 1 — total Symbot stat composition | Logic | Ready | ADR-0005 / ADR-0003 |
-| 006 | Formula 3 — effective drop rate | Logic | Ready | ADR-0003 |
-| 007 | ContentValidator — schema & enum-integrity family | Logic | Ready | ADR-0003 |
-| 008 | ContentValidator — content-rule, budget & synergy family | Logic | Ready | ADR-0003 |
-| 009 | ContentValidator — cross-DB referential integrity + level fields | Integration | Ready | ADR-0003 |
-| 010 | Author MVP part content + wire CI content suite | Config/Data | Ready | ADR-0003 |
+| 002 | PartDef schema + enums + PartCatalog | Logic | ✅ Done | ADR-0003 |
+| 003 | PartDB singleton — load / index / expose read-only | Integration | ✅ Done | ADR-0003 |
+| 004 | Formula 2 + 2b — per-part upgrade pipeline | Logic | ✅ Done | ADR-0005 / ADR-0003 |
+| 005 | Formula 1 — total Symbot stat composition | Logic | ✅ Done | ADR-0005 / ADR-0003 |
+| 006 | Formula 3 — effective drop rate | Logic | ✅ Done | ADR-0003 |
+| 007 | ContentValidator — schema & enum-integrity family | Logic | ✅ Done | ADR-0003 |
+| 008 | ContentValidator — content-rule, budget & synergy family | Logic | ✅ Done | ADR-0003 |
+| 009 | ContentValidator — cross-DB referential integrity + level fields | Integration | ✅ Done | ADR-0003 |
+| 010 | Author MVP part content + wire CI content suite | Config/Data | ✅ Done | ADR-0003 |
 
 **Build order:** 001 gates everything (engine spike — must PASS before content authoring).
 Then 002 (schema) → 003 (loader) / 004 (F2/F2b) → 005 (F1) / 006 (F3) / 007 (validator scaffold)

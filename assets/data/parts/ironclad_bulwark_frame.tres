@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="PartDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/part_def.gd" id="1_br066"]
+
+[resource]
+script = ExtResource("1_br066")
+id = &"ironclad_bulwark_frame"
+display_name = "Bulwark Frame"
+slot_type = 2
+chassis_archetype = 2
+rarity = 1
+manufacturer = &"ironclad"
+element = 2
+stat_bonuses = Dictionary[StringName, int]({
+&"armor": 6,
+&"resistance": 3,
+&"structure": 18
+})
+synergy_tags = Array[StringName]([&"thermal", &"ironclad"])
+flavor_text = "Ironclad's entry-tier plating. Overbuilt on purpose."
+sprite_id = &"chassis_bulwark"
