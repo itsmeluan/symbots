@@ -238,3 +238,11 @@ Task: RESUME HERE → run /design-review design/gdd/part-database.md (revised Ru
 - Code review this session: /code-review on damage_formula.gd + content_validator.gd → APPROVED WITH SUGGESTIONS. Applied CV-2b guard (bounds.size()<2 in _check_stat_budget). Suite 243/243 green.
 - Tech debt logged: None (2 advisory test gaps noted in story Completion Notes — damage_floor=0 boundary + guard-branch DI seam; add before Story 003)
 - Next recommended: Damage-Formula Story 002 (type_effectiveness chart lookup, derives T) — production/epics/damage-formula/story-002-type-effectiveness-lookup.md
+
+## Session Extract — /dev-story 2026-07-16
+- Story: production/epics/damage-formula/story-002-type-effectiveness-lookup.md — Type-effectiveness lookup
+- Files changed: src/core/stats/damage_formula.gd (type_effectiveness lookup), src/core/stats/balance_config.gd (type_chart field), assets/data/balance_config.tres (9 cells authored), src/core/content/content_validator.gd (_check_type_chart family + content_balance_type_chart_malformed), tests/unit/damage-formula/type_effectiveness_test.gd (12 test functions)
+- Implemented INLINE (engine-programmer subagent died on the intermittent "1M context credits" API error — same pattern as Story 001)
+- Suite: 255/255 green (was 243/243; +12). .tres nested-Dictionary round-trip CONFIRMED on 4.7.
+- Blockers: None
+- Next: /code-review src/core/stats/damage_formula.gd src/core/content/content_validator.gd then /story-done production/epics/damage-formula/story-002-type-effectiveness-lookup.md

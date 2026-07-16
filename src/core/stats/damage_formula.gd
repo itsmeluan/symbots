@@ -38,3 +38,21 @@ static func compute_damage(a: int, d: int, type_mult: float, cfg: BalanceConfig,
 	var base := float(a) * float(a) / (float(a) + float(d))  # TR-df-004 float cast
 	var pre_floor := base * type_mult * crit_mult            # TR-df-002 pre-floor T & crit
 	return maxi(cfg.damage_floor, StatMath.floor_eps(pre_floor))  # TR-df-005 floor after
+
+
+## Pure Part DB Rule 6 chart lookup — the SINGLE source of the type multiplier T
+## for both DF-1 (Story 003 binds it into [method compute_damage]) AND the Combat UI
+## pre-commit effectiveness glyph (GDD Open Question 1 / ADR-0008 `inline_stat_
+## composition`): the two readings share this one function so they can never disagree.
+##
+## [param skill_element] / [param target_core_element] are the attacking skill's and
+## defending Core's [enum PartDef.Element] values. They are INTENTIONALLY untyped so a
+## literal `null` (a Core with no element, or a Full-Vision-reserved element with no
+## authored row) flows straight to the nested `.get()` default — typing them `int`
+## would raise on `null` before the fallback runs. Any absent / null / unrecognized
+## element on EITHER side degrades to a neutral ×1.0 with no branch (GDD EC-04/EC-05):
+## it is valid content, never a crash. The ratios themselves are locked in Part DB
+## Rule 6 — this reads and applies them, it never redefines them (GDD Rule 2).
+static func type_effectiveness(skill_element, target_core_element,
+		cfg: BalanceConfig) -> float:
+	return float(cfg.type_chart.get(skill_element, {}).get(target_core_element, 1.0))

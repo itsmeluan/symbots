@@ -127,3 +127,21 @@ extends Resource
 ## ContentValidator rejects a negative value. Default 1 keeps a bare
 ## `BalanceConfig.new()` valid for unit-test DI; the authored `.tres` is the source.
 @export var damage_floor: int = 1
+
+## DF-1 type-effectiveness chart (Part DB Rule 6 / GDD Rule 2) — the sole source of
+## the multiplier T. Nested `skill Element → {target-Core Element → float}`, mirroring
+## [member chassis_modifiers]' shape and the same nested typed-Dictionary `.tres`
+## round-trip gate. Read exclusively via [method DamageFormula.type_effectiveness]
+## with `.get(skill, {}).get(core, 1.0)`, so any absent cell (a null/reserved element
+## on either axis) resolves to a neutral ×1.0 (GDD EC-04/EC-05) — the 3×3 VOLT/THERMAL/
+## KINETIC grid below is the complete MVP set; reserved elements are deliberately
+## absent and inherit the ×1.0 default. Values are LOCKED at Rule 6 (×1.5 super, ×1.0
+## neutral, ×0.75 resisted) — retuning is a design decision, not a balance pass, and
+## ContentValidator asserts every cell stays ∈ {0.75, 1.0, 1.5}. Untyped [Dictionary]
+## because the value is itself a nested per-element dict (same reason as
+## [member chassis_modifiers]).
+@export var type_chart: Dictionary = {
+	PartDef.Element.VOLT:    {PartDef.Element.VOLT: 1.0, PartDef.Element.THERMAL: 1.5, PartDef.Element.KINETIC: 0.75},
+	PartDef.Element.THERMAL: {PartDef.Element.VOLT: 0.75, PartDef.Element.THERMAL: 1.0, PartDef.Element.KINETIC: 1.5},
+	PartDef.Element.KINETIC: {PartDef.Element.VOLT: 1.5, PartDef.Element.THERMAL: 0.75, PartDef.Element.KINETIC: 1.0},
+}

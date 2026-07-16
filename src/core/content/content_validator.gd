@@ -130,6 +130,21 @@ const CONCENTRATION_MIN := 0.70
 ## tuning choice, not a schema violation).
 const DAMAGE_FLOOR_MIN := 0
 
+## AC-DF (Damage-Formula Story 002): the MVP `type_chart` grid is the 3×3 Cartesian
+## product of these skill/Core elements — every one of the 9 cells must be present
+## (a missing cell would silently degrade to ×1.0 at runtime, hiding an authoring
+## gap). Reserved Full-Vision elements (CRYO/CORROSIVE/DATA) are intentionally NOT
+## required — they legitimately fall through to the ×1.0 default.
+const TYPE_CHART_MVP_ELEMENTS: Array[int] = [
+	PartDef.Element.VOLT, PartDef.Element.THERMAL, PartDef.Element.KINETIC,
+]
+
+## AC-DF (Story 002): every authored `type_chart` cell must be one of the three
+## locked Part DB Rule 6 ratios — ×0.75 resisted, ×1.0 neutral, ×1.5 super-effective.
+## Any other value (a typo, a drifted retune) is a hard error: this validator is the
+## BalanceConfig-vs-GDD drift guard the ADR mandates.
+const TYPE_CHART_RATIOS: Array[float] = [0.75, 1.0, 1.5]
+
 # --- Story 009: cross-DB referential integrity + level fields (run only when a
 # Move/Passive resolution index is mounted via ContentCatalogs.references_mounted) ---
 
@@ -559,6 +574,43 @@ func _check_balance_config() -> void:
 	if _cfg.damage_floor < DAMAGE_FLOOR_MIN:
 		_error(&"content_balance_damage_floor_negative",
 			{"value": _cfg.damage_floor, "min": DAMAGE_FLOOR_MIN})
+	_check_type_chart()
+
+
+## Damage-Formula Story 002: the injected [BalanceConfig]'s [member
+## BalanceConfig.type_chart] must be a complete, well-formed 3×3 grid — every
+## (skill, Core) pair over VOLT/THERMAL/KINETIC present and each value ∈ the locked
+## Part DB Rule 6 ratio set {0.75, 1.0, 1.5}. A missing cell would silently read as a
+## neutral ×1.0 at runtime (hiding an authoring gap); an off-set value would drift
+## the type triangle away from the GDD. Both emit the single
+## `content_balance_type_chart_malformed` code with a `reason` discriminator. Absent
+## reserved elements (CRYO/CORROSIVE/DATA) are NOT flagged — the ×1.0 default is
+## correct for them (GDD EC-04/EC-05).
+func _check_type_chart() -> void:
+	for skill in TYPE_CHART_MVP_ELEMENTS:
+		var row: Variant = _cfg.type_chart.get(skill, null)
+		if not (row is Dictionary):
+			_error(&"content_balance_type_chart_malformed",
+				{"reason": "missing_row", "skill": skill})
+			continue
+		for core in TYPE_CHART_MVP_ELEMENTS:
+			if not row.has(core):
+				_error(&"content_balance_type_chart_malformed",
+					{"reason": "missing_cell", "skill": skill, "core": core})
+				continue
+			var cell: float = float(row[core])
+			if not _is_locked_ratio(cell):
+				_error(&"content_balance_type_chart_malformed",
+					{"reason": "out_of_set", "skill": skill, "core": core, "value": cell})
+
+
+## True when [param value] equals one of the three locked Rule 6 ratios (float-safe
+## compare — the authored `.tres` stores IEEE-754 doubles).
+func _is_locked_ratio(value: float) -> bool:
+	for ratio in TYPE_CHART_RATIOS:
+		if is_equal_approx(value, ratio):
+			return true
+	return false
 
 
 # ---------------------------------------------------------------------------
