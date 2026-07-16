@@ -1,10 +1,19 @@
 # Active Session State
 
 <!-- STATUS -->
-Epic: Foundation Layer
-Feature: Passive Database — COMPLETE (7/7 stories)
-Task: Story next Foundation epic (Consumable / Enemy DB) via /create-stories
+Epic: Foundation Layer — ALL 6 EPICS STORIED
+Feature: Consumable DB (8 stories) + Enemy DB (10 stories) — Ready, awaiting implementation
+Task: Implement a storied Foundation epic — /story-readiness → /dev-story on story-001
 <!-- /STATUS -->
+
+## Session Extract — /create-stories Consumable + Enemy DBs 2026-07-16 ("Story both now")
+- **Directive:** "Story both now" — story Consumable then Enemy back-to-back, inline/lean (never-1M constraint honored, zero Agent/Task subagents). User is stopping here; **next session = implementation** (fresh session by user's choice).
+- **Consumable DB — 8 stories written** (7 Logic + 1 Config/Data), all Ready, all ADR-0003. EPIC.md Stories table + Deferred note (AC-CD-20/21/22/23) + index row/layer-status updated. Story shape: 001 ConsumableDef schema+enums+catalog → 002 loader → 003 restore formulas CD-1/2/3 → 004 use-transaction/targeting/resource-neutrality → 005 Salvage Beacon BOOST_DROP CD-4 → 006 EncounterModifierState CD-5 (sole mutator `on_overworld_step`, structural battle-freeze) → 007 validator consumable family (strict `buy>sell`, `buy==sell` is the discriminator) → 008 MVP 8 `.tres` authoring.
+- **Enemy DB — 10 stories written** (9 Logic + 1 Config/Data), all Ready, all ADR-0003. EPIC.md Stories table + two-seam note + Deferred note (AC-ED-11/12/16) + index row/layer-status updated. Story shape: 001 EnemyDef schema (15 fields incl. ELZS level/xp/completion_bonus + nested break_regions/loot_pool dict shapes — HIGH-risk 4.7 `.tres` round-trip) → 002 loader → 003 EDB-1 break_hp (`+0.0001` LOAD-BEARING, `180×0.35=63` proof; python3-scan fixtures) → 004 validator schema-presence family (creates `_validate_enemy_catalog` dispatch, gated on `catalogs.enemies != null`) → 005 stat-block → 006 break-region (EDB-3, **calls Story-003 `derive_break_hp`, no re-impl**) → 007 loot/rarity/boss-grade gating (Part-DB referential live) → 008 harvest-decision(BLOCKING `loot_pool>break_regions`)/TTK(ADVISORY EDB-2)/density → 009 ELZS level/xp CP-F4/completion_bonus validation → 010 MVP roster authoring.
+- **Two Enemy seams flagged in the stories:** (1) `EnemyAI` is GDD-only → Story 004 builds `ai_profile` referential as an injected accept-all predicate (non-empty active now, `has_profile` wired when EnemyAI lands). Part DB + Move DB are Complete → Story 007/010 referential wire live. (2) Story 010 is dependency-gated on a richer Part-DB roster — it must stop-and-flag rather than invent part ids.
+- **TR-ID citations corrected post-write** (matched EPIC TR table): Story 004 dropped TR-edb-017; Story 005 TR-edb-005=WILD power cap / TR-edb-011=A-D ranges; Story 006 TR-edb-021=set-semantics / TR-edb-022=min-region / TR-edb-004=region_id uniqueness; Story 007 TR-edb-018=referential.
+- **NEXT (new session):** `/story-readiness production/epics/consumable-database/story-001-consumabledef-schema-enums-catalog.md` (or enemy-database story-001) → `/dev-story`. Both epics implement in dependency order; Enemy Story 010 trails until Part-DB roster backs its loot pools. After both epics implemented → Foundation COMPLETE → `/create-epics layer: core`.
+- **Constraint still binding:** never spawn Agent/Task subagents this session-mode (die on "1M-context credits" — memory `project-subagent-model-1m-resolved`). Stop-hook auto-commits; push stays manual.
 
 ## Session Extract — Passive DB epic IMPLEMENTED (7/7 stories) 2026-07-16
 - **Directive:** "implement all the stories from next epic in order" — Passive DB (Foundation, 7 Ready stories). Done inline (never-1M constraint honored, zero Agent/Task subagents).
