@@ -3,8 +3,8 @@
 > **Layer**: Foundation
 > **GDD**: design/gdd/part-database.md
 > **Architecture Module**: Content DBs (Part/Move/Passive/Consumable/Enemy)
-> **Status**: ✅ Complete (2026-07-15) — all 10 stories Done; MVP content authored + CI gate green (153/153)
-> **Stories**: 10 stories created (2026-07-15)
+> **Status**: ⚠️ Reopened (2026-07-16) — Stories 001–010 Done; **Story 011 (validator hardening) Ready** — Round 10/11 review-debt: GDD ACs 25/26/27 lack validator coverage, AC-08(b) test fixture out of sync with the amended GDD
+> **Stories**: 11 stories (10 created 2026-07-15, Complete; story-011 added 2026-07-16 from `/design-review` Round 11 escalation)
 
 ## Overview
 

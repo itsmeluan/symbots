@@ -306,3 +306,11 @@ Task: RESUME HERE → /dev-story Story 003 (damage-type routing + full routed co
 - Deviation (advisory, resolved): W-1 log.warn(&"damage_routing_unknown_damage_type") hardening on out-of-enum damage_type. Not logged as debt (completed enhancement, user chose plain close).
 - Tech debt logged: None.
 - Next recommended: see epic — Damage-Formula epic may be complete; next likely Turn-Based Combat (consumes DamageFormula.resolve).
+
+## Session Extract — /design-review 2026-07-16 (Part Database, Round 11)
+- Verdict: NEEDS REVISION (3 blockers) → all 3 + 7 recommended fixed same session → CD targeted fix-confirmation APPROVED. GDD status: **Approved**.
+- Blockers: AC-25 any-key focus loophole (user decision: **focus stat = slot primary** — off-primary Prototypes unauthorable); AC-08(b) base −1 fixture non-discriminating → base −3 [−3,−2,−1,0,0,0] (python-verified); stat_bonuses pinned Dictionary[StringName, int] + &"key" examples.
+- Recommended applied: AC-09(e) "1.575 exact" claim corrected (1.5749999999999997; strict ==1.0 safe); AC-06 ×2.00 exception; typed-export sentinel convention (null → &""/0/{}); focus-floor rule generalized; EC-12 → Verified by AC-11; AC-26 Rule-9/Drop-5a cross-ref; band "15–20%" → "~16.9–20%" ×4.
+- Tracking updated: part-database.md header, systems-index.md row 1, review-log Round 11 entry.
+- Production debt CLOSED as story: **production/epics/part-database/story-011-validator-hardening-round11.md** (Ready) — AC-25/26 validators missing, AC-27 negative bound missing, AC-08(b) test fixture sync, Story-009 entry-shape validators, TR-registry re-sync. Part-DB epic Reopened (index.md + EPIC.md updated).
+- Next: implement story-011 (`/create-stories` not needed — story exists; run implementation flow), or continue Foundation epics (Passive/Consumable/Enemy DBs unstoried).

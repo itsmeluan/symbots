@@ -5,7 +5,7 @@ Engine: Godot 4.7
 
 | Epic | Layer | System | GDD | Stories | Status |
 |------|-------|--------|-----|---------|--------|
-| [Part Database](part-database/EPIC.md) | Foundation | Part Database | design/gdd/part-database.md | 10 stories | Complete |
+| [Part Database](part-database/EPIC.md) | Foundation | Part Database | design/gdd/part-database.md | 11 stories | Reopened — story-011 (validator hardening, Round 10/11 review-debt) Ready |
 | [Move Database](move-database/EPIC.md) | Foundation | Move Database | design/gdd/move-database.md | 6 stories | Complete |
 | [Passive Database](passive-database/EPIC.md) | Foundation | Passive Database | design/gdd/passive-database.md | Not yet created | Ready |
 | [Consumable Database](consumable-database/EPIC.md) | Foundation | Consumable Database | design/gdd/consumable-database.md | Not yet created | Ready |
