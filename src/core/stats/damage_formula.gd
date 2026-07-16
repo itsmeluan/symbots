@@ -56,3 +56,41 @@ static func compute_damage(a: int, d: int, type_mult: float, cfg: BalanceConfig,
 static func type_effectiveness(skill_element, target_core_element,
 		cfg: BalanceConfig) -> float:
 	return float(cfg.type_chart.get(skill_element, {}).get(target_core_element, 1.0))
+
+
+## Routed DF-1 — the Turn-Based Combat call contract (GDD Formula DF-1 routing
+## table; ADR-0005 routing rule). This is the ONE call site TBC needs: it binds
+## `A`/`D` from two ALREADY-COMPOSED `final_stat` dicts by [param damage_type],
+## derives `T` via [method type_effectiveness], then defers to the
+## [method compute_damage] kernel — so no caller ever re-derives the formula.
+##
+## [param damage_type] is a [enum PartDef.DamageType] value (routing always
+## receives a concrete type, so it is typed `int`). PHYSICAL binds
+## `A = physical_power` / `D = armor`; ENERGY binds `A = energy_power` /
+## `D = resistance` — the two branches are kept explicit so a swapped binding is
+## impossible to miss (AC-DF-03/04 cross-checks guard exactly this). Stats are
+## read with `.get(key, 0)` so a missing stat degrades to 0, which the kernel's
+## `a == 0 and d == 0` path already handles (Engine Notes).
+##
+## [param skill_element] / [param target_core_element] stay UNTYPED — a literal
+## `null` (elementless Core / unauthored element) must flow to
+## [method type_effectiveness]'s neutral-×1.0 fallback (GDD EC-04/EC-05).
+## [param crit_mult] is a pass-through to the kernel, defaulting to 1.0.
+##
+## [b]Pure[/b]: reads no runtime state, rolls no RNG. It does NOT recompute stats
+## — it receives `StatMath.effective_stat` / `CombatantSnapshot.effective_stat`
+## outputs as parameters and must never reach into a live build or evaluator
+## cache (ADR-0005 `mid_battle_stat_recompute`).
+static func resolve(attacker_stat: Dictionary, damage_type: int, skill_element,
+		target_stat: Dictionary, target_core_element, cfg: BalanceConfig,
+		log: LogSink, crit_mult: float = 1.0) -> int:
+	var a: int
+	var d: int
+	if damage_type == PartDef.DamageType.PHYSICAL:
+		a = int(attacker_stat.get(&"physical_power", 0))
+		d = int(target_stat.get(&"armor", 0))
+	else:  # ENERGY
+		a = int(attacker_stat.get(&"energy_power", 0))
+		d = int(target_stat.get(&"resistance", 0))
+	var t := type_effectiveness(skill_element, target_core_element, cfg)
+	return compute_damage(a, d, t, cfg, log, crit_mult)

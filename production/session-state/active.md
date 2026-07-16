@@ -255,3 +255,12 @@ Task: RESUME HERE → /dev-story Story 003 (damage-type routing + full routed co
 - Advisory gaps ALL RESOLVED in tests/unit/damage-formula/type_effectiveness_test.gd (now 14 fns): (1) reason discriminator asserted in 3 rejection tests, (2) +test_validator_rejects_scalar_row, (3) +test_validator_rejects_non_numeric_cell.
 - Suite: 257/257 green (was 255; +2). Tech debt logged: None.
 - Next recommended: Damage-Formula Story 003 (damage-type routing/composition — binds A/D by damage_type, calls compute_damage with derived T) — production/epics/damage-formula/story-003-damage-type-routing-composition.md
+
+## Session Extract — /dev-story 2026-07-16 (Story 003)
+- Story: production/epics/damage-formula/story-003-damage-type-routing-composition.md — Damage-type routing + full routed composition
+- Files changed: src/core/stats/damage_formula.gd (added `resolve` routed entry point), tests/unit/damage-formula/damage_routing_test.gd (new, 11 test fns)
+- Test written: tests/unit/damage-formula/damage_routing_test.gd
+- Implemented INLINE (LOW-risk pure composition; engine-programmer subagent died on the "1M context credits" API error in Stories 001–002 — same pattern, so followed the established inline path)
+- Suite: 268/268 green (was 257; +11). All ACs covered with discriminating cross-checks (26/45 wrong-binding, 34 round, 24 wrong-order all asserted NOT-returned).
+- Blockers: None
+- Next: /code-review src/core/stats/damage_formula.gd then /story-done production/epics/damage-formula/story-003-damage-type-routing-composition.md

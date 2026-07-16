@@ -5,7 +5,7 @@
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-07-16
 
 ## Context
 
