@@ -24,7 +24,8 @@ class_name ConsumableDef
 extends Resource
 
 ## Content rarity band (GDD Rule 1). `BOSS_GRADE` is reserved but never authored in
-## MVP (AC-CD-18 flags a BOSS_GRADE consumable as a roster error). Values are
+## MVP (AC-CD-18 flags a BOSS_GRADE consumable as a roster warning — advisory `_warn`,
+## tracked as tech debt; not yet implemented in the ContentValidator). Values are
 ## APPEND-ONLY.
 enum Rarity {
 	COMMON     = 1,

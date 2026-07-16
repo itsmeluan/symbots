@@ -100,6 +100,12 @@ func test_both_context_item_valid_in_battle() -> void:
 	var r := ConsumableUse.resolve(_weld_patch(BATTLE), _living_state(), BATTLE, 1)
 	assert_eq(r["outcome"], OK, "a BOTH item with a valid living target is OK in battle")
 
+func test_both_context_item_valid_in_world() -> void:
+	# AC-CD-07 "BOTH valid in either" — the world half of the claim. A context gate
+	# that only whitelists BATTLE would wrongly reject this.
+	var r := ConsumableUse.resolve(_weld_patch(ConsumableDef.UseContext.BOTH), _living_state(), WORLD, 1)
+	assert_eq(r["outcome"], OK, "a BOTH item with a valid living target is OK in world")
+
 
 # ---------------------------------------------------------------------------
 # AC-CD-08 — quantity 0 rejected, no underflow
