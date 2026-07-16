@@ -3,20 +3,20 @@
 > **Layer**: Foundation
 > **GDD**: design/gdd/passive-database.md
 > **Architecture Module**: Content DBs (Part/Move/Passive/Consumable/Enemy)
-> **Status**: Ready
-> **Stories**: 7 stories created
+> **Status**: Complete
+> **Stories**: 7 stories — all implemented & green (370/370 GUT, 2026-07-16)
 
 ## Stories
 
 | # | Story | Type | Status | ADR |
 |---|-------|------|--------|-----|
-| 001 | PassiveDef schema, enums & PassiveCatalog | Logic | Ready | ADR-0003 |
-| 002 | PassiveDB loader & null-safe lookup | Logic | Ready | ADR-0003 |
-| 003 | Stacking-policy defaults by behavior_class | Logic | Ready | ADR-0003 |
-| 004 | Passive validator — schema-family + legality matrix | Logic | Ready | ADR-0003 |
-| 005 | Passive validator — behavior_params, STRUCTURAL non-negative & Core restriction | Logic | Ready | ADR-0003 |
-| 006 | Passive referential integrity & catalog wiring | Logic | Ready | ADR-0003 |
-| 007 | Three MVP status riders — content authoring | Config/Data | Ready | ADR-0003 |
+| 001 | PassiveDef schema, enums & PassiveCatalog | Logic | Done | ADR-0003 |
+| 002 | PassiveDB loader & null-safe lookup | Logic | Done | ADR-0003 |
+| 003 | Stacking-policy defaults by behavior_class | Logic | Done | ADR-0003 |
+| 004 | Passive validator — schema-family + legality matrix | Logic | Done | ADR-0003 |
+| 005 | Passive validator — behavior_params, STRUCTURAL non-negative & Core restriction | Logic | Done | ADR-0003 |
+| 006 | Passive referential integrity & catalog wiring | Logic | Done | ADR-0003 |
+| 007 | Three MVP status riders — content authoring | Config/Data | Done | ADR-0003 |
 
 **Scope boundary**: this epic delivers the schema, catalog, loader, validators, and
 the 3 MVP status-rider content. **Runtime firing** (AC-PDB-02, 04–11, 17 — status
@@ -69,4 +69,12 @@ This epic is complete when:
 
 ## Next Step
 
-Run `/create-stories passive-database` to break this epic into implementable stories.
+**Epic complete** (2026-07-16). All 7 stories implemented with passing GUT tests
+(370/370 suite green). Delivered: `PassiveDef`/`PassiveCatalog`/`PassiveDB`,
+stacking-policy defaults, the full ContentValidator Passive family (legality
+matrix, params, STRUCTURAL non-negative, Core restriction), the `passive_ids`
+referential seam (`ContentCatalogs.passive_ids_from`), and the 3 authored MVP
+status riders (`assets/data/passives/` + `passive_catalog.tres`).
+
+Remaining Foundation content DBs unstoried: **Consumable DB**, **Enemy DB**.
+Runtime firing of passives is the downstream **TBC Rule 13 executor epic**.

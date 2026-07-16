@@ -1,7 +1,7 @@
 # Story 003: Stacking-policy defaults by behavior_class
 
 > **Epic**: Passive Database
-> **Status**: Ready
+> **Status**: Done
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
@@ -76,7 +76,7 @@ Implement as a `const` dictionary or a small pure static function on `PassiveDef
 **Story Type**: Logic
 **Required evidence**: `tests/unit/passive_database/passive_stacking_policy_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created & passing (370/370 GUT, 2026-07-16)
 
 ---
 

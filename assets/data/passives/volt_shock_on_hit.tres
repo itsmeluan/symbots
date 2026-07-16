@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="PassiveDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/passive_def.gd" id="1_vshk"]
+
+[resource]
+script = ExtResource("1_vshk")
+id = &"volt_shock_on_hit"
+display_name = "Volt Shock"
+short_description = "On hit, inflicts Shock for 1 turn."
+trigger_category = 1
+behavior_class = 1
+scope = 1
+stacking_policy = 1
+passive_class = 1
+behavior_params = {
+"status_id": &"shock",
+"duration": 1
+}

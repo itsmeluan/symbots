@@ -1,7 +1,7 @@
 # Story 006: Passive referential integrity & catalog wiring
 
 > **Epic**: Passive Database
-> **Status**: Ready
+> **Status**: Done
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
@@ -79,7 +79,7 @@ This is primarily *wiring*, not new logic — the check at `content_validator.gd
 **Story Type**: Logic
 **Required evidence**: `tests/unit/content/passive_referential_integrity_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created & passing (370/370 GUT, 2026-07-16)
 
 ---
 

@@ -1,7 +1,7 @@
 # Story 007: Three MVP status riders — content authoring
 
 > **Epic**: Passive Database
-> **Status**: Ready
+> **Status**: Done
 > **Layer**: Foundation
 > **Type**: Config/Data
 > **Manifest Version**: 2026-07-14
@@ -81,7 +81,7 @@ Author the three `.tres` under the Passive content dir and add them to the `Pass
 **Story Type**: Config/Data
 **Required evidence**: `production/qa/smoke-passive-riders-[date].md` (catalog loads + validates clean at boot) **and** `tests/unit/content/passive_riders_content_test.gd` (authored contract values)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created & passing (370/370 GUT, 2026-07-16)
 
 ---
 

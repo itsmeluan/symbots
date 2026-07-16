@@ -1,7 +1,7 @@
 # Story 005: Passive validator — behavior_params, STRUCTURAL non-negative & Core restriction
 
 > **Epic**: Passive Database
-> **Status**: Ready
+> **Status**: Done
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
@@ -86,7 +86,7 @@ Add a Passive authoring-rules family to `ContentValidator` (same gate as Story 0
 **Story Type**: Logic
 **Required evidence**: `tests/unit/content/passive_validator_authoring_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created & passing (370/370 GUT, 2026-07-16)
 
 ---
 

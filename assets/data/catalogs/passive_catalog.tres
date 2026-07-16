@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="PassiveCatalog" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/passive_def.gd" id="1_pdef"]
+[ext_resource type="Resource" path="res://assets/data/passives/volt_shock_on_hit.tres" id="2_vshk"]
+[ext_resource type="Resource" path="res://assets/data/passives/thermal_burn_on_weapon.tres" id="3_tbrn"]
+[ext_resource type="Resource" path="res://assets/data/passives/kinetic_stagger_on_hit.tres" id="4_kstg"]
+[ext_resource type="Script" path="res://src/core/content/passive_catalog.gd" id="5_pcat"]
+
+[resource]
+script = ExtResource("5_pcat")
+entries = Array[ExtResource("1_pdef")]([ExtResource("2_vshk"), ExtResource("3_tbrn"), ExtResource("4_kstg")])

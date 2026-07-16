@@ -23,6 +23,12 @@ var parts: PartCatalog
 ## green. Same gating discipline as [member balance] / [member references_mounted].
 var moves: MoveCatalog
 
+## The Passive Database manifest (Passive-DB Story 001). Null in a validation that
+## mounts no passive catalog (e.g. Part-only / Move-only fixtures) — the Passive
+## schema/authoring family runs ONLY when this is provided, so prior-story fixtures
+## stay green. Same gating discipline as [member moves].
+var passives: PassiveCatalog
+
 ## The single balance tuning Resource (ADR-0005). The content-composition families
 ## (Story 008: stat budgets, primary caps/floors) validate against its tables, so
 ## they only run when it is provided; the schema families (Story 007) do not need
@@ -62,4 +68,20 @@ static func move_ids_from(catalog: MoveCatalog) -> Dictionary:
 	for move in catalog.entries:
 		if move != null:
 			ids[move.id] = true
+	return ids
+
+
+## Build the [member passive_ids] membership set from a loaded [PassiveCatalog]
+## (Passive-DB Story 006). The Part→Passive analogue of [method move_ids_from]:
+## one canonical builder shared by the real boot and every test fixture so the
+## `part.passive_id` resolution seam populates identically. Each entry's `id` maps
+## to `true`; a null catalog or a null entry contributes nothing (the schema family
+## reports those separately). O(n) build, O(1) `.has()` resolution.
+static func passive_ids_from(catalog: PassiveCatalog) -> Dictionary:
+	var ids := {}
+	if catalog == null:
+		return ids
+	for passive in catalog.entries:
+		if passive != null:
+			ids[passive.id] = true
 	return ids

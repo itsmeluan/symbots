@@ -2,9 +2,20 @@
 
 <!-- STATUS -->
 Epic: Foundation Layer
-Feature: Part Database — COMPLETE (11/11 stories)
-Task: Story next Foundation epic (Passive / Consumable / Enemy DB) via /create-stories
+Feature: Passive Database — COMPLETE (7/7 stories)
+Task: Story next Foundation epic (Consumable / Enemy DB) via /create-stories
 <!-- /STATUS -->
+
+## Session Extract — Passive DB epic IMPLEMENTED (7/7 stories) 2026-07-16
+- **Directive:** "implement all the stories from next epic in order" — Passive DB (Foundation, 7 Ready stories). Done inline (never-1M constraint honored, zero Agent/Task subagents).
+- **Result: all 7 stories implemented + green — 370/370 GUT, 3241 asserts** (was 293 pre-epic). EPIC.md → Complete; epics/index.md row + layer status + Next Step updated; all 7 story files Status→Done + test-evidence checked; tech-debt-register line 24 Passive side RESOLVED (item fully closed, both Move + Passive reconciled).
+- **Files created:** src/core/content/`passive_def.gd` (5 enums 1-based APPEND-ONLY, `DEFAULT_STACKING` + `default_stacking_policy`), `passive_catalog.gd`, `passive_db.gd` (thin host, null-safe `get_passive`). **Modified:** `content_catalogs.gd` (+`passives` slot, +`passive_ids_from` builder — both APPEND-ONLY), `content_validator.gd` (+Passive family: legality matrix, params key-set, STRUCTURAL non-negative, Core trigger whitelist + duplicate-combo; dispatched when `catalogs.passives != null`).
+- **Content:** `assets/data/passives/{volt_shock_on_hit,thermal_burn_on_weapon,kinetic_stagger_on_hit}.tres` + `assets/data/catalogs/passive_catalog.tres`; smoke `production/qa/smoke-passive-riders-2026-07-16.md`.
+- **Tests:** `tests/unit/passive_database/{spy_log_sink,passive_def_schema_test,passive_db_loader_test,passive_stacking_policy_test}.gd`; `tests/unit/content/{passive_validator_schema_test,passive_validator_authoring_test,passive_referential_integrity_test,passive_riders_content_test}.gd`.
+- **Two gotchas resolved:** (1) passive-only validator fixtures need `catalogs.parts = PartCatalog.new()` or `validate()` fires `content_missing_part_catalog`. (2) A passive-bearing Part fixture must be RARE, not COMMON — Rule 8 effect-capacity ceiling is 0 for Common (`content_effect_capacity_exceeded`).
+- **Scope boundary preserved:** Passive DB owns NO runtime executor — status application / stacking dedup / aura+structure clamps (AC-PDB-02, 04–11, 17) are the **TBC Rule 13 executor epic**. OQ-PDB-1 MVP Core roster (≤5 Cores, deferred AC-PDB-D1–D4) is a separate game-designer content pass.
+- **NEXT:** remaining unstoried Foundation epics — `/create-stories consumable-database` or `/create-stories enemy-database`. After both, Foundation complete → `/create-epics layer: core`.
+- Not yet run (batch directive): per-story `/code-review` + `/story-done`. Stop-hook will auto-commit.
 
 ## Session Extract — /story-done 2026-07-16 (Part-DB story-011)
 - Verdict: COMPLETE — 7/7 ACs passing, full traceability COVERED, Logic BLOCKING evidence gate passed, no blocking deviations.

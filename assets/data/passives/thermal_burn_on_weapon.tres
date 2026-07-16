@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="PassiveDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/passive_def.gd" id="1_tbrn"]
+
+[resource]
+script = ExtResource("1_tbrn")
+id = &"thermal_burn_on_weapon"
+display_name = "Thermal Burn"
+short_description = "On a weapon hit, inflicts Burn for 2 turns."
+trigger_category = 1
+behavior_class = 1
+scope = 2
+stacking_policy = 1
+passive_class = 1
+behavior_params = {
+"status_id": &"burn",
+"duration": 2
+}

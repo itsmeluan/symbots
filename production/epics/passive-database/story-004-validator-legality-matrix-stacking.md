@@ -1,7 +1,7 @@
 # Story 004: Passive validator — schema-family + trigger×behavior legality matrix
 
 > **Epic**: Passive Database
-> **Status**: Ready
+> **Status**: Done
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
@@ -79,7 +79,7 @@ Add a Passive schema/legality family to `ContentValidator`, gated on `catalogs.p
 **Story Type**: Logic
 **Required evidence**: `tests/unit/content/passive_validator_schema_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created & passing (370/370 GUT, 2026-07-16)
 
 ---
 
