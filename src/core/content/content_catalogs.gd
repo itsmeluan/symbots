@@ -17,6 +17,12 @@ extends RefCounted
 ## the validator reports `content_missing_part_catalog` rather than crashing.
 var parts: PartCatalog
 
+## The Move Database manifest (Move-DB Story 001). Null in a Part-only validation
+## (e.g. every Part-DB test fixture) — the Move schema/authoring family runs ONLY
+## when this is provided, so prior-story fixtures that mount no move catalog stay
+## green. Same gating discipline as [member balance] / [member references_mounted].
+var moves: MoveCatalog
+
 ## The single balance tuning Resource (ADR-0005). The content-composition families
 ## (Story 008: stat budgets, primary caps/floors) validate against its tables, so
 ## they only run when it is provided; the schema families (Story 007) do not need
@@ -25,10 +31,11 @@ var balance: BalanceConfig
 
 ## The set of valid Move DB skill IDs, as a `{StringName: true}` membership set
 ## (ADR-0003: cross-DB references are `StringName` IDs, never Resource links). Read
-## via `.has(id)` for AC-13 resolution. Populated only when [member
-## references_mounted] is true. A lightweight id-set (not a full `MoveCatalog`) is
-## used deliberately — the Move DB epic owns the real catalog schema; this is only
-## the resolution seam the real boot fills from the loaded Move DB.
+## via `.has(id)` for AC-13 / EC-MDB-01 resolution. Populated only when [member
+## references_mounted] is true. A lightweight id-set (not the full `MoveCatalog`)
+## is used deliberately — O(1) `.has()` resolution with no `Resource`-link coupling.
+## Build it from a loaded catalog with [method move_ids_from] so the real boot and
+## test fixtures populate it identically (Move-DB Story 006).
 var move_ids: Dictionary = {}
 
 ## The set of valid Passive DB IDs, as a `{StringName: true}` membership set. Same
@@ -41,3 +48,18 @@ var passive_ids: Dictionary = {}
 ## skip that family, so their fixtures — which set no level data and mount no
 ## reference index — stay green. Mirrors the `balance != null` gate for Story 008.
 var references_mounted: bool = false
+
+
+## Build the [member move_ids] membership set from a loaded [MoveCatalog]
+## (Move-DB Story 006). One canonical builder so the real boot and every test
+## fixture populate the resolution seam identically: each entry's `id` maps to
+## `true`. A null catalog or a null entry contributes nothing (the schema family
+## reports those separately). O(n) build, O(1) `.has()` resolution.
+static func move_ids_from(catalog: MoveCatalog) -> Dictionary:
+	var ids := {}
+	if catalog == null:
+		return ids
+	for move in catalog.entries:
+		if move != null:
+			ids[move.id] = true
+	return ids

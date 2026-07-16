@@ -132,7 +132,8 @@ func test_ac_13_dangling_skill_ref_errors() -> void:
 	p.active_skill_id = &"skill_missing"  # not in the mounted Move index
 	var r := _one(p)
 	assert_false(r["ok"])
-	assert_true(_logged(&"content_dangling_skill_ref"), "an unresolved active_skill_id is flagged")
+	# Canonical Part↔Move code, owned by Move-DB Story 006 (was content_dangling_skill_ref).
+	assert_true(_logged(&"content_active_skill_unresolved"), "an unresolved active_skill_id is flagged")
 
 
 func test_ac_13_dangling_passive_ref_errors() -> void:
@@ -151,7 +152,7 @@ func test_ac_13_empty_refs_are_skipped_not_flagged() -> void:
 	var p := _common_head(&"no_refs")
 	var r := _one(p)
 	assert_true(r["ok"], "a part with both references &\"\" passes")
-	assert_false(_logged(&"content_dangling_skill_ref"))
+	assert_false(_logged(&"content_active_skill_unresolved"))
 	assert_false(_logged(&"content_dangling_passive_ref"))
 
 
@@ -255,5 +256,5 @@ func test_family_skipped_when_references_unmounted() -> void:
 	p.level_requirement = 1  # below RARE floor 3
 	var r := _run_unmounted([p] as Array[PartDef])
 	assert_true(r["ok"], "with references unmounted, the referential + level family is skipped")
-	assert_false(_logged(&"content_dangling_skill_ref"))
+	assert_false(_logged(&"content_active_skill_unresolved"))
 	assert_false(_logged(&"content_level_requirement_below_floor"))

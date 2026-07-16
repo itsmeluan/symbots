@@ -3,8 +3,8 @@
 > **Layer**: Foundation
 > **GDD**: design/gdd/move-database.md
 > **Architecture Module**: Content DBs (Part/Move/Passive/Consumable/Enemy)
-> **Status**: Ready
-> **Stories**: Not yet created — run `/create-stories move-database`
+> **Status**: Complete (6/6 stories Done, 2026-07-16)
+> **Stories**: 6 created (2026-07-16), all implemented + green — see the Stories table below
 
 ## Overview
 
@@ -51,6 +51,28 @@ This epic is complete when:
 - The ContentValidator rejects every authoring-rule violation above (CI + dev-boot)
 - Referential integrity to the Part DB (active_skill_id resolution) is verified
 
+## Stories
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | MoveDef schema, enums & MoveCatalog | Logic | Complete | ADR-0003 |
+| 002 | MoveDB loader & null-safe lookup | Logic | Complete | ADR-0003, ADR-0004 |
+| 003 | MOVE-F1 — move power-multiply formula | Logic | Complete | ADR-0005 |
+| 004 | Move schema-validation family | Logic | Complete | ADR-0003 |
+| 005 | Move authoring-rule validation | Logic | Complete | ADR-0003 |
+| 006 | Referential integrity — active_skill_id ↔ Move DB | Integration | Complete | ADR-0003 |
+
+**Scope note:** this epic delivers the Move DB's static contract — schema, the MOVE-F1
+formula, content validation, and Part↔Move referential integrity (the 10 TR-mdb
+requirements). The GDD's *runtime* ACs — Basic Attack instantiation (AC-MDB-06),
+SCAN reveal/persistence (AC-MDB-10/20), Vent heat-mutation (AC-MDB-11), status-proc
+application (AC-MDB-09), `hit_resolved` emission (AC-MDB-19), SKILL_ENHANCE/UNLOCK
+runtime (AC-MDB-12/13) — are **Turn-Based Combat-owned** and land in the TBC epic;
+this epic authors the contract they fulfil. AC-MDB-05 (full DF-1→MOVE-F1→TBC-F5
+pipeline) is verified once DF-1 (Damage-Formula epic) and TBC-F5 (TBC epic) exist in code.
+
 ## Next Step
 
-Run `/create-stories move-database` to break this epic into implementable stories.
+Run `/story-readiness production/epics/move-database/story-001-movedef-schema-enums-catalog.md`
+then `/dev-story` to begin implementation. Work stories in dependency order (each
+story's `Depends on:` field is authoritative).

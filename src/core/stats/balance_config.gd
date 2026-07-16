@@ -108,3 +108,15 @@ extends Resource
 	PartDef.SlotType.HEAD: 17, PartDef.SlotType.ARMS: 19,
 	PartDef.SlotType.LEGS: 19, PartDef.SlotType.WEAPON: 22,
 }
+
+## MOVE-F1 per-tier power multiplier (Move DB Formula 1), indexed by the
+## [enum MoveDef.PowerTier] value (1=BASIC … 5=SIGNATURE). Index 0 is the reserved/
+## invalid tier sentinel and is never looked up — mirrors the
+## [member drop_rate_by_rarity] index-0-reserved pattern. GDD MOVE-F1 tier table.
+## [b]Cross-document, TTK-sensitive:[/b] `power_tier_multipliers[SIGNATURE]` is
+## coupled to the MOVE-F1 range, TBC-F5's range, the DF-1 pipeline errata, and the
+## TTK envelope — treat any change as a design decision requiring the epsilon
+## re-scan and TBC re-derivation, not a tuning pass (GDD Tuning-Knob warning 1).
+## The tiers must stay STRICTLY ORDERED BASIC < LIGHT < STANDARD < HEAVY < SIGNATURE
+## or the tier taxonomy loses meaning (GDD Tuning-Knob warning 3).
+@export var power_tier_multipliers: Array[float] = [0.0, 0.70, 0.80, 1.00, 1.20, 1.40]

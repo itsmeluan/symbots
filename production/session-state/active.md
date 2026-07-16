@@ -1,10 +1,34 @@
 # Active Session State
 
 <!-- STATUS -->
-Epic: Pre-Production
-Feature: Sprint Zero — Part Database
-Task: Part-DB GDD Round-9 design-review DONE (Rule 2/8/AC-01 effect-capacity rework → APPROVED; 2 blockers fixed+tested, 160/160 green). Next: pick the next Foundation epic (Move/Passive/Consumable/Enemy/Damage-Formula) or the 4.6→4.7 ADR re-validation sweep
+Epic: Foundation — Move Database (CLOSED — 6/6 stories Done)
+Feature: Move DB implementation
+Task: All 6 Move-DB stories implemented + green (229/229 suite, 2881 asserts, Godot 4.7). Next: pick the next Foundation epic (Passive/Consumable/Enemy/Damage-Formula) or the 4.6→4.7 ADR re-validation sweep
 <!-- /STATUS -->
+
+## Session Extract — Move Database epic COMPLETE (2026-07-16)
+
+- **All 6 Move-DB stories implemented + tested green** in dependency order (001→006),
+  mirroring the Part-DB epic's patterns (typed `.tres`, one catalog, DI ContentValidator,
+  "extend never fork" families gated behind injected state).
+  - **001** `MoveDef` schema + enums (append-only, 1-based, 0=sentinel) + `MoveCatalog`.
+  - **002** `MoveDB` loader + null-safe lookup.
+  - **003** MOVE-F1 power multiplier (post-DF-1 multiply, load-bearing epsilon
+    `floori(x + 0.0001)`), discriminating fixtures.
+  - **004** Move schema-validation family (`_validate_move_catalog` → per-move required
+    fields / power-tier / targeting; gated on `catalogs.moves != null`).
+  - **005** Authoring rules — energy-cost bands per tier, REPAIR Energy-brake floor,
+    STATUS status_proc↔element match, DAMAGE innate-rider ban.
+  - **006** Part↔Move referential integrity — `active_skill_id` resolves via the O(1)
+    `move_ids` membership seam, gated on `references_mounted`.
+- **Seam reconciliation (user-approved, Option A):** unified the Story-009 placeholder
+  `content_dangling_skill_ref` → canonical `content_active_skill_unresolved`; added the
+  one canonical `ContentCatalogs.move_ids_from()` builder (real boot + fixtures share it);
+  tech-debt register line 24 marked RESOLVED (Move side). **Passive side still OPEN**
+  (`passive_ids` / `content_dangling_passive_ref` — reconcile when the Passive DB epic lands).
+- **Evidence: full suite 229/229 green, 2881 asserts** (Godot 4.7 + GUT 9.7.1). Known
+  pre-existing part_db shared-instance test noise (17 orphans / 42 ObjectDB-leak warnings) —
+  not a regression. Story files, EPIC.md, epics/index.md all rolled up to Complete.
 
 ## Session Extract — Part-DB GDD Round-9 design-review → APPROVED (2026-07-16)
 
