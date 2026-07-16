@@ -608,7 +608,10 @@ func _check_primary_stat_group_coverage(catalog: PartCatalog) -> void:
 ## stat strictly exceeds it (ties are legal); (b) `stat_bonuses[primary]` strictly
 ## exceeds the slot's Rare primary FLOOR. Reuses [method _primary_stat_for] from
 ## AC-23 — an unresolved primary (ARMS/WEAPON with bad damage_type) is skipped here;
-## the enum family already flags it. Runs only on PROTOTYPE parts.
+## the enum family already flags it. Runs only on PROTOTYPE parts. Known co-fire: a
+## primary value ≤ 0 (missing key or all-negative bonuses) makes any positive stat a
+## strict exceeder, so (a) fires alongside AC-10's missing-positive error — noisy but
+## never wrong (such a part is invalid either way).
 func _check_prototype_focus_floor(part: PartDef) -> void:
 	if part.rarity != PartDef.Rarity.PROTOTYPE:
 		return
@@ -621,7 +624,7 @@ func _check_prototype_focus_floor(part: PartDef) -> void:
 	for v: int in part.stat_bonuses.values():
 		if v > primary_value:
 			_error(&"content_prototype_focus_not_primary",
-				{"id": part.id, "primary": primary, "primary_value": primary_value,
+				{"id": part.id, "primary": primary, "value": primary_value,
 				"exceeding_value": v})
 			return  # one error per part — the first offender is sufficient
 

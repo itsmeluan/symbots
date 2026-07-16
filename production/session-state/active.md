@@ -1,10 +1,19 @@
 # Active Session State
 
 <!-- STATUS -->
-Epic: Design — Part Database GDD (Round 10 revision pass complete)
-Feature: Part-DB re-review
-Task: Run /design-review design/gdd/part-database.md (fresh session after /clear) to confirm the 7 Round-10 blocker fixes and restore header to Approved
+Epic: Foundation Layer
+Feature: Part Database — COMPLETE (11/11 stories)
+Task: Story next Foundation epic (Passive / Consumable / Enemy DB) via /create-stories
 <!-- /STATUS -->
+
+## Session Extract — /story-done 2026-07-16 (Part-DB story-011)
+- Verdict: COMPLETE — 7/7 ACs passing, full traceability COVERED, Logic BLOCKING evidence gate passed, no blocking deviations.
+- Story: `production/epics/part-database/story-011-validator-hardening-round11.md` — Validator hardening (Round 10/11 review-debt: AC-25/26/27 + entry-shape + AC-08(b) fixture sync).
+- `/code-review` same session: APPROVED WITH SUGGESTIONS; all 4 applied (empty-drop_conditions test, payload-key `value` rename, dead-assignment cleanup, AC-10 co-fire doc note). Suite re-verified **294/294 green** (3015 asserts, 21 scripts, Godot 4.7 headless).
+- Two specialist findings refuted by fact-check: typed `Array[Dictionary]` makes the "blocking" non-Dictionary crash unrepresentable (part_def.gd:146/166); F2b floor-variant divergent `[-2,-1,0,1,1,1]` re-confirmed via python (−0.0001 epsilon makes floor ≠ ceil even for integer-exact bases).
+- Closure: story Complete + Completion Notes; Part-DB EPIC.md → ✅ Complete (011 row added); epics/index.md row + layer status + Next Step; systems-index row 1 production-debt note flipped OPEN → CLOSED.
+- Tech debt logged: None (residuals documented in-story: AC-25(a)/AC-10 co-fire noise, entry-shape/product-low double-report, int multipliers accepted).
+- Next recommended: story an unstoried Foundation epic — `/create-stories passive-database` (also unblocks tech-debt-register line 24 passive-side seam), or consumable/enemy DBs.
 
 ## Session Extract — Part-DB GDD Round-10 /design-review → NEEDS REVISION → all 7 blockers fixed (2026-07-16)
 

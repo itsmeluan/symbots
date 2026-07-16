@@ -457,10 +457,7 @@ func test_ac_25_proto_focus_tie_with_secondary_passes() -> void:
 	# structure=30 == armor=30; primary=structure=30 ≥ armor=30 → no strict exceeder.
 	# Positive sum = 60 > 55 (over budget) — use HEAD Prototype to avoid that clash.
 	var p := _proto_head(&"ac25_tie")
-	# HEAD primary = targeting. Set targeting = cooling = 30 (tie). Both pass (a).
-	# Positive sum = 60 → over HEAD Prototype budget [28,38]; adjust to keep budget clean.
-	p.stat_bonuses = _sb({&"targeting": 20, &"cooling": 20, &"mobility": -8})
-	# positive=40 > HEAD Prototype max 38; adjust: targeting=18, cooling=18.
+	# HEAD primary = targeting. targeting = cooling = 18 (tie) — neither strictly exceeds.
 	p.stat_bonuses = _sb({&"targeting": 18, &"cooling": 18, &"mobility": -8})
 	# Positive=36 ∈ [28,38] ✓. Concentration: top_two=36/36=1.0 ✓. Rare HEAD floor=17.
 	# targeting=18 > 17 ✓. cooling=18 ties targeting — neither strictly exceeds.
@@ -536,6 +533,20 @@ func test_ac_26_proto_three_at_1_5_passes() -> void:
 	assert_true(r["ok"], "3 × ×1.5 (product 3.375) passes AC-26")
 	assert_false(_logged(&"content_prototype_too_few_drop_conditions"), "no size error")
 	assert_false(_logged(&"content_prototype_drop_product_low"), "no product error")
+
+
+func test_ac_26_proto_empty_drop_conditions_fires_both_errors() -> void:
+	# Size 0: (a) fails (0 < 3) and the product loop never runs, leaving product=1.0
+	# < 3.0 → (b) fails too. Both errors must fire — the minimal both-fail input and
+	# a realistic authoring mistake (Prototype authored with no conditions at all).
+	var p := _proto_chassis(&"ac26_empty", 30, 10, -8)
+	p.drop_conditions = []
+	var r := _one(p)
+	assert_false(r["ok"], "an empty drop_conditions array fails AC-26 outright")
+	assert_true(_logged(&"content_prototype_too_few_drop_conditions"),
+		"(a) fires on size 0")
+	assert_true(_logged(&"content_prototype_drop_product_low"),
+		"(b) fires on the empty product (1.0 < 3.0)")
 
 
 func test_ac_26_non_prototype_skipped() -> void:

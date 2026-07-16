@@ -3,8 +3,8 @@
 > **Layer**: Foundation
 > **GDD**: design/gdd/part-database.md
 > **Architecture Module**: Content DBs (Part/Move/Passive/Consumable/Enemy)
-> **Status**: ⚠️ Reopened (2026-07-16) — Stories 001–010 Done; **Story 011 (validator hardening) Ready** — Round 10/11 review-debt: GDD ACs 25/26/27 lack validator coverage, AC-08(b) test fixture out of sync with the amended GDD
-> **Stories**: 11 stories (10 created 2026-07-15, Complete; story-011 added 2026-07-16 from `/design-review` Round 11 escalation)
+> **Status**: ✅ Complete (2026-07-16) — Stories 001–011 all Done; Round 10/11 review-debt closed by story-011 (validator hardening: AC-25/26/27, entry-shape, AC-08(b) fixture sync); suite 294/294 green
+> **Stories**: 11 stories (10 created 2026-07-15; story-011 added 2026-07-16 from `/design-review` Round 11 escalation, Complete same day)
 
 ## Overview
 
@@ -84,6 +84,7 @@ This epic is complete when:
 | 008 | ContentValidator — content-rule, budget & synergy family | Logic | ✅ Done | ADR-0003 |
 | 009 | ContentValidator — cross-DB referential integrity + level fields | Integration | ✅ Done | ADR-0003 |
 | 010 | Author MVP part content + wire CI content suite | Config/Data | ✅ Done | ADR-0003 |
+| 011 | Validator hardening — Round 10/11 review-debt (AC-25/26/27 + fixture sync) | Logic | ✅ Done | ADR-0003 |
 
 **Build order:** 001 gates everything (engine spike — must PASS before content authoring).
 Then 002 (schema) → 003 (loader) / 004 (F2/F2b) → 005 (F1) / 006 (F3) / 007 (validator scaffold)
