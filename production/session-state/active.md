@@ -221,16 +221,17 @@ Task: Story 001 (compute_damage kernel + damage_floor config) DONE — 243/243 s
 - Rare armor/chipset/legs frames are now authorable. **Skill flavor (attack vs buff/debuff) is authoring-guideline only** — enforceable once Move DB carries a skill category. Not yet run: `/design-review` on the revised GDD.
 
 <!-- STATUS -->
-Epic: Part Database (CLOSED — 10/10 stories Done)
-Feature: Rule 2↔Rule 8 reconciliation — RESOLVED 2026-07-15
-Task: RESUME HERE → run /design-review design/gdd/part-database.md (revised Rule 2 / Rule 8 / AC-01 not yet reviewed)
+Epic: Damage Formula
+Feature: DF-1 composition (Stories 001+002 Done)
+Task: RESUME HERE → /dev-story Story 003 (damage-type routing + full routed composition)
 <!-- /STATUS -->
 
-## ⏭️ NEXT SESSION — RESUME HERE (as of 2026-07-15, end of Rule2↔Rule8 work)
-- **State: DONE + green + committed.** Rule 2↔Rule 8 contradiction RESOLVED (effect-capacity model). Suite 158/158, all 14 parts valid. Tech-debt marked RESOLVED; memory `project-rule2-rule8-contradiction` = RESOLVED. See the "Rule 2↔Rule 8 RESOLVED" extract above for the full model + file list.
-- **THE ONE PENDING ACTION: run `/design-review design/gdd/part-database.md`** — the revised Rule 2 (slot table + basic-attack note), Rule 8 (effect-capacity rewrite), and AC-01 (new nullability clause) have NOT been through design-review yet. That's exactly what the user is about to /clear and do.
-- If design-review flags issues: the enforcement lives in `src/core/content/content_validator.gd` `_check_nullability` (consts `SKILL_CAPABLE_SLOTS` / `EFFECT_CEILING` / `EFFECT_FLOOR`); tests in `part_validator_schema_test.gd` (unit) + `part_referential_integrity_test.gd` (integration). Re-run: `godot --headless -s addons/gut/gut_cmdln.gd -gconfig=.gutconfig.json`.
-- After review passes: no more Part-DB work. Next Foundation epics unstoried — Move / Passive / Consumable / Enemy / Damage-Formula DBs. (Skill-flavor attack-vs-buff split becomes validator-enforceable once the Move DB carries a skill category — noted as forward work.)
+## ⏭️ NEXT SESSION — RESUME HERE (as of 2026-07-16, after Story 002 close)
+- **State: DONE + green + committed.** Damage-Formula Stories 001 (compute_damage kernel + damage_floor) and 002 (type_effectiveness lookup + type_chart config) are both **Complete**. Working tree clean. Suite **257/257 green** (Godot 4.7). Nested typed-Dictionary `.tres` round-trip CONFIRMED on 4.7.
+- **THE ONE PENDING ACTION: run `/dev-story production/epics/damage-formula/story-003-damage-type-routing-composition.md`** — Story 003 passed `/story-readiness` this session = **READY** (no gaps). It adds `DamageFormula.resolve(...)` — the routed TBC call contract that binds A/D by `damage_type` (PHYSICAL→physical_power/armor, ENERGY→energy_power/resistance), derives T via Story 002's `type_effectiveness`, and calls Story 001's `compute_damage`. Pure static fn in `src/core/stats/damage_formula.gd`; `crit_mult` stays a pass-through param.
+- **Watch during impl**: the two routing branches are where a swapped stat binding hides — AC-DF-03 (33 not 26) and AC-DF-04 (22 not 45) cross-checks are the regression guard; land the "wrong value NOT returned" asserts. AC-DF-06 is floor-vs-round discriminating (33 not 34); AC-DF-07 catches wrong post-floor order (25 not 24). Test evidence file: `tests/unit/damage-formula/damage_routing_test.gd`. Re-run: `/Applications/Godot.app/Contents/MacOS/Godot --headless -s addons/gut/gut_cmdln.gd -gconfig=.gutconfig.json`.
+- **Note**: `godot` is NOT on PATH — use the full `/Applications/Godot.app/Contents/MacOS/Godot` path. The gconfig runs the WHOLE suite even with `-gtest=` (expect 257 baseline + new routing tests).
+- After Story 003: Damage-Formula epic composition is complete → unlocks TBC damage resolution (consumes `DamageFormula.resolve`). Other unstoried Foundation epics: Passive / Consumable / Enemy DBs. Still-open earlier item: `/design-review design/gdd/part-database.md` (revised Rule 2/8/AC-01 never went through design-review) — deferred, not blocking Damage-Formula work.
 
 ## Session Extract — /story-done 2026-07-16
 - Verdict: COMPLETE WITH NOTES
