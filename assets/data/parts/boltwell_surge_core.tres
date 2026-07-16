@@ -21,6 +21,6 @@ max_upgrade_tier = 5
 flavor_text = "Boltwell's tuned reactor. Feeds the greedy builds."
 sprite_id = &"core_surge"
 level_requirement = 3
-level_growth = Dictionary[String, int]({
-"energy_capacity": 2
+level_growth = Dictionary[StringName, int]({
+&"energy_capacity": 2
 })

@@ -18,6 +18,6 @@ stat_bonuses = Dictionary[StringName, int]({
 synergy_tags = Array[StringName]([&"kinetic", &"scrapjaw"])
 flavor_text = "A salvaged reactor core. It hums like it's annoyed."
 sprite_id = &"core_scrap"
-level_growth = Dictionary[String, int]({
-"structure": 1
+level_growth = Dictionary[StringName, int]({
+&"structure": 1
 })

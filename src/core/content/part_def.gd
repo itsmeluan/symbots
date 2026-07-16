@@ -199,9 +199,12 @@ enum ChassisArchetype {
 
 ## Per-level flat stat bonus applied by CP-F3 (Core Progression Formula 3).
 ## Non-empty ONLY on CORE-slot parts — all other slots must have an empty dict.
-## Key = canonical stat name (String); value = flat bonus per Core level.
+## Key = canonical stat name (StringName, e.g. &"structure"); value = flat bonus
+## per Core level. StringName keys are required: CP-F3 looks up with &"stat"
+## literals and typed Dictionaries do NOT coerce String↔StringName — a
+## String-keyed dict would silently return 0 growth for every stat.
 ## CORE-only rule enforced by ContentValidator (Story 009).
-@export var level_growth: Dictionary[String, int] = {}
+@export var level_growth: Dictionary[StringName, int] = {}
 
 # ---------------------------------------------------------------------------
 # Reserved for Full Vision (null/empty in MVP)

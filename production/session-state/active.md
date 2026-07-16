@@ -1,10 +1,36 @@
 # Active Session State
 
 <!-- STATUS -->
-Epic: Foundation — Damage Formula (3 stories; 001 implemented + green)
-Feature: DF-1 kernel
-Task: Story 001 (compute_damage kernel + damage_floor config) DONE — 243/243 suite green (2907 asserts, Godot 4.7). Next: /code-review then /story-done story-001, then Stories 002 (type_effectiveness) + 003 (routing)
+Epic: Design — Part Database GDD (Round 10 revision pass complete)
+Feature: Part-DB re-review
+Task: Run /design-review design/gdd/part-database.md (fresh session after /clear) to confirm the 7 Round-10 blocker fixes and restore header to Approved
 <!-- /STATUS -->
+
+## Session Extract — Part-DB GDD Round-10 /design-review → NEEDS REVISION → all 7 blockers fixed (2026-07-16)
+
+- **Full-mode review, headless standard-context workaround** (Agent-tool subagents die
+  on the `claude-fable-5[1m]` settings pin — spawned 5 specialists + creative-director
+  via `claude -p` child processes instead; user constraint: never 1M context).
+- **Verdict: NEEDS REVISION (7 blockers)** — user chose revise-now; all 7 fixed in-session:
+  1. EC↔AC citations (EC-05/07/13 no-AC clauses; EC-10→AC-08+AC-25; EC-11→AC-07)
+  2. AC-09 sub-assertion (e) — 0.70×1.5×1.5=1.575 clamp discriminator
+  3. Prototype focus floor: Chassis budget 40→42, strict > Rare primary FLOOR, **new AC-25**
+  4. **New AC-26** — Prototype ≥3 drop conditions AND product ≥ ×3.0
+  5. `level_growth` String→StringName: GDD Rule 1 pinned; `part_def.gd:204` re-typed
+     `Dictionary[StringName, int]`; both Core `.tres` re-authored `&"key"`. **Suite
+     271/271 green** + explicit headless .tres round-trip check PASS (typed-dict
+     `.get(&"k")` returns 2/1, not 0)
+  6. **New AC-27** — every stat_bonuses value ∈ [−55, 55] (60+8 Boss Chassis fixture)
+  7. ×0.7 drop-penalty removed; Formula 3 floor >1.0 (Drop System Rule 5a alignment)
+- Also: Open Questions honesty rewrite (deferred external deps listed). Header now
+  "Approved — Revision Pending"; systems-index row 28 + review-log entry written.
+- **Carried forward (NOT done):** P2 #8 Boss-grade "exclusive synergy bonus" rewording;
+  P2 #9 Player Fantasy scope + cross-tag coverage; P2 #11 provisional drop-condition
+  vocab freeze; **P3 validator-hardening fast-follow story** (AC-25/26/27 validator
+  implementations + Story-009's promised entry-shape validators) — story not yet created.
+- **Next: after /clear, run `/design-review design/gdd/part-database.md`** (fresh panel
+  confirms fixes → restore Approved). Reviewer reports archived in session scratchpad
+  (ephemeral); findings summarized in `design/gdd/reviews/part-database-review-log.md`.
 
 ## Session Extract — /dev-story Damage-Formula 001 (2026-07-16)
 - Story: `production/epics/damage-formula/story-001-df1-kernel-compute-damage.md` — DF-1 kernel `compute_damage()` + `damage_floor` config

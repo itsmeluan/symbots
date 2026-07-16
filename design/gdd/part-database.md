@@ -1,8 +1,8 @@
 # Part Database
 
-> **Status**: Approved (Round 8 + visual amendment 2026-07-10)
+> **Status**: Approved — Revision Pending (Round 10 full-panel re-review 2026-07-16: NEEDS REVISION, 7 blockers; Priority-1 revisions applied same session — pending re-review confirmation)
 > **Author**: Luan + Claude Code (game-designer)
-> **Last Updated**: 2026-07-10
+> **Last Updated**: 2026-07-16
 > **Implements Pillar**: Pillar 1 (Engineer, Don't Collect), Pillar 3 (Build Depth Over Content Breadth), Pillar 4 (Synergy Is the Endgame)
 
 ## Summary
@@ -57,7 +57,7 @@ Every Sympart in the game is defined by the following fields. The Part Database 
 | `flavor_text` | String | One-line lore description shown in UI |
 | `sprite_id` | StringName | Art asset identifier for this part's visual representation on a Symbot. The Symbot renderer and Workshop UI look up this ID to swap the sprite for the affected visual zone when the part is equipped. Required for all parts — must be non-null and non-empty. |
 | `level_requirement` | int | Core level required to equip this part. Authoring floors by rarity (CP Rule 5): COMMON=1, RARE=3, BOSS_GRADE=6, PROTOTYPE=8. Individual parts may have a higher `level_requirement` than their rarity floor; never lower. `null` or 0 defaults to no gate (treated as 1). *(Core Progression erratum 2026-07-12.)* |
-| `level_growth` | Dictionary[String, int] | Per-level flat stat bonus applied by CP-F3 (Core Progression); **non-null only on CORE-slot parts**. Key = canonical stat name; value = flat bonus per level. Empty dict or `null` for all non-CORE parts — Assembly ignores `level_growth` on non-CORE slots. *(Core Progression erratum 2026-07-12.)* |
+| `level_growth` | Dictionary[StringName, int] | Per-level flat stat bonus applied by CP-F3 (Core Progression); **non-null only on CORE-slot parts**. Key = canonical stat name as **`StringName`** (matching `stat_bonuses` — the formula pipeline reads stat keys as `StringName` literals like `&"structure"`; a `String`-keyed dict would make CP-F3 lookups silently return 0, since typed-Dictionary lookups do not coerce `String`↔`StringName` in Godot 4.7). Value = flat bonus per level. Empty dict or `null` for all non-CORE parts — Assembly ignores `level_growth` on non-CORE slots. *(Core Progression erratum 2026-07-12; key type pinned `String`→`StringName` in the Round 10 review 2026-07-16 — godot-specialist finding 1.)* |
 
 Fields reserved for later content (must be in schema now, `null` in MVP content): `motherboard_slot_type`, `ram_cost`, `weight_class`, `modification_slots`.
 
@@ -212,12 +212,11 @@ Each part definition's `drop_conditions` array specifies how the player's battle
 ```
 drop_conditions: [
   { condition: "arm_broken",           multiplier: 1.5 },
-  { condition: "defeated_by_thermal",  multiplier: 0.7 },
   { condition: "targeting_active",     multiplier: 1.3 }
 ]
 ```
 
-Multipliers stack multiplicatively. All matching conditions are evaluated. The per-rarity base drop rate (a config constant, not a per-part field — see Formula 3) is the starting probability; conditions modify it up or down. Full condition vocabulary is defined in the Drop System GDD.
+Multipliers stack multiplicatively. All matching conditions are evaluated. The per-rarity base drop rate (a config constant, not a per-part field — see Formula 3) is the starting probability; conditions raise it. **Every authored multiplier must be strictly greater than 1.0** — drop conditions are incentives only. A multiplier ≤ 1.0 (a no-op or a penalty) is a content authoring error, rejected by Drop System Rule 5a's validator. *(Round 10, 2026-07-16: the former `defeated_by_thermal ×0.7` penalty example was removed — it contradicted Drop System Rule 5a and taught authors an illegal pattern. Design direction: reward correct hunting behavior, never punish deviation.)* Full condition vocabulary is defined in the Drop System GDD.
 
 ---
 
@@ -404,7 +403,7 @@ effective_drop_rate = clamp( base_drop_rate × product(multiplier for each match
 | Variable | Symbol | Type | Range | Description |
 |----------|--------|------|-------|-------------|
 | Base probability | `base_drop_rate` | float | 0.0–1.0 | From rarity tier table below |
-| Condition multiplier | `multiplier` | float | 0.5–1000 per condition | From matching `drop_conditions` entry |
+| Condition multiplier | `multiplier` | float | >1.0–1000 per condition | From matching `drop_conditions` entry. Strictly greater than 1.0 — Drop System Rule 5a rejects `multiplier <= 1.0` as a content error (Rule 9). *(Round 10: floor raised from 0.5 — penalty conditions removed from the design.)* |
 | Result | `effective_drop_rate` | float | 0.0–1.0 | Final probability passed to drop RNG; clamped |
 
 **Base drop rate by rarity:**
@@ -551,7 +550,7 @@ Designers must stay within these total stat-point budgets when authoring parts. 
 | Slot | Common | Rare | Boss-grade | Prototype (positive budget) |
 |------|--------|------|------------|-----------------------------|
 | Core | 18–22 | 32–38 | 48–55 | 35–45 |
-| Chassis | 22–28 | 38–46 | 55–68 | 40–55 |
+| Chassis | 22–28 | 38–46 | 55–68 | 42–55 |
 | Chipset | 12–16 | 22–28 | 35–42 | 28–38 |
 | Energy Cell | 14–18 | 26–32 | 40–48 | 32–42 |
 | Head | 12–16 | 22–28 | 35–42 | 28–38 |
@@ -561,7 +560,9 @@ Designers must stay within these total stat-point budgets when authoring parts. 
 
 **Prototype concentration rule (Option B design intent):** Prototype positive budgets are similar to or slightly lower than Boss-grade, but 70%+ of the budget must go into 1–2 focus stats. This concentration ensures that at maximum upgrade (+5, ×2.00), the Prototype's focus stat may exceed the equivalent Boss-grade part's primary stat — when the Boss-grade distributes its budget across multiple stats (the intended content authoring convention). A concentrated Boss-grade (all budget into one stat) retains a higher raw value in that stat; the Prototype's design guarantee is concentration, which Boss-grade parts are not required to follow. Content authors must spread Boss-grade budgets across ≥2 stats to preserve the Prototype's narrowed-domain advantage. A Prototype that spreads its own positive budget evenly violates this rule and must be revised. Drawback penalties are additional to the positive budget; they are not counted in the table above.
 
-**Multi-stat cap note:** Total positive budget values above 55 require distribution across at least 2 stats — no single stat may exceed 55 (per Formula 1 variable table range). A Chassis Boss-grade at 68 points must spread, e.g., 50 Structure + 18 Armor.
+**Prototype focus-stat floor (Round 10, 2026-07-16):** every Prototype's highest positive stat bonus (its focus stat, whichever key it is) must be **strictly greater than the slot's Rare primary FLOOR** (table below) — otherwise a Prototype at +0 can read as a pure downgrade against a Rare in the same slot, betraying EC-10's acquisition intent. This is why the Chassis Prototype minimum budget was raised 40 → 42: at the old minimum, a guideline-following author (70% of 40 = 28) landed **below** the Rare Chassis floor of 29 — the single off-by-one slot in the table. At the new minimum, the focus stat must be authored at ≥ 30 (~71.4% of 42) — legal under the 70%+ concentration rule. *Verified by AC-25.*
+
+**Multi-stat cap note:** Total positive budget values above 55 require distribution across at least 2 stats — no single stat may exceed 55 (per Formula 1 variable table range). A Chassis Boss-grade at 68 points must spread, e.g., 50 Structure + 18 Armor. Symmetrically, no single drawback may exceed −55 (the Formula 2b input floor). *Verified by AC-27 — Round 10 finding: AC-12 checks only the total budget, so a single 60-point stat passed validation while breaking Formula 2's declared 0–110 output range (floor(60 × 2.00) = 120 at +5).*
 
 **Slot primary-stat mapping (normative for AC-23):**
 
@@ -619,7 +620,7 @@ Players can hold any number of copies of the same part (same `id`). Each copy is
 - Hold spares for future Symbots
 - Recycle surplus copies for scrap materials
 
-Inventory does not deduplicate or stack part instances.
+Inventory does not deduplicate or stack part instances. *No Part DB AC — the observable outcomes (independent instances, per-copy tier tracking, no stacking) are produced and owned by the Inventory System's instance model (HOLISM-01: parts are instances); the Inventory GDD verifies them. Part DB's share — globally unique `id` per definition — is verified by AC-02.*
 
 ### EC-06 — Part variants (different rarity, same thematic part)
 Multiple parts can share the same `part_family` tag (e.g., `"servo_arm_family"`) but are distinct database entries with different `id` values. Each variant has its own `rarity`, `stat_bonuses`, `active_skill_id`, and `passive_id`. Workshop UI uses `part_family` to group variants in the picker (e.g., "all Servo Arm versions") but each is treated as a fully independent part by combat, upgrade, and drop systems. *Distinct-entry guarantee verified by AC-02 (globally unique `id`); the grouping/picker behavior is Workshop-UI-owned and has no Part DB AC.*
@@ -627,7 +628,7 @@ Multiple parts can share the same `part_family` tag (e.g., `"servo_arm_family"`)
 ### EC-07 — Multiple parts occupying the same slot type
 In MVP, each slot type (Core, Chassis, Chipset, Energy Cell, Head, Arms, Legs, Weapon) has exactly one slot. Equipping a second part to the same slot type replaces the current occupant — the displaced part returns to inventory.
 
-Post-MVP Motherboard configuration will allow builds with expanded slot counts (e.g., 2× Arms). The slot governance logic is owned by the Motherboard system; Part Database only stores `slot_type` and does not enforce limits itself.
+Post-MVP Motherboard configuration will allow builds with expanded slot counts (e.g., 2× Arms). The slot governance logic is owned by the Motherboard system; Part Database only stores `slot_type` and does not enforce limits itself. *No Part DB AC — the observable outcomes (one part per slot, replace-and-return-to-inventory) are equip-flow behaviors owned and verified by the Symbot Assembly GDD; Part DB's share — a valid `slot_type` on every part — is verified by AC-03.*
 
 ### EC-08 — stat_bonuses contains a key not in the canonical 11-stat list
 Treat as unknown. Assembly System logs a warning and ignores the key. Does not crash. Allows future stat additions without breaking existing parts. The 11 canonical MVP stats are: Structure, Armor, Resistance, Physical Power, Energy Power, Mobility, Targeting, Processing, Cooling, Energy Capacity, Recharge. *No Part DB AC — the observable outcome (log-warning + ignore-key + no-crash) is produced by the Assembly System's stat-aggregation reader (Formula 1 input); it is owned and verified by the Symbot Assembly GDD, not by Part DB content validation.*
@@ -636,20 +637,20 @@ Treat as unknown. Assembly System logs a warning and ignores the key. Does not c
 Not meaningful — +0 is the base state, not an upgrade. Assembly System ignores `upgrade_effects` entries with `tier = 0`. *No Part DB AC — the ignore-at-runtime behavior is owned and verified by the Symbot Assembly / Part Upgrade readers; Part DB only stores the array. (Content authoring convention: `upgrade_effects` entries are authored at tiers 1–5 per Rule 1.)*
 
 ### EC-10 — Prototype part at upgrade tier +3 or higher — drawback removal
-Formula 2b returns 0 for any negative `stat_bonuses` key once `tier >= 3`. The stat contribution for that key becomes 0 — neither a penalty nor a bonus. At +4 and +5 the drawback remains 0; it does not become a positive. The Workshop UI may visually indicate that the drawback has been fully eliminated.
+Formula 2b returns 0 for any negative `stat_bonuses` key once `tier >= 3`. The stat contribution for that key becomes 0 — neither a penalty nor a bonus. At +4 and +5 the drawback remains 0; it does not become a positive. The Workshop UI may visually indicate that the drawback has been fully eliminated. *Verified by AC-08 (full tier sequence [−15, −10, −5, 0, 0, 0] asserted through +5 — stays 0 from +3 onward, never positive).*
 
 **Design intent (post-drawback identity):** From +3 onward, a Prototype is a pure specialist — no active penalties, focus stat scaling to ×2.00 at +5. The Prototype is the highest single-stat option for dedicated builds when Boss-grade budget is spread across multiple stats (the intended content authoring convention); Boss-grade remains superior for mixed-stat builds. Build diversity is maintained by the Prototype's lower secondary stats, not by ongoing penalties. Note: a concentrated Boss-grade part (all budget into one stat) can match or exceed the Prototype's focus stat at +5 — this is an intentional content authoring risk that the Stat Budget Reference's convention (spread Boss-grade stats) is designed to prevent. When designing the Synergy System, note that Prototype focus stats may exceed Boss-grade at +5 in spread-Boss-grade builds — synergy bonuses applying to focus stats can amplify this advantage and should be considered during balance.
 
-**Acquisition experience intent:** At +0, a Prototype must read as a meaningful tradeoff — not a pure downgrade. Content authors must ensure the focus stat at +0 is already higher than the equivalent Rare slot's primary stat in the same slot, even accounting for the drawback on a secondary stat. The drawback should feel like a penalty on a stat the player is trading away, not a degradation of the stat they care about. A player earning a Prototype after a perfect boss run should feel rewarded at the moment of equip, even before upgrading.
+**Acquisition experience intent:** At +0, a Prototype must read as a meaningful tradeoff — not a pure downgrade. Every Prototype's focus stat at +0 must be strictly higher than the slot's **Rare primary FLOOR** (the guaranteed minimum for any Rare in that slot — not the strongest authored Rare, which may legitimately exceed a min-focus Prototype in raw primary stat; the Prototype's guarantee is the floor comparison plus concentration), even accounting for the drawback on a secondary stat. The drawback should feel like a penalty on a stat the player is trading away, not a degradation of the stat they care about. A player earning a Prototype after a perfect boss run should feel rewarded at the moment of equip, even before upgrading. *Verified by AC-25 (Round 10 — previously an unenforced authoring instruction; the Chassis min-budget off-by-one, 28 < 29, could ship a Prototype strictly worse than a Rare at +0).*
 
 ### EC-11 — Common part upgrade blocked at +3
-Attempting to upgrade a Common part to +4 is invalid. Workshop UI disables the upgrade button. If the upgrade is somehow submitted (e.g., via API call), the system rejects it and returns the part at its current tier unchanged.
+Attempting to upgrade a Common part to +4 is invalid. Workshop UI disables the upgrade button. If the upgrade is somehow submitted (e.g., via API call), the system rejects it and returns the part at its current tier unchanged. *Verified by AC-07 (`can_upgrade(common_part, 4) == false`; `compute_upgraded_stat` silently caps at the +3 value — no error, no ×1.70 result).*
 
 ### EC-12 — Boss-grade part with no break condition in `drop_conditions`
 `BASE_DROP_BOSS_GRADE` is a per-rarity config constant (currently 0.001). If a Boss-grade part's `drop_conditions` array contains no entry with a high multiplier (≥ 500), then `clamp(0.001 × 1.0, 0, 1) = 0.001` — a ~0.1% drop rate regardless of player behavior. This makes the part functionally unobtainable through normal play. This is a content authoring error — every Boss-grade part must have at least one break condition in `drop_conditions` with multiplier ≥ 500. Content validation should flag entries with either empty `drop_conditions` or no condition meeting this threshold (see AC-11).
 
 ### EC-13 — Two parts granting the same passive
-Both passives are registered and active simultaneously. Passive stacking behavior is defined by the Passive System, not the Part Database. Part Database makes no assumption about stacking rules.
+Both passives are registered and active simultaneously. Passive stacking behavior is defined by the Passive System, not the Part Database. Part Database makes no assumption about stacking rules. *No Part DB AC — the observable outcome (both passives registered, stacking semantics) is owned and verified by the Passive Database GDD's stacking rules; Part DB's share — every `passive_id` resolves to a valid Passive DB entry — is verified by AC-13.*
 
 ### EC-14 — Part with heat_generation = 0 and ammo_cost = 0
 Valid — a free skill with no resource cost. Typically used for basic attacks. No special handling required. *`heat_generation == 0` is verified by AC-22 (range [0, 40], and `== 0` when `active_skill_id` is null); `ammo_cost == 0` has no dedicated validation AC — 0 is the schema default and imposes no constraint (all MVP content ships `ammo_cost = 0`, per the schema's "0 if not ammo-based").*
@@ -773,7 +774,7 @@ The stat budget table (Common / Rare / Boss-grade / Prototype per slot) is the p
 
 **AC-08**: Formula 2b (Prototype Drawback Reduction) returns the correct ceiling-rounded values across all tiers, stays at 0 from +3 onward, and never returns a positive number. **Pass when**: (a) Mock Prototype part with `stat_bonuses["armor"] = -15` — `compute_upgraded_drawback` for tiers 0–5 returns exactly `[-15, -10, -5, 0, 0, 0]`. (b) Mock part with `stat_bonuses["armor"] = -1` — `compute_upgraded_drawback` for tiers 0–5 returns exactly `[-1, -1, -1, 0, 0, 0]`. Asserting the full sequence (not just tier +3) is required: the `max(0, …)` double-negation bug (BLOCK-6) manifests at tiers +4 and +5, not at +3. A test that only checks +3 will not catch a missing clamp. **Test type**: Unit.
 
-**AC-09**: Formula 3 (Effective Drop Rate) multiplies all matching conditions and clamps to [0.0, 1.0]. **Pass when**: (a) Boss-grade part with no matching conditions → `0.001` (not `0.0` — `BASE_DROP_BOSS_GRADE` is 0.001, so `clamp(0.001 × 1.0, 0, 1) = 0.001`). (b) Same Boss-grade part with break condition multiplier 1000 → `1.0` (not `1000.0`): `clamp(0.001 × 1000, 0, 1) = 1.0`. *(This sub-assertion tests clamping behavior at the mathematical boundary — ×1000 is NOT the recommended authoring value; see AC-11 and Enemy DB AC-ED-09 for the 50% design target at ×500.)* (c) **Required sub-assertion**: Boss-grade part with break multiplier 999 returns `0.999`, not `1.0` — assert the result is strictly `0.999`. The clamp triggers only when the product reaches exactly 1.0; an implementation that rounds up before clamping fails this case. (d) Rare part, base 0.25, multipliers ×1.5 and ×1.3 → assert `abs(result − 0.4875) < 1e-9` (not `0.49`). **Float-equality warning (verified 2026-07-09):** `0.25 × 1.5 × 1.3` evaluates to `0.48750000000000004` in IEEE 754 — strict `==` against the literal `0.4875` fails a *correct* implementation. Sub-assertions (a)–(c) are verified exact (`0.001 × 999 == 0.999` and `0.001 × 1000 == 1.0` hold exactly) and may use strict equality; any *new* drop-rate assertion involving float products must use tolerance comparison (`< 1e-9`) unless verified exact. **Test type**: Unit.
+**AC-09**: Formula 3 (Effective Drop Rate) multiplies all matching conditions and clamps to [0.0, 1.0]. **Pass when**: (a) Boss-grade part with no matching conditions → `0.001` (not `0.0` — `BASE_DROP_BOSS_GRADE` is 0.001, so `clamp(0.001 × 1.0, 0, 1) = 0.001`). (b) Same Boss-grade part with break condition multiplier 1000 → `1.0` (not `1000.0`): `clamp(0.001 × 1000, 0, 1) = 1.0`. *(This sub-assertion tests clamping behavior at the mathematical boundary — ×1000 is NOT the recommended authoring value; see AC-11 and Enemy DB AC-ED-09 for the 50% design target at ×500.)* (c) **Required sub-assertion**: Boss-grade part with break multiplier 999 returns `0.999`, not `1.0` — assert the result is strictly `0.999`. The clamp triggers only when the product reaches exactly 1.0; an implementation that rounds up before clamping fails this case. (d) Rare part, base 0.25, multipliers ×1.5 and ×1.3 → assert `abs(result − 0.4875) < 1e-9` (not `0.49`). **Float-equality warning (verified 2026-07-09):** `0.25 × 1.5 × 1.3` evaluates to `0.48750000000000004` in IEEE 754 — strict `==` against the literal `0.4875` fails a *correct* implementation. Sub-assertions (a)–(c) are verified exact (`0.001 × 999 == 0.999` and `0.001 × 1000 == 1.0` hold exactly) and may use strict equality; any *new* drop-rate assertion involving float products must use tolerance comparison (`< 1e-9`) unless verified exact. (e) **Clamp discriminator (Round 10 — BLOCK-6):** Common part, base 0.70, two ×1.5 conditions → product `0.70 × 1.5 × 1.5 = 1.575`; assert the result is exactly `1.0`. Sub-assertions (a)–(d) never produce a product **strictly greater than** 1.0 — (b) reaches exactly 1.0, where clamping and not-clamping are indistinguishable — so a clamp-free implementation passed every prior case while shipping raw `1.575` to the drop RNG. `0.70 × 1.5 × 1.5 == 1.575` is exact in IEEE 754 (verified); the assertion may use strict equality against `1.0`. **Test type**: Unit.
 
 ### Content Rules
 
@@ -811,13 +812,36 @@ The stat budget table (Common / Rare / Boss-grade / Prototype per slot) is the p
 
 **AC-24**: Every part entry has a non-null, non-empty `sprite_id`. **Pass when**: Validator loads all entries and finds zero parts with `sprite_id == null` or `sprite_id == ""`. Applies to all rarities including starter parts shipped with Symbots. **Test type**: Content Validation.
 
+**AC-25** *(Round 10, 2026-07-16)*: Every Prototype part's focus stat at +0 strictly exceeds its slot's Rare primary FLOOR (Stat Budget Reference tables). **Pass when**: For every `PROTOTYPE` entry, `max(v for v in stat_bonuses.values() if v > 0) > rare_primary_floor[slot]` — zero violations. The focus stat is the part's *highest positive bonus*, whichever stat key it is (a Prototype's focus need not be the slot's AC-23 primary stat). Boundary: a Prototype Chassis with top stat 29 **fails** (29 is not > 29 — this is the exact off-by-one that motivated the AC); top stat 30 passes. Discriminating fixture: use a Chassis Prototype at the minimum budget (42) with focus 29 — a validator comparing `>=` instead of `>` passes the wrong implementation. Enforces EC-10's acquisition intent, which was previously an unenforced prose instruction. **Test type**: Content Validation.
+
+**AC-26** *(Round 10, 2026-07-16)*: Every Prototype part satisfies the Formula 3 content rule — ≥3 drop conditions with sufficient combined strength. **Pass when**: For every `PROTOTYPE` entry: (a) `drop_conditions.size() >= 3` — zero violations; (b) `product(entry.multiplier for entry in drop_conditions) >= 3.0` — zero violations. (All authored multipliers are already > 1.0 per Rule 9, so the full product is the favorable product.) Boundary: three conditions at ×1.5 each → product 3.375, passes; three conditions at ×1.4, ×1.4, ×1.5 → product 2.94, **fails** (b); two conditions at ×2.0 each → product 4.0 but **fails** (a) — both sub-checks are independently required. Rationale: a Prototype below this floor makes the 15–20% optimal-play target unreachable and silently unhinges the Drop System's pity calibration (`N_PROTO_PITY = 25` assumes optimal rate ≥ 0.16875; at product ×2.0 the pity path becomes ~7% expected instead of ~1%). This was a stated cross-system contract with no enforcement — flagged independently by three reviewers. **Test type**: Content Validation.
+
+**AC-27** *(Round 10, 2026-07-16)*: No single stat bonus on any part exceeds the per-stat magnitude cap. **Pass when**: For every part entry, every `v in stat_bonuses.values()` satisfies `-55 <= v <= 55` — zero violations across all rarities. Boundary: a Boss-grade Chassis authored `structure = 60, armor = 8` passes AC-12 (total 68, within the 55–68 budget) but **must fail AC-27** — at +5, floor(60 × 2.00) = 120 breaks Formula 2's declared 0–110 output range and cascades into Formula 1 range violations downstream systems are calibrated against. The negative bound guards Formula 2b's −55 input floor symmetrically. Discriminating fixture: the 60+8 split above — a validator that only re-checks the total budget passes the wrong implementation. **Test type**: Content Validation.
+
 ## Open Questions
 
-None remaining. All design questions were resolved across Review Rounds 1–9 (see
-`design/gdd/reviews/part-database-review-log.md`), and the schema + formulas are
-implemented and green (Part Database epic — 10 stories Complete, 2026-07-15; suite
-green on Godot 4.7). Standing *recommended* (non-blocking) items are tracked in the
-review log, not here.
+No open questions *within this document's own scope* — all design questions were
+resolved across Review Rounds 1–10 (see `design/gdd/reviews/part-database-review-log.md`),
+and the schema + formulas are implemented and green (Part Database epic — 10 stories
+Complete, 2026-07-15; suite green on Godot 4.7). Standing *recommended* (non-blocking)
+items are tracked in the review log, not here.
+
+**Deferred external dependencies (Round 10 honesty note — these are open, they are
+just not this document's to close):**
+
+- **Workshop GDD (missing, load-bearing for MVP)** — owns the upgrade Scrap-cost
+  curve delegated by Rule 10 and the DB5 Scrap-sink UX. The Drop System's economy
+  model is derived from its *proposed* curve (10/20/40/80/160); the economy is not
+  validated until Workshop adopts or re-derives it.
+- **Synergy System GDD** — carries hard constraints DB1 (cross-tag synergies; the
+  Player Fantasy's 4-piece example is contingent on it) and DB4 (cross-element
+  incentives).
+- **Drop System GDD** — carries DB2 (Prototype pity), DB5 (scrap sink), and EC-16's
+  Boss-grade acquisition floor.
+- **Part-Break GDD** — carries DB3 (break probability + escalation) and the
+  drop-condition vocabulary freeze consumed by Rule 9.
+- **Blueprint Crafting / Part Upgrade GDDs (Alpha)** — downstream readers only; not
+  MVP-blocking.
 
 *(`Visual/Audio Requirements` and `UI Requirements` remain `[To be designed]` — they
 are owned by the Art Bible and the Workshop/Inventory UX specs respectively, not by
