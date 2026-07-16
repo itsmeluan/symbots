@@ -48,6 +48,11 @@ This epic is complete when:
 - The buy > sell invariant is enforced by the ContentValidator with a GUT test
   asserting a violating entry is rejected (BLOCKING)
 - Use-context gating (BATTLE/WORLD/BOTH) is validated including the reject-no-decrement path
+- If this epic's ContentValidator family pushes `src/core/content/content_validator.gd` past
+  ~1500 lines, extract the per-DB check families into composed `RefCounted` helpers **behind
+  the single `validate()` entry point** — preserving the ADR-0003 "single ContentValidator"
+  contract (no behavior change; a pure structural split with the suite green before and after).
+  Provenance: `/code-review` 2026-07-16 file-size watch (validator at 1170 lines after Story-011)
 
 ## Next Step
 
