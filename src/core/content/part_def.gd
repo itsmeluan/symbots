@@ -142,7 +142,7 @@ enum ChassisArchetype {
 ## Drop-condition modifiers. Each entry is a Dictionary with shape:
 ##   { "condition": StringName, "multiplier": float }
 ## Multipliers stack multiplicatively; evaluated by the Drop System (Rule 9).
-## Entry-shape validator-enforcement arrives in Story 009.
+## Entry-shape enforced by ContentValidator._check_drop_condition_entries (Story 011).
 @export var drop_conditions: Array[Dictionary] = []
 
 ## Whether this part appears in drop tables.
@@ -162,7 +162,8 @@ enum ChassisArchetype {
 ## effect_type ∈ { &"SKILL_UNLOCK", &"SKILL_ENHANCE" }.
 ## STAT_BONUS is reserved for Full Vision and must not appear in MVP content.
 ## Empty for Common parts and Rare+ parts with no defined unlocks (Rule 10).
-## Entry-shape and MVP-legality enforced by ContentValidator (Story 009).
+## Entry-shape enforced by ContentValidator._check_upgrade_effects (Story 011);
+## SKILL_UNLOCK support-slot legality enforced there too.
 @export var upgrade_effects: Array[Dictionary] = []
 
 # ---------------------------------------------------------------------------
