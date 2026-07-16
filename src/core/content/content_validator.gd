@@ -213,6 +213,7 @@ func _validate_part(part: PartDef) -> void:
 		return
 	_check_required_identity(part)
 	_check_nullability(part)
+	_check_upgrade_effects(part)
 	_check_slot_type(part)
 	_check_enums(part)
 	_check_recharge(part)
@@ -270,6 +271,20 @@ func _check_nullability(part: PartDef) -> void:
 	if EFFECT_FLOOR.has(part.rarity) and effect_count < EFFECT_FLOOR[part.rarity]:
 		_error(&"content_effect_missing",
 			{"id": part.id, "rarity": part.rarity, "count": effect_count, "floor": EFFECT_FLOOR[part.rarity]})
+
+
+## AC-01 sub-check (d) (Rule 8) — a support slot (not skill-capable) must not gain
+## an active skill through an upgrade. An `upgrade_effects` entry of type
+## SKILL_UNLOCK on a CORE / ENERGY_CELL part would inject an active skill at that
+## tier, bypassing the static `active_skill_id` gate in `_check_nullability`.
+## SKILL_ENHANCE (which tunes an existing passive) stays legal on support slots.
+func _check_upgrade_effects(part: PartDef) -> void:
+	if SKILL_CAPABLE_SLOTS.has(part.slot_type):
+		return
+	for effect in part.upgrade_effects:
+		if effect.get("effect_type", &"") == &"SKILL_UNLOCK":
+			_error(&"content_upgrade_skill_unlock_forbidden",
+				{"id": part.id, "slot": part.slot_type, "tier": effect.get("tier", 0)})
 
 
 ## AC-03: `slot_type` is one of the 8 MVP enum values (rejects the 0 sentinel).

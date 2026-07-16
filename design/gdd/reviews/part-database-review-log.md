@@ -247,3 +247,16 @@ Prior verdict resolved: Yes — all 8 blockers from Review 2 confirmed fixed.
 - AC-06(b): base=20 sanity check is non-discriminating (all exact integers). Consider replacing with base=13.
 - No AC validates the Prototype 70% concentration rule (focus stat ≥ 70% of positive budget).
 - Formula 4 Cooling range "5–18" and Formula 6 energy_capacity range "80–120" are ungrounded — add budget arithmetic or content authoring notes.
+
+## Review — 2026-07-16 — Verdict: NEEDS REVISION → resolved same session (Accepted, marked Approved)
+Scope signal: S
+Specialists: game-designer, systems-designer, qa-lead, creative-director (full-mode adversarial panel)
+Blocking items: 2 | Recommended: 4 (+1 nice-to-have) — deferred, user scoped this pass to blockers only
+Summary: Targeted re-review of the 2026-07-15 Rule 2/Rule 8/AC-01 rework from a skill-quota to an effect-capacity model (which resolved the prior Rule 2↔Rule 8 contradiction; the rest of the doc was Approved at Round 8). Two blockers found and closed for real, not in prose: **B-A** — Rule 8's claim that "AC-01 validates" the SKILL_UNLOCK ban on support slots was false-coverage (`_check_nullability` reads only `active_skill_id`/`passive_id`, never `upgrade_effects`, so a support-slot part could smuggle an active skill in at an upgrade tier undetected). Fixed by adding **AC-01 sub-check (d)** (`content_upgrade_skill_unlock_forbidden`), a new validator dispatch `_check_upgrade_effects()`, and a negative/positive test pair (Core +4 SKILL_UNLOCK → error; Core +4 SKILL_ENHANCE → pass). **B-B** — EC-01/EC-02 said "Always valid", contradicting the Rare+ effect floor=1 (proven by `test_ac_01_rare_noncore_no_effect_errors`) and citing no AC; rewritten rarity-scoped with `Verified by AC-01(b)` (EC-02 also cites AC-01(c) for support-slot legality). CD verdict: approve-on-fix-confirmation. Suite 160/160 green (419 asserts, +2 tests/+3 asserts vs prior baseline), Godot 4.7.
+Prior verdict resolved: Yes — the Rule 2↔Rule 8 contradiction (tech-debt, RESOLVED 2026-07-15) is now design-review-verified; recommended items REC-1 / AC-06(b) / Prototype-70% / Formula-4&6-ranges remain open (unchanged, out of this pass's scope).
+
+### Recommended (deferred — NOT addressed this pass, user chose blockers-only)
+- D-1: Rule 8 could state the ceiling-clause rationale explicitly (why Boss/Proto share ceiling 2).
+- Skill-flavor (attack vs buff/debuff) is authoring-guideline only until the Move DB carries a skill category — then it becomes a Synergy/validator constraint.
+- Stale "unique trait" phrasing near the Core identity consequence (partially cleaned in B-A edit).
+- AC-01(c) could cite the `SKILL_CAPABLE_SLOTS` constant by name for traceability.

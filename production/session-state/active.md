@@ -3,8 +3,28 @@
 <!-- STATUS -->
 Epic: Pre-Production
 Feature: Sprint Zero — Part Database
-Task: Part Database EPIC COMPLETE (all 10 stories Done) — next: pick the next Foundation epic (Move/Passive/Consumable/Enemy/Damage-Formula) or the 4.6→4.7 ADR re-validation sweep
+Task: Part-DB GDD Round-9 design-review DONE (Rule 2/8/AC-01 effect-capacity rework → APPROVED; 2 blockers fixed+tested, 160/160 green). Next: pick the next Foundation epic (Move/Passive/Consumable/Enemy/Damage-Formula) or the 4.6→4.7 ADR re-validation sweep
 <!-- /STATUS -->
+
+## Session Extract — Part-DB GDD Round-9 design-review → APPROVED (2026-07-16)
+
+- **`/design-review design/gdd/part-database.md` (full mode)** on the 2026-07-15
+  Rule 2/Rule 8/AC-01 effect-capacity rework. Verdict NEEDS REVISION (2 blockers)
+  → both fixed & test-verified in-session → **Accepted, marked Approved**.
+  - **B-A (false-coverage, closed for real):** Rule 8's "AC-01 validates" the
+    support-slot SKILL_UNLOCK ban was untrue — `_check_nullability` never read
+    `upgrade_effects`. Fixed: GDD **AC-01 sub-check (d)** + Rule 8 clause rewrite;
+    `content_validator.gd` new `_check_upgrade_effects()` + dispatch; 2 new tests
+    (neg Core +4 SKILL_UNLOCK → `content_upgrade_skill_unlock_forbidden`; pos
+    Core +4 SKILL_ENHANCE → pass).
+  - **B-B:** EC-01/EC-02 "Always valid" contradicted the Rare+ floor=1; rewritten
+    rarity-scoped + `Verified by AC-01(b)/(c)`.
+  - **Suite 160/160 green, 419 asserts** (was 158/416). Godot 4.7.
+  - Recommended items (D-1 ceiling rationale, skill-flavor→Synergy constraint,
+    stale "unique trait", AC-01(c) constant cite) **deferred** — user scoped this
+    pass to blockers only. Logged in the review-log Round-9 entry.
+  - Tracking updated: systems-index #1 note + `reviews/part-database-review-log.md`
+    Round-9 entry. Memory `project-rule2-rule8-contradiction` now design-review-verified.
 
 > **This file is a lean checkpoint, not a changelog.** Keep it small — current
 > task, open threads, next decision. Full project history lives in `git log` and

@@ -220,6 +220,42 @@ func test_ac_01_common_core_neither_skill_nor_passive_passes() -> void:
 	assert_true(r["ok"], "Common Core with neither skill nor passive is valid")
 
 
+# AC-01 sub-check (d) — a support slot must not gain an active skill via an upgrade.
+# SKILL_UNLOCK on a Core/Energy Cell bypasses the static active_skill_id gate (c).
+func test_ac_01_core_skill_unlock_upgrade_effect_errors() -> void:
+	# Arrange: a valid Rare Core (passive satisfies the floor) that tries to unlock a
+	# skill at +4 through upgrade_effects — illegal on a support slot.
+	var p := _valid_core(&"unlock_core", PartDef.Rarity.RARE)
+	var effects: Array[Dictionary] = [
+		{"tier": 4, "effect_type": &"SKILL_UNLOCK", "description": "", "skill_id": &"skill_sneaky"},
+	]
+	p.upgrade_effects = effects
+
+	# Act
+	var r := _one(p)
+
+	# Assert
+	assert_false(r["ok"])
+	assert_true(_logged(&"content_upgrade_skill_unlock_forbidden"), "a SKILL_UNLOCK upgrade on a support slot (Core) is forbidden")
+
+
+# AC-01 sub-check (d) — SKILL_ENHANCE tunes an existing passive and stays legal on Core.
+func test_ac_01_core_skill_enhance_upgrade_effect_passes() -> void:
+	# Arrange: same valid Rare Core, but the +4 upgrade enhances its passive rather
+	# than unlocking a new active skill.
+	var p := _valid_core(&"enhance_core", PartDef.Rarity.RARE)
+	var effects: Array[Dictionary] = [
+		{"tier": 4, "effect_type": &"SKILL_ENHANCE", "description": "", "skill_id": &"passive_enhance_core"},
+	]
+	p.upgrade_effects = effects
+
+	# Act
+	var r := _one(p)
+
+	# Assert
+	assert_true(r["ok"], "a SKILL_ENHANCE upgrade on a support slot (Core) is permitted")
+
+
 func test_ac_01_missing_id_errors() -> void:
 	var p := _valid_part(&"tmp")
 	p.id = &""

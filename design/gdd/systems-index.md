@@ -25,7 +25,7 @@ designed first.
 
 | # | System Name | Category | Priority | Status | Design Doc | Depends On |
 |---|-------------|----------|----------|--------|------------|------------|
-| 1 | Part Database | Foundation | MVP | Approved | design/gdd/part-database.md | — |
+| 1 | Part Database | Foundation | MVP | Approved (2026-07-16, Round 9 targeted re-review of the Rule 2/Rule 8/AC-01 effect-capacity rework — NEEDS REVISION → 2 blockers fixed & test-verified same session. B-A: Rule 8's SKILL_UNLOCK-ban "AC-01 validates this" was false-coverage — no path read `upgrade_effects`; closed for real via **AC-01 sub-check (d)** + validator `_check_upgrade_effects()` + neg/pos tests [`content_upgrade_skill_unlock_forbidden`]. B-B: EC-01/EC-02 "Always valid" contradicted the Rare+ floor=1; rewritten rarity-scoped + `Verified by AC-01(b)/(c)`. Suite 160/160 green, 419 asserts, Godot 4.7) | design/gdd/part-database.md | — |
 | 1a | Move Database | Foundation | MVP | Approved | design/gdd/move-database.md | Part Database |
 | 1b | Passive Database | Foundation | MVP | Approved | design/gdd/passive-database.md | Part Database |
 | 1c | Consumable Database | Foundation | MVP | Approved (2026-07-12, full-panel /design-review — NEEDS REVISION → 5 surgical blockers fixed same session; systems-designer IEEE-754 blocker refuted by python3 scan) | design/gdd/consumable-database.md | — (standalone schema authority; unlike 1a/1b it does **not** depend on Part Database) |
