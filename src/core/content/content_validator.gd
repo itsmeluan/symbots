@@ -31,6 +31,12 @@
 ## adds the Move authoring-rule family (energy band, REPAIR Energy-brake,
 ## status↔element, non-DAMAGE rider ban). Both run only when a `MoveCatalog` is
 ## mounted via [member ContentCatalogs.moves] — Part-only fixtures skip them.
+##
+## Internal structure: per-DB validation families are extracted into composed
+## [RefCounted] helpers under `validators/`. [ContentValidator] remains the single
+## public entry point; helpers share its [member _errors] / [member _warnings]
+## / [member _log] accumulators by reference (Arrays in GDScript are reference
+## types), so no post-call merge step is needed.
 class_name ContentValidator
 extends RefCounted
 
@@ -174,6 +180,23 @@ var _refs_mounted := false
 var _move_ids: Dictionary = {}
 var _passive_ids: Dictionary = {}
 
+## ai_profile referential seam (injected Callable). Signature: `(profile: StringName) -> bool`.
+## Default is accept-all — valid until the EnemyAI autoload is implemented.
+## Inject via [method ContentValidator.new] or the `ai_profile_checker` setter
+## in tests by replacing this field before calling validate().
+## Do NOT call EnemyAI directly here — that would create a hard compile-time
+## dependency on a not-yet-existing class.
+var _ai_profile_checker: Callable = func(_p: StringName) -> bool: return true
+
+# ---------------------------------------------------------------------------
+# Composed per-DB helper instances (lazy-allocated once, reused across calls).
+# ---------------------------------------------------------------------------
+var _part_validator: RefCounted
+var _move_validator: RefCounted
+var _passive_validator: RefCounted
+var _consumable_validator: RefCounted
+var _enemy_validator: RefCounted
+
 
 ## Validate every catalog in [param catalogs], routing each fatal finding through
 ## [param log_sink]. Returns `{ok, errors, warnings}` where `ok` is
@@ -187,27 +210,35 @@ func validate(catalogs: ContentCatalogs, log_sink: LogSink) -> Dictionary:
 	_refs_mounted = catalogs.references_mounted
 	_move_ids = catalogs.move_ids
 	_passive_ids = catalogs.passive_ids
+
 	# Config-level balance checks (Damage-Formula Story 001) — run once when a
 	# BalanceConfig is injected; validate the config itself before the catalogs.
 	if _cfg != null:
-		_check_balance_config()
-	_validate_part_catalog(catalogs.parts)
+		var pv := _get_part_validator()
+		pv.check_balance_config()
+
+	_get_part_validator().validate_catalog(catalogs.parts)
+
 	# Move DB family (Move-DB Stories 004/005) — only when a move catalog is mounted;
 	# Part-only fixtures leave it null and skip it, staying green.
 	if catalogs.moves != null:
-		_validate_move_catalog(catalogs.moves)
+		_get_move_validator().validate_catalog(catalogs.moves)
+
 	# Passive DB family (Passive-DB Stories 004/005) — only when a passive catalog is
 	# mounted; fixtures that mount none leave it null and skip it, staying green.
 	if catalogs.passives != null:
-		_validate_passive_catalog(catalogs.passives)
+		_get_passive_validator().validate_catalog(catalogs.passives)
+
 	# Consumable DB family (Consumable-DB Story 007) — only when a consumable catalog
 	# is mounted; fixtures that mount none leave it null and skip it, staying green.
 	if catalogs.consumables != null:
-		_validate_consumable_catalog(catalogs.consumables)
+		_get_consumable_validator().validate_catalog(catalogs.consumables)
+
 	# Enemy DB family (Enemy-DB Story 004) — only when an enemy catalog is mounted;
 	# all prior-story fixtures leave it null and skip it, staying green.
 	if catalogs.enemies != null:
-		_validate_enemy_catalog(catalogs.enemies)
+		_get_enemy_validator().validate_catalog(catalogs.enemies)
+
 	return {"ok": _errors.is_empty(), "errors": _errors, "warnings": _warnings}
 
 
@@ -226,1253 +257,73 @@ func _warn(code: StringName, detail: Dictionary) -> void:
 	_log.warn(code, detail)
 
 
-# ---------------------------------------------------------------------------
-# Catalog-level
-# ---------------------------------------------------------------------------
-
-func _validate_part_catalog(catalog: PartCatalog) -> void:
-	if catalog == null:
-		_error(&"content_missing_part_catalog", {})
-		return
-	_check_unique_ids(catalog)
-	for part in catalog.entries:
-		_validate_part(part)
-	if _cfg != null:
-		_check_primary_stat_group_coverage(catalog)
-
-
-## AC-02: every `id` is globally unique within the catalog.
-func _check_unique_ids(catalog: PartCatalog) -> void:
-	var seen := {}
-	for part in catalog.entries:
-		if part == null:
-			continue
-		if seen.has(part.id):
-			_error(&"content_duplicate_id", {"id": part.id})
-		else:
-			seen[part.id] = true
-
-
-# ---------------------------------------------------------------------------
-# Per-part dispatch
-# ---------------------------------------------------------------------------
-
-func _validate_part(part: PartDef) -> void:
-	if part == null:
-		_error(&"content_null_entry", {})
-		return
-	_check_required_identity(part)
-	_check_nullability(part)
-	_check_upgrade_effects(part)
-	_check_drop_condition_entries(part)
-	_check_slot_type(part)
-	_check_enums(part)
-	_check_recharge(part)
-	_check_chassis_archetype(part)
-	_check_heat(part)
-	_check_sprite(part)
-	# Content-composition families (Story 008) — only when a BalanceConfig is
-	# injected; the schema families above run regardless.
-	if _cfg != null:
-		_check_synergy_tags(part)
-		_check_prototype_balance(part)
-		_check_boss_break_condition(part)
-		_check_stat_budget(part)
-		_check_prototype_concentration(part)
-		_check_primary_stat_bounds(part)
-		_check_prototype_focus_floor(part)
-		_check_prototype_drop_conditions(part)
-	# Referential + level-field family (Story 009) — only when a Move/Passive
-	# resolution index is mounted; prior-story fixtures mount none and skip it.
-	if _refs_mounted:
-		_check_referential_integrity(part)
-		_check_level_requirement(part)
-		_check_level_growth(part)
-
-
-## AC-01 (required-field share): `id` and player-facing `display_name` present.
-func _check_required_identity(part: PartDef) -> void:
-	if part.id == &"":
-		_error(&"content_missing_id", {"display_name": part.display_name})
-	if part.display_name == "":
-		_error(&"content_missing_display_name", {"id": part.id})
-
-
-## AC-01 (Rule 8 — effect capacity & slot eligibility). Three data-driven rules
-## replace the old per-slot skill/passive quotas: (1) an active skill is legal
-## only on a skill-capable slot; (2) effect count must not exceed the rarity
-## ceiling; (3) effect count must meet the rarity floor. Passives are legal on
-## any slot within the band. The old CORE-passive special case is now emergent:
-## Core can't hold a skill (rule 1) yet a Rare+ Core must bring one effect
-## (rule 3), so its one effect can only be a passive — no inline `is_core` branch.
-func _check_nullability(part: PartDef) -> void:
-	var has_active := part.active_skill_id != &""
-	var has_passive := part.passive_id != &""
-	var effect_count := int(has_active) + int(has_passive)
-
-	# (1) Active skill only on skill-capable slots (never CORE / ENERGY_CELL).
-	if has_active and not SKILL_CAPABLE_SLOTS.has(part.slot_type):
-		_error(&"content_active_skill_forbidden",
-			{"id": part.id, "slot": part.slot_type, "rarity": part.rarity})
-
-	# (2) Effect-capacity ceiling by rarity.
-	if EFFECT_CEILING.has(part.rarity) and effect_count > EFFECT_CEILING[part.rarity]:
-		_error(&"content_effect_capacity_exceeded",
-			{"id": part.id, "rarity": part.rarity, "count": effect_count, "ceiling": EFFECT_CEILING[part.rarity]})
-
-	# (3) Effect-capacity floor: Common carries 0, every Rare+ part carries ≥1.
-	if EFFECT_FLOOR.has(part.rarity) and effect_count < EFFECT_FLOOR[part.rarity]:
-		_error(&"content_effect_missing",
-			{"id": part.id, "rarity": part.rarity, "count": effect_count, "floor": EFFECT_FLOOR[part.rarity]})
-
-
-## AC-01 sub-check (d) (Rule 8) — a support slot (not skill-capable) must not gain
-## an active skill through an upgrade. An `upgrade_effects` entry of type
-## SKILL_UNLOCK on a CORE / ENERGY_CELL part would inject an active skill at that
-## tier, bypassing the static `active_skill_id` gate in `_check_nullability`.
-## SKILL_ENHANCE (which tunes an existing passive) stays legal on support slots.
-## Entry-shape validation (Story 011 — Story 009 promised): each entry must carry
-## `tier` (int in [1,5]), `effect_type` (StringName, non-empty), and — when
-## SKILL_UNLOCK — a non-empty `skill_id` (StringName). A malformed entry emits
-## a clean `content_*` error and never panics.
-func _check_upgrade_effects(part: PartDef) -> void:
-	var index := 0
-	for entry in part.upgrade_effects:
-		# --- Entry shape ---
-		if not (entry is Dictionary):
-			_error(&"content_upgrade_entry_malformed",
-				{"id": part.id, "index": index, "reason": &"not_a_dictionary"})
-			index += 1
-			continue
-		# String key "tier" — matches the existing SKILL_UNLOCK check and authored .tres convention.
-		var tier_val: Variant = entry.get("tier", null)
-		if not (tier_val is int) or int(tier_val) < 1 or int(tier_val) > 5:
-			_error(&"content_upgrade_entry_malformed",
-				{"id": part.id, "index": index, "reason": &"tier_invalid",
-				"value": tier_val})
-		# String key "effect_type"; value is a StringName per authored content convention.
-		var effect_type_raw: Variant = entry.get("effect_type", null)
-		var effect_type: StringName = effect_type_raw if (effect_type_raw is StringName) else &""
-		if effect_type == &"":
-			_error(&"content_upgrade_entry_malformed",
-				{"id": part.id, "index": index, "reason": &"effect_type_missing_or_empty"})
-		# --- SKILL_UNLOCK gate (support-slot rule) ---
-		if effect_type == &"SKILL_UNLOCK":
-			if not SKILL_CAPABLE_SLOTS.has(part.slot_type):
-				_error(&"content_upgrade_skill_unlock_forbidden",
-					{"id": part.id, "slot": part.slot_type, "tier": entry.get("tier", 0)})
-		index += 1
-
-
-## AC-03: `slot_type` is one of the 8 MVP enum values (rejects the 0 sentinel).
-func _check_slot_type(part: PartDef) -> void:
-	if not PartDef.SlotType.values().has(part.slot_type):
-		_error(&"content_invalid_slot_type", {"id": part.id, "value": part.slot_type})
-
-
-## AC-21: manufacturer / element / rarity / damage_type within MVP enum sets;
-## Full-Vision-reserved values rejected.
-func _check_enums(part: PartDef) -> void:
-	if not VALID_MANUFACTURERS.has(part.manufacturer):
-		_error(&"content_invalid_manufacturer", {"id": part.id, "value": part.manufacturer})
-	if not MVP_ELEMENTS.has(part.element):
-		_error(&"content_invalid_element", {"id": part.id, "value": part.element})
-	if not PartDef.Rarity.values().has(part.rarity):
-		_error(&"content_invalid_rarity", {"id": part.id, "value": part.rarity})
-	_check_damage_type(part)
-
-
-## AC-21 (damage_type share): reserved types (DATA/TRUE) are rejected on ANY
-## part; a valid MVP type is required only when the part actually delivers an
-## active skill (damage_type is skill-delivered — a no-skill part legitimately
-## has the unset 0 value).
-func _check_damage_type(part: PartDef) -> void:
-	if RESERVED_DAMAGE_TYPES.has(part.damage_type):
-		_error(&"content_reserved_damage_type", {"id": part.id, "value": part.damage_type})
-	elif part.active_skill_id != &"" and not MVP_DAMAGE_TYPES.has(part.damage_type):
-		_error(&"content_invalid_damage_type", {"id": part.id, "value": part.damage_type})
-
-
-## AC-17 + AC-18: recharge magnitude within [0, 15]; only ENERGY_CELL and CORE
-## parts may carry a non-zero recharge. A missing `recharge` key reads as 0.
-func _check_recharge(part: PartDef) -> void:
-	var recharge: int = part.stat_bonuses.get(RECHARGE_KEY, 0)
-	if recharge < 0 or recharge > RECHARGE_MAX:
-		_error(&"content_recharge_out_of_range", {"id": part.id, "value": recharge})
-	var slot_allows_recharge := (
-		part.slot_type == PartDef.SlotType.ENERGY_CELL
-		or part.slot_type == PartDef.SlotType.CORE
-	)
-	if recharge != 0 and not slot_allows_recharge:
-		_error(&"content_recharge_slot_gating", {"id": part.id, "slot": part.slot_type, "value": recharge})
-
-
-## AC-20: CHASSIS parts carry a valid non-null `chassis_archetype`; every other
-## slot leaves it at 0 (the "no archetype" sentinel).
-func _check_chassis_archetype(part: PartDef) -> void:
-	var is_chassis := part.slot_type == PartDef.SlotType.CHASSIS
-	var has_archetype := part.chassis_archetype != 0
-	if is_chassis and not has_archetype:
-		_error(&"content_chassis_missing_archetype", {"id": part.id})
-	elif is_chassis and not PartDef.ChassisArchetype.values().has(part.chassis_archetype):
-		_error(&"content_invalid_chassis_archetype", {"id": part.id, "value": part.chassis_archetype})
-	elif not is_chassis and has_archetype:
-		_error(&"content_nonchassis_has_archetype",
-			{"id": part.id, "slot": part.slot_type, "value": part.chassis_archetype})
-
-
-## AC-22 (Part-DB share): `heat_generation` within [0, 40]; a part with no active
-## skill must generate no heat. (The THERMAL +5 runtime bonus is Combat/TBC.)
-func _check_heat(part: PartDef) -> void:
-	if part.heat_generation < 0 or part.heat_generation > HEAT_MAX:
-		_error(&"content_heat_out_of_range", {"id": part.id, "value": part.heat_generation})
-	if part.active_skill_id == &"" and part.heat_generation != 0:
-		_error(&"content_heat_without_skill", {"id": part.id, "value": part.heat_generation})
-
-
-## AC-24: every part carries a non-empty `sprite_id` (the renderer needs it).
-func _check_sprite(part: PartDef) -> void:
-	if part.sprite_id == &"":
-		_error(&"content_missing_sprite_id", {"id": part.id})
-
-
-# ---------------------------------------------------------------------------
-# Story 008 — content-composition families (AC-04/10/11/12/19/23)
-# ---------------------------------------------------------------------------
-
-## AC-04: every part carries its element tag; a non-wild part carries its
-## manufacturer tag; a wild part carries no manufacturer tag at all. An invalid
-## element/manufacturer is left to AC-21 — this check stays silent on it (no
-## double-flagging) by only acting on recognised values.
-func _check_synergy_tags(part: PartDef) -> void:
-	var element_tag: StringName = ELEMENT_TAGS.get(part.element, &"")
-	if element_tag != &"" and not part.synergy_tags.has(element_tag):
-		_error(&"content_synergy_missing_element_tag",
-			{"id": part.id, "element": part.element, "expected": element_tag})
-	if part.manufacturer == WILD_MANUFACTURER:
-		for tag in MANUFACTURER_TAGS:
-			if part.synergy_tags.has(tag):
-				_error(&"content_synergy_wild_has_manufacturer_tag", {"id": part.id, "tag": tag})
-	elif MANUFACTURER_TAGS.has(part.manufacturer) and not part.synergy_tags.has(part.manufacturer):
-		_error(&"content_synergy_missing_manufacturer_tag",
-			{"id": part.id, "manufacturer": part.manufacturer})
-
-
-## AC-10: every Prototype has ≥1 positive AND ≥1 negative `stat_bonuses` value —
-## the negative is its mandatory drawback and also the AC-19 divisor precondition.
-func _check_prototype_balance(part: PartDef) -> void:
-	if part.rarity != PartDef.Rarity.PROTOTYPE:
-		return
-	var has_positive := false
-	var has_negative := false
-	for v in part.stat_bonuses.values():
-		if v > 0:
-			has_positive = true
-		elif v < 0:
-			has_negative = true
-	if not has_positive:
-		_error(&"content_prototype_missing_positive", {"id": part.id})
-	if not has_negative:
-		_error(&"content_prototype_missing_negative", {"id": part.id})
-
-
-## AC-11: every Boss-grade part carries a `drop_conditions` entry whose
-## `multiplier >= 500` — otherwise it drops at the inert ~0.1% base and is
-## effectively unobtainable. Empty conditions or all-below-500 → ERROR.
-func _check_boss_break_condition(part: PartDef) -> void:
-	if part.rarity != PartDef.Rarity.BOSS_GRADE:
-		return
-	for entry in part.drop_conditions:
-		if float(entry.get("multiplier", 0.0)) >= BOSS_BREAK_MIN_MULTIPLIER:
-			return
-	_error(&"content_boss_break_condition_missing",
-		{"id": part.id, "min_multiplier": BOSS_BREAK_MIN_MULTIPLIER})
-
-
-## AC-12 + AC-27: positive stat spend within the slot/rarity budget; no single stat
-## above [constant MAX_SINGLE_STAT] (positive cap); and symmetrically, no single
-## stat below [constant -MAX_SINGLE_STAT] (negative floor — guards Formula 2b's
-## −55 input floor). Negative drawback values are NOT counted in the positive
-## budget. Bounds are read from the injected [BalanceConfig] — an unmapped
-## slot/rarity (e.g. an enum sentinel) is left to the schema families.
-func _check_stat_budget(part: PartDef) -> void:
-	var positive_sum := 0
-	for v in part.stat_bonuses.values():
-		if v > 0:
-			positive_sum += v
-			if v > MAX_SINGLE_STAT:
-				_error(&"content_stat_exceeds_single_cap",
-					{"id": part.id, "value": v, "cap": MAX_SINGLE_STAT})
-		elif v < -MAX_SINGLE_STAT:
-			# AC-27 symmetric negative floor — same error code, cap field is negative
-			# sentinel to distinguish positive-cap vs negative-floor violations if needed.
-			_error(&"content_stat_exceeds_single_cap",
-				{"id": part.id, "value": v, "cap": -MAX_SINGLE_STAT})
-	var by_rarity: Dictionary = _cfg.stat_budgets.get(part.slot_type, {})
-	var bounds: Array = by_rarity.get(part.rarity, [])
-	# A well-formed budget is a [min, max] pair. An unmapped (empty) or malformed
-	# (<2-element) entry is left to the schema families — never index [1] blind, or
-	# a hand-authored 1-element array would abort the CI gate with an engine panic
-	# instead of a clean content_* error (this validator must fail loud, gracefully).
-	if bounds.size() < 2:
-		return
-	if positive_sum < int(bounds[0]) or positive_sum > int(bounds[1]):
-		_error(&"content_stat_budget_out_of_range",
-			{"id": part.id, "slot": part.slot_type, "rarity": part.rarity,
-			"value": positive_sum, "min": bounds[0], "max": bounds[1]})
-
-
-## AC-19: a Prototype concentrates ≥70% of its positive budget in its top 1–2
-## stats. Guarded by AC-10 — a zero positive_total is an AC-10 failure and skips
-## the division here, so this never divides by zero. A single positive stat gives
-## ratio 1.0 (passes trivially).
-func _check_prototype_concentration(part: PartDef) -> void:
-	if part.rarity != PartDef.Rarity.PROTOTYPE:
-		return
-	var positives: Array[int] = []
-	for v in part.stat_bonuses.values():
-		if v > 0:
-			positives.append(v)
-	if positives.is_empty():
-		return  # AC-10 already flagged content_prototype_missing_positive
-	var positive_total := 0
-	for v in positives:
-		positive_total += v
-	positives.sort()  # ascending — the last two entries are the largest
-	var top_two := positives[-1]
-	if positives.size() >= 2:
-		top_two += positives[-2]
-	if float(top_two) / float(positive_total) < CONCENTRATION_MIN:
-		_error(&"content_prototype_concentration_low",
-			{"id": part.id, "top_two": top_two, "positive_total": positive_total})
-
-
-## AC-23 (per-part): a Common part's primary stat must not exceed its slot CAP; a
-## Rare part's primary stat must meet its slot FLOOR. Arms/Weapon resolve the
-## primary per-part by `damage_type`; an unresolved primary is skipped here (its
-## empty-group coverage is reported at the catalog level).
-func _check_primary_stat_bounds(part: PartDef) -> void:
-	var primary: StringName = _primary_stat_for(part)
-	if primary == &"":
-		return
-	var value: int = part.stat_bonuses.get(primary, 0)
-	if part.rarity == PartDef.Rarity.COMMON:
-		var cap: int = _cfg.primary_stat_common_caps.get(part.slot_type, -1)
-		if cap >= 0 and value > cap:
-			_error(&"content_common_primary_over_cap",
-				{"id": part.id, "slot": part.slot_type, "stat": primary, "value": value, "cap": cap})
-	elif part.rarity == PartDef.Rarity.RARE:
-		var floor_value: int = _cfg.primary_stat_rare_floors.get(part.slot_type, -1)
-		if floor_value >= 0 and value < floor_value:
-			_error(&"content_rare_primary_under_floor",
-				{"id": part.id, "slot": part.slot_type, "stat": primary, "value": value, "floor": floor_value})
-
-
-## Resolve a part's AC-23 primary stat: the slot mapping, or — for the
-## damage_type-split ARMS / WEAPON slots — the physical/energy primary chosen by
-## `damage_type`. Returns `&""` when unresolvable (an ARMS/WEAPON whose damage_type
-## is unset or reserved).
-func _primary_stat_for(part: PartDef) -> StringName:
-	if part.slot_type == PartDef.SlotType.ARMS or part.slot_type == PartDef.SlotType.WEAPON:
-		match part.damage_type:
-			PartDef.DamageType.PHYSICAL:
-				return PHYSICAL_PRIMARY
-			PartDef.DamageType.ENERGY:
-				return ENERGY_PRIMARY
-			_:
-				return &""
-	return PRIMARY_STAT.get(part.slot_type, &"")
-
-
-## AC-23 (catalog-level): every present slot / damage_type subgroup that has no
-## Common part (its CAP is uncheckable) or no Rare part (its FLOOR is uncheckable)
-## is a vacuous pass that still earns an authoring WARNING. Groups are keyed by
-## slot + resolved primary stat so ARMS/WEAPON PHYSICAL and ENERGY stay distinct.
-func _check_primary_stat_group_coverage(catalog: PartCatalog) -> void:
-	var groups := {}
-	for part in catalog.entries:
-		if part == null:
-			continue
-		var primary: StringName = _primary_stat_for(part)
-		if primary == &"":
-			continue
-		var key := "%d|%s" % [part.slot_type, primary]
-		if not groups.has(key):
-			groups[key] = {"has_common": false, "has_rare": false, "slot": part.slot_type, "stat": primary}
-		if part.rarity == PartDef.Rarity.COMMON:
-			groups[key]["has_common"] = true
-		elif part.rarity == PartDef.Rarity.RARE:
-			groups[key]["has_rare"] = true
-	for key in groups:
-		var g: Dictionary = groups[key]
-		if not g["has_common"]:
-			_warn(&"content_primary_group_no_common", {"slot": g["slot"], "stat": g["stat"]})
-		if not g["has_rare"]:
-			_warn(&"content_primary_group_no_rare", {"slot": g["slot"], "stat": g["stat"]})
-
-
-# ---------------------------------------------------------------------------
-# Story 011 — Prototype focus-floor (AC-25) and drop conditions (AC-26)
-# ---------------------------------------------------------------------------
-
-## AC-25 (Round 11): every Prototype's focus stat IS its slot's primary stat. Two
-## sub-checks: (a) `stat_bonuses[primary]` is the highest positive bonus — no other
-## stat strictly exceeds it (ties are legal); (b) `stat_bonuses[primary]` strictly
-## exceeds the slot's Rare primary FLOOR. Reuses [method _primary_stat_for] from
-## AC-23 — an unresolved primary (ARMS/WEAPON with bad damage_type) is skipped here;
-## the enum family already flags it. Runs only on PROTOTYPE parts. Known co-fire: a
-## primary value ≤ 0 (missing key or all-negative bonuses) makes any positive stat a
-## strict exceeder, so (a) fires alongside AC-10's missing-positive error — noisy but
-## never wrong (such a part is invalid either way).
-func _check_prototype_focus_floor(part: PartDef) -> void:
-	if part.rarity != PartDef.Rarity.PROTOTYPE:
-		return
-	var primary: StringName = _primary_stat_for(part)
-	if primary == &"":
-		return  # unresolvable — already flagged by enum family
-	var primary_value: int = part.stat_bonuses.get(primary, 0)
-
-	# (a) primary must be the highest positive stat; no other stat may strictly exceed it.
-	for v: int in part.stat_bonuses.values():
-		if v > primary_value:
-			_error(&"content_prototype_focus_not_primary",
-				{"id": part.id, "primary": primary, "value": primary_value,
-				"exceeding_value": v})
-			return  # one error per part — the first offender is sufficient
-
-	# (b) primary must STRICTLY exceed the Rare primary floor for its slot.
-	var rare_floor: int = _cfg.primary_stat_rare_floors.get(part.slot_type, -1)
-	if rare_floor >= 0 and primary_value <= rare_floor:
-		_error(&"content_prototype_focus_below_rare_floor",
-			{"id": part.id, "primary": primary, "value": primary_value,
-			"slot": part.slot_type, "floor": rare_floor})
-
-
-## AC-26: every Prototype carries ≥3 `drop_conditions` entries and the product of
-## ALL their `multiplier` values is ≥ 3.0. Both sub-checks are independent — a
-## two-entry product ≥ 3.0 still fails (a). Product uses float accumulation;
-## compared with `>= 3.0 − 1e-9` tolerance per the GDD float-equality warning.
-## This check trusts each entry's `multiplier > 1.0` invariant (Rule 9 / Drop System
-## Rule 5a, enforced per-entry by [method _check_drop_condition_entries]); it does NOT
-## re-validate entry shape — that is [method _check_drop_condition_entries]'s concern.
-## Runs only on PROTOTYPE parts.
-func _check_prototype_drop_conditions(part: PartDef) -> void:
-	if part.rarity != PartDef.Rarity.PROTOTYPE:
-		return
-	# Sub-check (a) — size.
-	if part.drop_conditions.size() < 3:
-		_error(&"content_prototype_too_few_drop_conditions",
-			{"id": part.id, "size": part.drop_conditions.size(), "min": 3})
-		# Do NOT return — sub-check (b) is independent and must run even when size fails.
-
-	# Sub-check (b) — product of all multipliers >= 3.0. String key matches authored
-	# .tres convention (same as _check_boss_break_condition uses "multiplier").
-	var product := 1.0
-	for entry: Dictionary in part.drop_conditions:
-		var m: float = float(entry.get("multiplier", 1.0))
-		product *= m
-	if product < 3.0 - 1e-9:
-		_error(&"content_prototype_drop_product_low",
-			{"id": part.id, "product": product, "min": 3.0})
-
-
-## Entry-shape validator for `drop_conditions` arrays (Story 011 — Story 009 debt).
-## Each entry requires: `condition` (StringName, non-empty), `multiplier` (float > 1.0).
-## A malformed entry emits a clean `content_*` error and never panics with an engine
-## exception on malformed authored content. Runs on ALL rarities (Boss-grade needs
-## `multiplier >= 500`; this check guards the structural invariant that the entry is
-## even readable). Called from [method _validate_part] before rarity-specific checks.
-## Keys use the String convention matching `_check_boss_break_condition` and authored
-## `.tres` content; `condition` VALUE is a StringName.
-func _check_drop_condition_entries(part: PartDef) -> void:
-	var index := 0
-	for entry: Dictionary in part.drop_conditions:
-		# `condition` key — String key, StringName value (per authored .tres convention).
-		var cond_raw: Variant = entry.get("condition", null)
-		var cond_sn: StringName = cond_raw if (cond_raw is StringName) else &""
-		if cond_sn == &"":
-			_error(&"content_drop_condition_entry_malformed",
-				{"id": part.id, "index": index, "reason": &"condition_missing_or_empty"})
-		# `multiplier` key — String key, float value > 1.0 (Rule 9 / Drop Rule 5a).
-		var mult_raw: Variant = entry.get("multiplier", null)
-		if mult_raw == null:
-			_error(&"content_drop_condition_entry_malformed",
-				{"id": part.id, "index": index, "reason": &"multiplier_missing"})
-		elif not (mult_raw is float or mult_raw is int):
-			_error(&"content_drop_condition_entry_malformed",
-				{"id": part.id, "index": index, "reason": &"multiplier_wrong_type"})
-		elif float(mult_raw) <= 1.0:
-			_error(&"content_drop_condition_entry_malformed",
-				{"id": part.id, "index": index, "reason": &"multiplier_not_above_one",
-				"value": float(mult_raw)})
-		index += 1
-
-
-# ---------------------------------------------------------------------------
-# Damage-Formula Story 001 — config-level balance check (DF-1 damage_floor)
-# ---------------------------------------------------------------------------
-
-## The injected [BalanceConfig] must carry a non-negative [member
-## BalanceConfig.damage_floor] — the DF-1 `max(damage_floor, floor(...))` clamp
-## would otherwise permit negative damage. Runs once per validation (config-level,
-## not per-part), only when a config is mounted.
-func _check_balance_config() -> void:
-	if _cfg.damage_floor < DAMAGE_FLOOR_MIN:
-		_error(&"content_balance_damage_floor_negative",
-			{"value": _cfg.damage_floor, "min": DAMAGE_FLOOR_MIN})
-	_check_type_chart()
-
-
-## Damage-Formula Story 002: the injected [BalanceConfig]'s [member
-## BalanceConfig.type_chart] must be a complete, well-formed 3×3 grid — every
-## (skill, Core) pair over VOLT/THERMAL/KINETIC present and each value ∈ the locked
-## Part DB Rule 6 ratio set {0.75, 1.0, 1.5}. A missing cell would silently read as a
-## neutral ×1.0 at runtime (hiding an authoring gap); an off-set value would drift
-## the type triangle away from the GDD. Both emit the single
-## `content_balance_type_chart_malformed` code with a `reason` discriminator. Absent
-## reserved elements (CRYO/CORROSIVE/DATA) are NOT flagged — the ×1.0 default is
-## correct for them (GDD EC-04/EC-05).
-func _check_type_chart() -> void:
-	for skill in TYPE_CHART_MVP_ELEMENTS:
-		var row: Variant = _cfg.type_chart.get(skill, null)
-		if not (row is Dictionary):
-			_error(&"content_balance_type_chart_malformed",
-				{"reason": "missing_row", "skill": skill})
-			continue
-		for core in TYPE_CHART_MVP_ELEMENTS:
-			if not row.has(core):
-				_error(&"content_balance_type_chart_malformed",
-					{"reason": "missing_cell", "skill": skill, "core": core})
-				continue
-			var cell: float = float(row[core])
-			if not _is_locked_ratio(cell):
-				_error(&"content_balance_type_chart_malformed",
-					{"reason": "out_of_set", "skill": skill, "core": core, "value": cell})
-
-
-## True when [param value] equals one of the three locked Rule 6 ratios (float-safe
-## compare — the authored `.tres` stores IEEE-754 doubles).
-func _is_locked_ratio(value: float) -> bool:
-	for ratio in TYPE_CHART_RATIOS:
-		if is_equal_approx(value, ratio):
-			return true
-	return false
-
-
-# ---------------------------------------------------------------------------
-# Story 009 — cross-DB referential integrity + level fields (AC-13, TR-011/012)
-# ---------------------------------------------------------------------------
-
-## AC-13 (TR-part-013) / Move-DB Story 006 (EC-MDB-01): every non-`&""`
-## `active_skill_id` resolves to a mounted Move DB entry, and every non-`&""`
-## `passive_id` to a mounted Passive DB entry. `&""` (no reference) is skipped,
-## never flagged. Resolves against the injected id sets (ADR-0003 — StringName IDs,
-## DI), never a live autoload. The skill-ref code is `content_active_skill_unresolved`
-## — the single canonical code for the Part↔Move linkage, owned by Move-DB Story 006
-## (it superseded the Story-009 placeholder `content_dangling_skill_ref` once the
-## real Move DB landed; the `move_ids` set is now populated from a live MoveCatalog
-## via [method ContentCatalogs.move_ids_from]).
-func _check_referential_integrity(part: PartDef) -> void:
-	if part.active_skill_id != &"" and not _move_ids.has(part.active_skill_id):
-		_error(&"content_active_skill_unresolved", {"id": part.id, "active_skill_id": part.active_skill_id})
-	if part.passive_id != &"" and not _passive_ids.has(part.passive_id):
-		_error(&"content_dangling_passive_ref", {"id": part.id, "passive_id": part.passive_id})
-
-
-## TR-part-011: a part's `level_requirement` meets its rarity floor (COMMON 1 /
-## RARE 3 / BOSS_GRADE 6 / PROTOTYPE 8). 0 is the "unset" sentinel and defaults to
-## 1, so a non-Common part left at 0 fails its higher floor (authoring must set it
-## explicitly). A part may exceed its floor, never go below. An unmapped rarity
-## (enum sentinel) is left to the schema families.
-func _check_level_requirement(part: PartDef) -> void:
-	if not RARITY_LEVEL_FLOORS.has(part.rarity):
-		return
-	var floor_value: int = RARITY_LEVEL_FLOORS[part.rarity]
-	var effective: int = part.level_requirement if part.level_requirement > 0 else 1
-	if effective < floor_value:
-		_error(&"content_level_requirement_below_floor",
-			{"id": part.id, "rarity": part.rarity, "value": part.level_requirement, "floor": floor_value})
-
-
-## TR-part-012: `level_growth` is non-empty ONLY on CORE-slot parts. A non-CORE part
-## with a non-empty `level_growth` is an ERROR; a CORE part with any (incl. empty)
-## `level_growth` is valid (Assembly ignores growth on non-Core slots at runtime).
-func _check_level_growth(part: PartDef) -> void:
-	if part.slot_type != PartDef.SlotType.CORE and not part.level_growth.is_empty():
-		_error(&"content_level_growth_non_core", {"id": part.id, "slot": part.slot_type})
-
-
-# ---------------------------------------------------------------------------
-# Move-DB Story 004 — Move schema family (AC-MDB-18/21, EC-MDB-04 authoring side)
-# ---------------------------------------------------------------------------
-# Runs only when a MoveCatalog is mounted (see validate() gate). Behaviours that
-# demand SELF targeting; behaviours that require a power tier.
-
-## Behaviours whose effect always applies to the caster, so their `targeting`
-## must be SELF (AC-MDB-21): REPAIR heals the user, UTILITY (Vent) cools the user.
-## DAMAGE / STATUS / SCAN act on an ENEMY and are unconstrained here.
-const SELF_TARGET_BEHAVIORS: Array[int] = [
-	MoveDef.Behavior.REPAIR, MoveDef.Behavior.UTILITY,
-]
-
-# --- Story 005: cross-field authoring rules (GDD Rule 3/5/7) ---
-
-## AC-MDB-14: the `energy_cost` band a DAMAGE move must fall in, keyed by its
-## PowerTier → `[min, max]` inclusive (GDD Rule 3). BASIC is the free Basic Attack
-## (cost 0) and is intentionally absent — it is exempt from the band. Non-DAMAGE
-## behaviours and an unset (0) tier are not keyed here and skip the check.
-const ENERGY_BANDS: Dictionary = {
-	MoveDef.PowerTier.LIGHT: [5, 8],
-	MoveDef.PowerTier.STANDARD: [12, 18],
-	MoveDef.PowerTier.HEAVY: [22, 30],
-	MoveDef.PowerTier.SIGNATURE: [32, 40],
-}
-
-## AC-MDB-15: a REPAIR move must cost STRICTLY MORE than one turn's passive energy
-## regen, or healing is free and stalls the match (the anti-stall brake, Rule 7 /
-## TBC AC-TBC-38). `energy_cost <= BASE_ENERGY_REGEN` is illegal.
-##
-## FORWARD WORK: `BASE_ENERGY_REGEN` is a TBC balance constant not yet in code.
-## Pinned here to the GDD value; source it from the TBC `BalanceConfig` field once
-## the TBC epic ships (single source of truth), then delete this local const.
-const BASE_ENERGY_REGEN := 10
-
-## AC-MDB-16: the status a STATUS move applies is fixed by its element (Rule 5 /
-## TBC Rule 11) — `status_proc.status_id` must equal this element's entry. A STATUS
-## move with an unset/reserved element (not keyed here) skips the match; its
-## element is the enum family's concern, not this cross-field rule's.
-const STATUS_BY_ELEMENT: Dictionary = {
-	PartDef.Element.VOLT: &"shock",
-	PartDef.Element.THERMAL: &"burn",
-	PartDef.Element.KINETIC: &"stagger",
-}
-
-## The `status_proc` sub-key carrying the applied status identity (Rule 5).
-const STATUS_ID_KEY := &"status_id"
-
-
-## Validate every entry in the mounted Move catalog. Mirrors
-## [method _validate_part_catalog] — a null entry is fatal, each real entry is
-## dispatched through [method _validate_move].
-func _validate_move_catalog(catalog: MoveCatalog) -> void:
-	for move in catalog.entries:
-		_validate_move(move)
-
-
-## Per-move dispatch (Story 004 schema family + Story 005 authoring rules). A null
-## entry is fatal and short-circuits — a null can't be field-checked.
-func _validate_move(move: MoveDef) -> void:
-	if move == null:
-		_error(&"content_null_entry", {"db": &"move"})
-		return
-	# Story 004 — schema shape.
-	_check_move_required_fields(move)
-	_check_damage_power_tier(move)
-	_check_move_targeting(move)
-	# Story 005 — cross-field authoring rules.
-	_check_move_energy_band(move)
-	_check_move_repair_brake(move)
-	_check_move_status_element(move)
-	_check_move_innate_rider(move)
-
-
-## AC-MDB-18: the always-required identity/schema fields, plus the DAMAGE-only
-## `damage_type` + `element`. `power_tier` is DAMAGE-required too but has its own
-## dedicated code (see [method _check_damage_power_tier]). `energy_cost` is NOT
-## checked here — 0 is a legitimate cost (a Basic Attack is free), so it has no
-## "missing" sentinel. Every finding names the move `id` (AC requirement).
-func _check_move_required_fields(move: MoveDef) -> void:
-	if move.id == &"":
-		_error(&"content_move_missing_field", {"id": move.id, "field": &"id", "display_name": move.display_name})
-	if move.display_name == "":
-		_error(&"content_move_missing_field", {"id": move.id, "field": &"display_name"})
-	if int(move.behavior) == 0:
-		_error(&"content_move_missing_field", {"id": move.id, "field": &"behavior"})
-	if int(move.targeting) == 0:
-		_error(&"content_move_missing_field", {"id": move.id, "field": &"targeting"})
-	if move.behavior == MoveDef.Behavior.DAMAGE:
-		if int(move.damage_type) == 0:
-			_error(&"content_move_missing_field", {"id": move.id, "field": &"damage_type"})
-		if int(move.element) == 0:
-			_error(&"content_move_missing_field", {"id": move.id, "field": &"element"})
-
-
-## EC-MDB-04 (authoring side): a DAMAGE move must declare a real `power_tier` —
-## the 0 sentinel is a missing tier. (TBC's runtime STANDARD fallback is a
-## separate, resolution-time concern; content authoring must be explicit.)
-func _check_damage_power_tier(move: MoveDef) -> void:
-	if move.behavior == MoveDef.Behavior.DAMAGE and int(move.power_tier) == 0:
-		_error(&"content_damage_move_missing_power_tier", {"id": move.id})
-
-
-## AC-MDB-21: a REPAIR or UTILITY(Vent) move must target SELF. The `targeting != 0`
-## guard skips the unset sentinel — that is already the required-field check's
-## job (no double-flagging). A REPAIR/UTILITY that explicitly targets ENEMY errors.
-func _check_move_targeting(move: MoveDef) -> void:
-	if not SELF_TARGET_BEHAVIORS.has(int(move.behavior)):
-		return
-	if int(move.targeting) != 0 and move.targeting != MoveDef.Targeting.SELF:
-		_error(&"content_move_bad_targeting",
-			{"id": move.id, "behavior": move.behavior, "targeting": move.targeting})
-
-
-## AC-MDB-14 (Story 005): a DAMAGE move's `energy_cost` must fall in its PowerTier
-## band (Rule 3). BASIC (the free Basic Attack) and an unset tier are not keyed in
-## [constant ENERGY_BANDS] and are exempt — a missing tier is Story 004's error.
-func _check_move_energy_band(move: MoveDef) -> void:
-	if move.behavior != MoveDef.Behavior.DAMAGE:
-		return
-	if not ENERGY_BANDS.has(move.power_tier):
-		return
-	var band: Array = ENERGY_BANDS[move.power_tier]
-	if move.energy_cost < int(band[0]) or move.energy_cost > int(band[1]):
-		_error(&"content_move_energy_band",
-			{"id": move.id, "power_tier": move.power_tier, "energy_cost": move.energy_cost,
-			"min": band[0], "max": band[1]})
-
-
-## AC-MDB-15 (Story 005): a REPAIR move must cost more than [constant
-## BASE_ENERGY_REGEN] — the anti-stall brake (Rule 7). `<=` regen is free healing.
-func _check_move_repair_brake(move: MoveDef) -> void:
-	if move.behavior != MoveDef.Behavior.REPAIR:
-		return
-	if move.energy_cost <= BASE_ENERGY_REGEN:
-		_error(&"content_move_repair_brake",
-			{"id": move.id, "energy_cost": move.energy_cost, "base_regen": BASE_ENERGY_REGEN})
-
-
-## AC-MDB-16 (Story 005): a STATUS move's `status_proc.status_id` must be the
-## status fixed by its `element` (Rule 5). An empty `status_proc` reads status_id
-## as `&""`, which never matches — so this same check also enforces AC-4's "a
-## STATUS move REQUIRES a status_proc" (a missing rider IS a mismatch: it can't
-## carry the element's status). An unset/reserved element is not keyed in
-## [constant STATUS_BY_ELEMENT] and is skipped (an enum-family concern).
-func _check_move_status_element(move: MoveDef) -> void:
-	if move.behavior != MoveDef.Behavior.STATUS:
-		return
-	var expected: StringName = STATUS_BY_ELEMENT.get(move.element, &"")
-	if expected == &"":
-		return
-	var status_id: StringName = move.status_proc.get(STATUS_ID_KEY, &"")
-	if status_id != expected:
-		_error(&"content_move_status_element_mismatch",
-			{"id": move.id, "element": move.element, "status_id": status_id, "expected": expected})
-
-
-## TR-mdb-009 (Story 005): a DAMAGE move must NOT carry an innate `status_proc` —
-## damage riders come only via passives (TBC Rule 13), never baked into the move.
-## STATUS is the one behaviour that owns a `status_proc`; every other behaviour
-## leaves it empty (a stray proc on non-DAMAGE is silently harmless, but the
-## DAMAGE case is the authored-content trap this guards).
-func _check_move_innate_rider(move: MoveDef) -> void:
-	if move.behavior == MoveDef.Behavior.DAMAGE and not move.status_proc.is_empty():
-		_error(&"content_move_innate_rider", {"id": move.id})
-
-
-# ---------------------------------------------------------------------------
-# Passive-DB Stories 004/005 — Passive schema + legality + authoring families
-# ---------------------------------------------------------------------------
-# Runs only when a PassiveCatalog is mounted (see validate() gate). Story 004
-# supplies the schema-shape + Rule 3 legality matrix + Rule 4 stacking check;
-# Story 005 supplies the Rule 3a behavior_params key-set, the STRUCTURAL
-# non-negative rule (EC-PDB-08 authoring side), and the Rule 6 Core doctrine.
-# The validator owns NO runtime executor — it rejects authoring errors only.
-
-## GDD Rule 3 legality matrix (copied verbatim from the GDD's "Allowed trigger ×
-## behavior combinations" table — NOT inferred): the exact set of legal
-## `trigger_category` values each `behavior_class` may pair with. An author reading
-## a `content_illegal_passive_pairing` error must see the same matrix the GDD
-## documents. APPEND-ONLY alongside the enums.
-const PASSIVE_LEGAL_TRIGGERS: Dictionary = {
-	PassiveDef.BehaviorClass.STATUS_RIDER: [
-		PassiveDef.TriggerCategory.ON_HIT,
-	],
-	PassiveDef.BehaviorClass.STAT_AURA: [
-		PassiveDef.TriggerCategory.PERSISTENT,
-	],
-	PassiveDef.BehaviorClass.RESOURCE_EFFECT: [
-		PassiveDef.TriggerCategory.ON_BATTLE_START,
-		PassiveDef.TriggerCategory.ON_TURN_START,
-		PassiveDef.TriggerCategory.ON_OVERHEAT,
-	],
-	PassiveDef.BehaviorClass.STRUCTURAL_EFFECT: [
-		PassiveDef.TriggerCategory.ON_BATTLE_START,
-		PassiveDef.TriggerCategory.ON_TURN_START,
-		PassiveDef.TriggerCategory.ON_OVERHEAT,
-	],
-}
-
-## GDD Rule 3a `behavior_params` schema — the EXACT key set each `behavior_class`
-## must carry (no more, no less). String keys per the untyped-entry-dict convention
-## (`_check_boss_break_condition`); `StringName` is reserved for the *values*
-## (status_id / stat) and for error codes. The validator flags a missing OR an
-## unknown key against this table (Story 005).
-const PASSIVE_PARAM_KEYS: Dictionary = {
-	PassiveDef.BehaviorClass.STATUS_RIDER: ["status_id", "duration"],
-	PassiveDef.BehaviorClass.STAT_AURA: ["stat", "delta"],
-	PassiveDef.BehaviorClass.RESOURCE_EFFECT: ["resource", "amount"],
-	PassiveDef.BehaviorClass.STRUCTURAL_EFFECT: ["target", "amount"],
-}
-
-## GDD Rule 6 constraint 2 — the ONLY `trigger_category` values a `CORE_TRAIT`
-## passive may use. `ON_HIT` and `ON_TURN_START` are deliberately excluded (status
-## riders are Weapon/Arms territory; Core identity fires at battle boundaries or
-## on overheat, or persists). Drives `content_core_illegal_trigger` (Story 005).
-const CORE_TRIGGER_WHITELIST: Array[int] = [
-	PassiveDef.TriggerCategory.ON_BATTLE_START,
-	PassiveDef.TriggerCategory.ON_OVERHEAT,
-	PassiveDef.TriggerCategory.PERSISTENT,
-]
-
-## The `behavior_params` key holding a STRUCTURAL_EFFECT's signed magnitude (Rule
-## 3a) — read for the non-negative rule (Story 005 / EC-PDB-08 authoring side).
-const PASSIVE_STRUCTURAL_AMOUNT_KEY := "amount"
-
-## The `behavior_params` key naming a STRUCTURAL_EFFECT's target (Rule 3a); surfaced
-## in the negative-structural error so the author knows which target was offending.
-const PASSIVE_STRUCTURAL_TARGET_KEY := "target"
-
-
-## Validate every entry in the mounted Passive catalog. Mirrors
-## [method _validate_move_catalog]: per-entry dispatch, plus one catalog-level
-## cross-entry pass (the Core duplicate-combo uniqueness check, AC-PDB-14).
-func _validate_passive_catalog(catalog: PassiveCatalog) -> void:
-	for passive in catalog.entries:
-		_validate_passive(passive)
-	_check_passive_core_duplicate_combo(catalog)
-
-
-## Per-passive dispatch (Story 004 schema/legality/stacking + Story 005 authoring
-## rules). A null entry is fatal and short-circuits — a null can't be field-checked.
-func _validate_passive(passive: PassiveDef) -> void:
-	if passive == null:
-		_error(&"content_null_entry", {"db": &"passive"})
-		return
-	# Story 004 — schema shape, Rule 3 legality, Rule 4 stacking.
-	_check_passive_required_fields(passive)
-	_check_passive_legality(passive)
-	_check_passive_stacking(passive)
-	# Story 005 — Rule 3a params, STRUCTURAL non-negative, Rule 6 Core trigger.
-	_check_passive_params(passive)
-	_check_passive_structural_nonneg(passive)
-	_check_passive_core_trigger(passive)
-
-
-## AC-PDB-15 (schema half): the always-required identity + classification fields.
-## Enum fields at the 0 INVALID sentinel are "missing" (an unset .tres slot). `scope`
-## is required ONLY for `ON_HIT` (it is the null-equivalent 0 for every other
-## trigger, so a non-ON_HIT passive with scope==0 is correct, not missing). Every
-## finding names the passive `id`.
-func _check_passive_required_fields(passive: PassiveDef) -> void:
-	if passive.id == &"":
-		_error(&"content_passive_missing_field", {"id": passive.id, "field": &"id", "display_name": passive.display_name})
-	if passive.display_name == "":
-		_error(&"content_passive_missing_field", {"id": passive.id, "field": &"display_name"})
-	if int(passive.behavior_class) == 0:
-		_error(&"content_passive_missing_field", {"id": passive.id, "field": &"behavior_class"})
-	if int(passive.trigger_category) == 0:
-		_error(&"content_passive_missing_field", {"id": passive.id, "field": &"trigger_category"})
-	if int(passive.stacking_policy) == 0:
-		_error(&"content_passive_missing_field", {"id": passive.id, "field": &"stacking_policy"})
-	if int(passive.passive_class) == 0:
-		_error(&"content_passive_missing_field", {"id": passive.id, "field": &"passive_class"})
-	# scope is mandatory only on ON_HIT (the move-slot filter); required-but-unset there.
-	if passive.trigger_category == PassiveDef.TriggerCategory.ON_HIT and int(passive.scope) == 0:
-		_error(&"content_passive_missing_field", {"id": passive.id, "field": &"scope"})
-
-
-## AC-PDB-15: the `trigger_category × behavior_class` pairing must be legal per the
-## Rule 3 matrix ([constant PASSIVE_LEGAL_TRIGGERS]). A def sitting at an INVALID
-## enum sentinel is malformed — [method _check_passive_required_fields] owns that
-## error; this check skips it so it is not double-flagged as an illegal pairing
-## (AC-1 edge case). The error names the id AND the offending pairing.
-func _check_passive_legality(passive: PassiveDef) -> void:
-	if int(passive.behavior_class) == 0 or int(passive.trigger_category) == 0:
-		return
-	var legal: Array = PASSIVE_LEGAL_TRIGGERS.get(passive.behavior_class, [])
-	if not legal.has(int(passive.trigger_category)):
-		_error(&"content_illegal_passive_pairing",
-			{"id": passive.id, "trigger": passive.trigger_category, "behavior": passive.behavior_class})
-
-
-## TR-pdb-004: the authored `stacking_policy` must match the `behavior_class`
-## default (Story 003's canonical table, via [method PassiveDef.default_stacking_policy]).
-## Skips a def with an INVALID behavior_class (no default to compare) or an unset
-## stacking_policy (the missing-field check owns that). Names the id and expected policy.
-func _check_passive_stacking(passive: PassiveDef) -> void:
-	if int(passive.behavior_class) == 0 or int(passive.stacking_policy) == 0:
-		return
-	var expected := PassiveDef.default_stacking_policy(passive.behavior_class)
-	if passive.stacking_policy != expected:
-		_error(&"content_passive_stacking_mismatch",
-			{"id": passive.id, "expected": expected, "actual": passive.stacking_policy})
-
-
-## AC-PDB-16 (params half): `behavior_params` must carry EXACTLY its
-## `behavior_class`'s key set (Rule 3a) — a missing required key OR an unknown extra
-## key is an error, each naming the offending field. Skips an INVALID behavior_class
-## (its key set is undefined — the schema check owns that). One error per bad field.
-func _check_passive_params(passive: PassiveDef) -> void:
-	if int(passive.behavior_class) == 0:
-		return
-	var required: Array = PASSIVE_PARAM_KEYS.get(passive.behavior_class, [])
-	if required.is_empty():
-		return
-	for key in required:
-		if not passive.behavior_params.has(key):
-			_error(&"content_passive_params_mismatch", {"id": passive.id, "field": key})
-	for key in passive.behavior_params.keys():
-		if not required.has(key):
-			_error(&"content_passive_params_mismatch", {"id": passive.id, "field": key})
-
-
-## AC-PDB-16 (structural half) / TR-pdb-007 (EC-PDB-08 authoring side): a
-## STRUCTURAL_EFFECT `amount` must be non-negative for EITHER target — persistent
-## structure debuffs go through a negative STAT_AURA, never here. A missing `amount`
-## is the params check's concern; this only fires when the key is present and < 0.
-func _check_passive_structural_nonneg(passive: PassiveDef) -> void:
-	if passive.behavior_class != PassiveDef.BehaviorClass.STRUCTURAL_EFFECT:
-		return
-	if not passive.behavior_params.has(PASSIVE_STRUCTURAL_AMOUNT_KEY):
-		return
-	if int(passive.behavior_params[PASSIVE_STRUCTURAL_AMOUNT_KEY]) < 0:
-		_error(&"content_passive_negative_structural",
-			{"id": passive.id, "target": passive.behavior_params.get(PASSIVE_STRUCTURAL_TARGET_KEY, &"")})
-
-
-## AC-PDB-12 / TR-pdb-008: a `CORE_TRAIT` passive may only use a whitelisted trigger
-## (Rule 6 constraint 2 — [constant CORE_TRIGGER_WHITELIST]). `passive_class` is the
-## authoring axis, so this gates only on it; a non-Core passive with `ON_HIT` is NOT
-## flagged here (that is a legal STATUS_RIDER pairing). Skips an unset trigger (the
-## missing-field check owns it). Names the passive id and the illegal trigger.
-func _check_passive_core_trigger(passive: PassiveDef) -> void:
-	if passive.passive_class != PassiveDef.PassiveClass.CORE_TRAIT:
-		return
-	if int(passive.trigger_category) == 0:
-		return
-	if not CORE_TRIGGER_WHITELIST.has(int(passive.trigger_category)):
-		_error(&"content_core_illegal_trigger",
-			{"id": passive.id, "trigger": passive.trigger_category})
-
-
-## AC-PDB-14: two `CORE_TRAIT` passives sharing an identical `trigger_category` +
-## `behavior_class` combo are duplicates (Boss-grade Cores must be mechanically
-## distinct, Rule 6). Inert until OQ-PDB-1 authors Core content — a catalog with
-## zero CORE_TRAIT entries produces no error. Only real (non-sentinel) combos are
-## compared. Reports the FIRST colliding pair, naming both ids and the shared combo.
-func _check_passive_core_duplicate_combo(catalog: PassiveCatalog) -> void:
-	var seen := {}
-	for passive in catalog.entries:
-		if passive == null:
-			continue
-		if passive.passive_class != PassiveDef.PassiveClass.CORE_TRAIT:
-			continue
-		if int(passive.trigger_category) == 0 or int(passive.behavior_class) == 0:
-			continue
-		var combo := "%d:%d" % [int(passive.trigger_category), int(passive.behavior_class)]
-		if seen.has(combo):
-			_error(&"content_core_duplicate_combo",
-				{"id_a": seen[combo], "id_b": passive.id,
-				"trigger": passive.trigger_category, "behavior": passive.behavior_class})
-		else:
-			seen[combo] = passive.id
-
-
-# ---------------------------------------------------------------------------
-# Consumable DB family (Consumable-DB Story 007)
-# ---------------------------------------------------------------------------
-
-## The exact `effect_params` key set + value type each `EffectType` must carry
-## (Consumable-DB AC-CD-17). Keys are `String` (matching the untyped `effect_params`
-## Dictionary the .tres authors — same convention as the Part-DB entry dicts). The
-## value is the expected Variant.Type. A def whose params miss a required key, carry
-## an unknown extra key, or store a key at the wrong type is malformed.
-const CONSUMABLE_PARAM_SPEC: Dictionary = {
-	ConsumableDef.EffectType.RESTORE_STRUCTURE: {"amount": TYPE_INT},
-	ConsumableDef.EffectType.REDUCE_HEAT: {"amount": TYPE_INT},
-	ConsumableDef.EffectType.RESTORE_ENERGY: {"amount": TYPE_INT},
-	ConsumableDef.EffectType.BOOST_DROP: {"multiplier": TYPE_FLOAT},
-	ConsumableDef.EffectType.MODIFY_ENCOUNTER_RATE: {"rate_multiplier": TYPE_FLOAT, "duration_steps": TYPE_INT},
-}
-
-## The coherent `(use_context, target)` pairing each `EffectType` is designed for
-## (AC-CD-18, ADVISORY). A restorative acts on a living team member usable in either
-## context; a Beacon is battle-only against the current battle; an encounter modifier
-## is world-only against the overworld. A def that diverges is authorable but flagged
-## as a design smell (a WORLD-context heal, a battle-target Lure) — a warning, never fatal.
-const CONSUMABLE_COHERENCE: Dictionary = {
-	ConsumableDef.EffectType.RESTORE_STRUCTURE: {"context": ConsumableDef.UseContext.BOTH, "target": ConsumableDef.Target.LIVING_TEAM_MEMBER},
-	ConsumableDef.EffectType.REDUCE_HEAT: {"context": ConsumableDef.UseContext.BOTH, "target": ConsumableDef.Target.LIVING_TEAM_MEMBER},
-	ConsumableDef.EffectType.RESTORE_ENERGY: {"context": ConsumableDef.UseContext.BOTH, "target": ConsumableDef.Target.LIVING_TEAM_MEMBER},
-	ConsumableDef.EffectType.BOOST_DROP: {"context": ConsumableDef.UseContext.BATTLE, "target": ConsumableDef.Target.CURRENT_BATTLE},
-	ConsumableDef.EffectType.MODIFY_ENCOUNTER_RATE: {"context": ConsumableDef.UseContext.WORLD, "target": ConsumableDef.Target.OVERWORLD},
-}
-
-
-## Catalog-level dispatch (mirrors [method _validate_passive_catalog]): per-entry
-## schema/price/params validation, plus catalog-wide duplicate-id + effect-type coverage.
-func _validate_consumable_catalog(catalog: ConsumableCatalog) -> void:
-	var seen_ids := {}
-	for consumable in catalog.entries:
-		_validate_consumable(consumable)
-		if consumable != null and consumable.consumable_id != &"":
-			if seen_ids.has(consumable.consumable_id):
-				_error(&"content_duplicate_id", {"db": &"consumable", "id": consumable.consumable_id})
-			else:
-				seen_ids[consumable.consumable_id] = true
-	_check_consumable_effect_coverage(catalog)
-
-
-## Per-consumable dispatch. A null entry is fatal and short-circuits — a null can't be
-## field-checked (mirrors [method _validate_passive]).
-func _validate_consumable(consumable: ConsumableDef) -> void:
-	if consumable == null:
-		_error(&"content_null_entry", {"db": &"consumable"})
-		return
-	_check_consumable_required_fields(consumable)
-	_check_consumable_effect_params(consumable)
-	_check_consumable_price_invariant(consumable)
-	_check_consumable_coherence(consumable)
-
-
-## AC-CD-17 (schema half): the always-required identity + classification fields. Enum
-## fields at the 0 INVALID sentinel are "missing" (an unset .tres slot); `max_stack`
-## must be at least 1 (a 0-stack item is unstockable). Each finding names the id.
-func _check_consumable_required_fields(consumable: ConsumableDef) -> void:
-	if consumable.consumable_id == &"":
-		_error(&"content_consumable_missing_field", {"id": consumable.consumable_id, "field": &"consumable_id", "display_name": consumable.display_name})
-	if consumable.display_name == "":
-		_error(&"content_consumable_missing_field", {"id": consumable.consumable_id, "field": &"display_name"})
-	if int(consumable.rarity) == 0:
-		_error(&"content_consumable_missing_field", {"id": consumable.consumable_id, "field": &"rarity"})
-	if int(consumable.effect_type) == 0:
-		_error(&"content_consumable_missing_field", {"id": consumable.consumable_id, "field": &"effect_type"})
-	if int(consumable.use_context) == 0:
-		_error(&"content_consumable_missing_field", {"id": consumable.consumable_id, "field": &"use_context"})
-	if int(consumable.target) == 0:
-		_error(&"content_consumable_missing_field", {"id": consumable.consumable_id, "field": &"target"})
-	if consumable.max_stack < 1:
-		_error(&"content_consumable_missing_field", {"id": consumable.consumable_id, "field": &"max_stack"})
-
-
-## AC-CD-17 (params half): `effect_params` must carry EXACTLY its `effect_type`'s key
-## set at the correct type ([constant CONSUMABLE_PARAM_SPEC]) — a missing required key,
-## an unknown extra key, or a wrong-typed value is malformed. An `effect_type` not in
-## the spec (and not the 0 sentinel — the schema check owns that) is an unknown type.
-## Skips a def at the 0 sentinel (missing-field check owns it). One error per bad key.
-func _check_consumable_effect_params(consumable: ConsumableDef) -> void:
-	if int(consumable.effect_type) == 0:
-		return
-	if not CONSUMABLE_PARAM_SPEC.has(consumable.effect_type):
-		_error(&"content_consumable_unknown_effect_type", {"id": consumable.consumable_id, "effect_type": consumable.effect_type})
-		return
-	var spec: Dictionary = CONSUMABLE_PARAM_SPEC[consumable.effect_type]
-	for key in spec:
-		if not consumable.effect_params.has(key):
-			_error(&"content_consumable_effect_params_malformed", {"id": consumable.consumable_id, "field": key, "issue": &"missing"})
-		elif typeof(consumable.effect_params[key]) != spec[key]:
-			_error(&"content_consumable_effect_params_malformed", {"id": consumable.consumable_id, "field": key, "issue": &"wrong_type"})
-	for key in consumable.effect_params.keys():
-		if not spec.has(key):
-			_error(&"content_consumable_effect_params_malformed", {"id": consumable.consumable_id, "field": key, "issue": &"unknown"})
-
-
-## AC-CD-18 (economy): the buy price must STRICTLY exceed the sell price — a store that
-## buys back for what it sells (or more) is an infinite-Scrap exploit. `buy == sell` is
-## the discriminating fixture (a `buy >= sell` impl wrongly passes it). Sell price must
-## also be non-negative. Names the id and both prices.
-func _check_consumable_price_invariant(consumable: ConsumableDef) -> void:
-	if consumable.sell_price < 0:
-		_error(&"content_consumable_price_invariant", {"id": consumable.consumable_id, "buy": consumable.buy_price, "sell": consumable.sell_price, "issue": &"negative_sell"})
-	if consumable.buy_price <= consumable.sell_price:
-		_error(&"content_consumable_price_invariant", {"id": consumable.consumable_id, "buy": consumable.buy_price, "sell": consumable.sell_price, "issue": &"buy_not_above_sell"})
-
-
-## AC-CD-18 (coherence, ADVISORY): warn when an effect_type's authored `use_context` /
-## `target` diverges from its designed pairing ([constant CONSUMABLE_COHERENCE]) — a
-## design smell, never fatal. Skips an unknown/sentinel effect_type (owned above).
-func _check_consumable_coherence(consumable: ConsumableDef) -> void:
-	if not CONSUMABLE_COHERENCE.has(consumable.effect_type):
-		return
-	var expected: Dictionary = CONSUMABLE_COHERENCE[consumable.effect_type]
-	if int(consumable.use_context) != 0 and consumable.use_context != expected["context"]:
-		_warn(&"content_consumable_context_target_incoherent",
-			{"id": consumable.consumable_id, "field": &"use_context", "expected": expected["context"], "actual": consumable.use_context})
-	if int(consumable.target) != 0 and consumable.target != expected["target"]:
-		_warn(&"content_consumable_context_target_incoherent",
-			{"id": consumable.consumable_id, "field": &"target", "expected": expected["target"], "actual": consumable.target})
-
-
-## Effect-type coverage advisory (ADVISORY): the MVP roster is designed to represent
-## every `EffectType` family; warn per family with no representative consumable so a
-## designer who removes the last item of a family is told. Inert on the full roster
-## (all 5 families covered → 0 warnings). Non-brittle: no hard-coded id list.
-func _check_consumable_effect_coverage(catalog: ConsumableCatalog) -> void:
-	var present := {}
-	for consumable in catalog.entries:
-		if consumable != null and int(consumable.effect_type) != 0:
-			present[consumable.effect_type] = true
-	for effect_type in CONSUMABLE_PARAM_SPEC:
-		if not present.has(effect_type):
-			_warn(&"content_consumable_roster", {"effect_type": effect_type, "issue": &"family_unrepresented"})
-
-
-# ---------------------------------------------------------------------------
-# Enemy-DB Story 004 — Enemy schema-presence family
-# ---------------------------------------------------------------------------
-# Runs only when an EnemyCatalog is mounted (see validate() gate). This story
-# owns: schema presence/type (_check_enemy_schema_presence), id uniqueness
-# (_check_enemy_id_uniqueness), skills count (_check_enemy_skills_count),
-# ai_profile non-empty + referential seam (_check_enemy_ai_profile), tier
-# advisory (_check_enemy_tier), and flavor_text length (_check_enemy_flavor_length).
-# Stories 005–009 will add sibling _check_enemy_* methods to this same family;
-# they must NOT modify any check established here.
-#
-# ai_profile referential seam: the EnemyAI registry does not yet exist as a
-# GDScript class. The check that asks "does this profile name exist?" is built
-# as a constructor-injected Callable (`_ai_profile_checker`) defaulting to
-# `func(_p): return true` (accept-all) so validation is shippable now and tests
-# can inject a reject-all Callable to prove the seam is wired. Wire the real
-# `EnemyAI.has_profile` lambda when the EnemyAI epic ships.
-
-## The accepted MVP `enemy_class` values. ELITE (3) and RIVAL (4) are reserved
-## for Full Vision — they are declared in the GDD but NOT in EnemyDef.EnemyClass,
-## so any .tres that somehow stores 3/4 reads back as INVALID. This check
-## enforces {WILD, BOSS} exactly; INVALID (0) is the "missing" sentinel.
-const VALID_ENEMY_CLASSES: Array[int] = [EnemyDef.EnemyClass.WILD, EnemyDef.EnemyClass.BOSS]
-
-## MVP-only enemy tier value. `tier != 1` → advisory warning (AC-ED-13a).
-const ENEMY_MVP_TIER := 1
-
-## Maximum `skills` array size before an advisory warning (TR-edb-019). Size > 4
-## is legal content (not a hard error) — it merely exceeds the MVP design intent
-## of 2–4 skills per enemy.
-const ENEMY_SKILLS_MAX := 4
-
-## `flavor_text` length cap (AC-ED-13b). 100 characters inclusive — a 100-char
-## string PASSES; 101 FAILS. Named constant so a Part DB ratification of a
-## different value is a one-line change. GDD source: AC-ED-13b (FLAVOR_TEXT_MAX).
-const FLAVOR_TEXT_MAX := 100
-
-## ai_profile referential seam (injected Callable). Signature: `(profile: StringName) -> bool`.
-## Default is accept-all — valid until the EnemyAI autoload is implemented.
-## Inject via [method ContentValidator.new] or the `ai_profile_checker` setter
-## in tests by replacing this field before calling validate().
-## Do NOT call EnemyAI directly here — that would create a hard compile-time
-## dependency on a not-yet-existing class.
-var _ai_profile_checker: Callable = func(_p: StringName) -> bool: return true
-
-
 ## Wire the `ai_profile` referential seam so tests (and eventually the real boot)
 ## can inject a non-default checker. Call before `validate()`.
 ## [param checker] must have signature `(StringName) -> bool`.
 func set_ai_profile_checker(checker: Callable) -> void:
 	_ai_profile_checker = checker
+	# Forward to enemy validator if already allocated.
+	if _enemy_validator != null:
+		_enemy_validator.set_ai_profile_checker(checker)
 
 
-## Catalog-level dispatch: per-entry schema validation, plus catalog-wide id
-## uniqueness. Mirrors [method _validate_consumable_catalog].
-func _validate_enemy_catalog(catalog: EnemyCatalog) -> void:
-	_check_enemy_id_uniqueness(catalog)
-	for enemy in catalog.entries:
-		_validate_enemy(enemy)
+# ---------------------------------------------------------------------------
+# Helper factory — allocate once, wire shared state each call
+# ---------------------------------------------------------------------------
+
+## Return the PartValidator, allocating it on first use and wiring the shared
+## accumulator arrays + state fields so it writes directly into [member _errors]
+## / [member _warnings] (Array reference semantics in GDScript).
+func _get_part_validator() -> RefCounted:
+	if _part_validator == null:
+		_part_validator = load("res://src/core/content/validators/part_validator.gd").new()
+	_part_validator._errors = _errors
+	_part_validator._warnings = _warnings
+	_part_validator._log = _log
+	_part_validator._cfg = _cfg
+	_part_validator._refs_mounted = _refs_mounted
+	_part_validator._move_ids = _move_ids
+	_part_validator._passive_ids = _passive_ids
+	return _part_validator
 
 
-## Per-enemy dispatch. A null entry is fatal and short-circuits.
-func _validate_enemy(enemy: EnemyDef) -> void:
-	if enemy == null:
-		_error(&"content_null_entry", {"db": &"enemy"})
-		return
-	_check_enemy_schema_presence(enemy)
-	_check_enemy_skills_count(enemy)
-	_check_enemy_ai_profile(enemy)
-	_check_enemy_tier(enemy)
-	_check_enemy_flavor_length(enemy)
+## Return the MoveValidator, allocating it on first use and wiring shared state.
+func _get_move_validator() -> RefCounted:
+	if _move_validator == null:
+		_move_validator = load("res://src/core/content/validators/move_validator.gd").new()
+	_move_validator._errors = _errors
+	_move_validator._warnings = _warnings
+	_move_validator._log = _log
+	return _move_validator
 
 
-## AC-ED-01: required fields present and correctly typed.
-## Checks: `id` non-empty, `display_name` non-empty, `enemy_class` ∈ {WILD,BOSS}
-## (INVALID(0) = missing; any value outside {1,2} = unknown/reserved class),
-## `stats` non-empty Dictionary, `skills` non-null (count checked separately),
-## `ai_profile` StringName (presence only — referential seam lives in
-## [method _check_enemy_ai_profile]).
-## Every finding names the `enemy_id`.
-func _check_enemy_schema_presence(enemy: EnemyDef) -> void:
-	if enemy.id == &"":
-		_error(&"content_enemy_schema_missing_field",
-			{"enemy_id": enemy.id, "field": &"id", "display_name": enemy.display_name})
-	if enemy.display_name == "":
-		_error(&"content_enemy_schema_missing_field",
-			{"enemy_id": enemy.id, "field": &"display_name"})
-	# enemy_class: INVALID (0) is the unset sentinel; any value not in VALID_ENEMY_CLASSES
-	# (which is {WILD=1, BOSS=2}) is a reserved/unknown class (ELITE/RIVAL are reserved
-	# and not yet declared in EnemyClass, so they can only appear as INVALID=0 from
-	# a stale .tres — but we guard the positive set explicitly anyway).
-	if not VALID_ENEMY_CLASSES.has(int(enemy.enemy_class)):
-		_error(&"content_enemy_schema_missing_field",
-			{"enemy_id": enemy.id, "field": &"enemy_class", "value": int(enemy.enemy_class)})
-	if enemy.stats.is_empty():
-		_error(&"content_enemy_schema_missing_field",
-			{"enemy_id": enemy.id, "field": &"stats"})
+## Return the PassiveValidator, allocating it on first use and wiring shared state.
+func _get_passive_validator() -> RefCounted:
+	if _passive_validator == null:
+		_passive_validator = load("res://src/core/content/validators/passive_validator.gd").new()
+	_passive_validator._errors = _errors
+	_passive_validator._warnings = _warnings
+	_passive_validator._log = _log
+	return _passive_validator
 
 
-## AC-ED-02: every `id` is globally unique within the catalog. Two entries sharing
-## the same id → error naming the duplicate. All-unique → no error.
-func _check_enemy_id_uniqueness(catalog: EnemyCatalog) -> void:
-	var seen := {}
-	for enemy in catalog.entries:
-		if enemy == null:
-			continue
-		if seen.has(enemy.id):
-			_error(&"content_enemy_duplicate_id", {"enemy_id": enemy.id})
-		else:
-			seen[enemy.id] = true
+## Return the ConsumableValidator, allocating it on first use and wiring shared state.
+func _get_consumable_validator() -> RefCounted:
+	if _consumable_validator == null:
+		_consumable_validator = load("res://src/core/content/validators/consumable_validator.gd").new()
+	_consumable_validator._errors = _errors
+	_consumable_validator._warnings = _warnings
+	_consumable_validator._log = _log
+	return _consumable_validator
 
 
-## AC-ED-03 / TR-edb-019: skills count rules.
-## `skills.size() == 0` → BLOCKING error (an enemy must have ≥1 skill to act);
-## `skills.size() > ENEMY_SKILLS_MAX (4)` → ADVISORY warning (exceeds MVP intent).
-## Size 1..4 → clean. The discriminating boundary: size 4 is clean, size 5 warns.
-func _check_enemy_skills_count(enemy: EnemyDef) -> void:
-	if enemy.skills.size() == 0:
-		_error(&"content_enemy_skills_empty", {"enemy_id": enemy.id})
-	elif enemy.skills.size() > ENEMY_SKILLS_MAX:
-		_warn(&"content_enemy_skills_excess",
-			{"enemy_id": enemy.id, "count": enemy.skills.size(), "max": ENEMY_SKILLS_MAX})
-
-
-## AC-ED-03 / AC-ED-01(d): ai_profile checks.
-## (1) Non-empty: `ai_profile == &""` → BLOCKING error.
-## (2) Referential seam: a non-empty ai_profile is passed to the injected
-##     `_ai_profile_checker` Callable. Default is accept-all (seam is inert until
-##     the EnemyAI epic ships). Inject a reject-all Callable in tests to prove
-##     the seam is wired — a non-empty ai_profile then errors with
-##     `content_enemy_ai_profile_missing`.
-func _check_enemy_ai_profile(enemy: EnemyDef) -> void:
-	if enemy.ai_profile == &"":
-		_error(&"content_enemy_ai_profile_missing",
-			{"enemy_id": enemy.id, "reason": &"empty"})
-		return
-	# Seam: referential check via injected Callable. Default=accept-all until EnemyAI exists.
-	if not _ai_profile_checker.call(enemy.ai_profile):
-		_error(&"content_enemy_ai_profile_missing",
-			{"enemy_id": enemy.id, "ai_profile": enemy.ai_profile, "reason": &"not_registered"})
-
-
-## AC-ED-13a (ADVISORY): `tier != 1` → warning. Only tier 1 is live in MVP; higher
-## tiers are reserved for Full Vision. A warning (never fatal) so the content
-## pipeline can flag reserved-tier authoring without blocking the CI gate.
-func _check_enemy_tier(enemy: EnemyDef) -> void:
-	if enemy.tier != ENEMY_MVP_TIER:
-		_warn(&"content_enemy_tier_reserved",
-			{"enemy_id": enemy.id, "tier": enemy.tier, "expected": ENEMY_MVP_TIER})
-
-
-## AC-ED-13b (BLOCKING): `flavor_text.length() > FLAVOR_TEXT_MAX` → error naming
-## the `enemy_id`. A 100-char string PASSES; a 101-char string FAILS (boundary is
-## inclusive ≤ 100). Empty flavor_text (length 0) passes this check; schema
-## presence is [method _check_enemy_schema_presence]'s concern.
-func _check_enemy_flavor_length(enemy: EnemyDef) -> void:
-	if enemy.flavor_text.length() > FLAVOR_TEXT_MAX:
-		_error(&"content_enemy_flavor_text_too_long",
-			{"enemy_id": enemy.id, "length": enemy.flavor_text.length(), "max": FLAVOR_TEXT_MAX})
+## Return the EnemyValidator, allocating it on first use and wiring shared state.
+## Forwards the injected [member _ai_profile_checker] seam.
+func _get_enemy_validator() -> RefCounted:
+	if _enemy_validator == null:
+		_enemy_validator = load("res://src/core/content/validators/enemy_validator.gd").new()
+		_enemy_validator.set_ai_profile_checker(_ai_profile_checker)
+	_enemy_validator._errors = _errors
+	_enemy_validator._warnings = _warnings
+	_enemy_validator._log = _log
+	return _enemy_validator
