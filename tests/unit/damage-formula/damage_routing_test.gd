@@ -117,6 +117,17 @@ func test_resolve_volt_vs_kinetic_core_is_resisted() -> void:
 	assert_ne(result, 24, "T is applied pre-floor — must NOT floor first then scale (24)")
 
 
+func test_resolve_physical_branch_also_applies_type_effectiveness() -> void:
+	# Guards the element path through the PHYSICAL branch (AC-DF-05/06/07 only exercise
+	# ENERGY): a bug that derives T in one branch but not the other would slip past them.
+	# VOLT skill vs THERMAL Core → T=1.5; physical_power=53 / armor=30 → 53²/83 × 1.5 → 50.
+	var attacker := {&"physical_power": 53}
+	var target := {&"armor": 30}
+	var result := DamageFormula.resolve(attacker, PHYSICAL, VOLT, target, THERMAL, _cfg, _spy)
+	assert_eq(result, 50, "PHYSICAL branch derives T too — VOLT vs THERMAL → ×1.5 → 50")
+	assert_ne(result, 33, "T must apply on the PHYSICAL branch, not collapse to neutral 33")
+
+
 # ---------------------------------------------------------------------------
 # Purity + crit_mult pass-through
 # ---------------------------------------------------------------------------
@@ -146,6 +157,35 @@ func test_resolve_defaults_crit_mult_to_one() -> void:
 	var defaulted := DamageFormula.resolve(attacker, ENERGY, VOLT, target, THERMAL, _cfg, _spy)
 	var explicit := DamageFormula.resolve(attacker, ENERGY, VOLT, target, THERMAL, _cfg, _spy, 1.0)
 	assert_eq(defaulted, explicit, "default crit_mult == explicit 1.0")
+
+
+# ---------------------------------------------------------------------------
+# Unknown damage_type — degrades to ENERGY binding + warns (never silent)
+# ---------------------------------------------------------------------------
+
+func test_resolve_unknown_damage_type_warns_and_degrades_to_energy() -> void:
+	# A damage_type that is neither PHYSICAL(1) nor ENERGY(2) is a caller/content bug.
+	# It must NOT crash: degrade to the ENERGY binding AND surface a warn so it is
+	# never silent (ADR-0002 §5 recoverable anomaly). 99 is an out-of-enum sentinel.
+	var attacker := {&"physical_power": 60, &"energy_power": 40}
+	var target := {&"armor": 20, &"resistance": 30}
+	var result := DamageFormula.resolve(attacker, 99, null, target, null, _cfg, _spy)
+
+	# Degrades to ENERGY: energy_power=40 vs resistance=30 → 40²/70 → 22 (not the
+	# PHYSICAL binding's 45), confirming the fallthrough uses the energy stats.
+	assert_eq(result, 22, "unknown damage_type degrades to the ENERGY binding → 22")
+	assert_eq(_spy.warns.size(), 1, "exactly one warn emitted for the unknown type")
+	assert_eq(_spy.warns[0]["code"], &"damage_routing_unknown_damage_type",
+		"the warn carries the routing diagnostic code")
+	assert_eq(_spy.warns[0]["detail"].get(&"damage_type"), 99,
+		"the warn detail reports the offending damage_type value")
+
+
+func test_resolve_known_damage_types_emit_no_warning() -> void:
+	# The happy path must stay silent — a PHYSICAL and an ENERGY call emit nothing.
+	DamageFormula.resolve({&"physical_power": 53}, PHYSICAL, null, {&"armor": 30}, null, _cfg, _spy)
+	DamageFormula.resolve({&"energy_power": 40}, ENERGY, null, {&"resistance": 30}, null, _cfg, _spy)
+	assert_eq(_spy.warns.size(), 0, "known damage types route without any diagnostic")
 
 
 # ---------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 # Story 003: Damage-type routing + full routed composition
 
 > **Epic**: Damage Formula
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
@@ -111,7 +111,7 @@ static func resolve(attacker_stat: Dictionary, damage_type: int, skill_element,
 **Story Type**: Logic
 **Required evidence**: `tests/unit/damage-formula/damage_routing_test.gd` — must exist and pass (routing cross-checks + element end-to-end + crit pass-through).
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing — `tests/unit/damage-formula/damage_routing_test.gd` (14 fns, 14/14 pass)
 
 ---
 
@@ -119,3 +119,12 @@ static func resolve(attacker_stat: Dictionary, damage_type: int, skill_element,
 
 - Depends on: Story 001 (`compute_damage` kernel), Story 002 (`type_effectiveness` lookup)
 - Unlocks: Turn-Based Combat damage resolution (consumes `DamageFormula.resolve` as its per-skill-use call); closes the DF-1→MOVE-F1→TBC-F5 pipeline entry point (AC-MDB-05 full-pipeline verification once TBC-F5 exists)
+
+---
+
+## Completion Notes
+**Completed**: 2026-07-16
+**Criteria**: 6/6 passing (AC-DF-03 through AC-DF-07 + purity/crit pass-through). No deferred items.
+**Deviations**: ADVISORY — `resolve()` gained a `log.warn(&"damage_routing_unknown_damage_type")` diagnostic that degrades an out-of-enum `damage_type` to the ENERGY binding rather than routing it silently (ADR-0002 §5 recoverable anomaly). Added during code review (W-1), user-approved, fully tested. Beyond the literal AC set but within the story's single target file — resolved hardening, not owed debt.
+**Test Evidence**: Logic — `tests/unit/damage-formula/damage_routing_test.gd` (14 test functions, 14/14 pass; full suite 271/271 green).
+**Code Review**: Complete — `/code-review` this session, verdict APPROVED WITH SUGGESTIONS; both suggestions applied (qa element-branch gap + W-1 diagnostic). W-2 (test-naming convention) left as-is to match the Story-002 sibling file style.

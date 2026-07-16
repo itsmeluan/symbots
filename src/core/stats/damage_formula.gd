@@ -68,7 +68,10 @@ static func type_effectiveness(skill_element, target_core_element,
 ## receives a concrete type, so it is typed `int`). PHYSICAL binds
 ## `A = physical_power` / `D = armor`; ENERGY binds `A = energy_power` /
 ## `D = resistance` — the two branches are kept explicit so a swapped binding is
-## impossible to miss (AC-DF-03/04 cross-checks guard exactly this). Stats are
+## impossible to miss (AC-DF-03/04 cross-checks guard exactly this). A
+## [param damage_type] that is neither known value degrades to the ENERGY binding
+## and emits [code]damage_routing_unknown_damage_type[/code] on [param log] — a
+## recoverable anomaly (ADR-0002 §5), never a crash. Stats are
 ## read with `.get(key, 0)` so a missing stat degrades to 0, which the kernel's
 ## `a == 0 and d == 0` path already handles (Engine Notes).
 ##
@@ -89,7 +92,13 @@ static func resolve(attacker_stat: Dictionary, damage_type: int, skill_element,
 	if damage_type == PartDef.DamageType.PHYSICAL:
 		a = int(attacker_stat.get(&"physical_power", 0))
 		d = int(target_stat.get(&"armor", 0))
-	else:  # ENERGY
+	else:  # ENERGY — also the graceful-degradation sink for an unknown type
+		# Routing always receives a concrete PHYSICAL/ENERGY value (see doc above),
+		# so a value that is neither is a caller/content bug. Degrade to the ENERGY
+		# binding rather than crash (ADR-0002 §5 recoverable anomaly), but surface it
+		# through the injected LogSink so it is never silent.
+		if damage_type != PartDef.DamageType.ENERGY:
+			log.warn(&"damage_routing_unknown_damage_type", {&"damage_type": damage_type})
 		a = int(attacker_stat.get(&"energy_power", 0))
 		d = int(target_stat.get(&"resistance", 0))
 	var t := type_effectiveness(skill_element, target_core_element, cfg)

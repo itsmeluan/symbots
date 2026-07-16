@@ -3,8 +3,8 @@
 > **Layer**: Foundation
 > **GDD**: design/gdd/damage-formula.md
 > **Architecture Module**: Damage Formula (Foundation — pure)
-> **Status**: Ready
-> **Stories**: 3 created (2026-07-16) — see the Stories table below
+> **Status**: Complete (all 3 stories closed 2026-07-16)
+> **Stories**: 3 created (2026-07-16), 3 complete — see the Stories table below
 
 ## Overview
 
@@ -54,9 +54,9 @@ This epic is complete when:
 
 | # | Story | Type | Status | ADR |
 |---|-------|------|--------|-----|
-| 001 | DF-1 kernel — `compute_damage()` + `damage_floor` config | Logic | Ready | ADR-0005 (sec: ADR-0006) |
-| 002 | Type-effectiveness lookup — `type_effectiveness()` + `type_chart` config | Logic | Ready | ADR-0005 |
-| 003 | Damage-type routing + full routed composition | Logic | Ready | ADR-0005 |
+| 001 | DF-1 kernel — `compute_damage()` + `damage_floor` config | Logic | Complete | ADR-0005 (sec: ADR-0006) |
+| 002 | Type-effectiveness lookup — `type_effectiveness()` + `type_chart` config | Logic | Complete | ADR-0005 |
+| 003 | Damage-type routing + full routed composition | Logic | Complete | ADR-0005 |
 
 **Scope note:** ADR-0005 pins the kernel signature `compute_damage(a, d, type_mult, cfg, log, crit_mult := 1.0)` (pre-bound A/D, pre-derived T). The GDD's blocking ACs, however, test the *routed* path (stats + `damage_type` + element → damage) and the *type-chart derivation* — so this epic ships all three layers: the pure kernel (001), the standalone type-effectiveness lookup that is the single source of truth for both DF-1 and the Combat UI pre-commit telegraph per GDD OQ-1 (002), and the routed composition that gives Turn-Based Combat its call contract (003). Config fields (`damage_floor`, `type_chart`) are appended to the existing `BalanceConfig` inside their consuming story (disjoint fields, append-only — no merge). Downstream: MOVE-F1 (Move DB, shipped) scales DF-1 output; the full DF-1→MOVE-F1→TBC-F5 pipeline (AC-MDB-05) verifies once TBC-F5 exists.
 

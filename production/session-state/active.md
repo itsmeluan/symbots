@@ -264,3 +264,19 @@ Task: RESUME HERE → /dev-story Story 003 (damage-type routing + full routed co
 - Suite: 268/268 green (was 257; +11). All ACs covered with discriminating cross-checks (26/45 wrong-binding, 34 round, 24 wrong-order all asserted NOT-returned).
 - Blockers: None
 - Next: /code-review src/core/stats/damage_formula.gd then /story-done production/epics/damage-formula/story-003-damage-type-routing-composition.md
+
+## Session Extract — /code-review 2026-07-16 (Story 003)
+- Verdict: APPROVED WITH SUGGESTIONS → both suggestions applied.
+- godot-gdscript-specialist: no BLOCKING. W-1 (unknown damage_type silent ENERGY fallthrough), W-2 (test naming) advisory.
+- qa-tester: coverage complete, all ACs + 4 cross-checks mapped. ADVISORY: element path only via ENERGY branch.
+- Applied: (1) qa element-branch gap → added test_resolve_physical_branch_also_applies_type_effectiveness; (2) W-1 → resolve() now log.warn(&"damage_routing_unknown_damage_type") + degrades to ENERGY, doc updated, +2 tests.
+- Suite: 271/271 green (was 257 at story start; +14 total in damage_routing_test.gd).
+- Next: /story-done production/epics/damage-formula/story-003-damage-type-routing-composition.md
+
+## Session Extract — /story-done 2026-07-16 (Story 003)
+- Verdict: COMPLETE WITH NOTES → closed. Status: Complete.
+- Story: production/epics/damage-formula/story-003-damage-type-routing-composition.md — Damage-type routing + full routed composition (DamageFormula.resolve)
+- ACs: 6/6 passing; test evidence tests/unit/damage-formula/damage_routing_test.gd (14 fns). Full suite 271/271 green.
+- Deviation (advisory, resolved): W-1 log.warn(&"damage_routing_unknown_damage_type") hardening on out-of-enum damage_type. Not logged as debt (completed enhancement, user chose plain close).
+- Tech debt logged: None.
+- Next recommended: see epic — Damage-Formula epic may be complete; next likely Turn-Based Combat (consumes DamageFormula.resolve).
