@@ -1,7 +1,7 @@
 # Story 002: Type-effectiveness lookup — `type_effectiveness()` + `type_chart` config
 
 > **Epic**: Damage Formula
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
@@ -109,7 +109,7 @@ static func type_effectiveness(skill_element, target_core_element,
 **Story Type**: Logic
 **Required evidence**: `tests/unit/damage-formula/type_effectiveness_test.gd` — must exist and pass (9-cell matrix + null fallbacks + `.tres` round-trip). ContentValidator shape check may live alongside the existing balance-validator suite.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing — `tests/unit/damage-formula/type_effectiveness_test.gd` (14/14; suite 257/257 green, 2026-07-16)
 
 ---
 
@@ -117,3 +117,15 @@ static func type_effectiveness(skill_element, target_core_element,
 
 - Depends on: Story 001 (shares `damage_formula.gd` + `balance_config.gd` / `.tres`; append after to avoid a merge on the same files)
 - Unlocks: Story 003 (routed composition calls this lookup); Combat UI pre-commit telegraph (later epic) reuses this exact function
+
+---
+
+## Completion Notes
+**Completed**: 2026-07-16
+**Criteria**: 5/5 passing (AC-DF-08 9-cell matrix, AC-DF-09 null core, AC-DF-10 null skill, `.tres` nested round-trip, ContentValidator shape) — all COVERED by unit tests, none deferred.
+**Deviations**: None. Manifest v2026-07-14 == current (no drift). ADR-0005 compliant (pure Layer-1 static fn, single composition point, append-only Layer-4 `type_chart`, data-driven Rule 6 ratios). No out-of-scope files.
+**Test Evidence**: Logic — `tests/unit/damage-formula/type_effectiveness_test.gd` (14/14; full suite 257/257 green).
+**Code Review**: Complete — `/code-review` verdict APPROVED WITH SUGGESTIONS. GDScript specialist clean (untyped `Variant` params confirmed correct 4.7 idiom for null-key EC-04/05 fallback); QA testability review flagged 3 advisory test-hardening gaps, all since **resolved** in the test file:
+  1. `content_balance_type_chart_malformed` `reason` discriminator now asserted in all 3 rejection tests (was code-only).
+  2. Added `test_validator_rejects_scalar_row` — `missing_row` via present-but-scalar row (was only tested via absent key).
+  3. Added `test_validator_rejects_non_numeric_cell` — pins the validator as the pre-flight gate for garbage cell types (documents why the runtime lookup may assume well-typed cells).

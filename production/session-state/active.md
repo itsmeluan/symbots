@@ -246,3 +246,11 @@ Task: RESUME HERE → run /design-review design/gdd/part-database.md (revised Ru
 - Suite: 255/255 green (was 243/243; +12). .tres nested-Dictionary round-trip CONFIRMED on 4.7.
 - Blockers: None
 - Next: /code-review src/core/stats/damage_formula.gd src/core/content/content_validator.gd then /story-done production/epics/damage-formula/story-002-type-effectiveness-lookup.md
+
+## Session Extract — /story-done 2026-07-16 (Story 002)
+- Verdict: COMPLETE WITH NOTES → closed (all advisory notes resolved before close)
+- Story: production/epics/damage-formula/story-002-type-effectiveness-lookup.md — Type-effectiveness lookup (type_effectiveness() + type_chart). Status: Complete.
+- Code review this session: /code-review → APPROVED WITH SUGGESTIONS. GDScript specialist clean; qa-tester flagged 3 advisory test gaps.
+- Advisory gaps ALL RESOLVED in tests/unit/damage-formula/type_effectiveness_test.gd (now 14 fns): (1) reason discriminator asserted in 3 rejection tests, (2) +test_validator_rejects_scalar_row, (3) +test_validator_rejects_non_numeric_cell.
+- Suite: 257/257 green (was 255; +2). Tech debt logged: None.
+- Next recommended: Damage-Formula Story 003 (damage-type routing/composition — binds A/D by damage_type, calls compute_damage with derived T) — production/epics/damage-formula/story-003-damage-type-routing-composition.md

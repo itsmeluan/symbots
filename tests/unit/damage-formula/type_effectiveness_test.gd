@@ -128,6 +128,17 @@ func _logged(code: StringName) -> bool:
 	return false
 
 
+## The `detail` dict of the FIRST error logged under [param code] (empty if none).
+## Lets a test assert the `reason` discriminator, not just that the code fired —
+## `content_balance_type_chart_malformed` multiplexes three structurally distinct
+## failures (missing_row / missing_cell / out_of_set) behind one code.
+func _first_detail(code: StringName) -> Dictionary:
+	for e in _spy.errors:
+		if e["code"] == code:
+			return e["detail"]
+	return {}
+
+
 func test_validator_accepts_locked_type_chart() -> void:
 	# The default grid is the locked Rule 6 set — a clean config validates silently.
 	var r := _validate(_cfg)
@@ -146,6 +157,8 @@ func test_validator_rejects_out_of_set_cell() -> void:
 	var r := _validate(_cfg)
 	assert_true(_logged(&"content_balance_type_chart_malformed"),
 		"an out-of-set cell (2.0) is rejected")
+	assert_eq(_first_detail(&"content_balance_type_chart_malformed").get("reason", ""), "out_of_set",
+		"the discriminator names the failure as an out-of-set ratio, not a shape gap")
 	assert_false(r["ok"], "malformed type_chart fails validation")
 
 
@@ -160,6 +173,8 @@ func test_validator_rejects_missing_cell() -> void:
 	var r := _validate(_cfg)
 	assert_true(_logged(&"content_balance_type_chart_malformed"),
 		"a missing cell is rejected")
+	assert_eq(_first_detail(&"content_balance_type_chart_malformed").get("reason", ""), "missing_cell",
+		"the discriminator names the failure as a missing cell within a present row")
 	assert_false(r["ok"], "incomplete type_chart fails validation")
 
 
@@ -172,4 +187,46 @@ func test_validator_rejects_missing_row() -> void:
 	var r := _validate(_cfg)
 	assert_true(_logged(&"content_balance_type_chart_malformed"),
 		"a missing skill row is rejected")
+	assert_eq(_first_detail(&"content_balance_type_chart_malformed").get("reason", ""), "missing_row",
+		"the discriminator names the failure as an absent skill row")
 	assert_false(r["ok"], "type_chart missing a row fails validation")
+
+
+# ---------------------------------------------------------------------------
+# ContentValidator — additional shape edge cases (advisory-gap hardening)
+# ---------------------------------------------------------------------------
+
+func test_validator_rejects_scalar_row() -> void:
+	# A skill key PRESENT but mapped to a scalar (float) instead of a nested dict is a
+	# distinct authoring mistake from an absent key — both hit `not (row is Dictionary)`
+	# and surface as `missing_row`. The absent-key case is covered above; this pins the
+	# present-but-not-a-Dictionary sibling so a future refactor can't drop it silently.
+	_cfg.type_chart = {
+		VOLT: 1.5,  # scalar where a nested {core: ratio} dict is required
+		THERMAL: {VOLT: 0.75, THERMAL: 1.0, KINETIC: 1.5},
+		KINETIC: {VOLT: 1.5, THERMAL: 0.75, KINETIC: 1.0},
+	}
+	var r := _validate(_cfg)
+	assert_true(_logged(&"content_balance_type_chart_malformed"),
+		"a scalar-valued skill row is rejected")
+	assert_eq(_first_detail(&"content_balance_type_chart_malformed").get("reason", ""), "missing_row",
+		"a present-but-scalar row is reported as missing_row (not a Dictionary)")
+	assert_false(r["ok"], "a scalar row fails validation")
+
+
+func test_validator_rejects_non_numeric_cell() -> void:
+	# The validator is the required pre-flight gate for garbage cell types: a non-numeric
+	# cell coerces via `float("oops") == 0.0`, which is ∉ the locked set → out_of_set.
+	# This documents WHY `type_effectiveness` may assume well-typed cells at runtime — the
+	# malformed data never reaches it because CI/boot validation rejects it first.
+	_cfg.type_chart = {
+		VOLT: {VOLT: 1.0, THERMAL: "oops", KINETIC: 0.75},  # non-numeric cell
+		THERMAL: {VOLT: 0.75, THERMAL: 1.0, KINETIC: 1.5},
+		KINETIC: {VOLT: 1.5, THERMAL: 0.75, KINETIC: 1.0},
+	}
+	var r := _validate(_cfg)
+	assert_true(_logged(&"content_balance_type_chart_malformed"),
+		"a non-numeric cell is rejected before it can reach the runtime lookup")
+	assert_eq(_first_detail(&"content_balance_type_chart_malformed").get("reason", ""), "out_of_set",
+		"a non-numeric cell coerces to 0.0 ∉ {0.75, 1.0, 1.5} → out_of_set")
+	assert_false(r["ok"], "a non-numeric cell fails validation")
