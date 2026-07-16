@@ -231,3 +231,10 @@ Task: RESUME HERE → run /design-review design/gdd/part-database.md (revised Ru
 - **THE ONE PENDING ACTION: run `/design-review design/gdd/part-database.md`** — the revised Rule 2 (slot table + basic-attack note), Rule 8 (effect-capacity rewrite), and AC-01 (new nullability clause) have NOT been through design-review yet. That's exactly what the user is about to /clear and do.
 - If design-review flags issues: the enforcement lives in `src/core/content/content_validator.gd` `_check_nullability` (consts `SKILL_CAPABLE_SLOTS` / `EFFECT_CEILING` / `EFFECT_FLOOR`); tests in `part_validator_schema_test.gd` (unit) + `part_referential_integrity_test.gd` (integration). Re-run: `godot --headless -s addons/gut/gut_cmdln.gd -gconfig=.gutconfig.json`.
 - After review passes: no more Part-DB work. Next Foundation epics unstoried — Move / Passive / Consumable / Enemy / Damage-Formula DBs. (Skill-flavor attack-vs-buff split becomes validator-enforceable once the Move DB carries a skill category — noted as forward work.)
+
+## Session Extract — /story-done 2026-07-16
+- Verdict: COMPLETE WITH NOTES
+- Story: production/epics/damage-formula/story-001-df1-kernel-compute-damage.md — DF-1 kernel compute_damage() + damage_floor config
+- Code review this session: /code-review on damage_formula.gd + content_validator.gd → APPROVED WITH SUGGESTIONS. Applied CV-2b guard (bounds.size()<2 in _check_stat_budget). Suite 243/243 green.
+- Tech debt logged: None (2 advisory test gaps noted in story Completion Notes — damage_floor=0 boundary + guard-branch DI seam; add before Story 003)
+- Next recommended: Damage-Formula Story 002 (type_effectiveness chart lookup, derives T) — production/epics/damage-formula/story-002-type-effectiveness-lookup.md

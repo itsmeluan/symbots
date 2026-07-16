@@ -1,7 +1,7 @@
 # Story 001: DF-1 kernel — `compute_damage()` + `damage_floor` config
 
 > **Epic**: Damage Formula
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
@@ -126,3 +126,10 @@ static func compute_damage(a: int, d: int, type_mult: float, cfg: BalanceConfig,
 
 - Depends on: None (`StatMath` + `BalanceConfig` already exist from the stat-pipeline epic)
 - Unlocks: Story 002 (shares `damage_formula.gd`), Story 003 (calls this kernel)
+
+## Completion Notes
+**Completed**: 2026-07-16
+**Criteria**: 12/12 passing (0 deferred) — all ACs mapped to discriminating unit tests
+**Deviations**: OUT OF SCOPE (benign) — code review added a `bounds.size() < 2` defensive guard to `content_validator.gd::_check_stat_budget` (Story-008 `stat_budgets` code, not the `damage_floor` addition); review-driven robustness fix, suite green.
+**Test Evidence**: Logic — `tests/unit/damage-formula/damage_formula_kernel_test.gd` (14 functions, passing); python3 IEEE-754 scan 0/131,769 mismatches. Full suite 243/243 green (Godot 4.7).
+**Code Review**: Complete — `/code-review` 2026-07-16, APPROVED WITH SUGGESTIONS. Advisory follow-ups (add before Story 003): `damage_floor = 0` validator boundary test; guard-branch DI seam test (`compute_damage(0,0,1.5,cfg_floor_3,spy) == 3`).
