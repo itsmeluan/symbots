@@ -1,12 +1,12 @@
 # Story 003: PartDB singleton — load / index / expose read-only
 
 > **Epic**: Part Database
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: TBD (fill at sprint planning)
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-15
 
 ## Context
 
@@ -108,7 +108,7 @@ Mirror the ADR-0003 `part_db.gd` sketch: `_by_id: Dictionary[StringName, PartDef
 **Required evidence**:
 - `tests/unit/part_database/part_db_loader_test.gd` — must exist and pass (getters, fatal-load paths, immutability, DirAccess grep)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing — `tests/unit/part_database/part_db_loader_test.gd` (11 tests in this file; 29/29, 142 asserts across the part_database suite, Godot 4.7 + GUT 9.7.1)
 
 ---
 
@@ -116,3 +116,16 @@ Mirror the ADR-0003 `part_db.gd` sketch: `_by_id: Dictionary[StringName, PartDef
 
 - Depends on: Story 002 (needs `PartDef` + `PartCatalog`)
 - Unlocks: Story 010 (content authoring loads through this DB); consumers project-wide read via `PartDB.get_part`
+
+---
+
+## Completion Notes
+**Completed**: 2026-07-15
+**Criteria**: 9/9 passing (AC-14 literal-null case satisfied via the `&""` null-equivalent — see deviation 1)
+**Deviations** (all advisory, logged to `docs/tech-debt-register.md`):
+1. **AC-14 literal `null`**: Godot 4.7 statically type-rejects a literal `null` passed to a `StringName` parameter ("Cannot convert argument 1 from Nil to StringName") — it never reaches the getter body. Per user decision, ADR-0003's `id: StringName` typing is kept; the null contract is carried by the `&""` null-equivalent (Story 002 `&""=none` convention). Test asserts the `&""` path.
+2. **LogSink prerequisite**: `src/core/diagnostics/log_sink.gd` (`@abstract` base, ADR-0002 §5) was created here to unblock the DI `load_catalog(catalog, log_sink)` signature. It is owned by ADR-0002 but had no home story.
+3. **Stale engine label**: story Context still reads "Godot 4.6" (line 20) — folds into the pending 4.6→4.7 ADR/doc re-validation sweep.
+4. **CI note for Story 010**: the new `class_name LogSink` must be present in `.godot/global_script_class_cache.cfg` before a headless GUT run can resolve `extends LogSink`. If that cache is gitignored, Story 010's CI must regenerate it (`godot --headless --editor --quit`) before the test step.
+**Test Evidence**: Integration — `tests/unit/part_database/part_db_loader_test.gd` (11 tests; suite 29/29, 142 asserts).
+**Code Review**: Complete — inline (lean mode). ADR-0003/0002/0004 compliant; typed, doc-commented, methods short, no hardcoded gameplay values. Subagent delegation unavailable this session (persistent "Usage credits" API error), so review was performed in-session.

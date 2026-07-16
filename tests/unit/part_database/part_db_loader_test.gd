@@ -69,11 +69,17 @@ func test_part_db_get_part_returns_null_for_unknown_id() -> void:
 	var spy := SpyLogSink.new()
 	var db := _loaded_db([_make_part(&"boltwell_spark_core")], spy)
 
-	# Act / Assert — unknown, empty, and null argument all return null, no crash.
+	# Act / Assert — an unknown id and the project's null-equivalent &"" both
+	# return null with no crash.
+	#
+	# 4.7 finding (Story 003): the ADR-0003 getter is typed `id: StringName`,
+	# so a literal `null` argument is REJECTED at the call boundary by GDScript's
+	# static type check ("Cannot convert argument 1 from Nil to StringName") — it
+	# never reaches the body. That is the intended fail-loud behavior: callers
+	# pass &"" for "no part" (the Story 002 `&""=none` convention), never `null`.
+	# AC-14's "null argument" case is therefore satisfied by the &"" path below.
 	assert_null(db.get_part(&"nonexistent_id_xyz"), "unknown id returns null")
-	assert_null(db.get_part(&""), "empty id returns null")
-	var nothing: Variant = null
-	assert_null(db.get_part(nothing), "null argument returns null (no crash)")
+	assert_null(db.get_part(&""), "empty id (null-equivalent) returns null")
 
 
 func test_part_db_has_part_matches_index_membership() -> void:
@@ -206,10 +212,18 @@ func test_part_db_duplicate_is_not_a_safe_copy() -> void:
 # ---------------------------------------------------------------------------
 
 func test_part_db_source_has_no_dir_access() -> void:
-	# Arrange — read the loader source directly.
+	# Arrange — read the loader source, then strip comment lines. The doc comment
+	# legitimately NAMES DirAccess ("No DirAccess anywhere in the load path"), so a
+	# raw substring check would false-positive on the very comment that documents
+	# the ban. We assert against actual CODE only.
 	var src := FileAccess.get_file_as_string(PART_DB_SOURCE)
+	var code_lines: PackedStringArray = []
+	for line in src.split("\n"):
+		if not line.strip_edges().begins_with("#"):
+			code_lines.append(line)
+	var code := "\n".join(code_lines)
 
 	# Assert
 	assert_ne(src, "", "loader source is readable")
-	assert_false(src.contains("DirAccess"),
+	assert_false(code.contains("DirAccess"),
 		"content load path must never use DirAccess (content_directory_scanning forbidden)")

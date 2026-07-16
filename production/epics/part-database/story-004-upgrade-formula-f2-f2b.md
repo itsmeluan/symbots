@@ -1,12 +1,12 @@
 # Story 004: Formula 2 + 2b — per-part upgrade pipeline
 
 > **Epic**: Part Database
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: TBD (fill at sprint planning)
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-15
 
 ## Context
 
@@ -104,7 +104,7 @@ Worked reference values (use as discriminating fixtures — floor ≠ round ≠ 
 **Required evidence**:
 - `tests/unit/part_database/upgrade_formula_test.gd` — must exist and pass (F2, F2b, cap, sign-routing, per-stat independence, epsilon)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing — `tests/unit/part_database/upgrade_formula_test.gd` (13 tests; full suite 44/44, 164 asserts, Godot 4.7 + GUT 9.7.1). Independently corroborated by an exhaustive `python3` Fraction-oracle scan: 0 impl-vs-exact mismatches for F2 (base 0–55) and F2b (base −55–0) across all tiers; the −ε nudge rescues exactly 26 F2b inputs (matches the GDD's empirical count).
 
 ---
 
@@ -112,3 +112,21 @@ Worked reference values (use as discriminating fixtures — floor ≠ round ≠ 
 
 - Depends on: Story 002 (`PartDef` supplies `stat_bonuses`, `max_upgrade_tier`, `rarity`)
 - Unlocks: Story 005 (Formula 1 consumes F2/F2b outputs), Story 010 (content upgrade behavior)
+
+---
+
+## Completion Notes
+**Completed**: 2026-07-15
+**Criteria**: 7/7 passing.
+**Files created**:
+- `src/core/stats/stat_math.gd` — ADR-0005 Layer-1 primitive: `floor_eps`/`ceil_eps` + the fixed `EPSILON` const (deliberately NOT in BalanceConfig).
+- `src/core/stats/balance_config.gd` — ADR-0005 Layer-4 `class_name BalanceConfig extends Resource`; introduces `upgrade_multipliers` (append-only schema; later stories add their tables).
+- `src/core/stats/upgrade_formula.gd` — the F2/F2b pure static-function module + sign-router + part-level cap.
+- `tests/unit/part_database/upgrade_formula_test.gd` — 13 discriminating tests.
+**Deviations** (all advisory, logged to `docs/tech-debt-register.md`):
+1. **StatMath + BalanceConfig prerequisites**: this is the first ADR-0005 stat-formula story, so it births the shared Layer-1 primitive (`StatMath`) and the Layer-4 tuning Resource (`BalanceConfig`). Both are ADR-0005-owned infra, not Story-004-exclusive; Stories 005/006/007+ extend them. Same "born-here" pattern as LogSink in Story 003.
+2. **`assets/data/balance_config.tres` NOT authored here**: ADR-0005 loads it at BootScreen step 2b and ContentValidator asserts it against the GDD — both are boot/validator/content concerns explicitly out of scope for a pure-formula story (cf. ADR-0004 boot-wiring carve-out). Unit tests inject `BalanceConfig.new()`, whose `@export` defaults mirror the GDD tier table. The authored `.tres` + boot load + validator balance-section are downstream (boot epic / Stories 007+ / 010).
+3. **Stale engine label**: story-004 Context reads "Godot 4.6" (line 20) — folds into the pending 4.6→4.7 ADR/doc re-validation sweep.
+**Verification note**: beyond the 13 GUT tests, an exhaustive `python3` `Fraction`-oracle scan proved the epsilon'd implementation equals the mathematically-exact value for every in-range input (F2: base 0–55; F2b: base −55–0; all tiers) — 0 mismatches — and confirmed the `−ε` nudge is load-bearing for exactly 26 F2b inputs (matches the GDD's 2026-07-09 IEEE-754 scan).
+**Test Evidence**: Logic — `tests/unit/part_database/upgrade_formula_test.gd` (BLOCKING gate satisfied).
+**Code Review**: Complete — inline (lean mode; subagents unavailable — persistent "Usage credits" API error). ADR-0005/0003 compliant; pure functions, doc-commented, data-driven tier table (config-sourced, no inline magic array), no runtime def mutation.

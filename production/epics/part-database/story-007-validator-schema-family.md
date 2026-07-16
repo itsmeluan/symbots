@@ -1,12 +1,12 @@
 # Story 007: ContentValidator — schema & enum-integrity family
 
 > **Epic**: Part Database
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: TBD (fill at sprint planning)
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-15
 
 ## Context
 
@@ -109,7 +109,7 @@ Per ADR-0003 Validation Criteria: ship a deliberately-corrupted fixture per fami
 **Required evidence**:
 - `tests/unit/content/part_validator_schema_test.gd` — must exist and pass; includes a discriminating corrupted fixture per family
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing — `tests/unit/content/part_validator_schema_test.gd` (31 tests; full suite 85/85, 239 asserts, Godot 4.7 + GUT 9.7.1). Every AC family pairs a clean fixture (passes) with a deliberately-corrupted one that fails its named test — proving the validator discriminates (ADR-0003 validation criteria).
 
 ---
 
@@ -117,3 +117,21 @@ Per ADR-0003 Validation Criteria: ship a deliberately-corrupted fixture per fami
 
 - Depends on: Story 002 (`PartDef`/`PartCatalog` to validate)
 - Unlocks: Story 008, Story 009 (extend this validator), Story 010 (CI mount runs it on real content)
+
+---
+
+## Completion Notes
+**Completed**: 2026-07-15
+**Criteria**: 10/10 passing (scaffold + AC-01/02/03/17/18/20/21/22/24). All COVERED by named tests.
+**Files created**:
+- `src/core/content/content_validator.gd` — `class_name ContentValidator extends RefCounted`; `validate(catalogs: ContentCatalogs, log_sink: LogSink) -> Dictionary` returning `{ok, errors, warnings}`; `ok == errors.is_empty()`; every finding mirrored to the injected `LogSink.error(code, detail)` in lock-step. Schema/enum/nullability/range families for the Part DB.
+- `src/core/content/content_catalogs.gd` — `class_name ContentCatalogs extends RefCounted`; the DI aggregate the validator takes (one `parts: PartCatalog` slot; APPEND-ONLY as future DBs land — ADR-0003/0004 infra).
+- `tests/unit/content/part_validator_schema_test.gd` — 31 tests; new `tests/unit/content/` dir (auto-discovered via `.gutconfig.json` `include_subdirs`).
+**Deviations** (all advisory, logged to `docs/tech-debt-register.md`):
+1. **`ContentCatalogs` born without a home story** — the `validate(catalogs, …)` signature needs an aggregate type; only `PartCatalog` exists (other DBs unstoried), so a minimal RefCounted bundle was created (like `LogSink`/`StatMath` born in earlier stories). Append future catalogs; never reorder.
+2. **`damage_type` gating interpretation (NEEDS USER CONFIRMATION)** — AC-21 lists `damage_type` among always-required MVP enums, but `damage_type` is skill-delivered: a no-skill part (e.g. any Core) legitimately has the unset `0`. Interpretation shipped: **reserved values (DATA/TRUE) rejected on every part; a valid MVP value required only when `active_skill_id != &""`.** Confirm this matches the GDD's intent for skill-less parts.
+3. **Stale engine label** — story-007 Context reads "Godot 4.6" (line 20); folds into the 4.6→4.7 re-validation sweep.
+4. **Reserved-element code reuse** — a reserved element (CRYO/CORROSIVE/DATA) is flagged with the generic `content_invalid_element` code rather than a distinct "reserved" code. The AC only requires it be flagged; distinct-code granularity is a nicety Story 008/009 can add if useful.
+**Verification note**: integer-range checks only (recharge [0,15], heat [0,40]) — no floor/ceil/epsilon, so no `python3` Fraction-oracle scan needed (that guidance targets rounding formulas). Boundary coverage: recharge 15 passes / 20 errors; heat 41 errors.
+**Test Evidence**: Logic — `tests/unit/content/part_validator_schema_test.gd` (BLOCKING gate satisfied; discriminating corrupted fixture per family per ADR-0003).
+**Code Review**: Complete — inline (lean mode; subagents unavailable — persistent "Usage credits" API error). ADR-0003 compliant (DI `RefCounted`, `{ok, errors, warnings}`, `LogSink`-routed, no `push_error`/`DirAccess`/`duplicate()`); ADR-0002 §5 compliant (all diagnostics via injected sink). Methods small, single-responsibility, doc-commented; enum sets are named consts (no magic values).

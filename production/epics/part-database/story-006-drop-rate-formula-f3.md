@@ -1,12 +1,12 @@
 # Story 006: Formula 3 — effective drop rate
 
 > **Epic**: Part Database
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: TBD (fill at sprint planning)
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-15
 
 ## Context
 
@@ -95,7 +95,7 @@ Note the multiplicative-formula invariant: `BASE_DROP_BOSS_GRADE` must be 0.001,
 **Required evidence**:
 - `tests/unit/part_database/drop_rate_formula_test.gd` — must exist and pass (boundaries, tolerance, gradient, clamp)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing — `tests/unit/part_database/drop_rate_formula_test.gd` (10 tests; full suite 54/54, 181 asserts, Godot 4.7 + GUT 9.7.1). Boundary exactness pre-verified via `python3` (boss 0.001 / ×500→0.5 / ×999→0.999 / ×1000→1.0 all IEEE-754-exact → strict `==`; Rare/Prototype float products → `< 1e-9` tolerance).
 
 ---
 
@@ -103,3 +103,21 @@ Note the multiplicative-formula invariant: `BASE_DROP_BOSS_GRADE` must be 0.001,
 
 - Depends on: Story 002 (`PartDef` supplies `rarity`, `drop_conditions`)
 - Unlocks: Story 010 (content drop-condition authoring); Drop System epic consumes this probability
+
+---
+
+## Completion Notes
+**Completed**: 2026-07-15
+**Criteria**: 6/6 passing.
+**Files created**:
+- `src/core/stats/drop_rate_formula.gd` — `DropRateFormula.compute_effective_drop_rate(rarity, matching_conditions, cfg)`; pure `clamp(base × Πmultipliers, 0, 1)`, no RNG.
+- `tests/unit/part_database/drop_rate_formula_test.gd` — 10 tests.
+**Files modified**:
+- `src/core/stats/balance_config.gd` — appended `drop_rate_by_rarity: Array[float] = [0.0, 0.70, 0.25, 0.001, 0.05]` (index = `PartDef.Rarity` value; index 0 = reserved sentinel).
+**Deviations** (all advisory, logged to `docs/tech-debt-register.md`):
+1. **Formula home**: `DropRateFormula` is ADR-0003-governed but lives in `src/core/stats/` — ADR-0005 explicitly designates that directory "the pure formula core", so all pure formulas colocate there. No `StatMath` dependency (F3 uses `clampf`, no epsilon rounding).
+2. **BalanceConfig extension**: `drop_rate_by_rarity` was appended to the ADR-0005 Layer-4 `BalanceConfig` (which enumerates stat-pipeline tables). Consistent with ADR-0005's "one BalanceConfig, reject per-system configs" decision, but drop config is a new field-family in that resource — flag when ContentValidator's BalanceConfig section is designed (must assert boss-grade stays 0.001, never 0.0).
+3. **Stale engine label**: story-006 Context reads "Godot 4.6" (line 20) — folds into the 4.6→4.7 sweep.
+**Verification note**: `python3` pre-verified every boundary's IEEE-754 exactness so strict `==` vs `< 1e-9` tolerance is applied correctly per the GDD float-equality caution (boss boundaries exact; Rare `0.48750000000000004` and Prototype products use tolerance).
+**Test Evidence**: Logic — `tests/unit/part_database/drop_rate_formula_test.gd` (BLOCKING gate satisfied).
+**Code Review**: Complete — inline (lean mode; subagents unavailable — persistent "Usage credits" API error). ADR-0003 compliant (rarity-constant base from config, not a per-part field; RNG-free); pure function, doc-commented, no allocations in the fold.

@@ -1,12 +1,12 @@
 # Story 005: Formula 1 — total Symbot stat composition
 
 > **Epic**: Part Database
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: TBD (fill at sprint planning)
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-15
 
 ## Context
 
@@ -83,7 +83,7 @@ The AC-05 (b) discriminator is the important one: a Prototype at tier +1 with `s
 **Required evidence**:
 - `tests/unit/part_database/total_stat_formula_test.gd` — must exist and pass (floor/max0, chassis lookup, pipeline-composition discriminator)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing — `tests/unit/part_database/total_stat_formula_test.gd` (14 tests; full suite 99/99, 265 asserts, Godot 4.7 + GUT 9.7.1). Includes the AC-05 (b) pipeline-composition discriminator (composes through `UpgradeFormula`; the raw-feed wrong path is asserted to yield 0 ≠ 2). `python3` Fraction-oracle scan: 0 impl-vs-exact mismatches across sums −440–880 × all six tabled modifiers (epsilon confirmed non-discriminating in MVP range).
 
 ---
 
@@ -91,3 +91,21 @@ The AC-05 (b) discriminator is the important one: a Prototype at tier +1 with `s
 
 - Depends on: Story 004 (Formula 1 consumes Formula 2 / 2b upgraded values)
 - Unlocks: Story 010 (content stat budgets validated against final-stat behavior); Assembly/Combat epics consume this function
+
+---
+
+## Completion Notes
+**Completed**: 2026-07-15
+**Criteria**: 5/5 passing. All COVERED by named tests.
+**Files created**:
+- `src/core/stats/total_stat_formula.gd` — `TotalStatFormula.compute_final_stat(stat_key, upgraded_values, chassis_archetype, cfg)`; pure static `max(0, floor(sum × chassis_modifier.get(S, 1.0) + ε))` reusing `StatMath.floor_eps` and `maxi(0, …)`. Consumes upgraded values only (never raw `stat_bonuses`).
+- `tests/unit/part_database/total_stat_formula_test.gd` — 14 tests (floor-not-round/ceil, GDD worked example, exact-integer, per-part-sum-before-modifier, negative-preclamp→0, every archetype row + ×1.0 fallthrough, and the pipeline-composition discriminator).
+**Files modified**:
+- `src/core/stats/balance_config.gd` — appended `chassis_modifiers: Dictionary` (sparse; only non-×1.0 entries; keyed by `PartDef.ChassisArchetype`). Append-only; mirrors the GDD Formula 1 modifier table exactly.
+**Deviations** (all advisory, logged to `docs/tech-debt-register.md`):
+1. **`chassis_modifiers` is an untyped nested `Dictionary`** — the `.tres` round-trip verified in Story 001 covered `Dictionary[StringName, int]` only; a nested `Dictionary` of per-stat `float` dicts is NOT yet round-trip-verified. When `assets/data/balance_config.tres` is authored (Story 010), verify the nested table serializes/reloads intact, or the validator asserts it against the GDD in code.
+2. **Sparse table representation** — only the non-×1.0 entries are stored (absent stats/archetypes → ×1.0 via `.get`). Faithful to the GDD ("stats not listed use ×1.0"), but the future ContentValidator balance section should assert the stored entries match the GDD table AND that no unexpected key drifts in.
+3. **Stale engine label** — story-005 Context reads "Godot 4.6" (line 20); folds into the 4.6→4.7 sweep.
+**Verification note**: `python3` Fraction-oracle scan (sums −440–880 × {0.80,0.85,1.0,1.05,1.20,1.25}) found 0 impl-vs-exact mismatches → the `floor(·+ε)` epsilon is non-discriminating in the MVP range (kept for uniformity/retune-safety per the GDD numeric-precision note). `max(0,·)` clamp exercised in 2640 negative-preclamp cases.
+**Test Evidence**: Logic — `tests/unit/part_database/total_stat_formula_test.gd` (BLOCKING gate satisfied; pipeline-composition discriminator present per AC-05 (b)).
+**Code Review**: Complete — inline (lean mode; subagents unavailable — persistent "Usage credits" API error). ADR-0005 compliant (pure formula core in `src/core/stats/`, DI `BalanceConfig`, reuses `StatMath`, no autoloads, chassis table config-sourced in the single Layer-4 Resource); ADR-0003 compliant (reads the frozen def/config, no `runtime_content_mutation`). Doc-commented, small static funcs, no allocations beyond the sum loop.

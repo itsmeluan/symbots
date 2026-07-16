@@ -1,12 +1,12 @@
 # Story 008: ContentValidator — content-rule, budget & synergy family
 
 > **Epic**: Part Database
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: TBD (fill at sprint planning)
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-15
 
 ## Context
 
@@ -31,12 +31,12 @@
 
 *From GDD AC-04/10/11/12/19/23 + Stat Budget Reference:*
 
-- [ ] AC-04: `synergy_tags` mandatory — element tag on ALL parts (matching `element`); manufacturer tag on non-wild parts; wild parts carry NO manufacturer tag and only valid element strings (TR-part-005)
-- [ ] AC-10: every Prototype has ≥1 negative AND ≥1 positive `stat_bonuses` value (TR-part-004; also the AC-19 precondition)
-- [ ] AC-11: every Boss-grade part has ≥1 `drop_conditions` entry with `multiplier >= 500` (so `clamp(0.001×500,0,1) >= 0.5`); empty conditions or max multiplier < 500 → ERROR (TR-part-007)
-- [ ] AC-12: every part's positive stat spend (`sum(max(0, v))`) falls within the Stat Budget Reference bounds for its slot/rarity
-- [ ] AC-19: every Prototype has `top_two_sum / positive_total >= 0.70` (70%+ concentration in 1–2 stats); single-positive-stat prototype passes trivially (ratio 1.0) (TR-part-022)
-- [ ] AC-23: every Common part's primary stat ≤ its slot's Common primary CAP; every Rare part's primary stat ≥ its slot's Rare primary FLOOR (Arms/Weapon split by `damage_type`); empty comparison group passes vacuously + emits an authoring WARNING (TR-part-014)
+- [x] AC-04: `synergy_tags` mandatory — element tag on ALL parts (matching `element`); manufacturer tag on non-wild parts; wild parts carry NO manufacturer tag and only valid element strings (TR-part-005)
+- [x] AC-10: every Prototype has ≥1 negative AND ≥1 positive `stat_bonuses` value (TR-part-004; also the AC-19 precondition)
+- [x] AC-11: every Boss-grade part has ≥1 `drop_conditions` entry with `multiplier >= 500` (so `clamp(0.001×500,0,1) >= 0.5`); empty conditions or max multiplier < 500 → ERROR (TR-part-007)
+- [x] AC-12: every part's positive stat spend (`sum(max(0, v))`) falls within the Stat Budget Reference bounds for its slot/rarity
+- [x] AC-19: every Prototype has `top_two_sum / positive_total >= 0.70` (70%+ concentration in 1–2 stats); single-positive-stat prototype passes trivially (ratio 1.0) (TR-part-022)
+- [x] AC-23: every Common part's primary stat ≤ its slot's Common primary CAP; every Rare part's primary stat ≥ its slot's Rare primary FLOOR (Arms/Weapon split by `damage_type`); empty comparison group passes vacuously + emits an authoring WARNING (TR-part-014)
 
 ---
 
@@ -108,7 +108,7 @@ Ship a discriminating corrupted fixture per family (ADR-0003 Validation Criteria
 **Required evidence**:
 - `tests/unit/content/part_validator_content_test.gd` — must exist and pass; discriminating corrupted fixture per family; asserts the AC-10→AC-19 ordering guard
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing — `tests/unit/content/part_validator_content_test.gd` (22 tests, part of the 121/121 suite, 308 asserts, Godot 4.7 + GUT 9.7.1)
 
 ---
 
@@ -116,3 +116,14 @@ Ship a discriminating corrupted fixture per family (ADR-0003 Validation Criteria
 
 - Depends on: Story 007 (extends the same `ContentValidator`)
 - Unlocks: Story 010 (CI mount runs these families on real content)
+
+---
+
+## Completion Notes
+**Completed**: 2026-07-15
+**Criteria**: 6/6 passing (AC-04/10/11/12/19/23) — all COVERED by unit tests
+**Deviations**:
+- ADVISORY (config boundary): the AC-12/AC-23 budget/cap/floor bounds live in `BalanceConfig` (ADR-0005 "single BalanceConfig") and are read via DI, per the story's "source it from config, not hardcoded". The purely-structural maps (`ELEMENT_TAGS`, `PRIMARY_STAT`, `MANUFACTURER_TAGS`) and fixed design thresholds (`MAX_SINGLE_STAT=55`, `BOSS_BREAK_MIN_MULTIPLIER=500.0`, `CONCENTRATION_MIN=0.70`) stay as validator constants — they are not tuning knobs. This straddles the ADR-0003/ADR-0005 boundary; logged for confirmation.
+- ADVISORY (stale label): story header reads "Engine: Godot 4.6" — project is pinned to 4.7 (label swap, not a compat change).
+**Test Evidence**: Logic — `tests/unit/content/part_validator_content_test.gd` (22 tests; suite 121/121, 308 asserts). AC-19 ratio (24/35=0.686), AC-11 (499 vs 500), AC-12 single-cap (61-in-budget/56-over-cap) fixtures python3-Fraction-verified as discriminating.
+**Code Review**: Complete — inline lean review, verdict APPROVED (ADR-0003/0002/0005 compliant; methods <40 lines, complexity <10; `_cfg != null` gating preserves Story 007's schema-only fixtures).

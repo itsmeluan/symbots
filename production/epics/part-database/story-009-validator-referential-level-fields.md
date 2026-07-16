@@ -1,12 +1,12 @@
 # Story 009: ContentValidator — cross-DB referential integrity + level fields
 
 > **Epic**: Part Database
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: TBD (fill at sprint planning)
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-15
 
 ## Context
 
@@ -31,10 +31,10 @@
 
 *From GDD AC-13 + Core Progression erratum (level_requirement / level_growth):*
 
-- [ ] AC-13: every non-null (`!= &""`) `active_skill_id` resolves to an existing Move DB entry; every non-null `passive_id` resolves to an existing Passive DB entry — zero dangling references (TR-part-013)
-- [ ] `level_requirement` respects rarity floors: COMMON≥1, RARE≥3, BOSS_GRADE≥6, PROTOTYPE≥8; a part may exceed its floor, never go below; `null`/0 defaults to 1 (TR-part-011)
-- [ ] `level_growth` is non-empty ONLY on CORE-slot parts; empty/null on all non-CORE parts (TR-part-012)
-- [ ] The referential family runs via DI over injected Part + Move + Passive catalogs — exercised in unit tests with fixture Move/Passive catalogs, and mounted on the real catalogs at CI/dev-boot
+- [x] AC-13: every non-null (`!= &""`) `active_skill_id` resolves to an existing Move DB entry; every non-null `passive_id` resolves to an existing Passive DB entry — zero dangling references (TR-part-013)
+- [x] `level_requirement` respects rarity floors: COMMON≥1, RARE≥3, BOSS_GRADE≥6, PROTOTYPE≥8; a part may exceed its floor, never go below; `null`/0 defaults to 1 (TR-part-011)
+- [x] `level_growth` is non-empty ONLY on CORE-slot parts; empty/null on all non-CORE parts (TR-part-012)
+- [x] The referential family runs via DI over injected Part + Move + Passive catalogs — exercised in unit tests with fixture Move/Passive catalogs, and mounted on the real catalogs at CI/dev-boot
 
 ---
 
@@ -91,7 +91,7 @@ Ship discriminating corrupted fixtures: a dangling `active_skill_id`; a RARE par
 **Required evidence**:
 - `tests/integration/content/part_referential_integrity_test.gd` — must exist and pass; uses fixture Move/Passive catalogs; discriminating corrupted fixtures for dangling ref, sub-floor level, misplaced level_growth
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing — `tests/integration/content/part_referential_integrity_test.gd` (15 tests; part of the 136/136 suite, 335 asserts, Godot 4.7 + GUT 9.7.1). Discriminating corrupted fixtures: dangling skill ref, dangling passive ref, sub-floor `level_requirement` (incl. the unset-0 case), misplaced `level_growth`. Includes a gating test proving the family is inert until a resolution index is mounted.
 
 ---
 
@@ -99,3 +99,16 @@ Ship discriminating corrupted fixtures: a dangling `active_skill_id`; a RARE par
 
 - Depends on: Story 007 (extends the same `ContentValidator`)
 - Unlocks: Story 010 (CI mount runs referential integrity against real Part + Move + Passive catalogs)
+
+---
+
+## Completion Notes
+**Completed**: 2026-07-15
+**Criteria**: 4/4 passing (AC-13 + level_requirement floors + level_growth CORE-only + DI mount) — all COVERED by the integration test
+**Deviations**:
+- ADVISORY (resolution seam): AC-13 resolves against two new append-only `ContentCatalogs` slots — `move_ids`/`passive_ids` as `{StringName: true}` sets, gated by a `references_mounted` flag. No `MoveCatalog`/`PassiveCatalog` class was created (those DB epics are unstoried and out of scope). The real Move/Passive DBs must populate these sets at boot; reconcile the id-set seam with their real catalog interfaces when those epics land. Consistent with the Story 007 `ContentCatalogs` inline precedent + ADR-0003 (StringName IDs, DI).
+- ADVISORY (floor semantics, confirm): `level_requirement == 0` is treated as the unset sentinel → defaults to 1, so a non-Common part left at 0 fails its higher rarity floor (RARE 3 / Boss 6 / Proto 8) — i.e. Rare+ parts must author an explicit `level_requirement`. Matches TR-part-011 ("never go below floor") + QA AC-2 (COMMON 0→1 passes). Confirm this is the intended authoring gate.
+- ADVISORY (scope drift): `PartDef` doc comments attribute `drop_conditions` and `upgrade_effects` entry-shape validation to "Story 009", but Story 009's ACs do not include them (only AC-13 + the two level fields). Not implemented here — logged as a gap for Story 010 or a dedicated follow-up.
+- ADVISORY (stale label): story header reads "Engine: Godot 4.6" — project is pinned to 4.7.
+**Test Evidence**: Integration — `tests/integration/content/part_referential_integrity_test.gd` (15 tests; suite 136/136, 335 asserts).
+**Code Review**: Complete — inline lean review, verdict APPROVED (ADR-0003/0002 compliant; `references_mounted` gate mirrors Story 008's `_cfg != null`; short doc-commented methods, no regressions across the 136-test suite).
