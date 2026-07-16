@@ -3,7 +3,7 @@
 > **Layer**: Foundation
 > **GDD**: design/gdd/enemy-database.md
 > **Architecture Module**: Content DBs (Part/Move/Passive/Consumable/Enemy)
-> **Status**: In Progress — 9/10 implemented & green; Story 010 BLOCKED on Part-DB content
+> **Status**: In Progress — 9/10 implemented & green; Story 010 Ready (Part-DB gate CLEARED 2026-07-16)
 > **Stories**: 10 stories — see table below
 
 ## Overview
@@ -84,7 +84,7 @@ This epic is complete when:
 | 007 | ContentValidator loot-pool, rarity & boss-grade gating family | Logic | Complete | ADR-0003 |
 | 008 | ContentValidator harvest-decision, TTK & density/spawn warnings | Logic | Complete | ADR-0003 |
 | 009 | ContentValidator ELZS progression-field family | Logic | Complete | ADR-0003 |
-| 010 | MVP enemy roster content authoring | Config/Data | **BLOCKED** (Part-DB content) | ADR-0003 |
+| 010 | MVP enemy roster content authoring | Config/Data | Ready (Part-DB gate cleared) | ADR-0003 |
 
 10 stories total: 9 Logic (7 Content-Val + 1 formula unit + 1 loader), 1 Config/Data.
 
@@ -108,10 +108,11 @@ validation + content only.
 
 **Stories 001–009 are implemented, tested (623/623 GUT green), and closed** — the Enemy-DB
 schema, loader, EDB-1 formula, and all six ContentValidator families are delivered. **Story 010
-(MVP roster content authoring) is BLOCKED on Part-DB content** (only 2 of 14 parts carry
-break-gating `drop_conditions`; a 0-warning roster satisfying AC-ED-19 for ~8 WILDs is
-unsatisfiable — see the story's Blocker). Decision (2026-07-16): ship 001–009 as the Enemy-DB
-deliverable; unblock 010 later by fleshing out the break-gated Part-DB roster.
+(MVP roster content authoring) is now Ready** — the Part-DB content gate was CLEARED 2026-07-16
+by enriching the Part roster with an anatomy-linked break-event vocabulary (15 parts, each RARE
+break-gated, 2 distinct BOSS_GRADE exclusives; part CI 623/623 green). See the story's Unblock
+Record for the break_event → gated-parts map.
 
-The Enemy-DB *code* is complete. Remaining work is content (Part-DB roster) + the deferred
-cross-system errata (Encounter Zone / TBC / Drop), tracked on their owning epics.
+Remaining work: author the ~8 WILD + 2 BOSS `EnemyDef` `.tres` + `EnemyCatalog` (Story 010),
+then close the epic. The deferred cross-system errata (Encounter Zone / TBC / Drop) stay tracked
+on their owning epics.

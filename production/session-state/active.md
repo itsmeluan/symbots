@@ -413,3 +413,14 @@ Task: RESUME HERE → /dev-story Story 003 (damage-type routing + full routed co
 - Validator surface 1284 lines (content_validator 345 + enemy_validator 939) — under 1500 DoD split trigger.
 - **NEXT (two tracks):** (1) `/create-epics layer: core` to begin Core layer; (2) optional — flesh out break-gated Part-DB roster to later unblock Story 010.
 - Constraint still binding: never spawn Agent/Task subagents (1M-context deaths); python3-scan every new floor/ceil formula.
+
+## Session Extract — Part-DB break-gated roster authored 2026-07-16
+- USER REQUEST: "tackle the part-db roster" → unblock Enemy Story 010.
+- Adopted anatomy-linked break-event vocabulary (GDD Rule 5; shared enemy break_regions ↔ part drop_conditions): head_broken/arm_broken/leg_broken/weapon_broken/chassis_cracked/core_exposed (internals=CORE+CHIPSET+ENERGY_CELL share core_exposed). User confirmed single core_exposed + add a new 2nd boss part.
+- Enriched 12 existing parts with slot-matched drop_conditions (commons ×2.5, rares ×3.0). RARE parts keep exactly 1 effect → effect-neutral, zero referential risk.
+- NEW part boltwell_storm_lance.tres — 2nd BOSS_GRADE exclusive (Boltwell/Volt WEAPON, weapon_broken ×600, product 0.6≥0.5; 2 effects skill_storm_lance+pass_overload, level_req 6). Added to part_catalog.tres; part_catalog_ci_test manifest extended (+skill_storm_lance,+pass_overload) & count 14→15.
+- Verify: reimport + GUT 623/623 green, 3817 asserts (was 3815; +2 = unique-id test over 15 entries). Part CI validates 15 parts, 0 errors, only-allowed warnings.
+- Coverage: 6 break events each ≥1 gated part; head/arm/weapon/core have ≥2; 2 distinct BOSS exclusives (kinetic arm / volt weapon). Every multi-region WILD can field ≥2 gated parts → Story 010 authorable at 0 warnings.
+- CONTENT-VARIETY NOTE (for Story 010): THERMAL has no RARE (only ironclad_bulwark_frame common). Not a blocker.
+- Bookkeeping: Story 010 BLOCKED→Ready (+Unblock Record table); EPIC.md + index.md updated. Enemy-DB code Complete; only enemy .tres authoring remains.
+- NEXT: author Story 010 (~8 WILD + 2 BOSS EnemyDef .tres + EnemyCatalog) → close Enemy-DB epic → Foundation fully Complete → /create-epics layer: core.

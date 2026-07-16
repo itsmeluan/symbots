@@ -17,6 +17,10 @@ stat_bonuses = Dictionary[StringName, int]({
 })
 passive_id = &"pass_overclock"
 synergy_tags = Array[StringName]([&"volt", &"boltwell"])
+drop_conditions = Array[Dictionary]([{
+"condition": &"core_exposed",
+"multiplier": 3.0
+}])
 max_upgrade_tier = 5
 flavor_text = "Boltwell's tuned reactor. Feeds the greedy builds."
 sprite_id = &"core_surge"

@@ -1,6 +1,6 @@
 ## Part-DB Story 010 — shipping-content CI gate.
 ##
-## The blocking gate that proves the REAL authored content — the 14 MVP PartDefs,
+## The blocking gate that proves the REAL authored content — the 15 MVP PartDefs,
 ## the PartCatalog manifest, and the BalanceConfig — passes the full ContentValidator
 ## (all three families: schema/007, budget-composition/008, referential-level/009)
 ## with `ok == true` and zero errors. It loads every resource fresh from disk
@@ -26,12 +26,12 @@ const PARTS_DIR := "res://assets/data/parts"
 ## The Move DB epic must provide exactly these (or a superset).
 const SHIPPED_SKILL_IDS: Array[StringName] = [
 	&"skill_deep_scan", &"skill_servo_strike", &"skill_crusher_claw",
-	&"skill_arc_bolt", &"skill_overdrive_blast",
+	&"skill_arc_bolt", &"skill_overdrive_blast", &"skill_storm_lance",
 ]
 
 ## Forward-reference manifest: the Passive DB IDs the shipped parts declare.
 const SHIPPED_PASSIVE_IDS: Array[StringName] = [
-	&"pass_overclock", &"pass_rend", &"pass_meltdown",
+	&"pass_overclock", &"pass_rend", &"pass_meltdown", &"pass_overload",
 ]
 
 ## The only warning codes the shipped set is allowed to emit — advisory AC-23
@@ -77,7 +77,7 @@ func _id_set(ids: Array[StringName]) -> Dictionary:
 func test_shipped_catalog_and_balance_load_from_disk() -> void:
 	assert_not_null(_catalog, "part_catalog.tres loads from disk")
 	assert_true(_catalog is PartCatalog, "loaded resource is a PartCatalog")
-	assert_eq(_catalog.entries.size(), 14, "the catalog ships all 14 MVP parts")
+	assert_eq(_catalog.entries.size(), 15, "the catalog ships all 15 MVP parts")
 
 
 func test_shipped_content_passes_full_validator() -> void:

@@ -17,6 +17,10 @@ stat_bonuses = Dictionary[StringName, int]({
 &"structure": 4
 })
 synergy_tags = Array[StringName]([&"kinetic", &"scrapjaw"])
+drop_conditions = Array[Dictionary]([{
+"condition": &"arm_broken",
+"multiplier": 2.5
+}])
 part_family = &"servo_arm_family"
 flavor_text = "The arm every Symbot starts with. Reliable, replaceable."
 sprite_id = &"arm_servo"

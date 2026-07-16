@@ -18,6 +18,10 @@ stat_bonuses = Dictionary[StringName, int]({
 })
 active_skill_id = &"skill_deep_scan"
 synergy_tags = Array[StringName]([&"volt", &"boltwell"])
+drop_conditions = Array[Dictionary]([{
+"condition": &"head_broken",
+"multiplier": 3.0
+}])
 max_upgrade_tier = 5
 heat_generation = 4
 flavor_text = "Reads a target's weak points before it knows it has them."

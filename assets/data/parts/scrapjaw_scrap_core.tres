@@ -16,6 +16,10 @@ stat_bonuses = Dictionary[StringName, int]({
 &"structure": 4
 })
 synergy_tags = Array[StringName]([&"kinetic", &"scrapjaw"])
+drop_conditions = Array[Dictionary]([{
+"condition": &"core_exposed",
+"multiplier": 2.5
+}])
 flavor_text = "A salvaged reactor core. It hums like it's annoyed."
 sprite_id = &"core_scrap"
 level_growth = Dictionary[StringName, int]({

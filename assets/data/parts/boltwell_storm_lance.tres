@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="PartDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/part_def.gd" id="1_strmlnc"]
+
+[resource]
+script = ExtResource("1_strmlnc")
+id = &"boltwell_storm_lance"
+display_name = "Storm Lance"
+slot_type = 8
+rarity = 3
+manufacturer = &"boltwell"
+element = 1
+damage_type = 2
+stat_bonuses = Dictionary[StringName, int]({
+&"energy_capacity": 6,
+&"energy_power": 34,
+&"targeting": 8
+})
+active_skill_id = &"skill_storm_lance"
+passive_id = &"pass_overload"
+synergy_tags = Array[StringName]([&"volt", &"boltwell"])
+drop_conditions = Array[Dictionary]([{
+"condition": &"weapon_broken",
+"multiplier": 600.0
+}])
+max_upgrade_tier = 5
+heat_generation = 20
+flavor_text = "Boltwell's flagship arc-driver, torn from the Warden's cradle. It answers only to a storm."
+sprite_id = &"weapon_storm_lance"
+level_requirement = 6

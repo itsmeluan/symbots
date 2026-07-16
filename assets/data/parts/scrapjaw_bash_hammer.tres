@@ -17,5 +17,9 @@ stat_bonuses = Dictionary[StringName, int]({
 &"structure": 4
 })
 synergy_tags = Array[StringName]([&"kinetic", &"scrapjaw"])
+drop_conditions = Array[Dictionary]([{
+"condition": &"weapon_broken",
+"multiplier": 2.5
+}])
 flavor_text = "A pipe with ambition. Hits things until they stop."
 sprite_id = &"weapon_bash_hammer"

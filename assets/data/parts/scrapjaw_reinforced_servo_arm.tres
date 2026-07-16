@@ -18,6 +18,10 @@ stat_bonuses = Dictionary[StringName, int]({
 })
 active_skill_id = &"skill_servo_strike"
 synergy_tags = Array[StringName]([&"kinetic", &"scrapjaw"])
+drop_conditions = Array[Dictionary]([{
+"condition": &"arm_broken",
+"multiplier": 3.0
+}])
 max_upgrade_tier = 5
 part_family = &"servo_arm_family"
 heat_generation = 8
