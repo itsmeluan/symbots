@@ -1,7 +1,7 @@
 # Story 004: Use-transaction validation, targeting & resource-neutrality
 
 > **Epic**: Consumable Database
-> **Status**: Ready
+> **Status**: Done
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
@@ -95,7 +95,7 @@ Build a `ConsumableUse` transaction (pure, DI). Signature roughly: given a `Cons
 **Story Type**: Logic
 **Required evidence**: `tests/unit/consumable_database/consumable_use_transaction_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Passing — full GUT suite 452/452 green (2026-07-16)
 
 ---
 

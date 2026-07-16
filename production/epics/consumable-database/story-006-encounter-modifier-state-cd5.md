@@ -1,7 +1,7 @@
 # Story 006: Encounter modifier state & MODIFY_ENCOUNTER_RATE (CD-5)
 
 > **Epic**: Consumable Database
-> **Status**: Ready
+> **Status**: Done
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
@@ -85,7 +85,7 @@ Two pieces: (1) a pure `modify_encounter_rate(base_rate, rate_multiplier)` clamp
 **Story Type**: Logic
 **Required evidence**: `tests/unit/consumable_database/encounter_modifier_state_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Passing — full GUT suite 452/452 green (2026-07-16)
 
 ---
 

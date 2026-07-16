@@ -1,7 +1,7 @@
 # Story 005: Salvage Beacon per-battle flag & BOOST_DROP (CD-4)
 
 > **Epic**: Consumable Database
-> **Status**: Ready
+> **Status**: Done
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
@@ -79,7 +79,7 @@ Two pieces: (1) a pure `boost_drop(base_rate, cond_mults, beacon_multiplier)` cl
 **Story Type**: Logic
 **Required evidence**: `tests/unit/consumable_database/beacon_boost_drop_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Passing — full GUT suite 452/452 green (2026-07-16)
 
 ---
 

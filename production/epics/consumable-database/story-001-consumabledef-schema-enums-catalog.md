@@ -1,7 +1,7 @@
 # Story 001: ConsumableDef schema, enums & ConsumableCatalog
 
 > **Epic**: Consumable Database
-> **Status**: Ready
+> **Status**: Done
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
@@ -85,7 +85,7 @@ Place `consumable_def.gd` and `consumable_catalog.gd` in `src/core/content/` alo
 **Story Type**: Logic
 **Required evidence**: `tests/unit/consumable_database/consumable_def_schema_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Passing — full GUT suite 452/452 green (2026-07-16)
 
 ---
 

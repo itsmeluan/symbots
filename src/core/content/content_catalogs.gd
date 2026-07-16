@@ -29,6 +29,12 @@ var moves: MoveCatalog
 ## stay green. Same gating discipline as [member moves].
 var passives: PassiveCatalog
 
+## The Consumable Database manifest (Consumable-DB Story 001). Null in a validation
+## that mounts no consumable catalog (e.g. Part/Move/Passive-only fixtures) — the
+## Consumable schema/authoring family runs ONLY when this is provided, so prior-story
+## fixtures stay green. Same gating discipline as [member moves] / [member passives].
+var consumables: ConsumableCatalog
+
 ## The single balance tuning Resource (ADR-0005). The content-composition families
 ## (Story 008: stat budgets, primary caps/floors) validate against its tables, so
 ## they only run when it is provided; the schema families (Story 007) do not need

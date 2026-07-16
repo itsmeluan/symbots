@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ConsumableDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/consumable_def.gd" id="1_cdef"]
+
+[resource]
+script = ExtResource("1_cdef")
+consumable_id = &"signal_jammer"
+display_name = "Signal Jammer"
+rarity = 2
+effect_type = 5
+effect_params = {
+"duration_steps": 20,
+"rate_multiplier": 0.1
+}
+use_context = 2
+target = 3
+max_stack = 10
+buy_price = 45
+sell_price = 10

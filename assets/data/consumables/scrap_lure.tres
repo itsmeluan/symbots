@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ConsumableDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/consumable_def.gd" id="1_cdef"]
+
+[resource]
+script = ExtResource("1_cdef")
+consumable_id = &"scrap_lure"
+display_name = "Scrap Lure"
+rarity = 1
+effect_type = 5
+effect_params = {
+"duration_steps": 15,
+"rate_multiplier": 2.5
+}
+use_context = 2
+target = 3
+max_stack = 20
+buy_price = 15
+sell_price = 3

@@ -1,10 +1,21 @@
 # Active Session State
 
 <!-- STATUS -->
-Epic: Foundation Layer — ALL 6 EPICS STORIED
-Feature: Consumable DB (8 stories) + Enemy DB (10 stories) — Ready, awaiting implementation
-Task: Implement a storied Foundation epic — /story-readiness → /dev-story on story-001
+Epic: Foundation Layer — 5/6 epics IMPLEMENTED (Consumable DB done 2026-07-16)
+Feature: Enemy DB (10 stories) — last unimplemented Foundation epic, Ready
+Task: Implement Enemy DB — /story-readiness → /dev-story on enemy story-001
 <!-- /STATUS -->
+
+## Session Extract — Consumable DB epic IMPLEMENTED (8/8 stories) 2026-07-16
+- **Directive:** "implement all the stories from next epic" — Consumable DB (Foundation, 8 Ready stories). Done inline (never-1M constraint honored, zero Agent/Task subagents; continued across a context compaction).
+- **Result: all 8 stories implemented + green — 452/452 GUT, 3467 asserts** (was 370 pre-epic; +82 consumable tests, +8 scripts). EPIC.md → Complete; epics/index.md row + layer status + Next Step updated; all 8 story files Status→Done + test-evidence checked; smoke `production/qa/smoke-consumables-2026-07-16.md`.
+- **Files created:** src/core/content/`consumable_def.gd` (4 enums 1-based APPEND-ONLY, 0=INVALID sentinel), `consumable_catalog.gd`, `consumable_db.gd` (thin host, null-safe `get_consumable`), `consumable_effects.gd` (pure CD-1..CD-5: restore_structure/reduce_heat/restore_energy int clamps + boost_drop/modify_encounter_rate float clampf), `consumable_use.gd` (pure `resolve()` transaction: qty→context→living-target→net-effect gates, Dict result), `beacon_state.gd` (per-battle flag, victory-only, spent-never-refunded), `encounter_modifier_state.gd` (sole mutator `on_overworld_step`, structural battle-freeze, latest-wins `apply`). **Modified:** `content_catalogs.gd` (+`consumables` slot APPEND-ONLY), `content_validator.gd` (+Consumable family @ end: schema/effect_params key+type/unknown-effect-type/strict `buy>sell`/coherence-advisory/family-coverage; dispatched when `catalogs.consumables != null`; now 1313 lines — under 1500 DoD extract threshold).
+- **Content:** `assets/data/consumables/{weld_patch,repair_kit,field_forge,coolant_flush,power_cell,salvage_beacon,signal_jammer,scrap_lure}.tres` + `assets/data/catalogs/consumable_catalog.tres`; CI gate `tests/unit/content/consumable_catalog_ci_test.gd` asserts real content validates with 0 errors AND 0 warnings.
+- **Tests:** `tests/unit/consumable_database/{spy_log_sink,consumable_def_schema_test,consumable_db_loader_test,restore_formulas_test,consumable_use_transaction_test,beacon_boost_drop_test,encounter_modifier_state_test}.gd`; `tests/unit/content/{consumable_validator_test,consumable_catalog_ci_test}.gd`.
+- **GOTCHA (cost 1 wasted run):** adding new `class_name` scripts then running GUT headless → every reference is "Identifier not declared in scope" and GUT **silently skips** the uncompilable test files, leaving the suite green at the OLD count (tell: test total didn't move off 370 baseline). Fix: `/Applications/Godot.app/Contents/MacOS/Godot --headless --import` BEFORE running the suite whenever new `class_name` types are introduced (registers the global class cache). Also: spy LogSink exposes `warns` not `warnings`.
+- **Scope boundary preserved:** Consumable DB owns NO runtime executor — assigning healed values to a live Symbot / turn-consume / live drop roll / overworld step countdown / inventory overflow are deferred errata AC-CD-20/21/22/23 on the TBC / Drop / Encounter Zone / Inventory epics. The pure formulas + DI state models they will call ARE unit-covered here.
+- **NEXT:** last unstoried-implemented Foundation epic — `/story-readiness production/epics/enemy-database/story-001-*.md` → `/dev-story` (10 stories, dependency order; Story 010 trails until Part-DB roster backs its loot pools). After Enemy DB → Foundation COMPLETE → `/create-epics layer: core`.
+- Not yet run (batch directive): per-story `/code-review` + `/story-done`. Stop-hook auto-commits; push stays manual.
 
 ## Session Extract — /create-stories Consumable + Enemy DBs 2026-07-16 ("Story both now")
 - **Directive:** "Story both now" — story Consumable then Enemy back-to-back, inline/lean (never-1M constraint honored, zero Agent/Task subagents). User is stopping here; **next session = implementation** (fresh session by user's choice).

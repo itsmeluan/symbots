@@ -3,8 +3,8 @@
 > **Layer**: Foundation
 > **GDD**: design/gdd/consumable-database.md
 > **Architecture Module**: Content DBs (Part/Move/Passive/Consumable/Enemy)
-> **Status**: Ready
-> **Stories**: 8 stories — see table below
+> **Status**: Complete (2026-07-16)
+> **Stories**: 8 stories — all implemented & green — see table below
 
 ## Overview
 
@@ -58,18 +58,20 @@ This epic is complete when:
 
 | # | Story | Type | Status | ADR |
 |---|-------|------|--------|-----|
-| 001 | ConsumableDef schema, enums & ConsumableCatalog | Logic | Ready | ADR-0003 |
-| 002 | ConsumableDB loader & null-safe lookup | Logic | Ready | ADR-0003 |
-| 003 | Restore effect formulas (CD-1/2/3) | Logic | Ready | ADR-0003 |
-| 004 | Use-transaction validation, targeting & resource-neutrality | Logic | Ready | ADR-0003 |
-| 005 | Salvage Beacon per-battle flag & BOOST_DROP (CD-4) | Logic | Ready | ADR-0003 |
-| 006 | Encounter modifier state & MODIFY_ENCOUNTER_RATE (CD-5) | Logic | Ready | ADR-0003 |
-| 007 | ContentValidator consumable family | Logic | Ready | ADR-0003 |
-| 008 | MVP content authoring — 8 `.tres` + catalog | Config/Data | Ready | ADR-0003 |
+| 001 | ConsumableDef schema, enums & ConsumableCatalog | Logic | Done | ADR-0003 |
+| 002 | ConsumableDB loader & null-safe lookup | Logic | Done | ADR-0003 |
+| 003 | Restore effect formulas (CD-1/2/3) | Logic | Done | ADR-0003 |
+| 004 | Use-transaction validation, targeting & resource-neutrality | Logic | Done | ADR-0003 |
+| 005 | Salvage Beacon per-battle flag & BOOST_DROP (CD-4) | Logic | Done | ADR-0003 |
+| 006 | Encounter modifier state & MODIFY_ENCOUNTER_RATE (CD-5) | Logic | Done | ADR-0003 |
+| 007 | ContentValidator consumable family | Logic | Done | ADR-0003 |
+| 008 | MVP content authoring — 8 `.tres` + catalog | Config/Data | Done | ADR-0003 |
+
+**Suite:** 370 → **452/452 green** (+82 consumable tests · 3467 asserts · 0 failing). Validator at 1313 lines — under the ~1500 DoD extract threshold, so the single-`validate()` family stays inline (no structural split needed this epic).
 
 **Deferred cross-system integration (NOT storied here — tracked as errata on the owning epics):**
 AC-CD-20 (TBC use-item 4th action / turn-consume), AC-CD-21 (Drop System consumable channel + Beacon end-to-end), AC-CD-22 (Encounter Zone hook + Overworld step countdown), AC-CD-23 (Inventory `max_stack` overflow). Each is noted in the relevant story's `## Out of Scope`; the DB owns schema + formulas + validation + content only (Rule 9 scope boundary).
 
 ## Next Step
 
-Run `/story-readiness production/epics/consumable-database/story-001-consumabledef-schema-enums-catalog.md` → `/dev-story` to begin implementation. Work stories in dependency order (each story's `Depends on:` field gates it).
+Epic **Complete** — all 8 stories implemented inline and verified green (452/452). Runtime wiring of the effects/state-models remains the deferred errata (AC-CD-20/21/22/23) on the TBC / Drop / Encounter Zone / Inventory epics. Remaining unstoried Foundation DB: **Enemy Database** — run `/create-stories enemy-database` next. Per-story `/code-review` + `/story-done` were deferred by the batch directive (same as the Passive DB batch) — a follow-up pass if desired.

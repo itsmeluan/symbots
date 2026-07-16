@@ -1,7 +1,7 @@
 # Story 007: ContentValidator consumable family
 
 > **Epic**: Consumable Database
-> **Status**: Ready
+> **Status**: Done
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
@@ -91,7 +91,7 @@ Follow the Passive DB Story 004/005 pattern exactly. Add `consumables: Consumabl
 **Story Type**: Logic
 **Required evidence**: `tests/unit/content/consumable_validator_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Passing — full GUT suite 452/452 green (2026-07-16)
 
 ---
 

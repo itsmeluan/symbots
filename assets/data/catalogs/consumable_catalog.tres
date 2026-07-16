@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ConsumableCatalog" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/consumable_def.gd" id="1_cdef"]
+[ext_resource type="Resource" path="res://assets/data/consumables/weld_patch.tres" id="2_weld"]
+[ext_resource type="Resource" path="res://assets/data/consumables/repair_kit.tres" id="3_rkit"]
+[ext_resource type="Resource" path="res://assets/data/consumables/field_forge.tres" id="4_ffrg"]
+[ext_resource type="Resource" path="res://assets/data/consumables/coolant_flush.tres" id="5_cool"]
+[ext_resource type="Resource" path="res://assets/data/consumables/power_cell.tres" id="6_pcel"]
+[ext_resource type="Resource" path="res://assets/data/consumables/salvage_beacon.tres" id="7_beac"]
+[ext_resource type="Resource" path="res://assets/data/consumables/signal_jammer.tres" id="8_jamm"]
+[ext_resource type="Resource" path="res://assets/data/consumables/scrap_lure.tres" id="9_lure"]
+[ext_resource type="Script" path="res://src/core/content/consumable_catalog.gd" id="10_ccat"]
+
+[resource]
+script = ExtResource("10_ccat")
+entries = Array[ExtResource("1_cdef")]([ExtResource("2_weld"), ExtResource("3_rkit"), ExtResource("4_ffrg"), ExtResource("5_cool"), ExtResource("6_pcel"), ExtResource("7_beac"), ExtResource("8_jamm"), ExtResource("9_lure")])

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ConsumableDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/consumable_def.gd" id="1_cdef"]
+
+[resource]
+script = ExtResource("1_cdef")
+consumable_id = &"coolant_flush"
+display_name = "Coolant Flush"
+rarity = 1
+effect_type = 2
+effect_params = {
+"amount": 50
+}
+use_context = 3
+target = 1
+max_stack = 20
+buy_price = 12
+sell_price = 2

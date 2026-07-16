@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ConsumableDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/consumable_def.gd" id="1_cdef"]
+
+[resource]
+script = ExtResource("1_cdef")
+consumable_id = &"repair_kit"
+display_name = "Repair Kit"
+rarity = 2
+effect_type = 1
+effect_params = {
+"amount": 50
+}
+use_context = 3
+target = 1
+max_stack = 10
+buy_price = 36
+sell_price = 8

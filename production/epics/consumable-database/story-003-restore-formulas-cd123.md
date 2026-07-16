@@ -1,7 +1,7 @@
 # Story 003: Restore effect formulas (CD-1 / CD-2 / CD-3)
 
 > **Epic**: Consumable Database
-> **Status**: Ready
+> **Status**: Done
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
@@ -81,7 +81,7 @@ Implement three pure functions (e.g. on a `ConsumableEffects` helper in `src/cor
 **Story Type**: Logic
 **Required evidence**: `tests/unit/consumable_database/restore_formulas_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Passing — full GUT suite 452/452 green (2026-07-16)
 
 ---
 

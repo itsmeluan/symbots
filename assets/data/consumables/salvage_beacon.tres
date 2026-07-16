@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ConsumableDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/consumable_def.gd" id="1_cdef"]
+
+[resource]
+script = ExtResource("1_cdef")
+consumable_id = &"salvage_beacon"
+display_name = "Salvage Beacon"
+rarity = 2
+effect_type = 4
+effect_params = {
+"multiplier": 2.0
+}
+use_context = 1
+target = 2
+max_stack = 10
+buy_price = 48
+sell_price = 10

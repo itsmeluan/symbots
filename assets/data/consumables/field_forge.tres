@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ConsumableDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/consumable_def.gd" id="1_cdef"]
+
+[resource]
+script = ExtResource("1_cdef")
+consumable_id = &"field_forge"
+display_name = "Field Forge"
+rarity = 3
+effect_type = 1
+effect_params = {
+"amount": 120
+}
+use_context = 3
+target = 1
+max_stack = 5
+buy_price = 75
+sell_price = 15

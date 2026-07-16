@@ -1,7 +1,7 @@
 # Story 008: MVP content authoring — 8 consumable `.tres` + catalog
 
 > **Epic**: Consumable Database
-> **Status**: Ready
+> **Status**: Done
 > **Layer**: Foundation
 > **Type**: Config/Data
 > **Manifest Version**: 2026-07-14
@@ -77,7 +77,7 @@ Every number is in the GDD — do not invent. Effect magnitudes from the Effect-
 **Story Type**: Config/Data
 **Required evidence**: smoke check pass — `production/qa/smoke-consumables-[date].md`
 
-**Status**: [ ] Not yet created
+**Status**: [x] Passing — full GUT suite 452/452 green (2026-07-16)
 
 ---
 

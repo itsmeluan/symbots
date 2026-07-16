@@ -1,7 +1,7 @@
 # Story 002: ConsumableDB loader & null-safe lookup
 
 > **Epic**: Consumable Database
-> **Status**: Ready
+> **Status**: Done
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
@@ -79,7 +79,7 @@ Mirror `passive_db.gd`/`move_db.gd`: a thin host that takes a `ConsumableCatalog
 **Story Type**: Logic
 **Required evidence**: `tests/unit/consumable_database/consumable_db_loader_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Passing — full GUT suite 452/452 green (2026-07-16)
 
 ---
 
