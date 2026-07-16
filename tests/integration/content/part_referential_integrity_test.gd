@@ -24,9 +24,10 @@ var _spy
 # Fixtures & harness
 # ---------------------------------------------------------------------------
 
-## A schema-valid RARE HEAD carrying a resolved skill + passive. RARE (non-Core)
-## requires an active skill → a real damage_type; a passive is allowed. Baseline for
-## the referential and level corruptions.
+## A schema-valid RARE HEAD carrying a single resolved skill. RARE carries exactly
+## one effect (Rule 8 ceiling = 1); a skill needs a real damage_type. Baseline for
+## the referential and level corruptions. (Passive-reference coverage uses a
+## passive-only fixture so each stays within the Rare 1-effect band.)
 func _rare_head(id: StringName) -> PartDef:
 	var p := PartDef.new()
 	p.id = id
@@ -39,7 +40,6 @@ func _rare_head(id: StringName) -> PartDef:
 	p.sprite_id = &"spr_%s" % id
 	p.synergy_tags = [&"volt", &"boltwell"]
 	p.active_skill_id = VALID_SKILL
-	p.passive_id = VALID_PASSIVE
 	p.level_requirement = 3  # meets the RARE floor
 	return p
 
@@ -136,7 +136,10 @@ func test_ac_13_dangling_skill_ref_errors() -> void:
 
 
 func test_ac_13_dangling_passive_ref_errors() -> void:
+	# Make the passive the part's sole effect (Rare ceiling = 1): drop the skill.
 	var p := _rare_head(&"dangling_passive")
+	p.active_skill_id = &""
+	p.damage_type = 0  # no skill → damage_type is legitimately unset
 	p.passive_id = &"pass_missing"  # not in the mounted Passive index
 	var r := _one(p)
 	assert_false(r["ok"])
@@ -206,7 +209,7 @@ func test_level_requirement_common_zero_passes() -> void:
 
 
 func test_level_requirement_boss_floor_enforced() -> void:
-	# A BOSS_GRADE HEAD (skill+passive+drop condition) at 5 is below floor 6.
+	# A BOSS_GRADE HEAD (1 effect, within the Boss band) at 5 is below floor 6.
 	var p := _rare_head(&"boss_low")
 	p.rarity = PartDef.Rarity.BOSS_GRADE
 	p.level_requirement = 5

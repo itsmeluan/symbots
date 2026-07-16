@@ -123,15 +123,15 @@ func func_chassis(id: StringName) -> PartDef:
 
 func test_ac_01_common_noncore_with_active_skill_errors() -> void:
 	var p := _valid_part(&"bad")
-	p.active_skill_id = &"illegal_skill"  # Common must have no skill
+	p.active_skill_id = &"illegal_skill"  # Common ceiling is 0 effects; a skill exceeds it
 	var r := _one(p)
 	assert_false(r["ok"])
-	assert_true(_logged(&"content_active_skill_forbidden"), "Common with a skill is flagged")
+	assert_true(_logged(&"content_effect_capacity_exceeded"), "a Common carrying any effect exceeds its 0-effect ceiling")
 
 
 func test_ac_01_core_with_active_skill_errors() -> void:
 	var p := _valid_core(&"bad_core", PartDef.Rarity.RARE)
-	p.active_skill_id = &"illegal_core_skill"  # Core never has a skill
+	p.active_skill_id = &"illegal_core_skill"  # Core is a support slot — never a skill
 	var r := _one(p)
 	assert_false(r["ok"])
 	assert_true(_logged(&"content_active_skill_forbidden"), "Core with a skill is flagged at any rarity")
@@ -139,26 +139,80 @@ func test_ac_01_core_with_active_skill_errors() -> void:
 
 func test_ac_01_rare_core_missing_passive_errors() -> void:
 	var p := _valid_core(&"bad_core", PartDef.Rarity.RARE)
-	p.passive_id = &""  # Rare+ Core requires a passive
+	p.passive_id = &""  # Core can't hold a skill, so its one required effect must be a passive
 	var r := _one(p)
 	assert_false(r["ok"])
-	assert_true(_logged(&"content_passive_missing"), "Rare Core without a passive is flagged")
+	assert_true(_logged(&"content_effect_missing"), "Rare Core with no passive fails the Rare+ effect floor")
 
 
-func test_ac_01_boss_noncore_missing_passive_errors() -> void:
-	var p := _valid_rare(&"boss_arm")
-	p.rarity = PartDef.Rarity.BOSS_GRADE  # still has skill from _valid_rare; passive required
-	var r := _one(p)
-	assert_false(r["ok"])
-	assert_true(_logged(&"content_passive_missing"), "Boss-grade non-Core without a passive is flagged")
-
-
-func test_ac_01_rare_noncore_missing_skill_errors() -> void:
+func test_ac_01_rare_noncore_no_effect_errors() -> void:
 	var p := _valid_part(&"rare_arm")
-	p.rarity = PartDef.Rarity.RARE  # Rare non-Core requires a skill; _valid_part has none
+	p.rarity = PartDef.Rarity.RARE  # 0 effects; every Rare+ part must bring at least one
 	var r := _one(p)
 	assert_false(r["ok"])
-	assert_true(_logged(&"content_active_skill_missing"), "Rare non-Core without a skill is flagged")
+	assert_true(_logged(&"content_effect_missing"), "Rare non-Core with no skill or passive fails the effect floor")
+
+
+func test_ac_01_rare_noncore_passive_only_passes() -> void:
+	# Passives are now legal on any slot — a Rare with a passive and no skill is valid.
+	var p := _valid_part(&"rare_pass")
+	p.rarity = PartDef.Rarity.RARE
+	p.passive_id = &"passive_rare_pass"
+	var r := _one(p)
+	assert_true(r["ok"], "a Rare non-Core carrying only a passive satisfies the effect floor")
+
+
+func test_ac_01_boss_noncore_single_effect_passes() -> void:
+	var p := _valid_rare(&"boss_arm")
+	p.rarity = PartDef.Rarity.BOSS_GRADE  # skill only = 1 effect; within Boss band [1..2]
+	var r := _one(p)
+	assert_true(r["ok"], "Boss-grade non-Core with a single effect (skill only) is valid — passive no longer required")
+
+
+func test_ac_01_skill_on_chipset_passes() -> void:
+	# Chipset is a skill-capable slot under Rule 8.
+	var p := _valid_part(&"chip")
+	p.slot_type = PartDef.SlotType.CHIPSET
+	p.rarity = PartDef.Rarity.RARE
+	p.active_skill_id = &"skill_chip"
+	p.damage_type = PartDef.DamageType.ENERGY
+	var r := _one(p)
+	assert_true(r["ok"], "an active skill on a Chipset is permitted (skill-capable slot)")
+
+
+func test_ac_01_skill_on_energy_cell_errors() -> void:
+	# Energy Cell is a support slot — never an active skill.
+	var p := _valid_part(&"cell_skill")
+	p.slot_type = PartDef.SlotType.ENERGY_CELL
+	p.rarity = PartDef.Rarity.RARE
+	p.active_skill_id = &"skill_cell"
+	p.damage_type = PartDef.DamageType.ENERGY
+	var r := _one(p)
+	assert_false(r["ok"])
+	assert_true(_logged(&"content_active_skill_forbidden"), "an active skill on an Energy Cell (support slot) is forbidden")
+
+
+func test_ac_01_rare_two_effects_exceeds_ceiling_errors() -> void:
+	# Rare ceiling is 1 effect; a skill AND a passive is two.
+	var p := _valid_part(&"rare_two")
+	p.rarity = PartDef.Rarity.RARE
+	p.active_skill_id = &"skill_two"
+	p.passive_id = &"passive_two"
+	p.damage_type = PartDef.DamageType.ENERGY
+	var r := _one(p)
+	assert_false(r["ok"])
+	assert_true(_logged(&"content_effect_capacity_exceeded"), "a Rare carrying both a skill and a passive exceeds its 1-effect ceiling")
+
+
+func test_ac_01_boss_chassis_skill_and_passive_passes() -> void:
+	# Chassis is skill-capable; Boss ceiling is 2 → skill + passive is valid.
+	var p := func_chassis(&"boss_chassis")
+	p.rarity = PartDef.Rarity.BOSS_GRADE
+	p.active_skill_id = &"skill_bc"
+	p.passive_id = &"passive_bc"
+	p.damage_type = PartDef.DamageType.ENERGY
+	var r := _one(p)
+	assert_true(r["ok"], "a Boss Chassis with both a skill and a passive is valid (2 effects within Boss band)")
 
 
 func test_ac_01_common_core_neither_skill_nor_passive_passes() -> void:

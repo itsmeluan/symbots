@@ -50,6 +50,27 @@ const HEAT_MAX := 40
 ## Canonical stat key read for the recharge range/gating checks.
 const RECHARGE_KEY := &"recharge"
 
+## AC-01 (Rule 8) — slots permitted to carry an active skill. CORE and
+## ENERGY_CELL are support slots (passive + stats only): an active skill on
+## either is a `content_active_skill_forbidden`.
+const SKILL_CAPABLE_SLOTS: Array[int] = [
+	PartDef.SlotType.HEAD, PartDef.SlotType.ARMS, PartDef.SlotType.WEAPON,
+	PartDef.SlotType.CHASSIS, PartDef.SlotType.LEGS, PartDef.SlotType.CHIPSET,
+]
+
+## AC-01 (Rule 8) — effect-capacity band per rarity, where an effect is a
+## non-null `active_skill_id` or `passive_id` (counted separately). CEILING caps
+## how many a part may carry; FLOOR is the minimum it must carry. Common is the
+## only tier with a 0 floor — every Rare-or-above part brings at least one effect.
+const EFFECT_CEILING: Dictionary = {
+	PartDef.Rarity.COMMON: 0, PartDef.Rarity.RARE: 1,
+	PartDef.Rarity.BOSS_GRADE: 2, PartDef.Rarity.PROTOTYPE: 2,
+}
+const EFFECT_FLOOR: Dictionary = {
+	PartDef.Rarity.COMMON: 0, PartDef.Rarity.RARE: 1,
+	PartDef.Rarity.BOSS_GRADE: 1, PartDef.Rarity.PROTOTYPE: 1,
+}
+
 # --- Story 008: content-composition families (run only when a BalanceConfig is
 # injected via ContentCatalogs.balance; the schema families above always run) ---
 
@@ -223,38 +244,32 @@ func _check_required_identity(part: PartDef) -> void:
 		_error(&"content_missing_display_name", {"id": part.id})
 
 
-## AC-01 (rarity-gated nullability): active-skill / passive presence rules, with
-## the CORE exception implemented explicitly. Core parts never carry an active
-## skill at any rarity; Rare+ Core requires a passive.
+## AC-01 (Rule 8 — effect capacity & slot eligibility). Three data-driven rules
+## replace the old per-slot skill/passive quotas: (1) an active skill is legal
+## only on a skill-capable slot; (2) effect count must not exceed the rarity
+## ceiling; (3) effect count must meet the rarity floor. Passives are legal on
+## any slot within the band. The old CORE-passive special case is now emergent:
+## Core can't hold a skill (rule 1) yet a Rare+ Core must bring one effect
+## (rule 3), so its one effect can only be a passive — no inline `is_core` branch.
 func _check_nullability(part: PartDef) -> void:
-	var is_core := part.slot_type == PartDef.SlotType.CORE
-	var is_common := part.rarity == PartDef.Rarity.COMMON
 	var has_active := part.active_skill_id != &""
 	var has_passive := part.passive_id != &""
+	var effect_count := int(has_active) + int(has_passive)
 
-	# Active skill: forbidden on Core (any rarity) and on Common; required on
-	# every other non-Core part (Rare/Boss/Prototype).
-	if is_core or is_common:
-		if has_active:
-			_error(&"content_active_skill_forbidden",
-				{"id": part.id, "slot": part.slot_type, "rarity": part.rarity})
-	elif not has_active:
-		_error(&"content_active_skill_missing", {"id": part.id, "rarity": part.rarity})
+	# (1) Active skill only on skill-capable slots (never CORE / ENERGY_CELL).
+	if has_active and not SKILL_CAPABLE_SLOTS.has(part.slot_type):
+		_error(&"content_active_skill_forbidden",
+			{"id": part.id, "slot": part.slot_type, "rarity": part.rarity})
 
-	# Passive: forbidden on Common; required on Rare+ Core and on Boss/Prototype
-	# non-Core; optional on Rare non-Core.
-	if is_common:
-		if has_passive:
-			_error(&"content_passive_forbidden", {"id": part.id, "rarity": part.rarity})
-	elif _passive_required(part.slot_type, part.rarity) and not has_passive:
-		_error(&"content_passive_missing", {"id": part.id, "slot": part.slot_type, "rarity": part.rarity})
+	# (2) Effect-capacity ceiling by rarity.
+	if EFFECT_CEILING.has(part.rarity) and effect_count > EFFECT_CEILING[part.rarity]:
+		_error(&"content_effect_capacity_exceeded",
+			{"id": part.id, "rarity": part.rarity, "count": effect_count, "ceiling": EFFECT_CEILING[part.rarity]})
 
-
-## Passive-required predicate for non-Common parts (Common is handled inline).
-func _passive_required(slot: PartDef.SlotType, rarity: PartDef.Rarity) -> bool:
-	if slot == PartDef.SlotType.CORE:
-		return true  # Rare+ Core requires a passive (the CORE exception).
-	return rarity == PartDef.Rarity.BOSS_GRADE or rarity == PartDef.Rarity.PROTOTYPE
+	# (3) Effect-capacity floor: Common carries 0, every Rare+ part carries ≥1.
+	if EFFECT_FLOOR.has(part.rarity) and effect_count < EFFECT_FLOOR[part.rarity]:
+		_error(&"content_effect_missing",
+			{"id": part.id, "rarity": part.rarity, "count": effect_count, "floor": EFFECT_FLOOR[part.rarity]})
 
 
 ## AC-03: `slot_type` is one of the 8 MVP enum values (rejects the 0 sentinel).

@@ -67,16 +67,20 @@ Fields reserved for later content (must be in schema now, `null` in MVP content)
 
 Each slot has a defined function on the Symbot. A Symbot always has exactly 8 parts equipped (one per slot). Empty slots are not permitted — every slot ships with a starter part that the player replaces during play.
 
-| Slot | Function | Stat Focus | Skill |
+| Slot | Function | Stat Focus | Active Skill (flavor) — *count & power gated by Rule 8* |
 |------|----------|------------|-------|
-| **Core** | Identity. Defines the Symbot's primary element and manufacturer affiliation. The Core is what makes a Symbot "itself" when all other parts are swapped. | Energy Capacity, Recharge. *("Element-specific boost" is an authoring convention, not a schema field: a Core's `stat_bonuses` are authored to favor stats thematic to its element. No formula reads an element-boost value.)* | Unique trait — a passive via `passive_id`, required at Rare+. **Core parts never define an active skill at any rarity** (Rule 8 Core exception). |
-| **Chassis** | Frame. Defines the combat archetype (Light / Heavy / Balanced / Guardian / Artillery). Determines Structure, defensive profile, and weight class. | Structure, Armor, Resistance | None (archetype determines implicit behavior) |
-| **Chipset** | Logic. Defines the Symbot's processing intelligence — status effect strength, scan reliability, and Processing power. | Processing, RAM (capacity for future Software slots) | None in MVP |
-| **Energy Cell** | Power. Defines the Symbot's Energy architecture — how much Energy it holds and how fast it regenerates. | Energy Capacity, Recharge | None |
-| **Head / Sensor** | Perception. Defines targeting accuracy, drop hunting capability, and scan range. The Head determines whether the player sees detailed enemy part information before battle. In MVP, this information advantage is delivered as a UI feature (enemy part display) rather than a stat mechanic — Salvage Rating is reserved for Full Vision. The Combat UI and Workshop UI GDDs are responsible for implementing this display. | Targeting (MVP); Salvage Rating (Full Vision reserved) | 1 scan or utility skill |
-| **Arms** | Action. Defines physical and energy manipulation — the Symbot's active combat tool beyond its weapon. | Physical Power or Energy Power | 1 active skill (attack, repair, or utility) |
-| **Legs** | Mobility. Defines movement profile and stability. Each Leg type has a distinct behavior archetype — not just a speed bonus. | Mobility, Evasion | 1 passive terrain/movement effect |
-| **Weapon** | Offense. Defines the primary damage source. Weapon type determines damage type (Physical or Energy), resource (Energy or Ammo), and primary combat skill. | Physical Power or Energy Power (by type) | 1 primary combat skill |
+| **Core** | Identity. Defines the Symbot's primary element and manufacturer affiliation. The Core is what makes a Symbot "itself" when all other parts are swapped. | Energy Capacity, Recharge. *("Element-specific boost" is an authoring convention, not a schema field: a Core's `stat_bonuses` are authored to favor stats thematic to its element. No formula reads an element-boost value.)* | **None** — Core never carries an active skill at any rarity (identity anchor). Its power is expressed as a passive (`passive_id`). |
+| **Chassis** | Frame. Defines the combat archetype (Light / Heavy / Balanced / Guardian / Artillery). Determines Structure, defensive profile, and weight class. | Structure, Armor, Resistance | Utility — buff / debuff / condition (defensive flavor). Optional. |
+| **Chipset** | Logic. Defines the Symbot's processing intelligence — status effect strength, scan reliability, and Processing power. | Processing, RAM (capacity for future Software slots) | Utility — status / condition / processing effects. Optional. |
+| **Energy Cell** | Power. Defines the Symbot's Energy architecture — how much Energy it holds and how fast it regenerates. | Energy Capacity, Recharge | **None** — support slot; passive + stats only, never an active skill. |
+| **Head / Sensor** | Perception. Defines targeting accuracy, drop hunting capability, and scan range. The Head determines whether the player sees detailed enemy part information before battle. In MVP, this information advantage is delivered as a UI feature (enemy part display) rather than a stat mechanic — Salvage Rating is reserved for Full Vision. The Combat UI and Workshop UI GDDs are responsible for implementing this display. | Targeting (MVP); Salvage Rating (Full Vision reserved) | Attack / scan / utility skill. Optional. |
+| **Arms** | Action. Defines physical and energy manipulation — the Symbot's active combat tool beyond its weapon. | Physical Power or Energy Power | Attack / repair / utility skill. Optional. |
+| **Legs** | Mobility. Defines movement profile and stability. Each Leg type has a distinct behavior archetype — not just a speed bonus. | Mobility, Evasion | Utility — buff / debuff / condition (mobility flavor). Optional. |
+| **Weapon** | Offense. Defines the primary damage source. Weapon type determines damage type (Physical or Energy) and resource (Energy or Ammo). | Physical Power or Energy Power (by type) | Attack skill. **Also defines the bot's basic-attack type** (see note). Optional. |
+
+> **Passives:** every slot may carry a passive (`passive_id`); Rule 8 gates how many effects a part may hold and how strong they are.
+>
+> **Basic attack:** independent of active skills, every Symbot always has a **basic attack** whose type (Physical / Energy / …) is set by its equipped **Weapon** (`damage_type` + `element`). The basic attack costs no skill/effect slot — active skills are the specials layered on top. The basic-attack *mechanic* is owned by the Combat / Turn-Based-Combat system; the Part DB only defines its source (the Weapon slot).
 
 ---
 
@@ -174,18 +178,28 @@ The Synergy System GDD defines what bonuses these tags trigger and at what thres
 
 ---
 
-**Rule 8 — Rarity Tiers (MVP)**
+**Rule 8 — Rarity Tiers & Effect Capacity (MVP)**
 
-Four rarity tiers in MVP. Rarity governs which schema fields are permitted to be non-null for a given part:
+Four rarity tiers. Rarity governs two things: **how many effects** a part may carry (its skill/passive *capacity*) and **how strong** its stats and effects are. An "effect" is a non-null `active_skill_id` or a non-null `passive_id`, counted separately (so a part with both carries two effects). The capacity is a *band*, not a fixed quota — Common carries none, every Rare-and-above part carries at least one, and higher tiers raise the ceiling. Higher tiers also make effects stronger; effect magnitude itself lives in the Move / Passive databases and the stat-budget tables, not here.
 
-| Rarity | Stats | Active Skill | Passive | Drawback |
-|--------|-------|-------------|---------|---------|
-| **Common** | Base stat contributions only | None (`null`) | None (`null`) | None |
-| **Rare** | Higher stat contributions | 1 skill (required) | None (`null`) | None |
-| **Boss-grade** | High stat contributions + exclusive synergy bonus | 1 skill (required) | 1 passive (required) | None |
-| **Prototype** | Very high in 1–2 focus stats (may exceed Boss-grade focus stat at +5 when Boss-grade budget is spread across multiple stats — the intended content convention; see Stat Budget Reference); lower or negative in others | 1 skill (required) | 1 passive (required) | Mandatory drawback (e.g., +30 Heat per use, stat penalty, jam chance) |
+| Rarity | Stats | Effect capacity (skills + passives) | Drawback |
+|--------|-------|-------------------------------------|----------|
+| **Common** | Base stat contributions only | **Exactly 0** — pure stats, no skill or passive | None |
+| **Rare** | Higher stat contributions | **Exactly 1** — a skill *or* a passive | None |
+| **Boss-grade** | High stat contributions + exclusive synergy bonus | **1 or 2** — skill and/or passive | None |
+| **Prototype** | Very high in 1–2 focus stats (may exceed Boss-grade focus stat at +5 when Boss-grade budget is spread across multiple stats — the intended content convention; see Stat Budget Reference); lower or negative in others | **1 or 2** — skill and/or passive | Mandatory drawback (e.g., +30 Heat per use, stat penalty, jam chance) |
 
-**Core slot exception (skill/passive rules):** Core parts never define an active skill — `active_skill_id` is `null` at every rarity. In place of the active-skill requirement, Rare and higher Core parts require a passive (`passive_id` non-null): the "unique trait" from Rule 2. This makes Core the only slot whose Rare-tier power is expressed as identity (a passive trait) rather than an action. Common Cores, like all Commons, have neither skill nor passive. Consequently, Core parts must not define `upgrade_effects` entries of type `SKILL_UNLOCK` (which would add an active skill); `SKILL_ENHANCE` targeting the Core's passive is permitted. AC-01 validates this exception.
+Equivalently: capacity **floor** = 0 for Common, 1 for every other tier (every Rare-or-above part must bring at least one skill or passive — no empty "stat-sticks" above Common); capacity **ceiling** = 0 / 1 / 2 / 2 for Common / Rare / Boss-grade / Prototype.
+
+**Which slots may carry an active skill** (a passive is permitted on *any* slot, within the capacity above):
+
+| Active-skill-capable | Support (passive + stats only, never an active skill) |
+|----------------------|-------------------------------------------------------|
+| Head, Arms, Weapon, Chassis, Legs, Chipset | Energy Cell, Core |
+
+**Skill flavor (authoring guideline).** Attack skills belong on **Head / Arms / Weapon**; buff / debuff / condition (status) skills belong on **Chassis / Legs / Chipset**. The Part DB validator enforces only *whether a slot may host an active skill at all* — it reads an ID, not the skill's behavior. The attack-vs-utility split becomes a machine-checked rule once the Move Database carries a skill category; until then it is an authoring convention.
+
+**Core identity consequence.** Because Core is a support slot (no active skill) yet must meet the Rare+ capacity floor of 1, every Rare-and-above Core necessarily carries a passive (`passive_id` non-null) — the "unique trait" from Rule 2. Common Cores, like all Commons, carry neither skill nor passive. Core parts must not define `upgrade_effects` entries of type `SKILL_UNLOCK` (which would add an active skill); `SKILL_ENHANCE` targeting the Core's passive is permitted. AC-01 validates this.
 
 Boss-grade parts are only obtainable by breaking a specific boss part region before defeating the boss. They cannot appear in wild drop tables. Prototype parts are **gradient conditional drops**: each battle condition the player fires multiplies the base rate per Formula 3; optimal play — firing all of a part's listed conditions — reaches the ~15–20% target band. Partial execution yields a partial rate, not zero (e.g., 2 of 3 ×1.5 conditions: 0.05 × 1.5 × 1.5 ≈ 11%). Every condition met visibly improves the odds — there is no all-or-nothing gate.
 
@@ -741,7 +755,7 @@ The stat budget table (Common / Rare / Boss-grade / Prototype per slot) is the p
 
 ### Schema Validation
 
-**AC-01**: Every part entry has all required fields populated with non-null, non-empty values for its rarity tier. **Pass when**: A schema validator iterates all part entries and finds zero entries where `id`, `display_name`, `slot_type`, `rarity`, `manufacturer`, `element`, `damage_type`, `stat_bonuses`, `max_upgrade_tier`, `drop_enabled`, `heat_generation`, or `ammo_cost` is null, missing, or the wrong type. **For non-Core slots:** zero Rare/Boss-grade/Prototype entries where `active_skill_id` is null; zero Boss-grade/Prototype entries where `passive_id` is null; zero Common entries where `active_skill_id` is non-null; zero Common or Rare entries where `passive_id` is non-null. **For the Core slot (Rule 8 Core exception):** zero Core entries at *any* rarity where `active_skill_id` is non-null; zero Rare/Boss-grade/Prototype Core entries where `passive_id` is null; zero Common Core entries where `passive_id` is non-null. **Test type**: Content Validation.
+**AC-01**: Every part entry has all required fields populated with non-null, non-empty values for its rarity tier. **Pass when**: A schema validator iterates all part entries and finds zero entries where `id`, `display_name`, `slot_type`, `rarity`, `manufacturer`, `element`, `damage_type`, `stat_bonuses`, `max_upgrade_tier`, `drop_enabled`, `heat_generation`, or `ammo_cost` is null, missing, or the wrong type. **Effect capacity & slot eligibility (Rule 8):** with `effect_count` = (`active_skill_id` non-null ? 1 : 0) + (`passive_id` non-null ? 1 : 0): (a) zero entries whose `effect_count` exceeds its rarity ceiling (Common 0 / Rare 1 / Boss-grade 2 / Prototype 2) — `content_effect_capacity_exceeded`; (b) zero Rare/Boss-grade/Prototype entries with `effect_count == 0` (every Rare-or-above part carries at least one skill or passive) — `content_effect_missing`; (c) zero entries with a non-null `active_skill_id` on a support slot (`ENERGY_CELL` or `CORE`) — `content_active_skill_forbidden`. Consequence of (b)+(c): every Rare+ Core carries a passive (its only permitted effect), and every Common carries neither. **Test type**: Content Validation.
 
 **AC-02**: Every part `id` is globally unique across the entire database. **Pass when**: A validator loads all part entries and confirms `set.size() == entries.size()` — no duplicates. **Test type**: Content Validation.
 
