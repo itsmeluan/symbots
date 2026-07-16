@@ -444,7 +444,7 @@ heat_after_decay = max( 0, heat_current − final_stat["cooling"] )
 | Variable | Symbol | Type | Range | Description |
 |----------|--------|------|-------|-------------|
 | Current Heat | `heat_current` | int | 0–100 | Heat at turn start before decay |
-| Cooling stat | `final_stat["cooling"]` | int | 5–18 | Post-chassis Cooling value (from Formula 1). Range derived from design-intent content targets (minimum Cooling build to maximum Cooling build); pending per-stat content validation in Stat Budget Reference. |
+| Cooling stat | `final_stat["cooling"]` | int | 5–18 | Post-chassis Cooling value (from Formula 1). Range is a design-intent content target (minimum Cooling build to maximum Cooling build); it is an authoring guideline, not a schema-enforced bound — the Stat Budget Reference governs authored values and no per-stat AC pins this exact range. MVP content (10-story Part DB epic, shipped 2026-07-15) is authored within it. |
 | Result | `heat_after_decay` | int | 0–100 | Applied at the start of each Symbot's turn |
 
 **Output range:** 0 to 100. Cannot go negative — excess Cooling is wasted.
@@ -519,7 +519,7 @@ energy_after_skill  = max( 0, energy_current − skill_energy_cost )
 |----------|--------|------|-------|-------------|
 | BASE_ENERGY_REGEN | constant | int | 10 | Fixed Energy regenerated at each turn start. **Shared constant, owned by Turn-Based Combat** (TBC applies it in Rule 4 turn-start recharge; this formula defines the regen step). Renamed from `BASE_REGEN` 2026-07-13 to unify with TBC/registry (C-3 hygiene). Safe range 8–15 — the **8 floor is load-bearing** for TBC's REPAIR anti-stall invariant (TBC-F6). |
 | Recharge stat sum | `recharge_bonus` | int | 0–30 | Sum of all equipped parts' `stat_bonuses["recharge"]` values (Rule 4 — 11th MVP stat). Energy Cell and Core may each contribute up to 15 independently, so the sum can reach 30. |
-| Energy Capacity | `energy_capacity` | int | 80–120 | Post-chassis maximum Energy pool. Range derived from design-intent content targets; pending per-stat content validation in Stat Budget Reference. |
+| Energy Capacity | `energy_capacity` | int | 80–120 | Post-chassis maximum Energy pool. Range is a design-intent content target; it is an authoring guideline, not a schema-enforced bound — the Stat Budget Reference governs authored values and no per-stat AC pins this exact range. MVP content (10-story Part DB epic, shipped 2026-07-15) is authored within it. |
 | Skill cost | `skill_energy_cost` | int | 0–40 | From active skill definition; see tier table |
 | After regen | `energy_after_regen` | int | 0–energy_capacity | Energy after turn-start regen; capped at capacity |
 | After skill | `energy_after_skill` | int | 0–energy_capacity | Energy after spending; floored at 0 |
@@ -606,12 +606,12 @@ Derivation: `cap = floor(0.70 × max Common budget)`; `floor = floor(cap × 1.50
 ### EC-03 — Part with minimal synergy tags
 All parts — including wild-manufacturer parts — must carry their element tag (e.g., `"volt"`) in `synergy_tags`. Non-wild parts additionally must carry their manufacturer tag (e.g., `"boltwell"`). Wild-manufacturer parts carry no manufacturer tag. The `synergy_tags` array is never empty for any part.
 
-Optional extra tags (boss-origin, thematic groups, Architecture Synergy reserved for Full Vision) are additive. A non-wild part may have exactly 2 tags (mandatory only) or more (mandatory + optional). A wild part has exactly 1 tag (element only) or more (element + optional). Absence of optional tags is not an error — the Synergy System processes all tags present and ignores missing ones.
+Optional extra tags (boss-origin, thematic groups, Architecture Synergy reserved for Full Vision) are additive. A non-wild part may have exactly 2 tags (mandatory only) or more (mandatory + optional). A wild part has exactly 1 tag (element only) or more (element + optional). Absence of optional tags is not an error — the Synergy System processes all tags present and ignores missing ones. *Verified by AC-04 (element tag present on all parts; manufacturer tag present on non-wild; wild parts carry no manufacturer tag).*
 
 ### EC-04 — Part not in drop table (`drop_enabled = false`)
 The part exists in the database and all existing inventory copies remain fully functional. Players can still use it, upgrade it, equip it, or recycle it. The part simply cannot drop from enemies or loot containers while `drop_enabled` is false. This is the mechanism for seasonal or event parts, or parts that have been power-adjusted out of the active drop pool.
 
-**What does NOT happen:** parts are never invalidated, disabled, or removed from player inventories. There is no "deprecated" state in this system.
+**What does NOT happen:** parts are never invalidated, disabled, or removed from player inventories. There is no "deprecated" state in this system. *Verified by AC-15a (excluded from drop-table queries while the full entry still resolves) and AC-15b (remains functional when read by Assembly and Inventory — Integration, DEFERRED until those interfaces exist).*
 
 ### EC-05 — Multiple copies of the same part in inventory
 Players can hold any number of copies of the same part (same `id`). Each copy is an independent instance with its own upgrade tier tracking. Uses:
@@ -622,7 +622,7 @@ Players can hold any number of copies of the same part (same `id`). Each copy is
 Inventory does not deduplicate or stack part instances.
 
 ### EC-06 — Part variants (different rarity, same thematic part)
-Multiple parts can share the same `part_family` tag (e.g., `"servo_arm_family"`) but are distinct database entries with different `id` values. Each variant has its own `rarity`, `stat_bonuses`, `active_skill_id`, and `passive_id`. Workshop UI uses `part_family` to group variants in the picker (e.g., "all Servo Arm versions") but each is treated as a fully independent part by combat, upgrade, and drop systems.
+Multiple parts can share the same `part_family` tag (e.g., `"servo_arm_family"`) but are distinct database entries with different `id` values. Each variant has its own `rarity`, `stat_bonuses`, `active_skill_id`, and `passive_id`. Workshop UI uses `part_family` to group variants in the picker (e.g., "all Servo Arm versions") but each is treated as a fully independent part by combat, upgrade, and drop systems. *Distinct-entry guarantee verified by AC-02 (globally unique `id`); the grouping/picker behavior is Workshop-UI-owned and has no Part DB AC.*
 
 ### EC-07 — Multiple parts occupying the same slot type
 In MVP, each slot type (Core, Chassis, Chipset, Energy Cell, Head, Arms, Legs, Weapon) has exactly one slot. Equipping a second part to the same slot type replaces the current occupant — the displaced part returns to inventory.
@@ -630,10 +630,10 @@ In MVP, each slot type (Core, Chassis, Chipset, Energy Cell, Head, Arms, Legs, W
 Post-MVP Motherboard configuration will allow builds with expanded slot counts (e.g., 2× Arms). The slot governance logic is owned by the Motherboard system; Part Database only stores `slot_type` and does not enforce limits itself.
 
 ### EC-08 — stat_bonuses contains a key not in the canonical 11-stat list
-Treat as unknown. Assembly System logs a warning and ignores the key. Does not crash. Allows future stat additions without breaking existing parts. The 11 canonical MVP stats are: Structure, Armor, Resistance, Physical Power, Energy Power, Mobility, Targeting, Processing, Cooling, Energy Capacity, Recharge.
+Treat as unknown. Assembly System logs a warning and ignores the key. Does not crash. Allows future stat additions without breaking existing parts. The 11 canonical MVP stats are: Structure, Armor, Resistance, Physical Power, Energy Power, Mobility, Targeting, Processing, Cooling, Energy Capacity, Recharge. *No Part DB AC — the observable outcome (log-warning + ignore-key + no-crash) is produced by the Assembly System's stat-aggregation reader (Formula 1 input); it is owned and verified by the Symbot Assembly GDD, not by Part DB content validation.*
 
 ### EC-09 — upgrade_effects entry at tier 0
-Not meaningful — +0 is the base state, not an upgrade. Assembly System ignores `upgrade_effects` entries with `tier = 0`.
+Not meaningful — +0 is the base state, not an upgrade. Assembly System ignores `upgrade_effects` entries with `tier = 0`. *No Part DB AC — the ignore-at-runtime behavior is owned and verified by the Symbot Assembly / Part Upgrade readers; Part DB only stores the array. (Content authoring convention: `upgrade_effects` entries are authored at tiers 1–5 per Rule 1.)*
 
 ### EC-10 — Prototype part at upgrade tier +3 or higher — drawback removal
 Formula 2b returns 0 for any negative `stat_bonuses` key once `tier >= 3`. The stat contribution for that key becomes 0 — neither a penalty nor a bonus. At +4 and +5 the drawback remains 0; it does not become a positive. The Workshop UI may visually indicate that the drawback has been fully eliminated.
@@ -652,10 +652,10 @@ Attempting to upgrade a Common part to +4 is invalid. Workshop UI disables the u
 Both passives are registered and active simultaneously. Passive stacking behavior is defined by the Passive System, not the Part Database. Part Database makes no assumption about stacking rules.
 
 ### EC-14 — Part with heat_generation = 0 and ammo_cost = 0
-Valid — a free skill with no resource cost. Typically used for basic attacks. No special handling required.
+Valid — a free skill with no resource cost. Typically used for basic attacks. No special handling required. *`heat_generation == 0` is verified by AC-22 (range [0, 40], and `== 0` when `active_skill_id` is null); `ammo_cost == 0` has no dedicated validation AC — 0 is the schema default and imposes no constraint (all MVP content ships `ammo_cost = 0`, per the schema's "0 if not ammo-based").*
 
 ### EC-15 — part_family is null
-The part has no thematic family. Workshop UI does not group it with any variants. Always valid for unique one-off parts (e.g., a cosmetic or story-specific drop with no family members).
+The part has no thematic family. Workshop UI does not group it with any variants. Always valid for unique one-off parts (e.g., a cosmetic or story-specific drop with no family members). *No AC — `null` is the schema default for `part_family` (Rule 1) and imposes no constraint; the group-or-don't-group behavior is Workshop-UI-owned.*
 
 ### EC-16 — Boss-grade acquisition floor (design commitment)
 The current schema permits a player who repeatedly fails break conditions to be soft-locked from Boss-grade drops indefinitely — which gate the Boss-grade exclusive synergy bonus and directly threaten Pillar 4 (Synergy Is the Endgame). With only 2 bosses in MVP, this is a real risk. A deterministic acquisition floor — a minimum guaranteed Boss-grade drop rate per N boss attempts, independent of break success — must exist in the game. The specific mechanic (N, pity rate) is defined by the Drop System GDD. **The Drop System GDD must not be approved without specifying this floor.** This is not a Part Database schema concern; it is a hard design constraint inherited from this system's drop mechanic that the Drop System GDD is responsible for fulfilling.
@@ -813,4 +813,12 @@ The stat budget table (Common / Rare / Boss-grade / Prototype per slot) is the p
 
 ## Open Questions
 
-[To be designed]
+None remaining. All design questions were resolved across Review Rounds 1–9 (see
+`design/gdd/reviews/part-database-review-log.md`), and the schema + formulas are
+implemented and green (Part Database epic — 10 stories Complete, 2026-07-15; suite
+green on Godot 4.7). Standing *recommended* (non-blocking) items are tracked in the
+review log, not here.
+
+*(`Visual/Audio Requirements` and `UI Requirements` remain `[To be designed]` — they
+are owned by the Art Bible and the Workshop/Inventory UX specs respectively, not by
+this schema document.)*

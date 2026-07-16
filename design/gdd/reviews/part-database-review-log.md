@@ -1,5 +1,34 @@
 # Review Log: Part Database
 
+## Review — 2026-07-16 — Verdict: APPROVED (lean pass — full panel unavailable)
+Scope signal: S (all follow-up is documentation-only; design + implementation are settled)
+Specialists: none — game-designer, systems-designer, qa-lead all died on `API Error: Usage
+credits required for 1M context` (persistent subagent failure this session). This was a lean
+single-session review, not the full adversarial panel.
+Blocking items: 0 | Recommended: 4 (hygiene) — applied this pass
+Summary: First *full-document* re-read since the 2026-07-15 effect-capacity rework (the Round 9
+pass on 2026-07-16 was scoped to blockers only). Completeness 8/8. Dependency graph clean — all
+MVP downstream dependents have GDD files; the two without (Blueprint Crafting, Part Upgrade) are
+explicitly Alpha. The effect-capacity model (Rule 8 / AC-01(a)–(d) / EC-01 / EC-02) holds under
+full re-read with **zero regressions**, strongly corroborated by the live green implementation
+(Part DB epic — 10 stories Complete; ContentValidator enforces every AC; suite 271/271 on Godot
+4.7). No blocking design defect found. Applied 4 hygiene fixes: (1) EC↔AC citations added for
+EC-03→AC-04, EC-04→AC-15a/15b, EC-06→AC-02, EC-08 (Assembly-owned, no Part DB AC), EC-09
+(Assembly/Upgrade-owned), EC-14→AC-22 + ammo_cost note, EC-15 (schema-default, UI-owned) —
+closing the project's EC↔AC cross-check rule gap; (2) stale `Open Questions` placeholder replaced
+with "none remaining" + note that Visual/Audio + UI Requirements are Art-Bible / UX-spec-owned;
+(3) Formula 4 Cooling (5–18) and Formula 6 Energy Capacity (80–120) "pending per-stat validation"
+notes reframed as design-intent authoring guidelines (content now shipped within them, no per-stat
+AC pins the exact range). The "unique trait" phrasing flagged in the Round 9 log was already
+cleaned ("identity trait described in Rule 2" — accurate).
+Prior verdict resolved: Yes — Round 9 (2026-07-16) APPROVED stands. Standing deferred *recommended*
+items remain open and out of this hygiene pass's scope: D-1 (Rule 8 ceiling-clause rationale for
+why Boss/Proto share ceiling 2), AC-01(c) naming `SKILL_CAPABLE_SLOTS`, and REC-1 / AC-06(b) /
+Prototype-70% / earlier tuning items. NEW cross-GDD note: the attack-vs-utility skill-flavor split
+(Rule 8, authoring-convention "until the Move DB carries a skill category") is now *actionable* —
+Move DB epic is Complete; promoting it to an enforced Synergy/validator constraint can be scoped
+(likely out of Part DB itself).
+
 ## Erratum — 2026-07-13 — C-3 + C-6 doc-hygiene (from /review-all-gdds) — light re-review touch owed
 
 Two cross-GDD hygiene warnings from the 2026-07-13 holistic review, fixed here (Status stays APPROVED):
