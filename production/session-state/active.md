@@ -496,3 +496,5 @@ Task: RESUME HERE → /dev-story Story 003 (damage-type routing + full routed co
 - Verify: --import + GUT 623/623 green, 3818 asserts, 0 errors, only allowed warnings.
 - ROSTER IMPACT: two Thermal wilds now drop aegis_frame (R-Thermal→chassis) instead of scavenged reinforced_servo_arm(Kinetic)/arc_blaster(Volt).
 - NEXT: author the 10 EnemyDef .tres + EnemyCatalog (Story 010) with the revised Thermal pools.
+
+<!-- QA-PLAN: 2026-07-17 | System: sprint-1 (Encounter Zone + Drop System) | Plan written: production/qa/qa-plan-sprint-1-2026-07-17.md -->

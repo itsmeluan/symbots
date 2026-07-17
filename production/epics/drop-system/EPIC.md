@@ -4,7 +4,7 @@
 > **GDD**: design/gdd/drop-system.md
 > **Architecture Module**: Drop System (Core)
 > **Status**: Ready
-> **Stories**: Not yet created — run `/create-stories drop-system`
+> **Stories**: 9 stories (2026-07-17) — 8 Logic (Ready) + 1 Integration (Blocked on Save/Load)
 
 ## Overview
 
@@ -56,6 +56,40 @@ This epic is complete when:
 - The Prototype and Boss-grade pity thresholds, ascending-ID roll order, and rarity-ordered
   Scrap yield each have discriminating fixtures
 
+## Stories
+
+| # | Story | Type | Status | ADR (primary) |
+|---|-------|------|--------|---------------|
+| 001 | DropSystem host, VICTORY trigger & DS-1 roll core | Logic | Ready | ADR-0006 |
+| 002 | Condition assembly — exact match, stacking, unknown key | Logic | Ready | ADR-0003 |
+| 003 | Pool iteration — dedup, independent rolls, empty pool | Logic | Ready | ADR-0006 |
+| 004 | Prototype gradient pity (DS-2) | Logic | Ready | ADR-0006 |
+| 005 | Boss-grade deterministic floor pity (DS-3) | Logic | Ready | ADR-0006 |
+| 006 | Determinism — ID-order, stream-sync, reproducibility | Logic | Ready | ADR-0006 |
+| 007 | Beacon (×2.0) & DS-F-LEVEL rate injection | Logic | Ready | ADR-0006 |
+| 008 | Scrap yield & rarity-ordering invariant | Logic | Ready | ADR-0003 |
+| 009 | Pity-counter persistence across save/load | Integration | **Blocked** (Save/Load) | ADR-0006 |
+
+**Build order**: 001 (anchor) → 002 / 003 / 004 / 005 / 008 (all depend only on 001) →
+006 (composes 004 + 005) → 007 (needs 001 + a pity-guaranteed part from 005) →
+009 (Integration, gated on the Not-Started Save/Load system; depends 004 + 005).
+
+**Coverage**: all 12 TR-drop requirements mapped; all 30 numbered BLOCKING ACs +
+the 1 gated release-blocker (AC-DS-28) placed —
+001: AC-DS-03/04/05/11/20/27 · 002: AC-DS-22/23/07/25 · 003: AC-DS-12/08/06 ·
+004: AC-DS-13/14/29/15 · 005: AC-DS-16/17/09/30/24/01/26 · 006: AC-DS-21/10/18/02 ·
+007: AC-DS-31 · 008: AC-DS-19 · 009: AC-DS-28 (gated).
+
+**Deferred integration notes** (author the stub now, wire later — not story-blocking):
+- **AD-1** outcome-fact provenance (drop resolution emits an auditable outcome fact) — deferred design.
+- **AD-3** loot / drop-summary screen — Presentation tier, deferred.
+- **AD-4** player-initiated scrap **action** + batch-scrap UX — Inventory-owned, deferred (Story 008 delivers only the yield source).
+- **AD-5** Part-Break → Drop qualifying-break contract — owned by the COMBAT/Part-Break seam; the deduplicated `fired_break_events` Set it produces is consumed here (Story 005).
+- **AC-ELZS-11** DS-F-LEVEL cross-system **integration** gate lives in `tests/integration/drop_system/` and is owned by the Encounter Zone erratum Done condition; Story 007 delivers the unit-level injection (AC-DS-31) it builds on.
+
 ## Next Step
 
-Run `/create-stories drop-system` to break this epic into implementable stories.
+Stories are written. Run `/story-readiness production/epics/drop-system/story-001-dropsystem-host-victory-trigger-ds1-roll-core.md`
+→ `/dev-story` to begin implementation from the anchor. Work stories in `Depends on:` order.
+Story 009 stays **Blocked** until the Save/Load system (ADR-0001) defines the pity-map
+serialization interface.

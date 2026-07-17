@@ -4,7 +4,7 @@
 > **GDD**: design/gdd/encounter-zone.md
 > **Architecture Module**: Encounter Zone (Core)
 > **Status**: Ready
-> **Stories**: Not yet created — run `/create-stories encounter-zone`
+> **Stories**: 8 stories created 2026-07-17 (6 Logic, 1 Integration, 1 Config/Data) — not yet implemented
 
 ## Overview
 
@@ -54,6 +54,27 @@ This epic is complete when:
 - The gate fail-safe (LOCKED on missing/unresolvable params) and `requires_defeated` sequencing
   have discriminating GUT fixtures; a broken prerequisite ref never fails open
 
+## Stories
+
+| # | Story | Type | Status | ADR | Covers |
+|---|-------|------|--------|-----|--------|
+| 001 | Zone data model & EZ-1 encounter trigger | Logic | Ready | ADR-0006 (primary), ADR-0003 | TR-ez-001, TR-ez-003 |
+| 002 | EZ-2 weighted enemy selection | Logic | Ready | ADR-0006 | TR-ez-001 |
+| 003 | Sub-pool validation & empty-pool sentinel | Logic | Ready | ADR-0003 (primary), ADR-0002 | TR-ez-002 |
+| 004 | WILD/BOSS encounter handoff to TBC | Integration | Ready | ADR-0007 (primary), ADR-0002 | TR-ez-001 |
+| 005 | Boss gate WIN_COUNT first-access & sequencing | Logic | Ready | ADR-0007 (primary), ADR-0002 | TR-ez-004, TR-ez-005, TR-ez-006, TR-ez-008 |
+| 006 | Repeat policy — LIGHTER_REGATE delta re-gate & ALWAYS_OPEN | Logic | Ready | ADR-0007 | TR-ez-005, TR-ez-007 |
+| 007 | Gate params validation & reserved-gate fail-safe | Logic | Ready | ADR-0007 (primary), ADR-0003 | TR-ez-008 |
+| 008 | Content-validation linters | Config/Data | Ready | ADR-0003 | TR-ez-009, TR-ez-010 |
+
+**8 stories: 6 Logic, 1 Integration, 1 Config/Data.** Build order: **001 (anchor) → {002, 003, 005, 008}**; **004** depends on 002 + 003; **006** and **007** depend on 005. Story 001 delivers the `ZoneDef`/`TerrainPatch`/`SpawnEntry`/`BossEncounter` value types + the injected-RNG/LogSink/Enemy-DB resolver host + EZ-1; 002 the EZ-2 weighted walk; 003 the `filter_valid` sub-pool exclusions + empty-pool sentinel; 004 the WILD/BOSS handoff to a stub TBC; 005 the WIN_COUNT first-access + `requires_defeated` sequencing (with the fail-safe LOCKED broken-ref); 006 the delta re-gate + ALWAYS_OPEN; 007 gate-param validation + reserved-gate fail-safe; 008 the offline content linters.
+
+**Coverage**: all 10 TR-ez requirements covered. **40 BLOCKING** ACs (Unit/Integration) + **11 ADVISORY** (Content Validation, Story 008) are stored now. The GDD's **60 ACs** map as: 001 → AC-EZ-01/02/03/57/59; 002 → 04–09; 003 → 26–30/32/33; 004 → 15; 005 → 16–20/40a/56/58; 006 → 21/22/23/39/52; 007 → 24/25/31/34–38; 008 → 10–14/47–51/54.
+
+**Deferred integration (9 DEFERRED ACs — not stories; write-the-stub-now, activate-when-the-Not-Started-system-ships):** AC-EZ-40b (live Exploration Progress), 41 (EZ-1 only on terrain tiles), 42 (sentinel → no transition), 43/44 (win-counter + `defeated_once` save/reload persistence), 45 (terrain_type from tile), 46 (reachable boss map presence), 53 (`FULL_REGATE` reserved behavior), 55 (WIN_COUNT wins-only across flee/loss). These await Overworld Navigation (#16), Zone & World Map (#12), and Exploration Progress (#14). Each blocked AC's stub note lives in the relevant story's Out of Scope.
+
+**Deferred content pass (not a story):** the real MVP zone `.tres` (one zone, 3–4 terrain patches drawn from ~8 WILD enemies, 2 bosses on the shared WIN_COUNT counter) is authored later — it needs the ~8-WILD roster and the finalized Art Bible terrain enum (OQ-EZ-1). Story 008 builds and proves the content linters **against fixtures now**; the real content is validated by those same linters when authored. This parallels the Synergy-tier `.tres` deferral — engine + linters built against DI seams + fixtures, content later.
+
 ## Next Step
 
-Run `/create-stories encounter-zone` to break this epic into implementable stories.
+Run `/story-readiness production/epics/encounter-zone/story-001-zone-data-model-ez1-encounter-trigger.md` then `/dev-story` to begin implementation. Work through stories in dependency order (001 anchor first). The other Ready-unstoried Core epic is Drop System — `/create-stories drop-system`.
