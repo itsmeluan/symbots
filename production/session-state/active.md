@@ -3,8 +3,15 @@
 <!-- STATUS -->
 Epic: Save/Load Foundation epic COMPLETE (6/6) + Drop System now 9/9 (DS-009 release-blocker CLEARED). Core layer 5/5 + Save/Load all done.
 Feature: Full GUT suite 913/913 green, 4740 asserts. Provider-envelope persistence (ADR-0001) + drop provider shipped; DS-009 pity-persistence passes end-to-end.
-Task: NEXT → /ux-design (interaction-patterns + accessibility-requirements — the remaining pre-gate blocker), then /gate-check production. /test-setup DONE (infra pre-existed from 2026-07-14, correct for GUT; fixed stale 4.6→4.7 CI+README drift 2026-07-17). No blocking persistence work remains.
+Task: NEXT → /gate-check production. BOTH pre-gate blockers now resolve: /test-setup DONE (GUT infra pre-existed; fixed 4.6→4.7 CI+README drift) + /ux-design DONE (interaction-patterns.md + accessibility-requirements.md both pre-existed & Approved; fixed accessibility doc PATH design/ux/→design/ so gate-check resolves it). No blocking persistence work remains.
 <!-- /STATUS -->
+
+## Session Extract — /ux-design confirmed already-complete + accessibility PATH fix 2026-07-17d
+- Ran `/ux-design` (no arg). BOTH gate artifacts already existed & Approved from 2026-07-14: `design/ux/interaction-patterns.md` (466 lines, 9 patterns + 2 primitives, seeded from battle.md — correct path) and the accessibility doc (GAG Basic tier, 5 decisions locked). Bonus: `design/ux/battle.md` (36 KB full battle-screen UX spec) also exists. The prior handoff's "pre-gate blocker doesn't exist" was STALE.
+- ONE real fix (same failure mode as the CI drift): accessibility doc lived at `design/ux/accessibility-requirements.md` but `/gate-check` (SKILL.md L114/172/225) + every UX/arch skill + ux-design Phase 2g expect `design/accessibility-requirements.md`. Gate would report a fully-Approved doc as MISSING on path alone. USER CHOSE "move to design/ (recommended)".
+- Did: `git mv` → `design/accessibility-requirements.md`; updated 3 LIVE inbound links (design/CLAUDE.md, design/art/art-bible.md ×2, design/ux/interaction-patterns.md), preserving the sibling interaction-patterns link. Left 2 dated arch-review snapshots (`architecture-review-2026-07-14*.md` — say "none exist" as of that date) + session-log/archive untouched as historical records. Verified: canonical path exists, no live doc references old path, no self-reference.
+- `design/player-journey.md` still absent — OPTIONAL context (skill Phase 2b), NOT a gate blocker; gate-check L519 treats it as a create-if-wanted, not a hard requirement.
+- NEXT: `/gate-check production` (a.k.a. Technical Setup → Pre-Production). Both blockers cleared.
 
 ## Session Extract — /test-setup confirmed already-complete + engine-drift fix 2026-07-17c
 - Ran `/test-setup`. Skill defaults to gdUnit4 — IGNORED; project uses GUT (per CLAUDE.md/coding-standards). Full infra already existed from 2026-07-14: `.github/workflows/tests.yml` (correct GUT CI), `.gutconfig.json`, `tests/README.md`, `tests/smoke/critical-paths.md`, full unit+integration tree (913 tests). The prior handoff's "CI workflow doesn't exist yet" was STALE/wrong.

@@ -470,7 +470,7 @@ An outsourced artist must verify all of the following before delivery:
 
 > **Serves**: Pillar 4 (Colorful mechanical wilderness) and Pillar 3 (Readable
 > tactics). Every semantic color carries a mandatory non-color co-channel — the
-> accessibility contract from §1.3 and `design/ux/accessibility-requirements.md`
+> accessibility contract from §1.3 and `design/accessibility-requirements.md`
 > §1.3 (Basic tier, BLOCKING) is enforced here at the palette level, not left to
 > individual screens.
 >
@@ -683,7 +683,7 @@ contract (§1.3), so no player has to find a setting to be able to play.
 
 ## 7. UI/HUD Visual Direction
 
-[To be authored — deferred. Will reconcile with `design/ux/interaction-patterns.md` + `design/ux/accessibility-requirements.md` (GAG Basic).]
+[To be authored — deferred. Will reconcile with `design/ux/interaction-patterns.md` + `design/accessibility-requirements.md` (GAG Basic).]
 
 ---
 

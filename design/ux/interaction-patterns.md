@@ -9,7 +9,7 @@
 > referenced.
 
 **Cross-references (binding):**
-- `design/ux/accessibility-requirements.md` — GAG Basic tier; every pattern inherits its
+- `design/accessibility-requirements.md` — GAG Basic tier; every pattern inherits its
   rules (§ Global Interaction Principles below folds them in so entries don't repeat them).
 - `docs/architecture/adr-0008-ui-architecture.md` — `Screen` base + `setup(ctx)` injection,
   signal-driven views (no `_process` polling), unified touch press-release, shared Theme
