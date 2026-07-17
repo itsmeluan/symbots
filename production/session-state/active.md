@@ -1,10 +1,19 @@
 # Active Session State
 
 <!-- STATUS -->
-Epic: Save/Load Foundation epic COMPLETE (6/6) + Drop System now 9/9 (DS-009 release-blocker CLEARED). Core layer 5/5 + Save/Load all done.
-Feature: Full GUT suite 913/913 green, 4740 asserts. Provider-envelope persistence (ADR-0001) + drop provider shipped; DS-009 pity-persistence passes end-to-end.
-Task: NEXT → /gate-check production. BOTH pre-gate blockers now resolve: /test-setup DONE (GUT infra pre-existed; fixed 4.6→4.7 CI+README drift) + /ux-design DONE (interaction-patterns.md + accessibility-requirements.md both pre-existed & Approved; fixed accessibility doc PATH design/ux/→design/ so gate-check resolves it). No blocking persistence work remains.
+Epic: Vertical Slice (Pre-Production) — Phase 4a headless harness COMPLETE. Loop proven end-to-end on real core+content.
+Feature: assemble stock Symbot → break Rustcrawler arm → harvest RARE reinforced_servo_arm → re-equip → felt stat delta (physical_power +11). 913/913 GUT green.
+Task: NEXT → Phase 4b (battle screen Control) per BUILD-PLAN — first interactive UI; needs Luan to run Godot + report. Balance retune of rustcrawler.tres logged as slice Finding 4.
 <!-- /STATUS -->
+
+## Session Extract — Vertical Slice Phase 4a headless harness COMPLETE 2026-07-17e
+- CONCEPT: Symbots vertical slice — validation Q: "stock Symbot → break a component → harvest the targeted part → re-equip → feel stronger, ~3 min unguided; AND buildable at representative quality on the existing core?" Scope: 1v1, team-swap CUT. Art quality: headless (no UI yet); 4b+ = touch-first Control per ADR-0008.
+- BUILT (all in `prototypes/symbots-vertical-slice/`, throwaway — never into src/): `slice_bootstrap.gd` (Phase 4a harness, SceneTree), `slice_log_sink.gd` (concrete LogSink, preloaded not class_name), README.md, BUILD-PLAN.md. Reuses REAL src/core (SymbotBuild, BattleController, DropSystem, DF-1) + REAL .tres content. Synthesizes only (a) a basic_attack MoveDef (moves unauthored) + (b) the Part-Break subscriber (hit_resolved→region-HP tally→note_break_event — presentation-tier, unbuilt in src).
+- RESULT: loop PROVEN end-to-end, zero crashes. Fight 6 (seed 20260717) drops RARE scrapjaw_reinforced_servo_arm; re-equip over common servo_arm → physical_power 24→35 (+11), structure +3, mobility +1. 913/913 GUT green, 4740 asserts after the content change.
+- BALANCE FINDING (Finding 4 in BUILD-PLAN): first run LOST all 40 fights. Instrumented (real BattleController): stock all-common build (42 struct, basic ×1.0, no weapon skill) deals ~13/hit (7 hits to kill) but dies in 3 (~15/hit taken); enemy roster is ALL tuned for developed builds (CORE leveling + authored weapon skills). USER DECISION = "retune real content now". Ran a real-BattleController tuning sim over 5 candidates; USER PICKED 52/12/11.
+- EDIT to `assets/data/enemies/rustcrawler.tres`: structure 85→52, physical_power 24→12, mobility 22→11; break_hp recomputed 29→18 (arm, ×0.35) & 18→11 (head, ×0.22) to satisfy enemy_validator (stored==derive_break_hp, break_hp<structure). xp_value 55 unchanged (derives from level+class, not structure). Validates clean (test_enemy_db_valid_catalog_loads_true_no_errors passes). Harvest path wins ~40% HP left / efficient path ~64% — legible risk-reward.
+- OPEN content gaps for Production (NOT slice blockers): (a) no authored STARTER LOADOUT (harness picks first-common-per-slot arbitrarily); (b) no authored WEAPON MOVES — parts carry no active_skill_id (Finding 1); (c) Part-Break subscriber must be promoted to a real system (Finding 2).
+- NEXT: Phase 4b battle screen (Control) — first interactive UI, touch-first, drives submit_action seam by hand. Multi-turn: Luan runs Godot + reports. Then 4c drop reveal, 4d workshop, 4e playtest + REPORT.md (PROCEED/PIVOT/KILL).
 
 ## Session Extract — /ux-design confirmed already-complete + accessibility PATH fix 2026-07-17d
 - Ran `/ux-design` (no arg). BOTH gate artifacts already existed & Approved from 2026-07-14: `design/ux/interaction-patterns.md` (466 lines, 9 patterns + 2 primitives, seeded from battle.md — correct path) and the accessibility doc (GAG Basic tier, 5 decisions locked). Bonus: `design/ux/battle.md` (36 KB full battle-screen UX spec) also exists. The prior handoff's "pre-gate blocker doesn't exist" was STALE.

@@ -66,6 +66,20 @@ re-equip over the common `servo_arm` → stats visibly rise.
 3. **Rare-arm level gating.** If `reinforced_servo_arm` carries a `level_req` above
    the stock core level, the harvest is gated by CoreProgression — the harness
    reports this explicitly rather than hiding it.
+4. **The stock start beat no authored enemy — the roster assumes progression a fresh
+   build lacks.** First run: the all-common stock build (42 structure, basic-attack
+   ×1.0, no weapon skill) **lost every fight**. Instrumented cause: ~13 dmg/hit → ~7
+   hits to kill, while dying in 3 — a race it loses even ignoring the break. The whole
+   enemy roster is tuned for developed builds (CORE leveling → structure; authored
+   weapon skills → damage), neither of which a stock start has. **Resolution (user
+   decision — retune real content):** the flavored "first contact" enemy Rustcrawler is
+   now a true tutorial fight beatable by a stock build — structure 85→52, physical_power
+   24→12, mobility 22→11 (`break_hp` recomputed 29/18→18/11 to satisfy the enemy
+   validator). Real-`BattleController` sim: harvest path wins with ~40% structure left,
+   efficient path ~64% — a legible risk/reward the first fight teaches. **Two deeper
+   content gaps stay OPEN for Production:** (a) no authored *starter loadout* (harness
+   picks first-common-per-slot arbitrarily); (b) no authored *weapon moves* (Finding 1)
+   — parts carry no `active_skill_id`.
 
 ## Hard limit
 
@@ -74,4 +88,8 @@ and surface the blocker. Velocity is logged in `REPORT.md`.
 
 ## Velocity Log
 
-- **2026-07-17 (day 1):** Phase 4a — headless harness. [in progress]
+- **2026-07-17 (day 1):** Phase 4a headless harness **COMPLETE**. Loop proven
+  end-to-end against real content: stock all-common Scrapjaw build → break Rustcrawler
+  arm → harvest RARE `reinforced_servo_arm` (fight 6, seeded RNG) → re-equip →
+  **physical_power +11** (24→35), structure +3, mobility +1. 913/913 GUT green after
+  the content change. Balance finding surfaced + resolved (Finding 4).
