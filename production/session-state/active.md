@@ -3,8 +3,14 @@
 <!-- STATUS -->
 Epic: Save/Load Foundation epic COMPLETE (6/6) + Drop System now 9/9 (DS-009 release-blocker CLEARED). Core layer 5/5 + Save/Load all done.
 Feature: Full GUT suite 913/913 green, 4740 asserts. Provider-envelope persistence (ADR-0001) + drop provider shipped; DS-009 pity-persistence passes end-to-end.
-Task: NEXT → Technical Setup → Pre-Production gate (/test-setup, /ux-design), then /gate-check production. No blocking persistence work remains.
+Task: NEXT → /ux-design (interaction-patterns + accessibility-requirements — the remaining pre-gate blocker), then /gate-check production. /test-setup DONE (infra pre-existed from 2026-07-14, correct for GUT; fixed stale 4.6→4.7 CI+README drift 2026-07-17). No blocking persistence work remains.
 <!-- /STATUS -->
+
+## Session Extract — /test-setup confirmed already-complete + engine-drift fix 2026-07-17c
+- Ran `/test-setup`. Skill defaults to gdUnit4 — IGNORED; project uses GUT (per CLAUDE.md/coding-standards). Full infra already existed from 2026-07-14: `.github/workflows/tests.yml` (correct GUT CI), `.gutconfig.json`, `tests/README.md`, `tests/smoke/critical-paths.md`, full unit+integration tree (913 tests). The prior handoff's "CI workflow doesn't exist yet" was STALE/wrong.
+- ONE real fix: CI + README pinned **Godot 4.6** but toolchain was re-pinned to **4.7** on 2026-07-15 (binary = 4.7.stable.official, project.godot = 4.7). CI would've run the suite on the wrong engine. Bumped `.github/workflows/tests.yml` (`setup-godot` version 4.6.0→4.7.0 + comment) and `tests/README.md` (engine 4.6→4.7). GUT 9.6.1 in README is CORRECT (a session note's "9.7.1" was a misremember).
+- CAVEAT: could not verify `chickensoft-games/setup-godot@v2` publishes a `"4.7.0"` tag (network-gated; 4.7 is bleeding-edge in-timeline). Value now matches VERSION.md's pin; if the first CI run 404s on the version, adjust the tag to whatever the action offers (e.g. `4.7-stable`) — the fix is the *engine target*, not the exact string.
+- NEXT: `/ux-design` → `/gate-check production`.
 
 ## ⇒ HANDOFF FOR NEXT SESSION (2026-07-17b) — Save/Load epic + DS-009 DONE
 

@@ -22,13 +22,14 @@ jobs:
         with:
           lfs: true
 
-      # Installs the Godot 4.6 headless binary. GDScript-only project → no .NET.
-      # Verify the version string against docs/engine-reference/godot/VERSION.md
-      # when bumping the engine.
-      - name: Set up Godot 4.6
+      # Installs the Godot 4.7 headless binary. GDScript-only project → no .NET.
+      # Version pinned to docs/engine-reference/godot/VERSION.md (re-pinned
+      # 4.6 → 4.7 on 2026-07-15 to match the installed 4.7.stable.official
+      # toolchain). Verify the version string against VERSION.md when bumping.
+      - name: Set up Godot 4.7
         uses: chickensoft-games/setup-godot@v2
         with:
-          version: "4.6.0"
+          version: "4.7.0"
           use-dotnet: false
           include-templates: false
 

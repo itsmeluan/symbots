@@ -1,9 +1,9 @@
 # Test Infrastructure
 
-**Engine**: Godot 4.6
+**Engine**: Godot 4.7
 **Test Framework**: GUT (Godot Unit Testing) v9.6.1 — https://github.com/bitwes/Gut
 **CI**: `.github/workflows/tests.yml`
-**Setup date**: 2026-07-14
+**Setup date**: 2026-07-14 (engine re-pinned 4.6 → 4.7 on 2026-07-15)
 
 ## Directory Layout
 
@@ -29,7 +29,7 @@ matches a `test_` *prefix*, but this project names test files with a `_test.gd`
 *suffix* (`combat_damage_test.gd`), so `-gdir` alone finds **nothing**. The
 config carries `prefix: ""` + `suffix: "_test.gd"` to match the convention.
 
-**From the editor:** open the project in Godot 4.6, then use the **GUT** bottom
+**From the editor:** open the project in Godot 4.7, then use the **GUT** bottom
 panel (the plugin is enabled in `project.godot`). Point it at `res://tests` and
 run.
 
