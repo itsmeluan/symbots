@@ -185,6 +185,10 @@ func _start_fight() -> void:
 # ---------------------------------------------------------------------------
 func _on_target_selected(sub_target: StringName) -> void:
 	_current_target = sub_target
+	# Re-mark the enemy readout immediately so the aim shows before you attack.
+	# ctx is live between rounds (ACTION_PENDING); _refresh no-ops if it isn't.
+	if not _battle_over:
+		_refresh()
 
 
 func _on_attack_pressed() -> void:
@@ -272,13 +276,18 @@ func _refresh() -> void:
 	var p := ctx.active()
 	var e := ctx.enemy
 	_set_bar(_enemy_struct_bar, e.current_structure, e.max_structure)
-	_enemy_struct_label.text = "STRUCTURE  %d/%d" % [e.current_structure, e.max_structure]
-	_set_bar(_arm_bar, mini(_arm_dmg, _arm_break_hp), _arm_break_hp)
-	_arm_label.text = ("ARM  BROKEN ✓" if _arm_broken else "ARM  %d/%d" % [
-		mini(_arm_dmg, _arm_break_hp), _arm_break_hp])
-	_set_bar(_head_bar, mini(_head_dmg, _head_break_hp), _head_break_hp)
-	_head_label.text = ("HEAD  BROKEN ✓" if _head_broken else "HEAD  %d/%d" % [
-		mini(_head_dmg, _head_break_hp), _head_break_hp])
+	_set_enemy_readout(_enemy_struct_label, BattleResolver.STRUCTURE,
+		"STRUCTURE  %d/%d" % [e.current_structure, e.max_structure])
+	# Break bars now read as the PART's own HP: they start FULL and DEPLETE as you batter
+	# them (playtest 4e: a bar that grew toward "broken" was counterintuitive).
+	var arm_rem := _arm_break_hp - mini(_arm_dmg, _arm_break_hp)
+	_set_bar(_arm_bar, arm_rem, _arm_break_hp)
+	_set_enemy_readout(_arm_label, &"arm",
+		"ARM  BROKEN ✓" if _arm_broken else "ARM  %d/%d" % [arm_rem, _arm_break_hp])
+	var head_rem := _head_break_hp - mini(_head_dmg, _head_break_hp)
+	_set_bar(_head_bar, head_rem, _head_break_hp)
+	_set_enemy_readout(_head_label, &"head",
+		"HEAD  BROKEN ✓" if _head_broken else "HEAD  %d/%d" % [head_rem, _head_break_hp])
 	_set_bar(_player_struct_bar, p.current_structure, p.max_structure)
 	_player_struct_label.text = "STRUCTURE  %d/%d" % [p.current_structure, p.max_structure]
 	_set_bar(_player_energy_bar, p.current_energy, p.max_energy_capacity)
@@ -318,6 +327,9 @@ func _build_ui() -> void:
 	scroll.add_child(info)
 
 	# --- Enemy panel ---
+	# The target picker lives INSIDE this panel, directly under the enemy's readouts,
+	# so "ARM / HEAD / CORE" reads unambiguously as "which part of THIS enemy do I hit"
+	# (playtest 4e: at the bottom, between your Symbot and ATTACK, it read as ambiguous).
 	var enemy_panel := _panel(info)
 	_enemy_name_label = _label(enemy_panel, "Rustcrawler", 22, true)
 	_enemy_struct_label = _label(enemy_panel, "STRUCTURE  --/--", 15)
@@ -326,6 +338,15 @@ func _build_ui() -> void:
 	_arm_bar = _bar(enemy_panel, COL_BREAK)
 	_head_label = _label(enemy_panel, "HEAD  0/0", 14)
 	_head_bar = _bar(enemy_panel, COL_BREAK)
+
+	_label(enemy_panel, "AIM AT →", 13)
+	var target_row := HBoxContainer.new()
+	target_row.add_theme_constant_override("separation", 10)
+	enemy_panel.add_child(target_row)
+	var group := ButtonGroup.new()
+	_add_target_btn(target_row, group, "ARM", &"arm", true)
+	_add_target_btn(target_row, group, "HEAD", &"head", false)
+	_add_target_btn(target_row, group, "CORE", BattleResolver.STRUCTURE, false)
 
 	# --- Log panel ---
 	var log_panel := _panel(info)
@@ -342,17 +363,8 @@ func _build_ui() -> void:
 	_player_energy_bar = _bar(player_panel, COL_ENERGY)
 	_player_heat_label = _label(player_panel, "HEAT  0", 14)
 
-	# --- Action bar (pinned below the scroll) ---
+	# --- Action bar (pinned below the scroll) — just the commit button now ---
 	var action_panel := _panel(root)
-	_label(action_panel, "TARGET", 14)
-	var target_row := HBoxContainer.new()
-	target_row.add_theme_constant_override("separation", 10)
-	action_panel.add_child(target_row)
-	var group := ButtonGroup.new()
-	_add_target_btn(target_row, group, "ARM", &"arm", true)
-	_add_target_btn(target_row, group, "HEAD", &"head", false)
-	_add_target_btn(target_row, group, "CORE", BattleResolver.STRUCTURE, false)
-
 	_attack_btn = Button.new()
 	_attack_btn.text = "ATTACK"
 	_attack_btn.custom_minimum_size = Vector2(0, 64)
@@ -463,6 +475,15 @@ func _label(parent: Node, text: String, size: int, bold: bool = false) -> Label:
 		l.add_theme_color_override("font_color", Color(1, 1, 1))
 	parent.add_child(l)
 	return l
+
+
+# Set an enemy readout label's text + a ▶ marker/brightness when it is the current aim,
+# so the player can see which enemy part their next hit lands on before committing.
+func _set_enemy_readout(label: Label, sub: StringName, body: String) -> void:
+	var selected := _current_target == sub
+	label.text = ("▶ " if selected else "   ") + body
+	label.add_theme_color_override("font_color",
+		Color(1, 1, 1) if selected else Color(0.62, 0.64, 0.68))
 
 
 func _bar(parent: Node, fill_color: Color) -> ProgressBar:
