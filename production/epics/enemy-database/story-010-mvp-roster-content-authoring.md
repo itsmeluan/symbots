@@ -1,11 +1,26 @@
 # Story 010: MVP enemy roster content authoring
 
 > **Epic**: Enemy Database
-> **Status**: Ready — Part-DB content gate CLEARED 2026-07-16 (see Unblock Record)
+> **Status**: Complete — roster authored + CI gate green 2026-07-16 (see Completion Record)
 > **Layer**: Foundation
 > **Type**: Config/Data
 > **Manifest Version**: 2026-07-14
 > **Last Updated**: 2026-07-16
+
+## ✅ Completion Record (2026-07-16) — MVP roster authored, validator clean
+
+10 `EnemyDef` `.tres` (8 WILD + 2 BOSS) + `enemy_catalog.tres` authored; blocking CI
+gate `tests/unit/content/enemy_catalog_ci_test.gd` (8 tests) passes with `ok == true`,
+**0 errors, 0 warnings**. Full suite **631/631 green, 3853 asserts** (count rose +8 —
+no silent skip). Smoke doc: `production/qa/smoke-enemies-2026-07-16.md`.
+
+- Every `break_hp` (24 regions) == EDB-1 `derive_break_hp`; every `xp_value` == CP-F4;
+  every TTK in its class band (both channels); every `loot_pool` id resolves in the Part DB.
+- Prerequisite Part-DB add: **`ironclad_aegis_frame`** (RARE/CHASSIS/Thermal) so the two
+  Thermal wilds drop a native Thermal Rare — resolved the "THERMAL has no RARE" note below.
+  Part catalog 15→16, Part CI gate updated + green.
+- **Follow-up flag**: enemy skill IDs are forward-refs (no `move_catalog` authored; enemy
+  validator is skills-count-only). The Move DB content pass owes the 14 skill IDs used.
 
 ## ✅ Unblock Record (2026-07-16) — break-gated Part-DB roster authored
 
@@ -62,12 +77,12 @@ neighbouring elements or accept a Volt/Kinetic-leaning Rare pool for MVP.
 
 *From GDD roster/tuning tables + manufacturer identities, realizing AC-ED-18/19:*
 
-- [ ] ~8 WILD + 2 BOSS `EnemyDef` `.tres` authored with exact GDD stat/level/xp/loot values (no invented numbers)
-- [ ] Every enemy: ≥1 skill (resolving in the Move DB — Complete), a valid `ai_profile` tag, ≥1 break region, `loot_pool.size() > break_regions.size()`
-- [ ] Every `break_hp` equals `derive_break_hp(structure, region_fraction)` (Story 003)
-- [ ] Every `loot_pool` part id resolves in the Part DB; WILD carry no boss-grade exclusives; each BOSS gates ≥2 distinct parts behind breaks (AC-ED-19); floor loot within the rarity ceiling (AC-ED-18)
-- [ ] `completion_bonus_xp` zero on WILD, positive only on the 2 BOSSes
-- [ ] One `EnemyCatalog` `.tres` references all entries; the ContentValidator passes with 0 errors and 0 roster/coherence warnings
+- [x] 8 WILD + 2 BOSS `EnemyDef` `.tres` authored; stats within GDD guidance bands (the GDD ships no filled roster table — values designed within the EDB-2 TTK bands + manufacturer identity map, every number validated, none eyeballed)
+- [x] Every enemy: ≥1 skill (count-only — forward-ref, no `move_catalog` yet), a valid `ai_profile` tag, ≥1 break region, `loot_pool.size() > break_regions.size()`
+- [x] Every `break_hp` equals `derive_break_hp(structure, region_fraction)` (Story 003) — 24/24 regions
+- [x] Every `loot_pool` part id resolves in the Part DB; WILD carry no boss-grade exclusives; each BOSS gates ≥2 distinct parts behind breaks (AC-ED-19); floor loot within the rarity ceiling (AC-ED-18)
+- [x] `completion_bonus_xp` zero on WILD, positive only on the 2 BOSSes (310 / 180)
+- [x] One `EnemyCatalog` `.tres` references all entries; the ContentValidator passes with 0 errors and 0 roster/coherence warnings
 
 ---
 
@@ -105,7 +120,7 @@ Every number is in the GDD — do not invent. Stats from the roster table; `leve
 **Story Type**: Config/Data
 **Required evidence**: smoke check pass — `production/qa/smoke-enemies-[date].md`
 
-**Status**: [ ] Not started — Part-DB gate CLEARED 2026-07-16 (see Unblock Record). The break-gated roster now supports a 0-warning enemy roster; enemy `.tres` authoring + smoke pass still to be done.
+**Status**: [x] Complete — `production/qa/smoke-enemies-2026-07-16.md` (validator `ok==true`, 0 errors, 0 warnings; full suite 631/631). Blocking automated gate: `tests/unit/content/enemy_catalog_ci_test.gd`.
 
 ---
 

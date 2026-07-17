@@ -1,0 +1,64 @@
+[gd_resource type="Resource" script_class="EnemyDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/enemy_def.gd" id="1_enemy"]
+
+[resource]
+script = ExtResource("1_enemy")
+id = &"storm_warden"
+display_name = "Storm Warden"
+enemy_class = 2
+tier = 1
+core_element = 1
+stats = {
+"structure": 450,
+"armor": 30,
+"resistance": 38,
+"physical_power": 0,
+"energy_power": 64,
+"mobility": 24,
+"processing": 30
+}
+skills = Array[StringName]([&"skill_storm_lance", &"skill_arc_pulse", &"skill_overload_nova"])
+ai_profile = &"TACTICAL"
+break_regions = Array[Dictionary]([{
+"region_id": "weapon",
+"region_fraction": 0.40,
+"break_hp": 180,
+"break_event": "weapon_broken"
+}, {
+"region_id": "core",
+"region_fraction": 0.30,
+"break_hp": 135,
+"break_event": "core_exposed"
+}, {
+"region_id": "head",
+"region_fraction": 0.22,
+"break_hp": 99,
+"break_event": "head_broken"
+}])
+loot_pool = Array[Dictionary]([{
+"id": "boltwell_storm_lance",
+"drop_condition": "weapon_broken",
+"enabled": true
+}, {
+"id": "boltwell_arc_blaster",
+"drop_condition": "weapon_broken",
+"enabled": true
+}, {
+"id": "boltwell_surge_core",
+"drop_condition": "core_exposed",
+"enabled": true
+}, {
+"id": "boltwell_targeting_array",
+"drop_condition": "head_broken",
+"enabled": true
+}, {
+"id": "boltwell_cell_mk1",
+"drop_condition": "core_exposed",
+"enabled": true
+}])
+spawn_enabled = true
+flavor_text = "A Boltwell command unit crackling with stormlight. Its lance was never meant to leave the cradle."
+level = 6
+xp_value = 190
+completion_bonus_xp = 180

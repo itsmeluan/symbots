@@ -1,0 +1,64 @@
+[gd_resource type="Resource" script_class="EnemyDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/enemy_def.gd" id="1_enemy"]
+
+[resource]
+script = ExtResource("1_enemy")
+id = &"rust_tyrant"
+display_name = "Rust Tyrant"
+enemy_class = 2
+tier = 1
+core_element = 3
+stats = {
+"structure": 440,
+"armor": 35,
+"resistance": 30,
+"physical_power": 58,
+"energy_power": 0,
+"mobility": 20,
+"processing": 24
+}
+skills = Array[StringName]([&"skill_crusher_claw", &"skill_rust_swipe", &"skill_quake_stomp"])
+ai_profile = &"AGGRESSIVE"
+break_regions = Array[Dictionary]([{
+"region_id": "arm",
+"region_fraction": 0.35,
+"break_hp": 154,
+"break_event": "arm_broken"
+}, {
+"region_id": "head",
+"region_fraction": 0.25,
+"break_hp": 110,
+"break_event": "head_broken"
+}, {
+"region_id": "core",
+"region_fraction": 0.40,
+"break_hp": 176,
+"break_event": "core_exposed"
+}])
+loot_pool = Array[Dictionary]([{
+"id": "scrapjaw_rustcrawler_claw",
+"drop_condition": "arm_broken",
+"enabled": true
+}, {
+"id": "scrapjaw_reinforced_servo_arm",
+"drop_condition": "arm_broken",
+"enabled": true
+}, {
+"id": "boltwell_targeting_array",
+"drop_condition": "head_broken",
+"enabled": true
+}, {
+"id": "scrapjaw_scrap_core",
+"drop_condition": "core_exposed",
+"enabled": true
+}, {
+"id": "scrapjaw_servo_arm",
+"drop_condition": "arm_broken",
+"enabled": true
+}])
+spawn_enabled = true
+flavor_text = "The Rustcrawlers' apex — a scrap-forged warlord that grew by devouring its own kind."
+level = 5
+xp_value = 170
+completion_bonus_xp = 310

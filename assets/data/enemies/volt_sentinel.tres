@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="EnemyDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/enemy_def.gd" id="1_enemy"]
+
+[resource]
+script = ExtResource("1_enemy")
+id = &"volt_sentinel"
+display_name = "Volt Sentinel"
+enemy_class = 1
+tier = 1
+core_element = 1
+stats = {
+"structure": 120,
+"armor": 28,
+"resistance": 32,
+"physical_power": 0,
+"energy_power": 30,
+"mobility": 16,
+"processing": 20
+}
+skills = Array[StringName]([&"skill_arc_pulse", &"skill_guard_protocol"])
+ai_profile = &"TACTICAL"
+break_regions = Array[Dictionary]([{
+"region_id": "head",
+"region_fraction": 0.24,
+"break_hp": 28,
+"break_event": "head_broken"
+}, {
+"region_id": "core",
+"region_fraction": 0.30,
+"break_hp": 36,
+"break_event": "core_exposed"
+}])
+loot_pool = Array[Dictionary]([{
+"id": "boltwell_logic_chip",
+"drop_condition": "core_exposed",
+"enabled": true
+}, {
+"id": "boltwell_cell_mk1",
+"drop_condition": "core_exposed",
+"enabled": true
+}, {
+"id": "boltwell_targeting_array",
+"drop_condition": "head_broken",
+"enabled": true
+}])
+spawn_enabled = true
+flavor_text = "A Boltwell guard unit. Patient, well-shielded, and quick to punish an opening."
+level = 3
+xp_value = 65
+completion_bonus_xp = 0

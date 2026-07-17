@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="EnemyDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/enemy_def.gd" id="1_enemy"]
+
+[resource]
+script = ExtResource("1_enemy")
+id = &"slag_hauler"
+display_name = "Slag Hauler"
+enemy_class = 1
+tier = 1
+core_element = 2
+stats = {
+"structure": 150,
+"armor": 34,
+"resistance": 30,
+"physical_power": 22,
+"energy_power": 26,
+"mobility": 6,
+"processing": 10
+}
+skills = Array[StringName]([&"skill_slag_hurl", &"skill_heat_vent"])
+ai_profile = &"TACTICAL"
+break_regions = Array[Dictionary]([{
+"region_id": "chassis",
+"region_fraction": 0.45,
+"break_hp": 67,
+"break_event": "chassis_cracked"
+}, {
+"region_id": "weapon",
+"region_fraction": 0.30,
+"break_hp": 45,
+"break_event": "weapon_broken"
+}])
+loot_pool = Array[Dictionary]([{
+"id": "ironclad_bulwark_frame",
+"drop_condition": "chassis_cracked",
+"enabled": true
+}, {
+"id": "ironclad_aegis_frame",
+"drop_condition": "chassis_cracked",
+"enabled": true
+}, {
+"id": "scrapjaw_bash_hammer",
+"drop_condition": "weapon_broken",
+"enabled": true
+}])
+spawn_enabled = true
+flavor_text = "A hulking Ironclad transport turned brawler. It hurls molten slag and shrugs off the return fire."
+level = 4
+xp_value = 75
+completion_bonus_xp = 0

@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="EnemyDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/enemy_def.gd" id="1_enemy"]
+
+[resource]
+script = ExtResource("1_enemy")
+id = &"dune_prowler"
+display_name = "Dune Prowler"
+enemy_class = 1
+tier = 1
+core_element = 3
+stats = {
+"structure": 72,
+"armor": 18,
+"resistance": 15,
+"physical_power": 28,
+"energy_power": 0,
+"mobility": 30,
+"processing": 10
+}
+skills = Array[StringName]([&"skill_sand_dash", &"skill_claw_rake"])
+ai_profile = &"OPPORTUNIST"
+break_regions = Array[Dictionary]([{
+"region_id": "arm",
+"region_fraction": 0.32,
+"break_hp": 23,
+"break_event": "arm_broken"
+}, {
+"region_id": "core",
+"region_fraction": 0.22,
+"break_hp": 15,
+"break_event": "core_exposed"
+}])
+loot_pool = Array[Dictionary]([{
+"id": "scrapjaw_servo_arm",
+"drop_condition": "arm_broken",
+"enabled": true
+}, {
+"id": "scrapjaw_scrap_core",
+"drop_condition": "core_exposed",
+"enabled": true
+}, {
+"id": "boltwell_surge_core",
+"drop_condition": "core_exposed",
+"enabled": true
+}])
+spawn_enabled = true
+flavor_text = "A low-slung raider built for the open flats. It circles, then lunges for the core."
+level = 2
+xp_value = 55
+completion_bonus_xp = 0

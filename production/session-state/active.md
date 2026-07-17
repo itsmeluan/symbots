@@ -1,10 +1,21 @@
 # Active Session State
 
 <!-- STATUS -->
-Epic: Foundation Layer — 5/6 epics IMPLEMENTED; Consumable DB (8/8) FORMALLY CLOSED via per-story gate 2026-07-16
-Feature: NEXT SESSION → gate Passive DB (7 stories, same closure gap) via per-story /code-review + /story-done
-Task: Then implement Enemy DB (10 stories, last unimplemented) → /story-readiness → /dev-story on enemy story-001
+Epic: Foundation Layer — ✅ FULLY COMPLETE (all 6 epics done & green 2026-07-16)
+Feature: Enemy DB closed — Story 010 MVP roster authored, CI gate ok==true / 0 err / 0 warn; suite 631/631
+Task: NEXT → /create-epics layer: core
 <!-- /STATUS -->
+
+## Session Extract — Enemy DB CLOSED (Story 010 roster authored) → Foundation COMPLETE 2026-07-16
+- **Directive:** "author Story 010" — the MVP enemy roster (last open Foundation work). Prerequisite sub-ask "add a thermal rare part first" honored. Done inline (never-1M constraint; zero Agent/Task subagents).
+- **Authored:** 10 `EnemyDef` `.tres` in `assets/data/enemies/` (8 WILD + 2 BOSS) + `assets/data/catalogs/enemy_catalog.tres`. Blocking CI gate `tests/unit/content/enemy_catalog_ci_test.gd` (8 tests): loads real roster CACHE_MODE_REPLACE, injects Part-DB `set_part_lookup` seam → validator `ok==true`, **0 errors, 0 warnings**.
+- **Prerequisite Part-DB add:** `ironclad_aegis_frame.tres` (RARE/CHASSIS/Thermal/Ironclad, passive `pass_ablative`, `chassis_cracked` ×3.0; structure 30/armor 8/resistance 6 = 44, inside CHASSIS-RARE budget [38,46]) so the 2 Thermal wilds drop a native Thermal Rare. Part catalog 15→16; part CI updated (+`pass_ablative`, count→16).
+- **All math verified before authoring:** every `break_hp` (24 regions) == EDB-1 `derive_break_hp`; every `xp_value` (10) == CP-F4; every TTK in class band both channels (WILD-early 2–4, WILD-mid 3–5, BOSS 12–18); every `loot_pool` id resolves in Part DB.
+- **Verify:** full suite **631/631 GUT green, 3853 asserts, 46 scripts** (count rose +8 — no silent skip; ran `--import` first). Smoke: `production/qa/smoke-enemies-2026-07-16.md`.
+- **LESSON (logged prior):** stat budgets live as `@export` DEFAULTS in `balance_config.gd`, NOT in `balance_config.tres` — validator correctly rejected the first aegis_frame at sum 51. Also: `PartDef.Element` has NO 0 member (starts VOLT=1); null-element is the raw int 0 (the `core_element` default sentinel) — CI checks `elements.has(0)` directly.
+- **Follow-up flag (non-blocking):** enemy skill IDs are forward-refs — no `move_catalog` content authored; enemy validator is skills-count-only. Move DB content pass owes the 14 skill IDs.
+- **Bookkeeping done:** story-010 Status→Complete + Completion Record + ACs checked + Test Evidence→Complete; EPIC.md Status→Complete (10/10) + Next Step; index.md Enemy row→Complete + Foundation layer→fully Complete + Next Step→/create-epics layer: core.
+- **NEXT:** Foundation is fully delivered → offer `/create-epics layer: core`.
 
 ## ⇒ HANDOFF FOR NEXT SESSION (2026-07-16 EOD) — Passive DB per-story gate
 **Do this first in the new session.** Consumable DB is fully closed (8/8, per-story gate). User will now run the SAME gate on **Passive DB (7 stories)** — implemented + green but stories are marked "Passing"/"Done", never through the formal `/code-review` + `/story-done` closure gate (no verdicts / Completion Notes / code-review evidence). Repeat exactly what was just done for Consumable DB:

@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="EnemyDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/enemy_def.gd" id="1_enemy"]
+
+[resource]
+script = ExtResource("1_enemy")
+id = &"scrapjaw_skirmisher"
+display_name = "Scrapjaw Skirmisher"
+enemy_class = 1
+tier = 1
+core_element = 3
+stats = {
+"structure": 78,
+"armor": 16,
+"resistance": 16,
+"physical_power": 26,
+"energy_power": 0,
+"mobility": 26,
+"processing": 8
+}
+skills = Array[StringName]([&"skill_hammer_smash", &"skill_quick_step"])
+ai_profile = &"OPPORTUNIST"
+break_regions = Array[Dictionary]([{
+"region_id": "weapon",
+"region_fraction": 0.30,
+"break_hp": 23,
+"break_event": "weapon_broken"
+}, {
+"region_id": "leg",
+"region_fraction": 0.20,
+"break_hp": 15,
+"break_event": "leg_broken"
+}])
+loot_pool = Array[Dictionary]([{
+"id": "scrapjaw_bash_hammer",
+"drop_condition": "weapon_broken",
+"enabled": true
+}, {
+"id": "wild_tread_legs",
+"drop_condition": "leg_broken",
+"enabled": true
+}, {
+"id": "boltwell_arc_blaster",
+"drop_condition": "weapon_broken",
+"enabled": true
+}])
+spawn_enabled = true
+flavor_text = "A Scrapjaw raider that leads with its hammer and never stops moving."
+level = 2
+xp_value = 55
+completion_bonus_xp = 0

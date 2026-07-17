@@ -3,7 +3,7 @@
 > **Layer**: Foundation
 > **GDD**: design/gdd/enemy-database.md
 > **Architecture Module**: Content DBs (Part/Move/Passive/Consumable/Enemy)
-> **Status**: In Progress — 9/10 implemented & green; Story 010 Ready (Part-DB gate CLEARED 2026-07-16)
+> **Status**: ✅ Complete — 10/10 stories done & green (MVP roster authored 2026-07-16; CI gate `ok==true`, 0 errors / 0 warnings; full suite 631/631)
 > **Stories**: 10 stories — see table below
 
 ## Overview
@@ -84,7 +84,7 @@ This epic is complete when:
 | 007 | ContentValidator loot-pool, rarity & boss-grade gating family | Logic | Complete | ADR-0003 |
 | 008 | ContentValidator harvest-decision, TTK & density/spawn warnings | Logic | Complete | ADR-0003 |
 | 009 | ContentValidator ELZS progression-field family | Logic | Complete | ADR-0003 |
-| 010 | MVP enemy roster content authoring | Config/Data | Ready (Part-DB gate cleared) | ADR-0003 |
+| 010 | MVP enemy roster content authoring | Config/Data | Complete | ADR-0003 |
 
 10 stories total: 9 Logic (7 Content-Val + 1 formula unit + 1 loader), 1 Config/Data.
 
@@ -106,13 +106,16 @@ validation + content only.
 
 ## Next Step
 
-**Stories 001–009 are implemented, tested (623/623 GUT green), and closed** — the Enemy-DB
-schema, loader, EDB-1 formula, and all six ContentValidator families are delivered. **Story 010
-(MVP roster content authoring) is now Ready** — the Part-DB content gate was CLEARED 2026-07-16
-by enriching the Part roster with an anatomy-linked break-event vocabulary (15 parts, each RARE
-break-gated, 2 distinct BOSS_GRADE exclusives; part CI 623/623 green). See the story's Unblock
-Record for the break_event → gated-parts map.
+**✅ Epic Complete (2026-07-16).** All 10 stories are implemented, tested, and closed. Story 010
+authored the MVP roster — 8 WILD + 2 BOSS `EnemyDef` `.tres` + `enemy_catalog.tres` — validated by
+the blocking CI gate `tests/unit/content/enemy_catalog_ci_test.gd` (`ok==true`, 0 errors, 0 warnings).
+Prerequisite Part-DB add: `ironclad_aegis_frame` (RARE/CHASSIS/Thermal) so the two Thermal wilds drop
+a native Thermal Rare (part catalog 15→16). Full suite **631/631 GUT green, 3853 asserts**. Smoke
+doc: `production/qa/smoke-enemies-2026-07-16.md`.
 
-Remaining work: author the ~8 WILD + 2 BOSS `EnemyDef` `.tres` + `EnemyCatalog` (Story 010),
-then close the epic. The deferred cross-system errata (Encounter Zone / TBC / Drop) stay tracked
-on their owning epics.
+With Enemy DB done, **all six Foundation epics are Complete** — Foundation layer is fully delivered.
+
+- **Follow-up (not blocking)**: enemy skill IDs are forward-refs — no `move_catalog` content exists
+  yet; the enemy validator is skills-count-only. The Move DB content pass owes the 14 skill IDs used.
+- **Deferred cross-system errata** (Encounter Zone / TBC / Drop) stay tracked on their owning epics.
+- **Next**: run `/create-epics layer: core` to begin the Core layer.

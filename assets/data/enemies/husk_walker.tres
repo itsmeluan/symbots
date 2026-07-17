@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="EnemyDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/enemy_def.gd" id="1_enemy"]
+
+[resource]
+script = ExtResource("1_enemy")
+id = &"husk_walker"
+display_name = "Husk Walker"
+enemy_class = 1
+tier = 1
+core_element = 0
+stats = {
+"structure": 88,
+"armor": 18,
+"resistance": 18,
+"physical_power": 20,
+"energy_power": 0,
+"mobility": 12,
+"processing": 8
+}
+skills = Array[StringName]([&"skill_lumber_slam"])
+ai_profile = &"AGGRESSIVE"
+break_regions = Array[Dictionary]([{
+"region_id": "leg",
+"region_fraction": 0.25,
+"break_hp": 22,
+"break_event": "leg_broken"
+}, {
+"region_id": "head",
+"region_fraction": 0.18,
+"break_hp": 15,
+"break_event": "head_broken"
+}])
+loot_pool = Array[Dictionary]([{
+"id": "wild_tread_legs",
+"drop_condition": "leg_broken",
+"enabled": true
+}, {
+"id": "wild_optic_sensor",
+"drop_condition": "head_broken",
+"enabled": true
+}, {
+"id": "boltwell_targeting_array",
+"drop_condition": "head_broken",
+"enabled": true
+}])
+spawn_enabled = true
+flavor_text = "A gutted chassis lurching on borrowed power. No core spark, no allegiance — it just walks."
+level = 3
+xp_value = 65
+completion_bonus_xp = 0

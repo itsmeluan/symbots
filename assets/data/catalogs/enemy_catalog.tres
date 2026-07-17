@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="EnemyCatalog" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/enemy_def.gd" id="1_edef"]
+[ext_resource type="Resource" path="res://assets/data/enemies/rustcrawler.tres" id="2_rustc"]
+[ext_resource type="Resource" path="res://assets/data/enemies/scrapjaw_skirmisher.tres" id="3_skirm"]
+[ext_resource type="Resource" path="res://assets/data/enemies/husk_walker.tres" id="4_husk"]
+[ext_resource type="Resource" path="res://assets/data/enemies/dune_prowler.tres" id="5_dune"]
+[ext_resource type="Resource" path="res://assets/data/enemies/volt_sentinel.tres" id="6_volts"]
+[ext_resource type="Resource" path="res://assets/data/enemies/arc_drone.tres" id="7_arc"]
+[ext_resource type="Resource" path="res://assets/data/enemies/ironclad_sentry.tres" id="8_iron"]
+[ext_resource type="Resource" path="res://assets/data/enemies/slag_hauler.tres" id="9_slag"]
+[ext_resource type="Resource" path="res://assets/data/enemies/rust_tyrant.tres" id="10_tyrant"]
+[ext_resource type="Resource" path="res://assets/data/enemies/storm_warden.tres" id="11_storm"]
+[ext_resource type="Script" path="res://src/core/content/enemy_catalog.gd" id="12_ecat"]
+
+[resource]
+script = ExtResource("12_ecat")
+entries = Array[ExtResource("1_edef")]([ExtResource("2_rustc"), ExtResource("3_skirm"), ExtResource("4_husk"), ExtResource("5_dune"), ExtResource("6_volts"), ExtResource("7_arc"), ExtResource("8_iron"), ExtResource("9_slag"), ExtResource("10_tyrant"), ExtResource("11_storm")])

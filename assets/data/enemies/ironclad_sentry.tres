@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="EnemyDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/enemy_def.gd" id="1_enemy"]
+
+[resource]
+script = ExtResource("1_enemy")
+id = &"ironclad_sentry"
+display_name = "Ironclad Sentry"
+enemy_class = 1
+tier = 1
+core_element = 2
+stats = {
+"structure": 140,
+"armor": 35,
+"resistance": 28,
+"physical_power": 18,
+"energy_power": 24,
+"mobility": 8,
+"processing": 12
+}
+skills = Array[StringName]([&"skill_bulwark_bash", &"skill_heat_vent"])
+ai_profile = &"TACTICAL"
+break_regions = Array[Dictionary]([{
+"region_id": "chassis",
+"region_fraction": 0.40,
+"break_hp": 56,
+"break_event": "chassis_cracked"
+}, {
+"region_id": "arm",
+"region_fraction": 0.30,
+"break_hp": 42,
+"break_event": "arm_broken"
+}])
+loot_pool = Array[Dictionary]([{
+"id": "ironclad_bulwark_frame",
+"drop_condition": "chassis_cracked",
+"enabled": true
+}, {
+"id": "ironclad_aegis_frame",
+"drop_condition": "chassis_cracked",
+"enabled": true
+}, {
+"id": "scrapjaw_servo_arm",
+"drop_condition": "arm_broken",
+"enabled": true
+}])
+spawn_enabled = true
+flavor_text = "An Ironclad line-holder. Slow, overbuilt, and radiating heat you have to crack through."
+level = 4
+xp_value = 75
+completion_bonus_xp = 0

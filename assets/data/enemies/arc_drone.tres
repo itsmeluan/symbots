@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="EnemyDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/enemy_def.gd" id="1_enemy"]
+
+[resource]
+script = ExtResource("1_enemy")
+id = &"arc_drone"
+display_name = "Arc Drone"
+enemy_class = 1
+tier = 1
+core_element = 1
+stats = {
+"structure": 105,
+"armor": 22,
+"resistance": 30,
+"physical_power": 0,
+"energy_power": 32,
+"mobility": 28,
+"processing": 18
+}
+skills = Array[StringName]([&"skill_arc_pulse", &"skill_dive_shock"])
+ai_profile = &"AGGRESSIVE"
+break_regions = Array[Dictionary]([{
+"region_id": "core",
+"region_fraction": 0.28,
+"break_hp": 29,
+"break_event": "core_exposed"
+}, {
+"region_id": "weapon",
+"region_fraction": 0.35,
+"break_hp": 36,
+"break_event": "weapon_broken"
+}])
+loot_pool = Array[Dictionary]([{
+"id": "boltwell_cell_mk1",
+"drop_condition": "core_exposed",
+"enabled": true
+}, {
+"id": "boltwell_logic_chip",
+"drop_condition": "core_exposed",
+"enabled": true
+}, {
+"id": "boltwell_arc_blaster",
+"drop_condition": "weapon_broken",
+"enabled": true
+}])
+spawn_enabled = true
+flavor_text = "A fast Boltwell interceptor. Dives in, discharges, and peels away before you can answer."
+level = 3
+xp_value = 65
+completion_bonus_xp = 0
