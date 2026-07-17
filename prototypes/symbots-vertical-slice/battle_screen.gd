@@ -231,43 +231,53 @@ func _build_ui() -> void:
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	for side in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, 18)
+		margin.add_theme_constant_override("margin_" + side, 12)
 	add_child(margin)
 
 	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 14)
+	root.add_theme_constant_override("separation", 10)
 	margin.add_child(root)
 
+	# Battle info (enemy / log / player) lives in a ScrollContainer so it absorbs
+	# any vertical overflow; the action bar is a sibling AFTER it, pinned to the
+	# bottom of the window and therefore always visible/clickable.
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	root.add_child(scroll)
+	var info := VBoxContainer.new()
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.add_theme_constant_override("separation", 10)
+	scroll.add_child(info)
+
 	# --- Enemy panel ---
-	var enemy_panel := _panel(root)
-	_enemy_name_label = _label(enemy_panel, "Rustcrawler", 24, true)
-	_enemy_struct_label = _label(enemy_panel, "STRUCTURE  --/--", 16)
+	var enemy_panel := _panel(info)
+	_enemy_name_label = _label(enemy_panel, "Rustcrawler", 22, true)
+	_enemy_struct_label = _label(enemy_panel, "STRUCTURE  --/--", 15)
 	_enemy_struct_bar = _bar(enemy_panel, COL_ENEMY)
-	_arm_label = _label(enemy_panel, "ARM  0/0", 15)
+	_arm_label = _label(enemy_panel, "ARM  0/0", 14)
 	_arm_bar = _bar(enemy_panel, COL_BREAK)
-	_head_label = _label(enemy_panel, "HEAD  0/0", 15)
+	_head_label = _label(enemy_panel, "HEAD  0/0", 14)
 	_head_bar = _bar(enemy_panel, COL_BREAK)
 
-	# --- Log panel (grows to fill middle) ---
-	var log_panel := _panel(root)
-	log_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_log_label = _label(log_panel, "", 18)
+	# --- Log panel ---
+	var log_panel := _panel(info)
+	_log_label = _label(log_panel, "", 17)
 	_log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_log_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_log_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_log_label.custom_minimum_size = Vector2(0, 72)
 
 	# --- Player panel ---
-	var player_panel := _panel(root)
-	_label(player_panel, "YOUR SYMBOT", 20, true)
-	_player_struct_label = _label(player_panel, "STRUCTURE  --/--", 16)
+	var player_panel := _panel(info)
+	_label(player_panel, "YOUR SYMBOT", 18, true)
+	_player_struct_label = _label(player_panel, "STRUCTURE  --/--", 15)
 	_player_struct_bar = _bar(player_panel, COL_PLAYER)
-	_player_energy_label = _label(player_panel, "ENERGY  --/--", 16)
+	_player_energy_label = _label(player_panel, "ENERGY  --/--", 15)
 	_player_energy_bar = _bar(player_panel, COL_ENERGY)
-	_player_heat_label = _label(player_panel, "HEAT  0", 15)
+	_player_heat_label = _label(player_panel, "HEAT  0", 14)
 
-	# --- Action bar ---
+	# --- Action bar (pinned below the scroll) ---
 	var action_panel := _panel(root)
-	_label(action_panel, "TARGET", 15)
+	_label(action_panel, "TARGET", 14)
 	var target_row := HBoxContainer.new()
 	target_row.add_theme_constant_override("separation", 10)
 	action_panel.add_child(target_row)
@@ -327,7 +337,7 @@ func _label(parent: Node, text: String, size: int, bold: bool = false) -> Label:
 func _bar(parent: Node, fill_color: Color) -> ProgressBar:
 	var bar := ProgressBar.new()
 	bar.show_percentage = false
-	bar.custom_minimum_size = Vector2(0, 22)
+	bar.custom_minimum_size = Vector2(0, 18)
 	bar.min_value = 0
 	bar.max_value = 1
 	bar.value = 0
