@@ -25,7 +25,9 @@ jobs:
       # Installs the Godot 4.7 headless binary. GDScript-only project → no .NET.
       # Version pinned to docs/engine-reference/godot/VERSION.md (re-pinned
       # 4.6 → 4.7 on 2026-07-15 to match the installed 4.7.stable.official
-      # toolchain). Verify the version string against VERSION.md when bumping.
+      # toolchain; 4.7-stable released 2026-06-18). The action takes GodotSharp
+      # NuGet-style version strings, where "4.7.0" == 4.7 STABLE (pre-releases
+      # carry a suffix, e.g. "4.7.0-rc.1"). Verify against VERSION.md when bumping.
       - name: Set up Godot 4.7
         uses: chickensoft-games/setup-godot@v2
         with:
