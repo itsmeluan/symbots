@@ -143,3 +143,93 @@ func test_item_on_downed_target_is_rejected() -> void:
 
 	assert_false(consumed, "a DOWNED Symbot is not a valid item target")
 	assert_gt(_log.warns.size(), 0, "the rejected use is logged")
+
+
+# ---------------------------------------------------------------------------
+# AC-TBC-10 (Scenario A) + AC-TBC-18 (Scenario B) — a Burn tick at TURN START
+# downs the active before it acts, and DOWNING clears ALL of its statuses.
+# ---------------------------------------------------------------------------
+
+func test_burn_kill_at_turn_start_downs_active_and_clears_all_statuses() -> void:
+	_start(BattleController.EncounterType.WILD)
+	var hero: Combatant = _bc.context().active()
+	hero.current_structure = 3  # a tick-5 Burn is lethal at turn start
+	hero.statuses.apply(StatusInstance.Type.BURN, 72, 2, _cfg)   # proc 72 → tick 5
+	hero.statuses.apply(StatusInstance.Type.SHOCK, 53, 2, _cfg)  # a second status, to prove ALL clear
+	assert_eq(hero.statuses.count(), 2, "arrange: two statuses ride the active before its turn")
+
+	var ts: Dictionary = _bc.begin_turn(hero)
+
+	assert_true(ts["downed"], "the turn-start Burn tick downs the active before it can act (AC-TBC-10 A)")
+	assert_eq(ts["burn_damage"], 5, "the Burn dealt its tick-5 magnitude")
+	assert_false(hero.is_alive(), "structure driven to 0 by the turn-start Burn")
+	assert_true(hero.is_downed, "the active is flagged downed")
+	assert_eq(hero.statuses.count(), 0, "DOWNING clears EVERY status, not just the lethal Burn (AC-TBC-18 B)")
+
+
+# ---------------------------------------------------------------------------
+# AC-TBC-10 (Scenario A) — a Burn-downed active with a living bench parks a
+# FORCED_SWITCH; the free replacement pick is accepted and the battle continues.
+# ---------------------------------------------------------------------------
+
+func test_burn_kill_of_active_with_living_bench_parks_forced_switch() -> void:
+	_start(BattleController.EncounterType.WILD)
+	var ctx := _bc.context()
+	var hero: Combatant = ctx.active()
+	hero.current_structure = 3
+	hero.statuses.apply(StatusInstance.Type.BURN, 72, 2, _cfg)
+
+	var ts: Dictionary = _bc.begin_turn(hero)
+	assert_true(ts["downed"], "arrange: the active is Burn-downed at turn start")
+
+	var stopped: bool = _bc._handle_turn_start_death(hero)
+	assert_true(stopped, "the turn loop halts on the downed active")
+	assert_eq(_bc.state(), BattleController.BattleState.FORCED_SWITCH, "parks a FORCED_SWITCH, not a defeat (living bench)")
+
+	# The free replacement pick is accepted — no turn is charged for it.
+	_bc.submit_action({"type": BattleController.ActionType.SWITCH, "target_index": 1})
+	assert_eq(ctx.active_index, 1, "the free forced-switch installed the chosen bench Symbot")
+	assert_true(_bc.is_battle_active(), "the battle continues after the free switch")
+
+
+# ---------------------------------------------------------------------------
+# AC-TBC-10 (Scenario B) — an ENEMY Burn-downed at turn start ends in VICTORY.
+# ---------------------------------------------------------------------------
+
+func test_enemy_burn_death_at_turn_start_ends_in_victory() -> void:
+	watch_signals(_bc)
+	_start(BattleController.EncounterType.WILD)
+	var foe: Combatant = _bc.context().enemy
+	foe.current_structure = 3
+	foe.statuses.apply(StatusInstance.Type.BURN, 72, 2, _cfg)
+
+	var ts: Dictionary = _bc.begin_turn(foe)
+	assert_true(ts["downed"], "arrange: the enemy is Burn-downed at its turn start")
+
+	var stopped: bool = _bc._handle_turn_start_death(foe)
+	assert_true(stopped, "the loop halts")
+	assert_signal_emitted(_bc, "battle_ended", "a Burn-killed enemy ends the battle")
+	assert_eq(get_signal_parameters(_bc, "battle_ended")[0], BattleController.Outcome.VICTORY, "outcome VICTORY (AC-TBC-10 B)")
+
+
+# ---------------------------------------------------------------------------
+# AC-TBC-18 (Scenario A) — benched statuses are FROZEN: while the active takes a
+# full turn cycle, a benched Symbot's Burn neither ticks (no damage) nor
+# decrements (no expiry).
+# ---------------------------------------------------------------------------
+
+func test_benched_statuses_freeze_while_active_takes_its_turn() -> void:
+	_start(BattleController.EncounterType.WILD)
+	var ctx := _bc.context()
+	var bench: Combatant = ctx.team[1]
+	var bench_structure_before: int = bench.current_structure
+	bench.statuses.apply(StatusInstance.Type.BURN, 72, 1, _cfg)  # duration 1 → a stray decrement would EXPIRE it
+	assert_eq(bench.statuses.count(), 1, "arrange: the benched Symbot carries a 1-turn Burn")
+
+	# A full active-turn cycle — the only combatant the loop ticks is the active.
+	_bc.begin_turn(ctx.active())
+	_bc.end_turn(ctx.active())
+
+	assert_eq(bench.statuses.count(), 1, "the benched Burn did NOT decrement/expire — frozen (AC-TBC-18 A)")
+	assert_eq(bench.statuses.burn_tick(), 5, "the benched Burn still reads its snapshot potency")
+	assert_eq(bench.current_structure, bench_structure_before, "the benched Symbot took no Burn damage while frozen")

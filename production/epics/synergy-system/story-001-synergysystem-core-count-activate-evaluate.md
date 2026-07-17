@@ -1,11 +1,11 @@
 # Story 001: SynergySystem core — SYN-F1 counting, SYN-F2 activation, evaluate() + synergy_changed
 
 > **Epic**: Synergy System
-> **Status**: Done
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: 2026-07-16
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -89,7 +89,7 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/synergy/synergy_core_evaluate_test.gd` — must exist and pass.
 
-**Status**: [x] Created — 11 tests, all passing (full suite 689/689 green, 2026-07-16)
+**Status**: [x] Complete — `tests/unit/synergy/synergy_core_evaluate_test.gd`, 11 tests, all passing (full suite 762/762 green, 4268 asserts, 2026-07-17)
 
 ---
 
@@ -97,3 +97,17 @@
 
 - Depends on: None (epic anchor)
 - Unlocks: Story 002, Story 003, Story 004, Story 005
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-07-17 (lean per-story gate — `/code-review` + `/story-done`, inline as godot-gdscript-specialist)
+
+**Criteria**: 9/9 acceptance criteria verified against source (`src/core/synergy/synergy_system.gd`) + tests (content-matched, not header-matched).
+
+**Deviations**: None. All 9 ACs have discriminating fixtures in `synergy_core_evaluate_test.gd` (11 tests): AC-SYN-04 asserts on the public `active_synergies` (proving manufacturer/combined tiers never counted, not an internal map); AC-SYN-18 covers both short (5-entry) and long (10-entry, VOLT-at-8/9-ignored) arrays; AC-SYN-19 covers both `[]` and `null` tag fields; AC-SYN-22/23 use the empty build (the strongest vacuous-truth fixture) and assert the tier is named in the log.
+
+**Test Evidence**: `tests/unit/synergy/synergy_core_evaluate_test.gd` — 11 tests. Full suite 762/762 green, 4268 asserts (Godot 4.7 · GUT 9.7.1).
+
+**Code Review**: Pass. `SynergySystem` is a DI `RefCounted` in `src/core/synergy/` (control-manifest compliant — pure core, not autoload); `synergy_changed` owner-declared + typed; diagnostics via injected `LogSink`. `cached_bonus_block`/`active_synergies` never null. No blocking issues.

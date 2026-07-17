@@ -3,7 +3,7 @@
 > **Layer**: Core
 > **GDD**: design/gdd/turn-based-combat.md
 > **Architecture Module**: Turn-Based Combat (Core)
-> **Status**: Ready
+> **Status**: Complete (2026-07-17 — lean per-story gate)
 > **Stories**: 14 stories — see `## Stories` below
 
 ## Overview
@@ -80,20 +80,20 @@ highest-risk signal contract).
 
 | # | Story | Type | Status | ADR |
 |---|-------|------|--------|-----|
-| 001 | BattleController FSM host & teardown | Logic | Ready | ADR-0007 |
-| 002 | Battle-start sequence & build validity | Logic | Ready | ADR-0007 |
-| 003 | Move pool & action availability | Logic | Ready | ADR-0007 |
-| 004 | Initiative & round structure (Shock floor) | Logic | Ready | ADR-0007 |
-| 005 | Turn anatomy, recharge & heat decay | Logic | Ready | ADR-0007 |
-| 006 | Heat gain & Overheat | Logic | Ready | ADR-0007 |
-| 007 | Status system model & lifecycle | Logic | Ready | ADR-0007 |
-| 008 | Damage pipeline: SYN-F4 → DF-1 → MOVE-F1 → Stagger | Logic | Ready | ADR-0005 |
-| 009 | Sub-target routing, `hit_resolved` & enemy enrage | Logic | Ready | ADR-0005 |
-| 010 | Repair (TBC-F6) & SCAN no-op | Logic | Ready | ADR-0005 |
-| 011 | Switch, flee, bench-freeze & down-ordering | Logic | Ready | ADR-0007 |
-| 012 | Use-item action | Logic | Ready | ADR-0007 |
-| 013 | Passive effect registry & dispatch | Logic | Ready | ADR-0007 |
-| 014 | Battle end — 8-field `battle_ended` & teardown | Integration | Ready | ADR-0002 |
+| 001 | BattleController FSM host & teardown | Logic | Complete | ADR-0007 |
+| 002 | Battle-start sequence & build validity | Logic | Complete | ADR-0007 |
+| 003 | Move pool & action availability | Logic | Complete | ADR-0007 |
+| 004 | Initiative & round structure (Shock floor) | Logic | Complete | ADR-0007 |
+| 005 | Turn anatomy, recharge & heat decay | Logic | Complete | ADR-0007 |
+| 006 | Heat gain & Overheat | Logic | Complete | ADR-0007 |
+| 007 | Status system model & lifecycle | Logic | Complete | ADR-0007 |
+| 008 | Damage pipeline: SYN-F4 → DF-1 → MOVE-F1 → Stagger | Logic | Complete | ADR-0005 |
+| 009 | Sub-target routing, `hit_resolved` & enemy enrage | Logic | Complete | ADR-0005 |
+| 010 | Repair (TBC-F6) & SCAN no-op | Logic | Complete | ADR-0005 |
+| 011 | Switch, flee, bench-freeze & down-ordering | Logic | Complete | ADR-0007 |
+| 012 | Use-item action | Logic | Complete | ADR-0007 |
+| 013 | Passive effect registry & dispatch | Logic | Complete | ADR-0007 |
+| 014 | Battle end — 8-field `battle_ended` & teardown | Integration | Complete | ADR-0002 |
 
 13 Logic + 1 Integration. Implement in order — each story's `Depends on:` field names its prerequisites (Story 001 first).
 
@@ -112,4 +112,10 @@ This epic is complete when:
 
 ## Next Step
 
-Stories written (14). Run `/story-readiness production/epics/turn-based-combat/story-001-battlecontroller-fsm-host-teardown.md` then `/dev-story` to begin implementation — Story 001 first (all others depend on the FSM host).
+**Epic complete (2026-07-17).** All 14 stories implemented and closed through the lean per-story gate (`/code-review` + `/story-done`, inline as godot-gdscript-specialist). Full GUT suite **762/762 green, 4268 asserts** (Godot 4.7 · GUT 9.7.1).
+
+Gate closed 5 test-coverage gaps the green suite could not surface on its own (the test-file headers carry AC IDs that drifted from the GDD, so coverage was mapped by scenario content):
+- **AC-TBC-11** (Story 006) — victory resolves before the killing move's heat recoil: 1 discriminating test added.
+- **AC-TBC-10 / AC-TBC-18** (Story 011) — Burn-kill-at-turn-start forced switch (both scenarios), bench-status freeze, and DOWN-clears-all-statuses at integration level: 4 discriminating tests added.
+
+One ADVISORY carried to `docs/tech-debt-register.md`: `BattleController` ships as a DI `RefCounted`, not the ADR-0007 slot-11 autoload (no behavioral impact; revisit at Presentation-tier battle entry). Two in-story location/seed deviation notes recorded (Story 001/014 unit-vs-integration test path; Story 002 live enemy pools).

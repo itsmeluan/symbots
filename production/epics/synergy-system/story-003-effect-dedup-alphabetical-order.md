@@ -1,11 +1,11 @@
 # Story 003: Effect dedup & alphabetical tier-ID ordering (SYN-F3 effects)
 
 > **Epic**: Synergy System
-> **Status**: Done
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: 2026-07-16
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -78,7 +78,7 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/synergy/synergy_effect_dedup_order_test.gd` — must exist and pass. Carries the epic DoD gate (AC-SYN-05b: the `String(tier_id)` sort discriminator).
 
-**Status**: [x] Created — 5 tests, all passing incl. AC-SYN-05b DoD gate (full suite 689/689 green, 2026-07-16)
+**Status**: [x] Complete — `tests/unit/synergy/synergy_effect_dedup_order_test.gd`, 5 tests, all passing incl. AC-SYN-05b DoD gate (full suite 762/762 green, 4268 asserts, 2026-07-17)
 
 ---
 
@@ -86,3 +86,17 @@
 
 - Depends on: Story 001 (SynergySystem owner, activation, evaluate())
 - Unlocks: None
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-07-17 (lean per-story gate — `/code-review` + `/story-done`, inline as godot-gdscript-specialist)
+
+**Criteria**: 5/5 acceptance criteria verified against source (SYN-F3 effect flatten/dedup) + tests (content-matched).
+
+**Deviations**: None. The load-bearing **AC-SYN-05b DoD gate** was read in full and confirmed genuinely discriminating: `test_effects_dedup_follows_alphabetical_tier_order_not_file_order()` authors the tiers reverse-alphabetically (volt_3_piece registered FIRST, ironclad_3_piece SECOND), each carrying `shared_test`, then asserts `effects == [shared_test, ironclad_unique, volt_unique]` — which only holds if the flatten sorts by `String(tier_id)` (alpha-first ironclad owns `shared_test`), NOT registration/file order. This is the StringName-intern-trap guard (ADR-0008). Other 4: AC-SYN-05 keep-first dedup (FAIL size 2), AC-SYN-12 exact ordered active list, AC-SYN-16 combined-unique not over-deduplicated (size 3), AC-SYN-26 unregistered ID passes through unfiltered.
+
+**Test Evidence**: `tests/unit/synergy/synergy_effect_dedup_order_test.gd` — 5 tests. Full suite 762/762 green, 4268 asserts (Godot 4.7 · GUT 9.7.1).
+
+**Code Review**: Pass. Effect flatten sorts a copy of `active_synergies` by `String(tier_id)` (never bare-StringName sort, never insertion order), keep-first dedup, no effect-registry filtering. The one determinism contract the epic's DoD hinges on is proven. No blocking issues.

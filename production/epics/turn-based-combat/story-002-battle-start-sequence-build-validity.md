@@ -1,11 +1,11 @@
 # Story 002: Battle-start sequence & build-validity refusal
 
 > **Epic**: Turn-Based Combat
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -83,7 +83,19 @@
 **Story Type**: Integration
 **Required evidence**: `tests/integration/tbc/battle_start_sequence_test.gd` — must exist and pass. Uses stub Assembly/Synergy/CoreProgression injections; asserts `evaluate_silent` call count and the refusal path with no state creation.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/tbc/battle_controller_start_test.gd`
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-07-17 · **Criteria**: 4/4 (AC-TBC-01, 42, 02, 19) verified against source + discriminating tests.
+
+- AC-TBC-42 (invalid build refuses the WHOLE battle before any snapshot), AC-TBC-01 (`evaluate_silent` once per fielded Symbot, zero `synergy_changed`), AC-TBC-19 (enemy instantiated with no synergy — Rule 8), AC-TBC-02 (frozen snapshot seeds runtime pools) each land a dedicated discriminating test.
+- **Deviation (note)**: `make_enemy` seeds the enemy with live pools (`current_energy = capacity`, `current_heat = 0`) rather than leaving them null. Harmless — enemy `begin_turn` skips decay & recharge (Rule 8), so the seeded values are never read; the enemy never participates in the heat/energy economy.
+
+**Test Evidence**: `battle_controller_start_test.gd` — full GUT suite **762/762 green, 4268 asserts** (Godot 4.7 · GUT 9.7.1).
+**Code Review**: inline as godot-gdscript-specialist (lean per-story gate) — no blocking issues.
 
 ---
 

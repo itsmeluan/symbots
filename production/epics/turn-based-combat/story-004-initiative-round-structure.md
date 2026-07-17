@@ -1,11 +1,11 @@
 # Story 004: Initiative & round structure (TBC-F1 + TBC-F4 shock magnitude)
 
 > **Epic**: Turn-Based Combat
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -79,7 +79,19 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/tbc/initiative_round_structure_test.gd` — must exist and pass. Discriminating floor fixtures (53→15, not 16) required.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/tbc/battle_controller_initiative_test.gd` (+ `battle_formulas_test.gd` for TBC-F1/F4)
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-07-17 · **Criteria**: 3/3 (AC-TBC-03, 04, 05) verified against source + discriminating tests.
+
+- AC-TBC-03 (descending `effective_mobility`), AC-TBC-04 (ties resolve player-first, NO RNG — deterministic), AC-TBC-05 (Shock lowers `effective_mobility` and can reorder) each have a dedicated test; the TBC-F4 shock magnitude is separately pinned in `battle_formulas_test.gd`.
+- Initiative recomputes every `ROUND_START` (verified through the pure static sort).
+
+**Test Evidence**: `battle_controller_initiative_test.gd`, `battle_formulas_test.gd` — full GUT suite **762/762 green, 4268 asserts** (Godot 4.7 · GUT 9.7.1).
+**Code Review**: inline as godot-gdscript-specialist (lean per-story gate) — no blocking issues.
 
 ---
 

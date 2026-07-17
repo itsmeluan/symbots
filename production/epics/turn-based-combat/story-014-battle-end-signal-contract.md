@@ -1,11 +1,11 @@
 # Story 014: Battle end — 8-field `battle_ended` contract & teardown
 
 > **Epic**: Turn-Based Combat
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -78,7 +78,19 @@
 **Story Type**: Integration
 **Required evidence**: `tests/integration/tbc/battle_end_signal_contract_test.gd` — must exist and pass. The 8-field-vs-2-field non-confusion assertion + WeakRef teardown + dedup set are all required.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/tbc/battle_controller_lifecycle_test.gd`
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-07-17 · **Criteria**: 2/2 (AC-TBC-31, 32) verified against source + discriminating tests.
+
+- AC-TBC-31 (the 8-field `battle_ended` fires on VICTORY with the correct payload fields) and AC-TBC-32 (`fired_break_events` is a de-duplicated set — VICTORY carries it, DEFEAT/FLED carry `{}`) each covered. Non-confusability with the 2-field WORLD signal rests on ARITY (8 vs 2 fields) — asserted directly.
+- **Deviation (location)**: story named `tests/integration/tbc/...`; evidence landed as unit coverage in `battle_controller_lifecycle_test.gd` (shared host with Story 001).
+
+**Test Evidence**: `battle_controller_lifecycle_test.gd` — full GUT suite **762/762 green, 4268 asserts** (Godot 4.7 · GUT 9.7.1).
+**Code Review**: inline as godot-gdscript-specialist (lean per-story gate) — no blocking issues.
 
 ---
 

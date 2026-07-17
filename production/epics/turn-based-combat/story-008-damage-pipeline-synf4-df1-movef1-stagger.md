@@ -1,11 +1,11 @@
 # Story 008: Damage pipeline — SYN-F4 → DF-1 → MOVE-F1 → Stagger reduction (TBC-F5)
 
 > **Epic**: Turn-Based Combat
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -77,7 +77,18 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/tbc/damage_pipeline_test.gd` — must exist and pass. Argument-capture stub for `compute_damage`; SYN-F4-skipped and synergy-on-enemy-defense FAIL cases asserted. Also implements the SYN-F4 contract (AC-SYN-06/AC-SYN-10) in `tests/unit/tbc/`.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/tbc/damage_pipeline_test.gd` (+ `battle_formulas_test.gd`)
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-07-17 · **Criteria**: 3/3 (AC-TBC-22, 26, 28) verified against source + discriminating tests.
+
+- AC-TBC-22 (SYN-F4 both sides, incl. the SYN-F4-skipped and synergy-on-enemy FAIL traps + the VOLT type sub-fixture), AC-TBC-26 (TBC-F5 two-step floor through the live pipeline via a Staggered attacker), AC-TBC-28 (DF-1 extended range) each covered. Every worked value is discriminating — a `round()`/`ceil()` build lands a different int; the formula kernel is separately pinned in `battle_formulas_test.gd`.
+
+**Test Evidence**: `damage_pipeline_test.gd`, `battle_formulas_test.gd` — full GUT suite **762/762 green, 4268 asserts** (Godot 4.7 · GUT 9.7.1).
+**Code Review**: inline as godot-gdscript-specialist (lean per-story gate) — no blocking issues.
 
 ---
 

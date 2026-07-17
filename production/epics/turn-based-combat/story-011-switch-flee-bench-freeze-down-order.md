@@ -1,11 +1,11 @@
 # Story 011: Switch, flee, bench-status freeze & down-ordering
 
 > **Epic**: Turn-Based Combat
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -88,7 +88,23 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/tbc/switch_flee_down_order_test.gd` — must exist and pass. Voluntary-vs-forced contrast + WILD-flee bookkeeping-before-FLED required.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/tbc/battle_controller_switch_item_test.gd`
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-07-17 · **Criteria**: 5/5 (AC-TBC-12, 37, 17, 18, 10) verified against source + discriminating tests.
+
+- AC-TBC-12 (voluntary switch keeps the incoming's FROZEN runtime), AC-TBC-37 (voluntary switch consumes the turn), AC-TBC-17 (flee succeeds WILD / rejected BOSS) were already covered.
+- **Gate findings closed (4 new tests)**: the switch-test header mislabels its AC IDs, and cross-checking by scenario content exposed three untested BLOCKING Logic behaviors — all present in source but unproven. Closed this gate in `battle_controller_switch_item_test.gd`:
+  - AC-TBC-10 Scenario A — `test_burn_kill_at_turn_start_downs_active_and_clears_all_statuses` + `test_burn_kill_of_active_with_living_bench_parks_forced_switch` (turn-start Burn downs the active before it acts → FORCED_SWITCH park → free replacement pick accepted).
+  - AC-TBC-10 Scenario B — `test_enemy_burn_death_at_turn_start_ends_in_victory`.
+  - AC-TBC-18 Scenario A — `test_benched_statuses_freeze_while_active_takes_its_turn` (a benched 1-turn Burn neither ticks nor decrements while the active takes its turn — a stray decrement would have expired it).
+  - AC-TBC-18 Scenario B (DOWNING clears ALL statuses) is now integration-proven via the first new test (was only isolated `StatusSet.clear()` unit coverage before).
+
+**Test Evidence**: `battle_controller_switch_item_test.gd` — full GUT suite **762/762 green, 4268 asserts** (Godot 4.7 · GUT 9.7.1).
+**Code Review**: inline as godot-gdscript-specialist (lean per-story gate) — no blocking issues.
 
 ---
 

@@ -1,11 +1,11 @@
 # Story 013: Passive effect registry (Rule 13) & dispatch
 
 > **Epic**: Turn-Based Combat
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -84,7 +84,18 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/tbc/passive_effect_registry_test.gd` — must exist and pass. Unknown-ID log-and-continue + ON_BATTLE_START/ON_TURN_START counters required. Stub logger captures the content-error message.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/tbc/passive_effect_registry_test.gd`
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-07-17 · **Criteria**: 4/4 (AC-TBC-14, 29, 30, 40) verified against source + discriminating tests.
+
+- AC-TBC-29 (`volt_shock_on_hit` fires on any DAMAGE, not on REPAIR), AC-TBC-30 (`thermal_burn_on_weapon` is WEAPON-slot-only — a HEAD-slot hit applies nothing), AC-TBC-14 (an unknown effect id logs exactly one content error and is skipped, the known sibling still firing), AC-TBC-40 (ON_BATTLE_START / ON_TURN_START generic entries dispatch; PERSISTENT/absent triggers do not) each covered.
+
+**Test Evidence**: `passive_effect_registry_test.gd` — full GUT suite **762/762 green, 4268 asserts** (Godot 4.7 · GUT 9.7.1).
+**Code Review**: inline as godot-gdscript-specialist (lean per-story gate) — no blocking issues.
 
 ---
 

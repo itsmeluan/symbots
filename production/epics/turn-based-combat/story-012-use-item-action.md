@@ -1,11 +1,11 @@
 # Story 012: Use-item action (Rule 7a)
 
 > **Epic**: Turn-Based Combat
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -79,7 +79,18 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/tbc/use_item_action_test.gd` — must exist and pass. Uses injected stub Consumable DB + inventory. Rejected-use-no-cost + resource-neutral required.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/tbc/battle_controller_switch_item_test.gd`
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-07-17 · **Criteria**: 1/1 (AC-TBC-41) verified against source + discriminating tests.
+
+- AC-TBC-41: an item restores a LIVING team member (active or benched — no switch-in), consuming the turn ONLY on a net-positive apply; a full-pool use and a DOWNED target are both rejected without consuming the turn. Three dedicated test functions.
+
+**Test Evidence**: `battle_controller_switch_item_test.gd` — full GUT suite **762/762 green, 4268 asserts** (Godot 4.7 · GUT 9.7.1).
+**Code Review**: inline as godot-gdscript-specialist (lean per-story gate) — no blocking issues.
 
 ---
 

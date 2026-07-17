@@ -3,8 +3,8 @@
 > **Layer**: Core
 > **GDD**: design/gdd/synergy-system.md
 > **Architecture Module**: Synergy (Core)
-> **Status**: Done — all 5 stories implemented & tested 2026-07-16 (engine complete; content authoring deferred, see below)
-> **Stories**: 5 stories, all Done — SynergySystem engine implemented, 32 GUT tests green
+> **Status**: Complete (2026-07-17 — lean per-story gate; engine complete, synergy-tier `.tres` content a deferred later pass)
+> **Stories**: 5 stories, all Complete — SynergySystem engine implemented, 32 GUT tests green
 
 ## Overview
 
@@ -60,11 +60,11 @@ This epic is complete when:
 
 | # | Story | Type | Status | ADR | Covers |
 |---|-------|------|--------|-----|--------|
-| 001 | SynergySystem core — SYN-F1 counting, SYN-F2 activation, evaluate() + synergy_changed | Logic | Done | ADR-0005 (primary), ADR-0002 | TR-syn-001/002/007/011/012/013 |
-| 002 | Cumulative & combined tier aggregation (SYN-F3 stat_delta) | Logic | Done | ADR-0005 | TR-syn-003/004 |
-| 003 | Effect dedup & alphabetical tier-ID ordering (SYN-F3 effects) | Logic | Done | ADR-0005 | TR-syn-005/006/014 |
-| 004 | evaluate_silent() battle path (no emit, no self-lock) | Logic | Done | ADR-0005 (primary), ADR-0002 | TR-syn-008 |
-| 005 | preview() pure read-only hypothetical | Logic | Done | ADR-0008 (primary), ADR-0005 | TR-syn-009 |
+| 001 | SynergySystem core — SYN-F1 counting, SYN-F2 activation, evaluate() + synergy_changed | Logic | Complete | ADR-0005 (primary), ADR-0002 | TR-syn-001/002/007/011/012/013 |
+| 002 | Cumulative & combined tier aggregation (SYN-F3 stat_delta) | Logic | Complete | ADR-0005 | TR-syn-003/004 |
+| 003 | Effect dedup & alphabetical tier-ID ordering (SYN-F3 effects) | Logic | Complete | ADR-0005 | TR-syn-005/006/014 |
+| 004 | evaluate_silent() battle path (no emit, no self-lock) | Logic | Complete | ADR-0005 (primary), ADR-0002 | TR-syn-008 |
+| 005 | preview() pure read-only hypothetical | Logic | Complete | ADR-0008 (primary), ADR-0005 | TR-syn-009 |
 
 **5 stories, all Logic.** Build order: **001 (anchor) → {002, 003, 004, 005}** — 002–005 all depend on 001 and are mutually independent. Story 001 delivers the `SynergySystem` RefCounted owner + `SynergyTierDef` runtime type + the count→activate→evaluate spine; 002 adds `stat_delta` depth, 003 the effect dedup/ordering (carries the AC-SYN-05b DoD gate), 004 the silent battle path, 005 the read-only `preview()`.
 
@@ -82,6 +82,17 @@ All 5 stories implemented inline and verified:
 - **DoD gates proven**: AC-SYN-05b `String(tier_id)` sort discriminator (reverse-alpha fixture); `evaluate_silent()` emit-free; `preview()` cache-write-free / emit-free incl. the AC-SYN-13 B add-only delta-shortcut discriminator.
 - **Deferred as designed**: SYN-F4 (TR-syn-010) consumer-owned; synergy tier `.tres` content blocked on OQ-1/2/3 — engine built against the injected `Array[SynergyTierDef]` seam.
 
+## Closure Record (2026-07-17 — lean per-story gate)
+
+All 5 stories closed through the lean per-story gate (`/code-review` + `/story-done`, inline as godot-gdscript-specialist). Coverage was re-verified by **scenario content, not test-header labels** (the TBC lesson) — Synergy's headers were confirmed to map cleanly to story ACs with no drift, and the three load-bearing DoD-gate tests were each read in full and confirmed genuinely discriminating:
+- **AC-SYN-05b** (`String(tier_id)` sort): reverse-alpha authored fixture — alpha-first ironclad owns `shared_test`, fails on file order.
+- **AC-SYN-14** (`evaluate_silent` emit-free + no self-lock via AC-SYN-25).
+- **AC-SYN-13 B** (`preview` subtracts displaced tags — not an add-only delta shortcut).
+
+All 26 checkbox ACs across the 5 stories have discriminating fixtures. **AC-SYN-06 / AC-SYN-10 (TR-syn-010, SYN-F4 `max(0, base+delta)`) are legitimately consumer-owned** — not a Synergy-engine gap; now discharged by the implemented Turn-Based Combat (`CombatantSnapshot.effective_stat`). **No code gaps found → no tech-debt entries logged** (markdown-only closure; one full suite run validated all 5). Full GUT suite **762/762 green, 4268 asserts** (Godot 4.7 · GUT 9.7.1).
+
+**Deferred as designed (not a closure blocker):** synergy tier `.tres` content authoring remains a later pass blocked on OQ-1/2/3 (data format, MVP stat values + budget validation, feasible effect IDs). The engine was built and closed against the injected `Array[SynergyTierDef]` DI seam — exactly as scoped.
+
 ## Next Step
 
-Synergy engine is complete. Remaining before this epic fully closes to content: resolve OQ-1/2/3 and author the synergy tier `.tres` roster (a later content pass). Next Core epic: continue with `/create-stories` for the next Core-layer system, or `/create-epics` if Core epics remain undefined.
+**Epic complete (2026-07-17).** Synergy is the 3rd of 5 Core epics closed (with Symbot Assembly + Turn-Based Combat). The synergy-tier `.tres` content pass lands once OQ-1/2/3 resolve — track it with the other content passes, not as a Core-engine blocker. Next Core work: `/create-stories encounter-zone` and `drop-system` (the 2 remaining Ready-unstoried Core epics).

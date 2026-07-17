@@ -1,11 +1,11 @@
 # Story 004: evaluate_silent() battle path (no emit, no self-lock)
 
 > **Epic**: Synergy System
-> **Status**: Done
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: 2026-07-16
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -72,7 +72,7 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/synergy/synergy_evaluate_silent_test.gd` — must exist and pass. Contributes the epic DoD proof that `evaluate_silent()` is emit-free.
 
-**Status**: [x] Created — 3 tests, all passing (full suite 689/689 green, 2026-07-16)
+**Status**: [x] Complete — `tests/unit/synergy/synergy_evaluate_silent_test.gd`, 3 tests, all passing (full suite 762/762 green, 4268 asserts, 2026-07-17)
 
 ---
 
@@ -80,3 +80,17 @@
 
 - Depends on: Story 001 (SynergySystem owner + compute pipeline); benefits from Stories 002–003 being present so Scenario B's combined path is exercised.
 - Unlocks: None
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-07-17 (lean per-story gate — `/code-review` + `/story-done`, inline as godot-gdscript-specialist)
+
+**Criteria**: 2/2 acceptance criteria verified against source (`evaluate_silent` sharing the private `_compute` path) + tests (content-matched).
+
+**Deviations**: None. AC-SYN-14 is proven emit-free by `assert_signal_emit_count(sys, "synergy_changed", 0)` on both the single-tag cumulative path (energy 6+12=18) and the combined path (armor 13 / energy 10, identical to `evaluate()` — proving no path divergence). The load-bearing **no-self-lock** contract (AC-SYN-25) is genuinely discriminating: `evaluate_silent(VOLT=5)` caches 18, then `evaluate([])` asserts the cache is emptied with note "FAIL 18 = self-locked" and exactly 1 emit — proving Rule 8 is caller discipline, not a system self-lock that would break Workshop live recalc.
+
+**Test Evidence**: `tests/unit/synergy/synergy_evaluate_silent_test.gd` — 3 tests. Full suite 762/762 green, 4268 asserts (Godot 4.7 · GUT 9.7.1).
+
+**Code Review**: Pass. `evaluate` and `evaluate_silent` delegate to one private compute core (divergence impossible by construction); the silent path writes cache + `active_synergies` but never emits; no frozen flag. This is the emit-free entry point TBC's BATTLE_INIT depends on. No blocking issues.

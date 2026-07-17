@@ -1,11 +1,11 @@
 # Story 002: Cumulative & combined tier aggregation (SYN-F3 stat_delta)
 
 > **Epic**: Synergy System
-> **Status**: Done
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: 2026-07-16
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -79,7 +79,7 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/synergy/synergy_aggregation_test.gd` — must exist and pass.
 
-**Status**: [x] Created — 7 tests, all passing (full suite 689/689 green, 2026-07-16)
+**Status**: [x] Complete — `tests/unit/synergy/synergy_aggregation_test.gd`, 7 tests, all passing (full suite 762/762 green, 4268 asserts, 2026-07-17)
 
 ---
 
@@ -87,3 +87,17 @@
 
 - Depends on: Story 001 (SynergySystem owner, counting, activation, evaluate())
 - Unlocks: None
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-07-17 (lean per-story gate — `/code-review` + `/story-done`, inline as godot-gdscript-specialist)
+
+**Criteria**: 6/6 acceptance criteria verified against source (SYN-F3 aggregation in `synergy_system.gd`) + tests (content-matched).
+
+**Deviations**: None. Each AC has a discriminating fixture in `synergy_aggregation_test.gd` (7 tests) carrying an explicit failure witness: AC-SYN-02 cumulative "FAIL 12 = non-cumulative"; AC-SYN-03 combined stacks (armor 8+5=13, energy 6+4=10) with a companion test proving combined stays inactive when VOLT=0 ("FAIL 13"); AC-SYN-09 off-by-one boundary at exactly 5; AC-SYN-15 deactivation recomputes-from-scratch ("FAIL 18 stale / 0 over-drop"); AC-SYN-17 unknown stat key passes through verbatim; AC-SYN-27 seven simultaneously-active tiers accumulate with no merge collision (armor written by 5 tiers → 40).
+
+**Test Evidence**: `tests/unit/synergy/synergy_aggregation_test.gd` — 7 tests. Full suite 762/762 green, 4268 asserts (Godot 4.7 · GUT 9.7.1).
+
+**Code Review**: Pass. Aggregation is a blind additive sum over active tiers (no schema lookup on stat keys — AC-SYN-17 confirms), recompute-from-scratch each `evaluate` (no stale cache — AC-SYN-15). No blocking issues.

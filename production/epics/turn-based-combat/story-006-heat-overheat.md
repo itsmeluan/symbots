@@ -1,11 +1,11 @@
 # Story 006: Heat gain & Overheat (self-damage, skip, carry-in; victory-before-heat)
 
 > **Epic**: Turn-Based Combat
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -73,7 +73,19 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/tbc/heat_overheat_test.gd` — must exist and pass. Both the carry-in-20 discriminator and the victory-before-heat ordering required.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/tbc/battle_controller_turn_test.gd` + `battle_controller_lifecycle_test.gd`
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-07-17 · **Criteria**: 2/2 (AC-TBC-09, 11) verified against source + discriminating tests.
+
+- AC-TBC-09 (heat gain trips OVERHEATED at threshold with `floor(max_structure × 10%)` recoil; THERMAL adds +5) and the overheated-turn reset/skip are covered in `battle_controller_turn_test.gd`.
+- **Gate finding closed**: AC-TBC-11 (victory is resolved BEFORE the killing move applies its heat) had **no discriminating test** at gate entry — the turn-test header mislabels its AC IDs, and the true AC-TBC-11 was uncovered. Closed this gate with `test_victory_is_resolved_before_the_killing_move_applies_heat()` in `battle_controller_lifecycle_test.gd` (heat pre-set to 90 + a kill move with heat_gen 20 that WOULD trip Overheat if Rule 5d ran — asserts it never does).
+
+**Test Evidence**: `battle_controller_turn_test.gd`, `battle_controller_lifecycle_test.gd` — full GUT suite **762/762 green, 4268 asserts** (Godot 4.7 · GUT 9.7.1).
+**Code Review**: inline as godot-gdscript-specialist (lean per-story gate) — no blocking issues.
 
 ---
 

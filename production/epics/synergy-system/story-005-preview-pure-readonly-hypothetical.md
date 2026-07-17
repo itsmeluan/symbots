@@ -1,11 +1,11 @@
 # Story 005: preview() pure read-only hypothetical
 
 > **Epic**: Synergy System
-> **Status**: Done
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: 2026-07-16
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -76,7 +76,7 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/synergy/synergy_preview_test.gd` — must exist and pass. Contributes the epic DoD proof that `preview()` is cache-write-free / emit-free.
 
-**Status**: [x] Created — 6 tests, all passing incl. AC-SYN-13 B delta-shortcut discriminator (full suite 689/689 green, 2026-07-16)
+**Status**: [x] Complete — `tests/unit/synergy/synergy_preview_test.gd`, 6 tests, all passing incl. AC-SYN-13 B delta-shortcut discriminator (full suite 762/762 green, 4268 asserts, 2026-07-17)
 
 ---
 
@@ -84,3 +84,17 @@
 
 - Depends on: Story 001 (SynergySystem owner + compute pipeline); Story 004 (shared `_compute_block` factoring) if landed first — otherwise `preview()` reuses whatever private compute path exists.
 - Unlocks: None
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-07-17 (lean per-story gate — `/code-review` + `/story-done`, inline as godot-gdscript-specialist)
+
+**Criteria**: 4/4 acceptance criteria verified against source (`preview` recomputing on a copied hypothetical array) + tests (content-matched).
+
+**Deviations**: None. Every test asserts cache-untouched + zero emit. The load-bearing **AC-SYN-13 B delta-shortcut discriminator** was read in full: `test_preview_models_deactivation_direction_subtracts_displaced_tags()` replaces an active VOLT part with KINETIC and asserts the hypothetical `stat_delta.is_empty()` with note "FAIL energy_power==6 = add-only delta shortcut" — proving `preview` recomputes from the full displaced array, not an add-only delta over cached state. AC-SYN-20 proves the explicit `< 0 or > 7` guard (negative index does NOT wrap to slot 7) with a content-error log; AC-SYN-24 proves a null candidate models unequip as valid input (no error logged), distinct from the out-of-range error path.
+
+**Test Evidence**: `tests/unit/synergy/synergy_preview_test.gd` — 6 tests. Full suite 762/762 green, 4268 asserts (Godot 4.7 · GUT 9.7.1).
+
+**Code Review**: Pass. `preview` copies `current_parts`, substitutes `candidate` at `target_slot`, runs the shared private compute read-only, returns the block without committing — no cache write, no emit. Both threshold directions and the GDScript negative-index-wrap trap are guarded. No blocking issues.

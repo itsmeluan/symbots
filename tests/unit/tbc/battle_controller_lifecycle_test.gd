@@ -90,6 +90,31 @@ func test_victory_emits_eight_field_battle_ended() -> void:
 
 
 # ---------------------------------------------------------------------------
+# AC-TBC-11 — victory is resolved BEFORE the killing move applies its heat
+# ---------------------------------------------------------------------------
+
+func test_victory_is_resolved_before_the_killing_move_applies_heat() -> void:
+	# A killing blow ends the battle before its own heat recoil — the actor's heat gain
+	# (and any Overheat) never executes. Pre-set heat to 90 and give the kill move a
+	# part_heat_generation of 20, which WOULD push heat to the 100 threshold and trip
+	# Overheat + self-damage IF Rule 5d ran. Victory must short-circuit it first.
+	watch_signals(_bc)
+	_bc.start_battle([_killer_loadout()], _fragile_enemy(), BattleController.EncounterType.WILD, FakeSynergy.new())
+	var hero: Combatant = _bc.context().active()  # RefCounted — survives teardown to assert on
+	hero.current_heat = 90
+
+	var kill: Dictionary = _kill_action()
+	kill["part_heat_generation"] = 20  # would drive heat 90 → 100 (Overheat) if it executed
+	_bc.submit_action(kill)
+
+	assert_signal_emitted(_bc, "battle_ended", "the killing blow ends the battle")
+	assert_eq(get_signal_parameters(_bc, "battle_ended")[0], BattleController.Outcome.VICTORY, "outcome VICTORY")
+	assert_eq(hero.current_heat, 90, "heat gain never ran — victory resolved before Rule 5d (AC-TBC-11)")
+	assert_false(hero.is_overheated, "no Overheat trip after a victorious killing blow")
+	assert_true(hero.is_alive(), "the victor is not self-downed by recoil that never executed")
+
+
+# ---------------------------------------------------------------------------
 # AC-TBC-32 — fired_break_events dedup; VICTORY carries the set
 # ---------------------------------------------------------------------------
 

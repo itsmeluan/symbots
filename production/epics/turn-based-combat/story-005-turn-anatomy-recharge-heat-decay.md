@@ -1,11 +1,11 @@
 # Story 005: Turn anatomy — heat decay, energy recharge (TBC-F2), phase ordering
 
 > **Epic**: Turn-Based Combat
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -73,7 +73,18 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/tbc/turn_anatomy_recharge_test.gd` — must exist and pass. AC-TBC-08 cap-fires + cap-silent required together.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/tbc/battle_controller_turn_test.gd` (+ `battle_formulas_test.gd` for TBC-F2)
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-07-17 · **Criteria**: 2/2 (AC-TBC-07, 08) verified against source + discriminating tests.
+
+- Ordered turn-start anatomy (cooling decay → TBC-F2 recharge → Burn tick LAST) and the enemies-skip-decay-and-recharge rule each have a dedicated test; the TBC-F2 recharge cap is separately pinned (paired silent/fired) in `battle_formulas_test.gd`.
+
+**Test Evidence**: `battle_controller_turn_test.gd`, `battle_formulas_test.gd` — full GUT suite **762/762 green, 4268 asserts** (Godot 4.7 · GUT 9.7.1).
+**Code Review**: inline as godot-gdscript-specialist (lean per-story gate) — no blocking issues.
 
 ---
 

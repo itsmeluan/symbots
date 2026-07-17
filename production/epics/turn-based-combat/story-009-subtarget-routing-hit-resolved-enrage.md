@@ -1,11 +1,11 @@
 # Story 009: Sub-target routing, spillover & hit_resolved hook; enemy enrage (TBC-F7)
 
 > **Epic**: Turn-Based Combat
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -80,7 +80,18 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/tbc/subtarget_routing_hit_resolved_test.gd` — must exist and pass. Fixture B (region sub_target != STRUCTURE) required to close the hardcoding trap. Enrage identity (count 0) required.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/tbc/subtarget_routing_hit_resolved_test.gd`
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-07-17 · **Criteria**: 1/1 (AC-TBC-34, + TBC-F7 enrage) verified against source + discriminating tests.
+
+- AC-TBC-34 Fixture A (STRUCTURE emit — payload damage 60, `sub_target` STRUCTURE), Fixture B (region emit — `sub_target "left_arm"`, not the hardcoded default), and the non-DAMAGE exclusion (Repair/SCAN never emit `hit_resolved`) are covered. TBC-F7 enemy enrage is applied post-Stagger through the resolver with a stubbed broken-region count, plus an identity/max-stack discriminator.
+
+**Test Evidence**: `subtarget_routing_hit_resolved_test.gd` — full GUT suite **762/762 green, 4268 asserts** (Godot 4.7 · GUT 9.7.1).
+**Code Review**: inline as godot-gdscript-specialist (lean per-story gate) — no blocking issues.
 
 ---
 

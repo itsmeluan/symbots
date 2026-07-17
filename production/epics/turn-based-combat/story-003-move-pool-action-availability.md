@@ -1,11 +1,11 @@
 # Story 003: Move pool & action availability (Rule 5 gate, null slot)
 
 > **Epic**: Turn-Based Combat
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -78,7 +78,19 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/tbc/move_pool_availability_test.gd` — must exist and pass. Both AC-TBC-06 fixtures required together.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/tbc/battle_controller_movepanel_test.gd`
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-07-17 · **Criteria**: 2/2 (AC-TBC-06, 21) verified against source + discriminating tests.
+
+- AC-TBC-06 (a slot is available iff non-null AND `current_energy ≥ cost`) and AC-TBC-21 (Basic Attack cost-0 always available; empty/null slots surface without throwing) are covered. Fixture B (null slot) is exercised.
+- Pure static `move_panel_state` query — no battle context, deterministic.
+
+**Test Evidence**: `battle_controller_movepanel_test.gd` — full GUT suite **762/762 green, 4268 asserts** (Godot 4.7 · GUT 9.7.1).
+**Code Review**: inline as godot-gdscript-specialist (lean per-story gate) — no blocking issues.
 
 ---
 

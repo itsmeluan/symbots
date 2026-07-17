@@ -1,12 +1,12 @@
 # Story 001: BattleController autoload host, FSM scaffold & teardown
 
 > **Epic**: Turn-Based Combat
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: timeboxed 4h (Risk: HIGH — the FSM host every other story builds on)
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -96,7 +96,19 @@
 **Story Type**: Integration
 **Required evidence**: `tests/integration/tbc/battlecontroller_fsm_host_test.gd` — must exist and pass. Include the `WeakRef` teardown assertion and the `submit_action` out-of-turn no-op.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/tbc/battle_controller_lifecycle_test.gd`
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-07-17 · **Criteria**: 1/1 (AC-TBC-35) verified against source + discriminating tests.
+
+- **Deviation (ADVISORY, tracked)**: `BattleController` ships as `class_name BattleController extends RefCounted`, DI-constructed with `(cfg, log)` — **not** the autoload in slot 11 that ADR-0007 specified (this project registers no autoloads). The FSM, `is_battle_active()` gate, synchronous `_ctx`-drop-then-clear teardown, and event-driven park/resume seam are all preserved; only the hosting mechanism differs. Logged to `docs/tech-debt-register.md`.
+- **Deviation (location)**: story named `tests/integration/tbc/battlecontroller_fsm_host_test.gd`; the evidence landed as unit coverage in `tests/unit/tbc/battle_controller_lifecycle_test.gd` (teardown is WeakRef-verified there). The out-of-range `_state` `push_error` guard is a defensive branch, not a checkbox AC.
+
+**Test Evidence**: `battle_controller_lifecycle_test.gd` — full GUT suite **762/762 green, 4268 asserts** (Godot 4.7 · GUT 9.7.1).
+**Code Review**: inline as godot-gdscript-specialist (lean per-story gate) — no blocking issues.
 
 ---
 

@@ -1,10 +1,24 @@
 # Active Session State
 
 <!-- STATUS -->
-Epic: Turn-Based Combat (Core layer) — ✅ IMPLEMENTED 2026-07-17 (14/14 stories, engine + tests green)
-Feature: BattleController FSM host + resolver/status/passive kernel — full suite 757/757, 70 scripts, 4244 asserts
-Task: NEXT → close TBC per-story gate (/code-review + /story-done, lean) OR /create-stories next Core epic
+Epic: Synergy System (Core layer) — ✅ CLOSED 2026-07-17 (5/5 stories Complete via lean per-story gate) — 3 of 5 Core epics now closed
+Feature: Gate done — all 5 stories → Complete + Completion Notes; EPIC.md/index.md rolled up; suite 762/762, 4268 asserts (markdown-only closure, no code touched)
+Task: NEXT → /create-stories encounter-zone (or drop-system) — the last 2 Ready-unstoried Core epics
 <!-- /STATUS -->
+
+## Session Extract — Synergy System epic CLOSED via lean per-story gate 2026-07-17
+- **Gate run:** `/code-review` + `/story-done` inline as godot-gdscript-specialist (lean, zero subagents). All 5 story files → `Status: Complete` + `Last Updated: 2026-07-17` + Test Evidence box checked (with test filename) + a `## Completion Notes` section. EPIC.md Status/Stories-table → Complete + a Closure Record; `index.md` Synergy row → ✅ Complete, Core layer → **3 of 5 closed through the gate**.
+- **Coverage re-verified by SCENARIO CONTENT (the TBC lesson):** unlike TBC, Synergy's test-file headers map CLEANLY to story ACs — no drift. All 26 checkbox ACs across the 5 stories have discriminating fixtures (each carries explicit "FAIL X = wrong-behavior" witnesses). The 3 load-bearing DoD-gate tests were each read in full and confirmed genuinely discriminating: AC-SYN-05b (`String(tier_id)` sort — reverse-alpha authored, alpha-first ironclad owns `shared_test`), AC-SYN-14 (`evaluate_silent` emit-count 0 + AC-SYN-25 no-self-lock), AC-SYN-13 B (`preview` subtracts displaced tags, not add-only delta).
+- **0 code gaps → markdown-only closure, 0 tech-debt entries.** AC-SYN-06/10 (TR-syn-010, SYN-F4 `max(0, base+delta)`) are legitimately consumer-owned — NOT a Synergy-engine gap; now discharged by the implemented TBC (`CombatantSnapshot.effective_stat`). One full GUT run validated all 5 closures: **762/762 green, 4268 asserts** (unchanged — no tests added).
+- **Deferred as designed (not a closure blocker):** synergy tier `.tres` content authoring is a later pass on OQ-1/2/3 (data format / MVP stat values + budget / feasible effect IDs). Engine was built + closed against the injected `Array[SynergyTierDef]` DI seam.
+
+## Session Extract — Turn-Based Combat epic CLOSED via lean per-story gate 2026-07-17
+- **Gate run:** `/code-review` + `/story-done` inline as godot-gdscript-specialist (lean mode, zero subagents). All 14 story files → `Status: Complete` + `Last Updated: 2026-07-17` + Test Evidence box checked + a `## Completion Notes` section (Assembly format). EPIC.md Stories table + Status → Complete; `production/epics/index.md` TBC row → ✅ Complete and Core layer → **3 of 5 done**.
+- **Coverage verified by SCENARIO CONTENT, not test-header labels** — the test-file header comments carry AC IDs that drifted from the GDD (e.g. switch_item header calls flee "AC-TBC-10" but GDD numbers flee AC-TBC-17; turn_test mislabels AC-TBC-11). Every one of the 42 checkbox ACs mapped to a discriminating test.
+- **5 Logic-AC test gaps CLOSED this gate (green suite couldn't surface them):** (1) AC-TBC-11 victory-before-heat → `test_victory_is_resolved_before_the_killing_move_applies_heat` in `_lifecycle`; (2–5) Story 011 AC-TBC-10 Burn-kill-at-turn-start [player forced-switch + enemy VICTORY], AC-TBC-18 A bench-status-freeze, AC-TBC-18 B down-clears-all → 4 tests in `_switch_item`. All present in source, just unproven. Typed all new `var`s (Dictionary/Combatant/bool) to dodge the INFERENCE_ON_VARIANT silent-skip trap.
+- **Full suite after gate:** **762/762 green, 4268 asserts** (was 757/757/4244 → +5 tests, +24 asserts). Count rose by exactly 5 → no silent skip.
+- **1 ADVISORY logged** to `docs/tech-debt-register.md`: `BattleController` is a DI `RefCounted`, not the ADR-0007 slot-11 autoload (no behavioral impact; revisit at Presentation-tier battle entry, ADR-0008). In-story notes: Story 001/014 unit-vs-integration test path; Story 002 live enemy pools (harmless — enemy skips decay/recharge).
+- **Synergy System reminder:** ✅ RESOLVED — Synergy was closed through the same lean gate on 2026-07-17 (see the extract above this one). Now at ✅ Complete in index.md.
 
 ## Session Extract — Turn-Based Combat epic IMPLEMENTED (all 14 stories) 2026-07-17
 - **Directive:** "write all 14, then implement them" — the 14 TBC story files were written in a prior window; this window implemented the engine + GUT tests inline (zero Agent/Task subagents; never-1M constraint binding).

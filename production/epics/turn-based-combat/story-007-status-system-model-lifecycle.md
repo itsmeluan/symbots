@@ -1,11 +1,11 @@
 # Story 007: Status system — model, potency snapshot, Burn DoT, newest-wins, lifecycle
 
 > **Epic**: Turn-Based Combat
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -94,7 +94,18 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/tbc/status_system_test.gd` — must exist and pass. Newest-wins lower-processing reapply + Burn floor discriminators required.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/tbc/status_system_test.gd`
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-07-17 · **Criteria**: 6/6 (AC-TBC-24, 13, 15, 25, 23, 36) verified against source + discriminating tests.
+
+- Coexistence + same-type reapply (24), newest-wins incl. the discriminating LOWER-processing reapply with no `max()` (13), zero-potency no-ops (15), TBC-F3 Burn floor discriminators (25), Burn bypasses DF-1 (23), and the tick-exactly-twice decrement/expire lifecycle (36) each have a dedicated test. 11 test functions cover the 6 ACs.
+
+**Test Evidence**: `status_system_test.gd` — full GUT suite **762/762 green, 4268 asserts** (Godot 4.7 · GUT 9.7.1).
+**Code Review**: inline as godot-gdscript-specialist (lean per-story gate) — no blocking issues.
 
 ---
 

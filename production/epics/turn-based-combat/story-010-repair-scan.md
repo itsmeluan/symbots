@@ -1,11 +1,11 @@
 # Story 010: Repair (TBC-F6) & SCAN no-op
 
 > **Epic**: Turn-Based Combat
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -77,7 +77,18 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/tbc/repair_scan_test.gd` — must exist and pass. Repair floor discriminators + overheal-cap-with-costs + SCAN cost/no-op required.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/tbc/repair_scan_test.gd`
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-07-17 · **Criteria**: 3/3 (AC-TBC-27, 16, 39) verified against source + discriminating tests.
+
+- AC-TBC-27 (TBC-F6 repair floor discriminators + effective-power scaling), AC-TBC-16 (overheal caps at `max_structure`; Energy + heat costs ALWAYS paid, even at exactly full), AC-TBC-39 (SCAN pays costs, consumes the turn, applies no damage/status, never crashes) each covered across 5 test functions.
+
+**Test Evidence**: `repair_scan_test.gd` — full GUT suite **762/762 green, 4268 asserts** (Godot 4.7 · GUT 9.7.1).
+**Code Review**: inline as godot-gdscript-specialist (lean per-story gate) — no blocking issues.
 
 ---
 
