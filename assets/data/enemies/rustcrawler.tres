@@ -10,12 +10,12 @@ enemy_class = 1
 tier = 1
 core_element = 3
 stats = {
-"structure": 85,
+"structure": 52,
 "armor": 20,
 "resistance": 18,
-"physical_power": 24,
+"physical_power": 12,
 "energy_power": 0,
-"mobility": 22,
+"mobility": 11,
 "processing": 10
 }
 skills = Array[StringName]([&"skill_rust_swipe", &"skill_scrap_toss"])
@@ -23,12 +23,12 @@ ai_profile = &"AGGRESSIVE"
 break_regions = Array[Dictionary]([{
 "region_id": "arm",
 "region_fraction": 0.35,
-"break_hp": 29,
+"break_hp": 18,
 "break_event": "arm_broken"
 }, {
 "region_id": "head",
 "region_fraction": 0.22,
-"break_hp": 18,
+"break_hp": 11,
 "break_event": "head_broken"
 }])
 loot_pool = Array[Dictionary]([{
