@@ -32,6 +32,16 @@ var _log: SliceLogSink
 var _controller: BattleController
 var _atk: MoveDef
 
+# --- 4c drop / rematch state (built once in _setup_battle, reused per fight) ---
+var _cfg: BalanceConfig
+var _enemy_def: EnemyDef
+var _enemy_spec: Dictionary = {}
+var _loadout                                   # SymbotLoadout — reused each rematch
+var _loot_pool: Array[PartDef] = []
+var _drop_system: DropSystem                   # created ONCE so pity survives rematches
+var _harvested_drops: Array = []               # last fight's PartInstances (Phase 4d re-equip)
+var _fired_events: Dictionary = {}
+
 # --- Part-Break subscriber state (presentation-tier glue, unbuilt in src/) ---
 var _arm_break_hp: int = 0
 var _head_break_hp: int = 0
@@ -62,6 +72,12 @@ var _player_heat_label: Label
 var _attack_btn: Button
 var _target_btns: Dictionary = {}              # StringName sub_target -> Button
 
+# --- 4c reveal overlay refs ---
+var _overlay: Control
+var _overlay_title: Label
+var _overlay_body: VBoxContainer
+var _rematch_btn: Button
+
 
 func _ready() -> void:
 	_log = SliceLogSink.new()
@@ -84,38 +100,71 @@ func _notification(what: int) -> void:
 # Battle assembly (mirrors slice_bootstrap.gd — prototype copy-paste is allowed)
 # ---------------------------------------------------------------------------
 func _setup_battle() -> void:
-	var cfg := load(BALANCE_PATH) as BalanceConfig
+	_cfg = load(BALANCE_PATH) as BalanceConfig
 	var part_catalog := load(PART_CATALOG_PATH) as PartCatalog
 	var enemy_catalog := load(ENEMY_CATALOG_PATH) as EnemyCatalog
 
 	var starters := _pick_stock_starters(part_catalog)
-	var build := SymbotBuild.with_starters(starters, cfg, _log)
+	var build := SymbotBuild.with_starters(starters, _cfg, _log)
 	var base_stats := build.get_final_stat()
 	var core_element = starters[PartDef.SlotType.CORE].part.element
 	var part_defs: Array = []
 	for slot_type in starters:
 		part_defs.append(starters[slot_type].part)
 	_atk = _make_basic_attack(core_element)
-	var loadout := SymbotLoadout.make(
+	_loadout = SymbotLoadout.make(
 		0, base_stats, [_atk, null, null, null], build.get_passive_pool(),
 		core_element, part_defs)
 
-	var enemy_def := _find_enemy(enemy_catalog, TARGET_ENEMY)
-	_arm_break_hp = _break_hp_for_region(enemy_def, &"arm")
-	_head_break_hp = _break_hp_for_region(enemy_def, &"head")
-	var enemy_spec := {
-		"id": enemy_def.id, "stats": enemy_def.stats,
-		"core_element": enemy_def.core_element, "level": enemy_def.level,
-		"xp_value": enemy_def.xp_value,
-		"completion_bonus_xp": enemy_def.completion_bonus_xp,
+	_enemy_def = _find_enemy(enemy_catalog, TARGET_ENEMY)
+	_arm_break_hp = _break_hp_for_region(_enemy_def, &"arm")
+	_head_break_hp = _break_hp_for_region(_enemy_def, &"head")
+	_enemy_spec = {
+		"id": _enemy_def.id, "stats": _enemy_def.stats,
+		"core_element": _enemy_def.core_element, "level": _enemy_def.level,
+		"xp_value": _enemy_def.xp_value,
+		"completion_bonus_xp": _enemy_def.completion_bonus_xp,
 		"is_first_boss_defeat": false,
 	}
-	_enemy_name_label.text = "%s   Lv%d" % [enemy_def.display_name, enemy_def.level]
+	_enemy_name_label.text = "%s   Lv%d" % [_enemy_def.display_name, _enemy_def.level]
 
-	_controller = BattleController.new(cfg, _log)
+	# Loot pool + DropSystem are built ONCE — the seeded RNG stream and gradient
+	# pity are internal to _drop_system, so reusing it across rematches lets the
+	# rare accumulate exactly like the real farm loop (mirrors slice_bootstrap.gd).
+	_loot_pool = _resolve_loot_pool(_enemy_def, part_catalog)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 20260717
+	_drop_system = DropSystem.new(rng, _cfg, _log)
+
+	_controller = BattleController.new(_cfg, _log)
 	_controller.hit_resolved.connect(_on_hit_resolved)
 	_controller.battle_ended.connect(_on_battle_ended)
-	_controller.start_battle([loadout], enemy_spec, BattleController.EncounterType.WILD, null)
+	_start_fight()
+
+
+# Reset per-fight break state and (re)start the encounter on the SAME controller.
+# Called for the first fight and every "LUTAR DE NOVO" — never rebuilds the
+# DropSystem, so pity persists across the farm.
+func _start_fight() -> void:
+	_arm_dmg = 0
+	_head_dmg = 0
+	_arm_broken = false
+	_head_broken = false
+	_battle_over = false
+	_harvested_drops = []
+	_fired_events = {}
+	_round_lines.clear()
+	# Reset the target back to the harvest-nudge default — otherwise a rematch keeps
+	# the stale CORE selection from the previous fight's finisher and the arm never breaks.
+	_current_target = &"arm"
+	if _target_btns.has(&"arm"):
+		(_target_btns[&"arm"] as Button).button_pressed = true
+	_attack_btn.disabled = false
+	_attack_btn.text = "ATTACK"
+	for sub in _target_btns:
+		(_target_btns[sub] as Button).disabled = false
+	_controller.start_battle(
+		[_loadout], _enemy_spec, BattleController.EncounterType.WILD, null)
 
 
 # ---------------------------------------------------------------------------
@@ -177,22 +226,27 @@ func _on_player_hit(damage: int, sub_target: StringName) -> void:
 		_round_lines.append("You strike its CORE for %d." % damage)
 
 
-func _on_battle_ended(outcome: int, _enemy_id: StringName, _fired: Dictionary,
+func _on_battle_ended(outcome: int, _enemy_id: StringName, fired: Dictionary,
 		_xp: int, _bonus: int, _first_boss: bool, _level: int, _deployed: Array) -> void:
 	_battle_over = true
-	if outcome == BattleController.Outcome.VICTORY:
-		if _arm_broken:
-			_round_lines.append("VICTORY!  The arm was broken — harvest is unlocked (Phase 4c).")
-		else:
-			_round_lines.append("VICTORY!  (Arm intact — no rare harvest this time.)")
-	elif outcome == BattleController.Outcome.DEFEAT:
-		_round_lines.append("DEFEATED.  Your Symbot is scrap. (Retry from the editor.)")
-	else:
-		_round_lines.append("Battle ended (outcome %d)." % outcome)
+	_fired_events = fired.duplicate()
 	_attack_btn.disabled = true
 	_attack_btn.text = "— BATTLE OVER —"
 	for sub in _target_btns:
 		(_target_btns[sub] as Button).disabled = true
+
+	if outcome == BattleController.Outcome.VICTORY:
+		# Same DropSystem call the harness makes — victory-gated, break-event-driven,
+		# seeded/pity RNG. Drops feed the reveal panel and are kept for Phase 4d.
+		_harvested_drops = _drop_system.resolve_drops(
+			DropSystem.OUTCOME_VICTORY, _loot_pool, _fired_events, _enemy_def.level)
+		_round_lines.append("VICTORY!")
+		_show_reveal(_harvested_drops)
+	elif outcome == BattleController.Outcome.DEFEAT:
+		_round_lines.append("DEFEATED.")
+		_show_defeat()
+	else:
+		_round_lines.append("Battle ended (outcome %d)." % outcome)
 
 
 # ---------------------------------------------------------------------------
@@ -292,6 +346,58 @@ func _build_ui() -> void:
 	_attack_btn.add_theme_font_size_override("font_size", 22)
 	_attack_btn.pressed.connect(_on_attack_pressed)
 	action_panel.add_child(_attack_btn)
+
+	_build_overlay()
+
+
+# Reveal/defeat overlay — hidden until a battle ends. Full-rect dim blocks input to
+# the battle behind it; a centered panel shows the loot (or defeat) + rematch.
+func _build_overlay() -> void:
+	_overlay = Control.new()
+	_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_overlay.visible = false
+	add_child(_overlay)
+
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.74)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_overlay.add_child(dim)
+
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_overlay.add_child(center)
+
+	var pc := PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.14, 0.15, 0.18)
+	sb.set_corner_radius_all(12)
+	sb.set_content_margin_all(20)
+	sb.set_border_width_all(2)
+	sb.border_color = COL_BREAK
+	pc.add_theme_stylebox_override("panel", sb)
+	pc.custom_minimum_size = Vector2(360, 0)
+	center.add_child(pc)
+
+	var vb := VBoxContainer.new()
+	vb.add_theme_constant_override("separation", 14)
+	pc.add_child(vb)
+
+	_overlay_title = Label.new()
+	_overlay_title.add_theme_font_size_override("font_size", 26)
+	_overlay_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vb.add_child(_overlay_title)
+
+	_overlay_body = VBoxContainer.new()
+	_overlay_body.add_theme_constant_override("separation", 8)
+	vb.add_child(_overlay_body)
+
+	_rematch_btn = Button.new()
+	_rematch_btn.text = "LUTAR DE NOVO"
+	_rematch_btn.custom_minimum_size = Vector2(0, 60)
+	_rematch_btn.add_theme_font_size_override("font_size", 20)
+	_rematch_btn.pressed.connect(_on_rematch_pressed)
+	vb.add_child(_rematch_btn)
 
 
 func _add_target_btn(row: HBoxContainer, group: ButtonGroup, text: String,
@@ -393,3 +499,107 @@ func _break_hp_for_region(enemy_def: EnemyDef, region: StringName) -> int:
 		if StringName(r.get("region_id", &"")) == region:
 			return int(r.get("break_hp", 0))
 	return 0
+
+
+func _resolve_loot_pool(enemy_def: EnemyDef, catalog: PartCatalog) -> Array[PartDef]:
+	var pool: Array[PartDef] = []
+	for entry in enemy_def.loot_pool:
+		if not bool(entry.get("enabled", true)):
+			continue
+		var want := StringName(entry.get("id", &""))
+		for p in catalog.entries:
+			if p.id == want:
+				pool.append(p)
+				break
+	return pool
+
+
+# ---------------------------------------------------------------------------
+# 4c reveal overlay
+# ---------------------------------------------------------------------------
+func _show_reveal(drops: Array) -> void:
+	_overlay_title.text = "PILHAGEM"
+	_overlay_title.add_theme_color_override("font_color", COL_BREAK)
+	_clear_overlay_body()
+
+	# Flavor line per broken region — the harvest we gated.
+	for ev in _fired_events:
+		_overlay_line(_region_flavor(ev), 16, COL_BREAK)
+
+	if drops.is_empty():
+		_overlay_line("Nada se soltou desta vez.", 18, Color(0.75, 0.76, 0.80))
+		_overlay_line("Lute de novo para forçar o drop.", 14, Color(0.60, 0.61, 0.65))
+	else:
+		var got_rare := false
+		for d in drops:
+			var rarity = d.part.rarity
+			var mark := "★ " if rarity >= PartDef.Rarity.RARE else "• "
+			_overlay_line("%s%s   [%s]" % [
+				mark, d.part.display_name, _rarity_text(rarity)],
+				20, _rarity_color(rarity))
+			if rarity >= PartDef.Rarity.RARE:
+				got_rare = true
+		if got_rare:
+			_overlay_line("Peça rara colhida — pronta para a Oficina (4d).",
+				14, Color(0.60, 0.61, 0.65))
+
+	_rematch_btn.text = "LUTAR DE NOVO"
+	_overlay.visible = true
+
+
+func _show_defeat() -> void:
+	_overlay_title.text = "DERROTA"
+	_overlay_title.add_theme_color_override("font_color", COL_ENEMY)
+	_clear_overlay_body()
+	_overlay_line("Seu Symbot virou sucata.", 18, Color(0.80, 0.55, 0.55))
+	_overlay_line("Nenhuma peça colhida.", 14, Color(0.60, 0.61, 0.65))
+	_rematch_btn.text = "LUTAR DE NOVO"
+	_overlay.visible = true
+
+
+func _on_rematch_pressed() -> void:
+	_overlay.visible = false
+	_start_fight()
+	_refresh()
+	_log_label.text = "Outra Rustcrawler se aproxima. Quebre o BRAÇO para colher."
+
+
+func _clear_overlay_body() -> void:
+	for child in _overlay_body.get_children():
+		child.queue_free()
+
+
+func _overlay_line(text: String, size: int, color: Color) -> void:
+	var l := Label.new()
+	l.text = text
+	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_color_override("font_color", color)
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_overlay_body.add_child(l)
+
+
+func _region_flavor(break_event: StringName) -> String:
+	match break_event:
+		&"arm_broken": return "O BRAÇO se despedaçou!"
+		&"head_broken": return "A CABEÇA se despedaçou!"
+		&"leg_broken": return "A PERNA se despedaçou!"
+		&"weapon_broken": return "A ARMA se despedaçou!"
+	return "%s disparou." % String(break_event)
+
+
+func _rarity_text(rarity: int) -> String:
+	match rarity:
+		PartDef.Rarity.COMMON: return "COMUM"
+		PartDef.Rarity.RARE: return "RARO"
+		PartDef.Rarity.BOSS_GRADE: return "BOSS"
+		PartDef.Rarity.PROTOTYPE: return "PROTÓTIPO"
+	return "?"
+
+
+func _rarity_color(rarity: int) -> Color:
+	match rarity:
+		PartDef.Rarity.RARE: return Color(0.95, 0.78, 0.30)      # gold — the payoff
+		PartDef.Rarity.BOSS_GRADE: return Color(0.85, 0.40, 0.85)
+		PartDef.Rarity.PROTOTYPE: return Color(0.40, 0.85, 0.90)
+	return Color(0.72, 0.74, 0.78)                              # common gray

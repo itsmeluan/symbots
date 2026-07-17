@@ -35,20 +35,38 @@ func _process(_delta: float) -> bool:
 	print("player: ", s._player_struct_label.text, " | energy: ", s._player_energy_label.text)
 	print("target default: ", s._current_target)
 
+	# 4c: farm through rematches until the RARE drops (or a cap), proving the reveal
+	# panel populates, the harvest is stored, and DropSystem pity survives rematches.
+	var fights := 0
+	var harvested_rare := false
+	while fights < 40 and not harvested_rare:
+		fights += 1
+		_drive_one_fight(s)
+		var names: Array = []
+		for d in s._harvested_drops:
+			names.append(String(d.part.id))
+			if d.part.rarity >= PartDef.Rarity.RARE:
+				harvested_rare = true
+		print("[fight %d] arm_broken=%s head_broken=%s fired=%s drops=%s%s" % [
+			fights, s._arm_broken, s._head_broken, s._fired_events.keys(), names,
+			("  ← RARE" if harvested_rare else "")])
+		if not harvested_rare:
+			s._on_rematch_pressed()   # reset + restart on the same controller/drop_system
+
+	print("--- farm done after %d fight(s) — rare harvested: %s ---" % [fights, harvested_rare])
+	print("overlay title: ", s._overlay_title.text, " | rematch btn: ", s._rematch_btn.text)
+	print("final harvest: ", ("[]" if s._harvested_drops.is_empty()
+		else s._harvested_drops[0].part.display_name if s._harvested_drops.size() > 0 else "?"))
+
+	s.queue_free()
+	return true   # quit the main loop
+
+
+# Drive a single encounter to a terminal state (attack arm, break it, finish CORE).
+func _drive_one_fight(s: Node) -> void:
 	var round := 0
 	while not s._battle_over and round < 40:
 		round += 1
 		if s._arm_broken:
 			s._on_target_selected(BattleResolver.STRUCTURE)
 		s._on_attack_pressed()
-		print("[round %d] %s | %s | you: %s" % [
-			round, s._enemy_struct_label.text,
-			(s._arm_label.text if not s._arm_broken else "ARM BROKEN"),
-			s._player_struct_label.text])
-
-	print("--- battle over after %d rounds ---" % round)
-	print("arm_broken: ", s._arm_broken, " | final log: ", s._log_label.text)
-	print("attack btn disabled: ", s._attack_btn.disabled)
-
-	s.queue_free()
-	return true   # quit the main loop
