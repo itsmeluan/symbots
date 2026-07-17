@@ -93,3 +93,35 @@ and surface the blocker. Velocity is logged in `REPORT.md`.
   arm → harvest RARE `reinforced_servo_arm` (fight 6, seeded RNG) → re-equip →
   **physical_power +11** (24→35), structure +3, mobility +1. 913/913 GUT green after
   the content change. Balance finding surfaced + resolved (Finding 4).
+
+- **2026-07-17 (day 1):** Phase 4b interactive battle screen **COMPLETE**. First
+  interactive scene in the project. All-code `Control` UI (no hand-authored .tscn
+  theme subresources): structure/energy/break bars, component target picker (ARM/
+  HEAD/CORE), ATTACK. Signal-driven per ADR-0008 (subscribe `hit_resolved`/
+  `battle_ended`, no `_process` polling), touch-first ≥56px targets. Reuses the real
+  `BattleController` + `SymbotBuild`; synthesizes only `basic_attack` MoveDef and the
+  Part-Break subscriber (both unbuilt in `src/`). Headless smoke-runner (`_smoke_screen.gd`)
+  drives the real scene to prove instantiation + combat resolution.
+
+- **2026-07-17 (day 1):** Phase 4c drop-reveal panel **COMPLETE**. Authentic
+  `DropSystem` RNG (not faked) — `DropSystem` + seeded RNG created ONCE and reused
+  across rematches so gradient pity accumulates (RARE lands fight 6, matching the
+  4a harness). PILHAGEM overlay: per-region break flavor + rarity-colored drop list;
+  **LUTAR DE NOVO** rematch reuses the same `BattleController`. Bug caught by the
+  smoke-runner: `_start_fight` didn't reset `_current_target`, so rematches never
+  re-hit the arm — fixed (reset to ARM + toggle button). **Design finding:**
+  `drop_conditions` are rate *multipliers*, not gates — a part drops at base rate even
+  without its break; breaking only boosts the rate (MHW-authentic). Flag for REPORT.
+
+- **2026-07-17 (day 1):** Phase 4d workshop screen **COMPLETE + PLAYTEST-VALIDATED**.
+  OFICINA panel: current ARMS + harvested candidates with live delta preview, EQUIPAR,
+  VOLTAR À BATALHA → next fight on the upgraded build. Preview uses the pure core's
+  `preview_swap()` (no reimplementation). Bug caught by an equivalence assertion in the
+  smoke-runner: `preview_swap` returns a **signed delta** dict (`hypo − current`), not
+  absolute stats — the panel was rendering the delta as if absolute; fixed by rebuilding
+  `after = current + delta`. Now **preview delta == realized delta** (verified headless).
+  Realized equip: struct 42→45, power 24→**35**. **Playtest (Luan, F6):** "hits ficaram
+  mais fortes… me senti mais forte e não foi só sobre números. senti que meu esforço me
+  recompensou." Scope caveat he raised: the single-part reward *loop* is validated; the
+  full *build-composition* fantasy (multi-slot synergy, effects, attack choice) is out of
+  slice scope and remains untested — **REPORT risk line.**
