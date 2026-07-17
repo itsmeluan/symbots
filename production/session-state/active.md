@@ -1,10 +1,32 @@
 # Active Session State
 
 <!-- STATUS -->
-Epic: Synergy System (Core layer) — ✅ CLOSED 2026-07-17 (5/5 stories Complete via lean per-story gate) — 3 of 5 Core epics now closed
-Feature: Gate done — all 5 stories → Complete + Completion Notes; EPIC.md/index.md rolled up; suite 762/762, 4268 asserts (markdown-only closure, no code touched)
-Task: NEXT → /create-stories encounter-zone (or drop-system) — the last 2 Ready-unstoried Core epics
+Epic: Sprint 1 planned (Core close) — Encounter Zone + Drop System, both storied & Ready; 3 of 5 Core epics already Complete
+Feature: Sprint 1 (2026-07-17→07-31) + sprint-status.yaml + QA plan all written; DS-9 Blocked (Save/Load). Suite baseline 762/762, 4268 asserts (no code touched this session — all markdown/planning)
+Task: NEXT → /story-readiness on an anchor (EZ-1 or DS-1, both zero-dep) → /dev-story. Start implementing Sprint 1.
 <!-- /STATUS -->
+
+## ⇒ HANDOFF FOR NEXT SESSION (2026-07-17 EOD) — Sprint 1 implementation
+**Do this first in the new session.** Three planning skills ran back-to-back this session (all markdown only, zero code, zero Agent/Task subagents — the never-1M constraint is still binding). State to resume from:
+
+1. **`/create-stories drop-system` — DONE.** 9 Drop System stories written to `production/epics/drop-system/story-001..009-*.md` (8 Logic **Ready** + Story 009 Integration **Blocked** on the Not-Started Save/Load system — AC-DS-28 is a release-blocker). EPIC.md Stories table + `production/epics/index.md` Drop row (→ "9 stories") + Core-layer paragraph updated. All 12 TR-drop + 30 BLOCKING ACs + AC-DS-28 placed. **All 5 Core epics are now storied.**
+
+2. **`/sprint-plan new` — DONE.** Wrote `production/sprints/sprint-1.md` + `production/sprint-status.yaml` (the machine-readable source of truth read by `/sprint-status`, `/story-done`, `/help`). **Sprint 1 goal: close the Core layer** (implement Encounter Zone 8 + Drop System 8) → reach the Pre-Production → Production gate. 11 Must Have (the encounter→battle→drop loop) + 5 Should Have; **DS-9 recorded `blocked`** (nice-to-have tier, not workable — Save/Load must land first). Review mode = lean → PR-SPRINT producer gate skipped.
+
+3. **`/qa-plan sprint` — DONE.** Wrote `production/qa/qa-plan-sprint-1-2026-07-17.md` (14 Logic unit + 2 Integration + 1 Config/Data; 0 Visual-Feel/UI; no playtests). **Did NOT back-fill story files** — each story already carries inline `## QA Test Cases` from `/create-stories`; back-filling would clobber them. If a future session wants per-AC specs injected into stories, that's still an open option (decided against, not forgotten).
+
+**NEXT ACTIONS (in order):**
+- `/story-readiness production/epics/encounter-zone/story-001-zone-data-model-ez1-encounter-trigger.md` **or** `production/epics/drop-system/story-001-dropsystem-host-victory-trigger-ds1-roll-core.md` — both anchors are zero-dependency; start either, or interleave the two epics (they're mutually independent, both RNG-injected Core).
+- Then `/dev-story` on that anchor; work down each epic's `Depends on:` chain (EZ: 001→{002,003,005,008}→004→{006,007}; DS: 001→{002,003,004,005,008}→006→007).
+- `/sprint-status` mid-sprint for burndown.
+
+**IMPLEMENTATION GOTCHAS (bit us every prior Core epic — see extracts below):**
+- Run `Godot --headless --import` BEFORE GUT whenever new `class_name` scripts are added, or GUT silently skips the uncompilable `_test.gd` and stays green at the OLD count. **Verify the test count rose by exactly the number of tests added.**
+- Type every `var` in tests (`var x: int = …`) — an untyped `:=` off a Variant source (`Array` index, `weakref`, `.size()`) throws "Cannot infer type" → whole-file parse skip while suite stays green.
+- Any new floor/ceil formula → python3 exact-oracle scan (specialists err in BOTH directions). DS/EZ mostly reuse scanned formulas + integer thresholds, but DS-1 clamp / EDB break-hp fixtures deserve a check.
+- `src/core/` stays pure: injected seeded RNG (never global `randf()`/`RngService`), diagnostics via injected LogSink `warn(code, detail)` (never `push_warning`/`push_error` from `src/`), content defs read-only.
+
+**PROJECT-LEVEL OPEN THREAD:** DS-9 / AC-DS-28 (pity persistence) is a ship-blocker gated on the **Not-Started Save/Load system (ADR-0001 is Accepted, but no epic/stories/code yet)**. Sprint 1 completes with DS-9 Blocked; the *game can't ship* until Save/Load is built and DS-9 passes. **Save/Load is the natural next epic to architect after Sprint 1** — worth surfacing to the user.
 
 ## Session Extract — Synergy System epic CLOSED via lean per-story gate 2026-07-17
 - **Gate run:** `/code-review` + `/story-done` inline as godot-gdscript-specialist (lean, zero subagents). All 5 story files → `Status: Complete` + `Last Updated: 2026-07-17` + Test Evidence box checked (with test filename) + a `## Completion Notes` section. EPIC.md Status/Stories-table → Complete + a Closure Record; `index.md` Synergy row → ✅ Complete, Core layer → **3 of 5 closed through the gate**.
