@@ -161,3 +161,62 @@ extends Resource
 	&"mobility", &"targeting", &"processing", &"cooling", &"energy_capacity",
 	&"recharge",
 ]
+
+# ---------------------------------------------------------------------------
+# Turn-Based Combat tuning knobs (ADR-0005 / ADR-0007; GDD TBC-F1…F7).
+# APPEND-ONLY, same discipline as every field above. Defaults mirror the GDD
+# formula tables verbatim so a bare BalanceConfig.new() drives the TBC unit
+# tests via DI; the authored `.tres` is the production source of truth.
+# ---------------------------------------------------------------------------
+
+## TBC-F2 universal per-turn energy gain (Rule 4.1b). Also the anti-stall brake
+## reference (`REPAIR moves author energy_cost > this`). GDD range: fixed 10.
+@export var base_energy_regen: int = 10
+
+## TBC-F3 Burn DoT: `max(burn_min, floor(processing × burn_coeff + ε))`.
+## GDD: BURN_COEFF = 0.08, BURN_MIN = 2. Bypasses DF-1 (direct structure loss).
+@export var burn_coeff: float = 0.08
+@export var burn_min: int = 2
+
+## TBC-F4 Shock mobility reduction: `floor(processing × shock_coeff + ε)`, stored
+## POSITIVE and subtracted by TBC-F1. GDD: SHOCK_COEFF = 0.3, output 0–33.
+@export var shock_coeff: float = 0.3
+
+## TBC-F5 Stagger: `stagger_pct = floor(processing × stagger_coeff + ε)` (0–27),
+## then `max(1, floor(final_damage × (1 − pct/100) + ε))` post-MOVE-F1.
+## GDD: STAGGER_COEFF = 0.25.
+@export var stagger_coeff: float = 0.25
+
+## TBC-F6 Repair: `max(repair_min, floor(energy_power × repair_coeff + repair_base + ε))`
+## capped at max_structure. GDD: REPAIR_COEFF = 0.17, REPAIR_BASE = 5, REPAIR_MIN = 5.
+@export var repair_coeff: float = 0.17
+@export var repair_base: int = 5
+@export var repair_min: int = 5
+
+## TBC-F7 enemy enrage (Part-Break PB-F5, TBC-applied POST-Stagger):
+## `max(1, floor(hit × (1 + broken_region_count × enrage_per_break) + ε))`.
+## GDD: ENRAGE_PER_BREAK = 0.12 → multiplier ∈ {1.00, 1.12, 1.24, 1.36}.
+## Part-Break-owned tuning knob — do not duplicate-tune; mirror it here only.
+@export var enrage_per_break: float = 0.12
+
+## PB-F3 break spillover fraction TBC applies on a region hit (Rule 10).
+## GDD/Part-Break: BREAK_SPILLOVER = 0.20. Part-Break-owned; mirrored here.
+@export var break_spillover: float = 0.20
+
+## SYN-F4 consumer-side cumulative synergy `stat_delta` caps (DF-1 range contract).
+## GDD: SYNERGY_POWER_BUDGET = 40 (physical_power / energy_power),
+## SYNERGY_DEFENSE_BUDGET = 50 (armor / resistance). Content-validation ceilings.
+@export var synergy_power_budget: int = 40
+@export var synergy_defense_budget: int = 50
+
+## Heat / overheat (Rule 5, Story 006). Heat is a 0–[member overheat_threshold] gauge.
+## A move's heat gain (`gen + THERMAL bonus`) is clamped to the threshold; touching it
+## trips OVERHEATED, dealing `floor(max_structure × overheat_self_damage_pct)` recoil.
+## The overheated turn resets heat flat to [member overheat_reset_heat] (no decay that
+## turn) and skips the action phase. Per-turn cooling itself is the combatant's
+## effective `cooling` STAT (canonical key), not a global constant. GDD: THRESHOLD 100,
+## SELF_DAMAGE 10%, RESET 20, THERMAL move heat bonus +5.
+@export var overheat_threshold: int = 100
+@export var overheat_self_damage_pct: float = 0.10
+@export var overheat_reset_heat: int = 20
+@export var thermal_move_heat_bonus: int = 5

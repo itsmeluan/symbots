@@ -4,7 +4,7 @@
 > **GDD**: design/gdd/turn-based-combat.md
 > **Architecture Module**: Turn-Based Combat (Core)
 > **Status**: Ready
-> **Stories**: Not yet created — run `/create-stories turn-based-combat`
+> **Stories**: 14 stories — see `## Stories` below
 
 ## Overview
 
@@ -76,6 +76,27 @@ highest-risk signal contract).
 | TR-tbc-041 | Battle end: all runtime state discarded; fresh snapshots/evaluate_silent next battle | ADR-0007 ✅ |
 | TR-tbc-042 | Consumed turn → next combatant by initiative; free action does not advance turn order | ADR-0007 ✅ |
 
+## Stories
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | BattleController FSM host & teardown | Logic | Ready | ADR-0007 |
+| 002 | Battle-start sequence & build validity | Logic | Ready | ADR-0007 |
+| 003 | Move pool & action availability | Logic | Ready | ADR-0007 |
+| 004 | Initiative & round structure (Shock floor) | Logic | Ready | ADR-0007 |
+| 005 | Turn anatomy, recharge & heat decay | Logic | Ready | ADR-0007 |
+| 006 | Heat gain & Overheat | Logic | Ready | ADR-0007 |
+| 007 | Status system model & lifecycle | Logic | Ready | ADR-0007 |
+| 008 | Damage pipeline: SYN-F4 → DF-1 → MOVE-F1 → Stagger | Logic | Ready | ADR-0005 |
+| 009 | Sub-target routing, `hit_resolved` & enemy enrage | Logic | Ready | ADR-0005 |
+| 010 | Repair (TBC-F6) & SCAN no-op | Logic | Ready | ADR-0005 |
+| 011 | Switch, flee, bench-freeze & down-ordering | Logic | Ready | ADR-0007 |
+| 012 | Use-item action | Logic | Ready | ADR-0007 |
+| 013 | Passive effect registry & dispatch | Logic | Ready | ADR-0007 |
+| 014 | Battle end — 8-field `battle_ended` & teardown | Integration | Ready | ADR-0002 |
+
+13 Logic + 1 Integration. Implement in order — each story's `Depends on:` field names its prerequisites (Story 001 first).
+
 ## Definition of Done
 
 This epic is complete when:
@@ -91,4 +112,4 @@ This epic is complete when:
 
 ## Next Step
 
-Run `/create-stories turn-based-combat` to break this epic into implementable stories.
+Stories written (14). Run `/story-readiness production/epics/turn-based-combat/story-001-battlecontroller-fsm-host-teardown.md` then `/dev-story` to begin implementation — Story 001 first (all others depend on the FSM host).

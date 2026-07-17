@@ -1,10 +1,19 @@
 # Active Session State
 
 <!-- STATUS -->
-Epic: Synergy System (Core layer) — ✅ IMPLEMENTED 2026-07-16 (5/5 stories Done, engine complete)
-Feature: SynergySystem count→activate→aggregate + evaluate/evaluate_silent/preview — suite 689/689, 58 scripts
-Task: NEXT → /create-stories turn-based-combat (consumes Assembly snapshot + synergy block)
+Epic: Turn-Based Combat (Core layer) — ✅ IMPLEMENTED 2026-07-17 (14/14 stories, engine + tests green)
+Feature: BattleController FSM host + resolver/status/passive kernel — full suite 757/757, 70 scripts, 4244 asserts
+Task: NEXT → close TBC per-story gate (/code-review + /story-done, lean) OR /create-stories next Core epic
 <!-- /STATUS -->
+
+## Session Extract — Turn-Based Combat epic IMPLEMENTED (all 14 stories) 2026-07-17
+- **Directive:** "write all 14, then implement them" — the 14 TBC story files were written in a prior window; this window implemented the engine + GUT tests inline (zero Agent/Task subagents; never-1M constraint binding).
+- **Production code (src/core/battle/):** `combatant.gd` (+`is_overheated` flag); `symbot_loadout.gd` (`SymbotLoadout` DI seam carrying precomputed `is_build_valid` + `final_stat` snapshot — controller REFUSES on the flag, never re-derives stats mid-battle per Manifest); `battle_context.gd` (`BattleContext` per-battle RefCounted — team/pools/turn_order/`fired_break_events` set/outcome; dropped synchronously at battle end); `passive_effect_registry.gd` (`PassiveEffectRegistry` — 3 seeded elemental riders volt→SHOCK / thermal→BURN(weapon-only) / kinetic→STAGGER; alphabetical unknown-id dedup log); `battle_controller.gd` (the FSM orchestrator — `start_battle` Rule-2 validity gate → snapshot → initiative TBC-F1 → park at ACTION_PENDING; `begin_turn` ordered cooling-decay→TBC-F2 recharge→Burn-tick-LAST; `apply_move_heat` overheat trip w/ `floor(max_structure×0.10)` recoil + THERMAL +5; switch/flee/item; idempotent `_end_battle` emitting the 8-field `battle_ended`, `_ctx=null` before `is_battle_active=false`). Added 4 @export overheat constants to `balance_config.gd`.
+- **Tests (7 new files this window, +43 tests → tbc dir 68/68, 12 scripts):** `tests/unit/tbc/` — passive_effect_registry (5), battle_controller_start (4), _initiative (3), _movepanel (3), _turn (5), _switch_item (7), _lifecycle (4). Support: `fake_synergy_system.gd` (preload duck-typed) + reused `spy_log_sink.gd`. (Stories 007–010 formula/status/resolver kernel — battle_formulas/status_system/damage_pipeline/repair_scan/subtarget_routing — landed in earlier windows this session, tasks #1–3.)
+- **GOTCHA HIT + FIXED (same class, TWICE):** GUT ran 10 scripts vs 12 files on disk — count delta caught 2 silent skips. `battle_controller_lifecycle_test.gd:119` `var wr := weakref(_bc.context())` (weakref→Variant) and `battle_controller_switch_item_test.gd:126` `var before := ctx.team[0].current_structure` (Array-index→Variant) → INFERENCE_ON_VARIANT warning-as-error → whole-file parse skip while suite stayed green. Fix: annotate `var wr: WeakRef =` / `var before: int =`. Re-ran: tbc 68/68, 12 scripts (== 12 files, reconciles).
+- **No python3 scan owed:** TBC applies EXISTING scanned formulas/coefficients (TBC-F1..F7 defensive epsilons verified 2026-07-10/11); no coefficient retuned. The 4 new overheat constants are integer thresholds + one pct whose single floor (`floor(155×0.10)=floor(15.5001)=15`, round→16) is discriminator-tested in `_turn`.
+- **Full suite:** `--import` (4 new class_name: BattleContext/BattleController/PassiveEffectRegistry/SymbotLoadout registered) → **757/757 green, 70 scripts, 4244 asserts**, zero failures/skips.
+- **NEXT:** close TBC via the lean per-story gate (`/code-review` + `/story-done`) like Assembly/Synergy, then EPIC.md/index.md → Complete; or forward to the next Core epic.
 
 ## Session Extract — Synergy System epic IMPLEMENTED (all 5 stories) 2026-07-16
 - **Directive:** "implement all stories from this epic" (synergy-system, immediately after `/create-stories` wrote the 5 files). Done inline, zero Agent/Task subagents (never-1M constraint still binding).

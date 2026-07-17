@@ -27,3 +27,19 @@ static func floor_eps(value: float) -> int:
 ## that would otherwise ceil to 11).
 static func ceil_eps(value: float) -> int:
 	return ceili(value - EPSILON)
+
+## SYN-F4 — the single stat-composition clamp `max(0, base + synergy_delta + aura)`
+## (GDD Rule 10; ADR-0005). [param base_final] is the frozen SA-F1/CP-F3 `final_stat`
+## dict; [param synergy_delta] is the frozen `cached_bonus_block["stat_delta"]`;
+## [param passive_aura] is the frozen PERSISTENT-passive aura (Story 013 — empty in
+## MVP). A stat absent from any block reads 0. Pure integer arithmetic — no epsilon.
+##
+## This is the ONE place synergy + aura fold into a base stat; the damage pipeline,
+## repair, and status potency all read through it (or its [CombatantSnapshot] wrapper),
+## never re-summing inline (`inline_stat_composition` forbidden).
+static func effective_stat(base_final: Dictionary, synergy_delta: Dictionary,
+		passive_aura: Dictionary, key: StringName) -> int:
+	var base: int = int(base_final.get(key, 0))
+	var syn: int = int(synergy_delta.get(key, 0))
+	var aura: int = int(passive_aura.get(key, 0))
+	return maxi(0, base + syn + aura)

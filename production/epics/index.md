@@ -13,7 +13,7 @@ Engine: Godot 4.7
 | [Damage Formula](damage-formula/EPIC.md) | Foundation | Damage Formula | design/gdd/damage-formula.md | 3 stories | Complete |
 | [Symbot Assembly](symbot-assembly/EPIC.md) | Core | Symbot Assembly | design/gdd/symbot-assembly.md | 7 stories | ✅ Complete |
 | [Synergy System](synergy-system/EPIC.md) | Core | Synergy | design/gdd/synergy-system.md | 5 stories | ✅ Done (engine; content deferred) |
-| [Turn-Based Combat](turn-based-combat/EPIC.md) | Core | Turn-Based Combat | design/gdd/turn-based-combat.md | Not yet created | Ready |
+| [Turn-Based Combat](turn-based-combat/EPIC.md) | Core | Turn-Based Combat | design/gdd/turn-based-combat.md | 14 stories | Ready |
 | [Encounter Zone](encounter-zone/EPIC.md) | Core | Encounter Zone | design/gdd/encounter-zone.md | Not yet created | Ready |
 | [Drop System](drop-system/EPIC.md) | Core | Drop System | design/gdd/drop-system.md | Not yet created | Ready |
 
