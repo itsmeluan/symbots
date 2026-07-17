@@ -32,6 +32,7 @@ const SHIPPED_SKILL_IDS: Array[StringName] = [
 ## Forward-reference manifest: the Passive DB IDs the shipped parts declare.
 const SHIPPED_PASSIVE_IDS: Array[StringName] = [
 	&"pass_overclock", &"pass_rend", &"pass_meltdown", &"pass_overload",
+	&"pass_ablative",
 ]
 
 ## The only warning codes the shipped set is allowed to emit — advisory AC-23
@@ -77,7 +78,7 @@ func _id_set(ids: Array[StringName]) -> Dictionary:
 func test_shipped_catalog_and_balance_load_from_disk() -> void:
 	assert_not_null(_catalog, "part_catalog.tres loads from disk")
 	assert_true(_catalog is PartCatalog, "loaded resource is a PartCatalog")
-	assert_eq(_catalog.entries.size(), 15, "the catalog ships all 15 MVP parts")
+	assert_eq(_catalog.entries.size(), 16, "the catalog ships all 16 MVP parts")
 
 
 func test_shipped_content_passes_full_validator() -> void:

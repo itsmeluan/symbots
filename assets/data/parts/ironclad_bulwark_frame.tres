@@ -21,5 +21,6 @@ drop_conditions = Array[Dictionary]([{
 "condition": &"chassis_cracked",
 "multiplier": 2.5
 }])
+part_family = &"bulwark_frame_family"
 flavor_text = "Ironclad's entry-tier plating. Overbuilt on purpose."
 sprite_id = &"chassis_bulwark"

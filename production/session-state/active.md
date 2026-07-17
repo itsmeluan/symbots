@@ -424,3 +424,11 @@ Task: RESUME HERE → /dev-story Story 003 (damage-type routing + full routed co
 - CONTENT-VARIETY NOTE (for Story 010): THERMAL has no RARE (only ironclad_bulwark_frame common). Not a blocker.
 - Bookkeeping: Story 010 BLOCKED→Ready (+Unblock Record table); EPIC.md + index.md updated. Enemy-DB code Complete; only enemy .tres authoring remains.
 - NEXT: author Story 010 (~8 WILD + 2 BOSS EnemyDef .tres + EnemyCatalog) → close Enemy-DB epic → Foundation fully Complete → /create-epics layer: core.
+
+## Session Extract — Thermal Rare added 2026-07-16
+- NEW part ironclad_aegis_frame.tres (RARE / CHASSIS / Thermal / Ironclad; passive pass_ablative; chassis_cracked ×3.0; structure 30 / armor 8 / resistance 6 = 44, inside CHASSIS-RARE budget [38,46], structure ≥ 29 rare-floor). Fixes the "Thermal enemies drop Kinetic/Volt Rares" ugliness.
+- LESSON: stat_budgets/primary_stat_rare_floors are BalanceConfig.gd @export DEFAULTS (not in balance_config.tres). CHASSIS/RARE budget [38,46]; validator rejected first pass at sum 51.
+- Companion edits: bulwark_frame.tres +part_family=bulwark_frame_family (Bulwark→Aegis chain); part_catalog.tres 15→16; part_catalog_ci_test SHIPPED_PASSIVE_IDS +pass_ablative, count 15→16.
+- Verify: --import + GUT 623/623 green, 3818 asserts, 0 errors, only allowed warnings.
+- ROSTER IMPACT: two Thermal wilds now drop aegis_frame (R-Thermal→chassis) instead of scavenged reinforced_servo_arm(Kinetic)/arc_blaster(Volt).
+- NEXT: author the 10 EnemyDef .tres + EnemyCatalog (Story 010) with the revised Thermal pools.

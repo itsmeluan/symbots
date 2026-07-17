@@ -16,8 +16,9 @@
 [ext_resource type="Resource" path="res://assets/data/parts/boltwell_arc_blaster.tres" id="14_55fo8"]
 [ext_resource type="Resource" path="res://assets/data/parts/wild_overdrive_cannon.tres" id="15_e7cfu"]
 [ext_resource type="Resource" path="res://assets/data/parts/boltwell_storm_lance.tres" id="17_strml"]
+[ext_resource type="Resource" path="res://assets/data/parts/ironclad_aegis_frame.tres" id="18_aegis"]
 [ext_resource type="Script" path="res://src/core/content/part_catalog.gd" id="16_f4gn4"]
 
 [resource]
 script = ExtResource("16_f4gn4")
-entries = Array[ExtResource("1_7ca0m")]([ExtResource("2_amvcf"), ExtResource("3_kk32u"), ExtResource("4_7qs42"), ExtResource("5_0u4b2"), ExtResource("6_w4bre"), ExtResource("7_dgada"), ExtResource("8_mnubn"), ExtResource("9_dotwj"), ExtResource("10_w8n7s"), ExtResource("11_u8g3u"), ExtResource("12_by1ss"), ExtResource("13_wm6hu"), ExtResource("14_55fo8"), ExtResource("15_e7cfu"), ExtResource("17_strml")])
+entries = Array[ExtResource("1_7ca0m")]([ExtResource("2_amvcf"), ExtResource("3_kk32u"), ExtResource("4_7qs42"), ExtResource("5_0u4b2"), ExtResource("6_w4bre"), ExtResource("7_dgada"), ExtResource("8_mnubn"), ExtResource("9_dotwj"), ExtResource("10_w8n7s"), ExtResource("11_u8g3u"), ExtResource("12_by1ss"), ExtResource("13_wm6hu"), ExtResource("14_55fo8"), ExtResource("15_e7cfu"), ExtResource("17_strml"), ExtResource("18_aegis")])

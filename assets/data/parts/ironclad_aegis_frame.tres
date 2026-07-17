@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="PartDef" format=3]
+
+[ext_resource type="Script" path="res://src/core/content/part_def.gd" id="1_aegis"]
+
+[resource]
+script = ExtResource("1_aegis")
+id = &"ironclad_aegis_frame"
+display_name = "Aegis Frame"
+slot_type = 2
+chassis_archetype = 2
+rarity = 2
+manufacturer = &"ironclad"
+element = 2
+stat_bonuses = Dictionary[StringName, int]({
+&"armor": 8,
+&"resistance": 6,
+&"structure": 30
+})
+passive_id = &"pass_ablative"
+synergy_tags = Array[StringName]([&"thermal", &"ironclad"])
+drop_conditions = Array[Dictionary]([{
+"condition": &"chassis_cracked",
+"multiplier": 3.0
+}])
+max_upgrade_tier = 5
+part_family = &"bulwark_frame_family"
+flavor_text = "Ironclad's tournament-grade shell. Sheds a plasma lance like rain."
+sprite_id = &"chassis_aegis"
+level_requirement = 3
