@@ -1,10 +1,10 @@
-; Symbots — Godot project configuration
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
 ;
-; Creature-collection RPG: modular robot building, turn-based combat.
-; Engine: Godot 4.7 · Renderer: 2D (gl_compatibility, mobile/iOS target)
-;
-; This file is hand-authored as the project foundation. When first opened in the
-; Godot 4.7 editor it may be rewritten/expanded — that is expected and safe.
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
 
 config_version=5
 
