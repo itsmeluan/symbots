@@ -145,3 +145,19 @@ extends Resource
 	PartDef.Element.THERMAL: {PartDef.Element.VOLT: 0.75, PartDef.Element.THERMAL: 1.0, PartDef.Element.KINETIC: 1.5},
 	PartDef.Element.KINETIC: {PartDef.Element.VOLT: 1.5, PartDef.Element.THERMAL: 0.75, PartDef.Element.KINETIC: 1.0},
 }
+
+## The canonical 11 Symbot stat keys, in GDD order (design/gdd/symbot-assembly.md
+## §"The 11 canonical MVP stat keys"). SA-F1 ([StatPipeline.derive]) iterates THIS
+## list — never the union of the equipped parts' `stat_bonuses` keys — so every
+## `final_stat` carries all 11 entries even when no part contributes to a stat
+## (downstream present-key assertions like `final_stat["targeting"]==0` depend on
+## this). A part key outside this list is a content error: skipped with a warning
+## (EC-SA-05). Distinct from the Enemy DB stat vocabulary, which swaps `targeting`
+## for `output_power` (enemies have no player-facing targeting stat). APPEND-ONLY
+## like every field here; the default lets a bare `BalanceConfig.new()` serve DI
+## unit tests without loading the authored `.tres`.
+@export var canonical_stat_keys: Array[StringName] = [
+	&"structure", &"armor", &"resistance", &"physical_power", &"energy_power",
+	&"mobility", &"targeting", &"processing", &"cooling", &"energy_capacity",
+	&"recharge",
+]

@@ -3,8 +3,8 @@
 > **Layer**: Core
 > **GDD**: design/gdd/symbot-assembly.md
 > **Architecture Module**: Symbot Assembly (Core)
-> **Status**: Ready
-> **Stories**: Not yet created — run `/create-stories symbot-assembly`
+> **Status**: ✅ Complete
+> **Stories**: 7/7 Complete — closed through the per-story `/code-review` + `/story-done` gate 2026-07-16
 
 ## Overview
 
@@ -50,6 +50,48 @@ This epic is complete when:
   (a case where a wrong ordering, or flooring at the wrong step, produces a different result)
 - The SA-F2 preview is proven pure (no signal emit, no cache/build mutation) by test
 
+## Stories
+
+| # | Story | Type | Status | ADR | Covers |
+|---|-------|------|--------|-----|--------|
+| 001 | StatPipeline SA-F1 execution core (steps 1–4) | Logic | Complete | ADR-0005 | TR-sa-001/002/003 |
+| 002 | SymbotBuild owner & equip mechanics (Rule 3) | Integration | Complete | ADR-0005 | TR-sa-007 |
+| 003 | Eager recompute & chassis-swap correctness | Logic | Complete | ADR-0005 | TR-sa-006 |
+| 004 | Move pool derivation | Logic | Complete | ADR-0005 | TR-sa-008 |
+| 005 | Passive pool derivation | Logic | Complete | ADR-0005 | TR-sa-009 |
+| 006 | SA-F2 preview_swap (stat delta) | Logic | Complete | ADR-0005 | TR-sa-005 |
+| 007 | CP-F3 level-growth step (4b) & pipeline ordering | Integration | Complete | ADR-0005 | TR-sa-004 |
+
+**Implemented 2026-07-16** — all 7 stories: production code in `src/core/stats/`
+(`part_instance.gd`, `stat_pipeline.gd`, `symbot_build.gd`; `canonical_stat_keys`
+added to `balance_config.gd`) + 7 GUT files (`tests/unit/symbot_assembly/` ×5,
+`tests/integration/symbot_assembly/` ×2). Suite green at **657 tests / 53 scripts**
+(was 631/46; +26 tests).
+
+**Coverage**: all 9 TR-sa IDs and all 15 GDD ACs (AC-SA-01…15) covered exactly once.
+
+**Build order**: 001 → 002 → {003, 004, 005, 006, 007}. Story 002 is the anchor
+(the `SymbotBuild` owner); 003–007 depend on it. Story 007 carries a **binding
+cross-system DoD gate** (AC-SA-15 = Core Progression AC-CP-18).
+
+**Injected upstream collaborators** (stubbed in tests, not blockers — no Proposed
+ADR involved): **Inventory** (system Not Started) and **CoreProgression** (GDD
+Approved, no code yet). Both are DI collaborators per ADR-0005's testability mandate.
+
 ## Next Step
 
-Run `/create-stories symbot-assembly` to break this epic into implementable stories.
+**Epic closed (2026-07-16).** All 7 stories implemented, green, and formally closed through
+the per-story `/code-review` + `/story-done` gate (lean/inline mode). Baseline: full GUT suite
+**657/657 green, 3934 asserts, 53 scripts** (Godot 4.7 headless) — one run validates all 7
+markdown-only closures. Each story now carries `Status: Complete` + `## Completion Notes`
+(verdict / criteria / deviations / test evidence / code review).
+
+Gate findings: 6/7 stories APPROVED clean; Story 006 APPROVED WITH NOTES — one ADVISORY
+latent-limitation logged to `docs/tech-debt-register.md` (SA-F2 preview previews the candidate
+`PartDef` at tier +0; a future Workshop-UI preview of an owned instance at tier > 0 needs an
+instance-taking overload). Story 007's binding cross-system DoD gate (AC-SA-15 = Core
+Progression AC-CP-18, the 160-not-168 CP-F3 ordering discriminator) is **green and discharged**.
+
+Core layer forward progress: `/create-stories synergy-system` (its BATTLE_INIT path snapshots
+Assembly's `final_stat` and folds SYN-F4 on top — the composition point Assembly deliberately
+leaves out per Rule 8).

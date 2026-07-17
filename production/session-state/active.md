@@ -1,10 +1,29 @@
 # Active Session State
 
 <!-- STATUS -->
-Epic: Foundation Layer — ✅ FULLY COMPLETE (all 6 epics done & green 2026-07-16)
-Feature: Enemy DB closed — Story 010 MVP roster authored, CI gate ok==true / 0 err / 0 warn; suite 631/631
-Task: NEXT → /create-epics layer: core
+Epic: Symbot Assembly (Core layer) — ✅ CLOSED via per-story gate 2026-07-16 (7/7 Complete)
+Feature: StatPipeline SA-F1 + SymbotBuild owner + CP-F3 ordering — suite 657/657, 53 scripts
+Task: NEXT → /create-stories synergy-system (SYN-F4 folds on Assembly's final_stat snapshot)
 <!-- /STATUS -->
+
+## Session Extract — Symbot Assembly per-story gate CLOSED (7/7) 2026-07-16
+- **Directive:** "formally close the epic symbot-assembly through the per-story gate (/code-review + /story-done, lean) as was done for Consumable/Passive DB." Done inline/lean (never-1M constraint; zero Agent/Task subagents; review-mode.txt = lean).
+- **All 7 stories now Status: Complete** with `## Completion Notes` (verdict / criteria / deviations / test evidence / code review). Baseline validated by ONE full GUT run — **657/657 green, 3934 asserts, 53 scripts** (Godot 4.7 headless; known part_db leak/orphan noise, not a regression). Closure only edits markdown, so one run covers all 7. Reviewed inline as godot-gdscript-specialist against the actual src (`stat_pipeline.gd`, `symbot_build.gd`, `part_instance.gd`) + tests + tr-registry TR-sa-001..009 + the GDD ACs.
+- **Verdicts:** 6/7 APPROVED clean; Story 006 APPROVED WITH NOTES. Implementation matched every AC exactly (26 test funcs across 7 files cover all 15 AC-SA IDs).
+- **Gate caught one real ADVISORY the green tests can't:** Story 006 SA-F2 preview `compute_stat_delta(slot, candidate_part: PartDef)` hard-codes the hypothetical candidate at **tier +0** (`symbot_build.gd:183`), while equip installs the real PartInstance at its `tier`. A future Workshop-UI preview of an owned candidate at tier>0 shows a delta ≠ what equip realizes. AC-SA-08 is tier-0 so it passes; latent API limitation → logged ADVISORY to `docs/tech-debt-register.md` (fix = instance-taking overload in the Presentation epic).
+- **Story 007 DoD gate DISCHARGED:** AC-SA-15 (160-not-168 CP-F3 ordering) = Core Progression AC-CP-18. Green. Cross-epic note left in story-007: AC-CP-18 stays DEFERRED in the CP GDD (that epic has no code yet) — it can reference this passing test when built, not re-author it.
+- **Bookkeeping:** 7 story files closed; EPIC.md Status→✅ Complete + Stories table Done→Complete + Next Step (gate done → /create-stories synergy-system); index.md row→✅ Complete + Core layer-status + Next Step updated.
+- **NEXT:** Core forward progress — `/create-stories synergy-system` (SYN-F4 is the composition point Assembly deliberately leaves out per Rule 8; its BATTLE_INIT path snapshots Assembly's `final_stat`).
+
+## Session Extract — Symbot Assembly epic IMPLEMENTED (all 7 stories) 2026-07-16
+- **Directive:** "implement all the stories from this epic" (symbot-assembly). Done inline, zero Agent/Task subagents (never-1M constraint still binding).
+- **Production code (src/core/stats/):** `part_instance.gd` (RefCounted wrapper: instance_id/part/tier); `stat_pipeline.gd` (`StatPipeline.derive` = the single SA-F1→CP-F3 composition point, static/pure Layer-1; recharge>30 reports-not-clamps; unknown part/growth keys warn); `symbot_build.gd` (Layer-2 DI RefCounted owner: equip Rule 3, eager recompute, move/passive pools, SA-F2 `preview_swap`/`compute_stat_delta`, owner-declared `part_equipped`/`stats_changed`). Added `canonical_stat_keys` @export (11 keys) to `balance_config.gd`.
+- **Tests (7 files, +26 tests):** `tests/unit/symbot_assembly/` — stat_pipeline_derive (7), symbot_build_recompute (2), move_pool (4), passive_pool (3), preview_swap (2); `tests/integration/symbot_assembly/` — symbot_build_equip (5), cp_f3_ordering (3). Support: `assembly_fixtures.gd` + `spy_log_sink.gd` (preload, not class_name — ADR-0002 §5).
+- **Discriminators locked:** SA-F1 floor 9-not-10 (F2), F2b −5-not-6 (epsilon load-bearing); AC-SA-15 **160-not-168** (CP-F3 is flat POST-floor add: floor(100×1.20)=120 + 10×(5−1)=40 = 160; wrong pre-multiply order = (100+40)×1.20 = 168).
+- **GOTCHA HIT + FIXED:** `symbot_build_equip_test.gd:77` `var x := _inv.added.size()` — `_inv` untyped → Variant → "Cannot infer type" parse error → GUT silently skipped the whole file (green at 652/52). Fix: `var x: int = …`. Re-ran: **657/657 green, 53 scripts, 3934 asserts** (was 631/46; +26 tests, +7 scripts — count rose exactly, no silent skip). Ran `--import` before GUT (4 new class_name scripts).
+- **No python3 scan owed:** StatPipeline introduces NO new floor/ceil — reuses scanned StatMath/UpgradeFormula/TotalStatFormula (ADR-0005 reuse).
+- **Bookkeeping done:** 7 story files Status→Done + evidence box checked; EPIC.md Stories table Done + implemented-note; index.md Symbot row→Done.
+- **NEXT:** either close Assembly through the formal per-story gate (`/code-review` + `/story-done`, lean mode) like Consumable/Passive DB, or forward to `/create-stories synergy-system` (its battle path snapshots Assembly's final_stat).
 
 ## Session Extract — Enemy DB CLOSED (Story 010 roster authored) → Foundation COMPLETE 2026-07-16
 - **Directive:** "author Story 010" — the MVP enemy roster (last open Foundation work). Prerequisite sub-ask "add a thermal rare part first" honored. Done inline (never-1M constraint; zero Agent/Task subagents).
