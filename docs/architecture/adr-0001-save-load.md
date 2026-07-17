@@ -4,6 +4,18 @@
 
 Accepted (2026-07-13, via `/architecture-review` follow-up — review report `architecture-review-2026-07-13.md`)
 
+> **Amended 2026-07-17** (implementation groundwork, no status change — the decision stands):
+> (1) **Engine re-validated 4.6 → 4.7.** The persistence surface carries **no 4.7
+> breaking changes** — `FileAccess.store_*` still returns `bool` (the 4.4 change,
+> confirmed current in `docs/engine-reference/godot/breaking-changes.md`), and
+> `JSON.stringify`/`JSON.parse_string`/`DirAccess.rename_absolute` are unchanged in 4.7.
+> A version bump alone does not warrant a superseding ADR (the "flag as Superseded"
+> note below is scoped to *breaking* upgrades; this was a clean re-pin).
+> (2) **`drop` provider shape corrected** to match the built DropSystem: it exposes
+> **two** part-id-keyed pity maps (`proto_pity_credit`, `break_pity_counter`), not a
+> single `pool_id → int` map. The envelope example and Durable-State Manifest row are
+> updated accordingly. See SL-6 / Story DS-009.
+
 ## Date
 
 2026-07-13
@@ -24,14 +36,17 @@ Symbots needs one unified way to persist all durable game state — part instanc
 
 | Field | Value |
 |-------|-------|
-| **Engine** | Godot 4.6 |
+| **Engine** | Godot 4.7 (re-validated 2026-07-17; originally authored against 4.6) |
 | **Domain** | Core (persistence / serialization) |
-| **Knowledge Risk** | HIGH — post-LLM-cutoff (Godot 4.4/4.5 changed serialization APIs) |
-| **References Consulted** | `docs/engine-reference/godot/VERSION.md`, `docs/architecture/architecture.md` (§ System Layer Map, § Data Flow 3, § API Boundaries), `design/gdd/exploration-progress.md` |
-| **Post-Cutoff APIs Used** | `FileAccess.store_string()` returns `bool` (changed in 4.4 — was `void`). `JSON.stringify()` / `JSON.parse_string()` (stable since 4.x). Deliberately AVOIDS `Resource.duplicate_deep()` / `ResourceSaver`-based save by never serializing live Resources. |
-| **Verification Required** | (1) Confirm the full write-failure surface on 4.6: `FileAccess.get_open_error()` after `open()`, the `bool` from `store_string()`, AND `FileAccess.get_error()` after the write — all three must be `OK`/`true` for a write to count as successful (the bool alone misses full-disk / sandbox-denial failures on iOS). (2) ~~Atomicity of rename on iOS~~ — **confirmed** by engine specialist: `DirAccess.rename_absolute()` maps to POSIX `rename(2)`, atomic within a single APFS volume, and both `.tmp` and final live under the same `user://` sandbox container. On-device spot-check still advised. (3) Measure real serialized save size and synchronous write time on a physical iOS device during the vertical slice, against the budget below. |
+| **Knowledge Risk** | HIGH — post-LLM-cutoff (Godot 4.4/4.5 changed serialization APIs; 4.6/4.7 re-checked clean for this surface) |
+| **References Consulted** | `docs/engine-reference/godot/VERSION.md`, `docs/engine-reference/godot/breaking-changes.md`, `docs/architecture/architecture.md` (§ System Layer Map, § Data Flow 3, § API Boundaries), `design/gdd/exploration-progress.md` |
+| **Post-Cutoff APIs Used** | `FileAccess.store_string()` returns `bool` (changed in 4.4 — was `void`; **still `bool` in 4.7**). `JSON.stringify()` / `JSON.parse_string()` (stable; **unchanged in 4.7**). `DirAccess.rename_absolute()` (**unchanged in 4.7**). Deliberately AVOIDS `Resource.duplicate_deep()` / `ResourceSaver`-based save by never serializing live Resources. |
+| **Verification Required** | (1) Confirm the full write-failure surface on 4.7: `FileAccess.get_open_error()` after `open()`, the `bool` from `store_string()`, AND `FileAccess.get_error()` after the write — all three must be `OK`/`true` for a write to count as successful (the bool alone misses full-disk / sandbox-denial failures on iOS). (2) ~~Atomicity of rename on iOS~~ — **confirmed** by engine specialist: `DirAccess.rename_absolute()` maps to POSIX `rename(2)`, atomic within a single APFS volume, and both `.tmp` and final live under the same `user://` sandbox container. On-device spot-check still advised. (3) Measure real serialized save size and synchronous write time on a physical iOS device during the vertical slice, against the budget below. |
 
-> **Note**: Knowledge Risk is HIGH. Re-validate this ADR if the project upgrades engine versions — flag as Superseded and write a new ADR.
+> **Note**: Knowledge Risk is HIGH. Re-validate this ADR if the project upgrades engine
+> versions. The 2026-07-17 4.6 → 4.7 re-pin was re-validated as a **clean, non-breaking**
+> change to the persistence surface (see the Status amendment) — no supersession required.
+> A *breaking* future upgrade would still warrant flagging as Superseded and writing a new ADR.
 
 ## ADR Dependencies
 
@@ -54,7 +69,7 @@ Greenfield. No save system, no ADRs, no code. The only existing persistence cont
 
 ### Constraints
 
-- **Engine (Godot 4.6):** `FileAccess.store_*` returns `bool` (must be checked); nested `Resource` serialization is a known footgun (`Resource.duplicate()` is shallow; `duplicate_deep()` exists but is easy to misuse). Knowledge Risk HIGH — verify against engine reference, not training data.
+- **Engine (Godot 4.7):** `FileAccess.store_*` returns `bool` (must be checked); nested `Resource` serialization is a known footgun (`Resource.duplicate()` is shallow; `duplicate_deep()` exists but is easy to misuse). Knowledge Risk HIGH — verify against engine reference, not training data.
 - **Platform (iOS primary):** 512 MB memory ceiling; flash storage with finite write endurance; synchronous file writes on the main thread cause frame hitches; app can be force-quit or crash between saves at any time.
 - **Design:** Part instances are **uncapped** (Inventory GDD) — a hoarding player's save grows without a built-in bound.
 - **Resource (solo dev):** The system must be debuggable by one person reading the file, and must not require bespoke tooling to inspect a broken save.
@@ -86,7 +101,8 @@ Adopt a **single-file, human-readable JSON save** whose top level is a **provide
                      "scrap": 250,
                      "consumables": { "<id>": <count>, ... } },
     "workshop":    { "builds": [ {plain dict}, ... ] },
-    "drop":        { "pity": { "<pool_id>": <int>, ... } },
+    "drop":        { "proto_pity_credit":  { "<part_id>": <int>, ... },
+                     "break_pity_counter": { "<part_id>": <int>, ... } },
     "settings":    { ... }
   }
 }
@@ -128,7 +144,7 @@ The `progression` provider is Exploration Progress itself: its `snapshot()` is `
 | `&"progression"` | Exploration Progress (#17-adjacent) | The entire EP blob: `zones` (`win_count`, `boss_progress[]`), `cores` (`CoreProgressionRecord.cumulative_xp`), `world_loot` (collected IDs), plus `progress_format_version` |
 | `&"inventory"` | Inventory | `part_instances[]` (plain dicts), `next_instance_id` (monotonic int), `scrap` (int), `consumables` (id→count) |
 | `&"workshop"` | Workshop / Assembly | `builds[]` (equipped-part-instance-id references per slot, plain dicts) |
-| `&"drop"` | Drop System | `pity` maps (pool_id→int counter) |
+| `&"drop"` | Drop System | Two part-id-keyed pity maps: `proto_pity_credit` (Prototype gradient credit, DS-2) and `break_pity_counter` (Boss-grade break pity, DS-3) — both `String(part_id) → int` |
 | `&"settings"` | Settings | Player options (audio, accessibility, input) |
 
 Reserved (not MVP): `&"key_items"` (Vertical Slice, #23a) — will register without a `save_format_version` bump, proving requirement.
@@ -145,8 +161,8 @@ Reserved (not MVP): `&"key_items"` (Vertical Slice, #23a) — will register with
         ┌───────────────┴───────────────┬───────────┬────────┬─────────┐
         ▼                               ▼           ▼        ▼         ▼
   progression provider            inventory     workshop    drop    settings
-  (= Exploration Progress,        (part          (builds)   (pity)  (options)
-   opaque sub-blob, owns its       instances,
+  (= Exploration Progress,        (part          (builds)  (2 pity  (options)
+   opaque sub-blob, owns its       instances,               maps)
    OWN progress_format_version)    next_id,
         │                          scrap,
         ▼                          consumables)

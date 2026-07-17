@@ -1,18 +1,20 @@
 # Story 009: Pity-counter persistence across save/load
 
 > **Epic**: Drop System
-> **Status**: Blocked
+> **Status**: Done (2026-07-17)
 > **Layer**: Core
 > **Type**: Integration
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
-> **BLOCKED:** gated on the Not-Started **Save/Load** system. AC-DS-28 is a
-> **release-blocker** (GATED → BLOCKING once Save/Load exists — do not ship
-> without it passing). Unblocks the moment the Save/Load GDD/system defines the
-> serialization interface for the two pity-counter maps (see ADR-0001 Save/Load
-> Architecture). The in-memory counters this test round-trips are delivered by
-> Stories 004 (DS-2) + 005 (DS-3); only the *persistence* is blocked.
+> **UNBLOCKED & DONE (2026-07-17):** the Save/Load epic (SL-1..SL-6) shipped the
+> provider-envelope system and the `&"drop"` provider (SL-6). AC-DS-28 now passes
+> against the real path — `tests/integration/drop_system/pity_persistence_test.gd`
+> drives DropSystem.snapshot() → SaveLoadService envelope → JSON → atomic write →
+> parse → SL-PRED-1 RESTORE → restore(), then proves the post-reload boundary:
+> both counters reload identical (72 / 7), advance from the restored value
+> (`+= c` → 75, `+= 1` → 8), and the next qualifying attempt fires the pre-roll
+> guarantee (drop + reset, RNG untouched). Release-blocker cleared.
 
 ## Context
 
@@ -84,7 +86,7 @@
 **Story Type**: Integration
 **Required evidence**: `tests/integration/drop_system/pity_persistence_test.gd` — must exist and pass. **Release-blocker**: this must pass before ship.
 
-**Status**: [ ] Not yet created (BLOCKED — Save/Load Not Started)
+**Status**: [x] Created & passing — 3 integration tests covering AC-DS-28 (a)/(b)/(c), green in the 913-test suite (2026-07-17). Round-trips through the real SaveLoadService path (not a bespoke shortcut) and proves boundary semantics, not just integer equality.
 
 ---
 

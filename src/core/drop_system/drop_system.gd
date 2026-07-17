@@ -155,6 +155,53 @@ func set_break_pity_counter(part_id: StringName, counter: int) -> void:
 	_boss_pity_counter[String(part_id)] = counter
 
 
+# --- Save/Load provider surface (ADR-0001, SL-6 / DS-009) ------------------------
+#
+# DropSystem IS the `&"drop"` persistence provider. It satisfies the provider
+# protocol STRUCTURALLY (duck-typed snapshot/restore/rederive) — there is no
+# compile-time reference to `SaveLoadService` here, so the core→persistence
+# dependency direction stays clean (core never imports persistence). The two pity
+# maps are the only durable drop state; everything else the DropSystem holds is an
+# injected borrowed reference (RNG / BalanceConfig / sinks) rebuilt at construction.
+
+## Provider snapshot: the two pity maps as plain, JSON-safe data (source facts only,
+## ADR-0001 rule). Deep-copied so a later in-memory pity mutation cannot leak into an
+## already-captured envelope. Keys are `String(part_id)`, values are non-negative ints.
+func snapshot() -> Dictionary:
+	return {
+		"proto_pity_credit": _proto_pity_credit.duplicate(true),
+		"break_pity_counter": _boss_pity_counter.duplicate(true),
+	}
+
+
+## Provider restore (two-phase Phase 1): replace both pity maps from the saved facts.
+## Every value is int-cast — JSON parse yields floats, and the pity arithmetic
+## (`+= c`, `+= 1`, `== N×C`) is integer-only, so a stray float key would silently
+## break the guarantee comparisons. Missing/non-Dictionary sub-maps restore as empty
+## (a save that predates a map, or a corrupt sub-tree, yields a clean zero baseline).
+func restore(data: Dictionary) -> void:
+	_proto_pity_credit = _restore_int_map(data.get("proto_pity_credit"))
+	_boss_pity_counter = _restore_int_map(data.get("break_pity_counter"))
+
+
+## Provider rederive (two-phase Phase 2): no-op. The pity maps ARE the source facts;
+## nothing in the DropSystem is derived from another provider's restored state.
+func rederive() -> void:
+	pass
+
+
+## Coerce a restored sub-map to `String → int`, defending against JSON's float
+## numbers and any non-Dictionary payload. Not the persistence layer's `as_int`
+## (that lives in `src/persistence/` — core must not reach into it).
+func _restore_int_map(raw) -> Dictionary:
+	var out: Dictionary = {}
+	if typeof(raw) != TYPE_DICTIONARY:
+		return out
+	for k in raw:
+		out[String(k)] = int(raw[k])
+	return out
+
+
 ## Rule 9 Scrap yield for a part of the given rarity (DS-8), read read-only from the
 ## injected [BalanceConfig] (`@export` defaults, never a literal here). The source
 ## side of the Scrap economy — the player-initiated scrap ACTION is Inventory's and

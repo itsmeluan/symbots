@@ -1,12 +1,31 @@
 # Active Session State
 
 <!-- STATUS -->
-Epic: Sprint 1 COMPLETE — Core layer fully Complete (5/5). Encounter Zone (8/8) + Drop System (8/9, DS-009 Blocked on Save/Load) both closed.
-Feature: Full GUT suite 869/869 green, 4606 asserts. All Core code built + tested against DI seams + fixtures.
-Task: NEXT → Technical Setup → Pre-Production gate (/test-setup, /ux-design), then /gate-check production. Land Save/Load (ADR-0001) to unblock DS-009.
+Epic: Save/Load Foundation epic COMPLETE (6/6) + Drop System now 9/9 (DS-009 release-blocker CLEARED). Core layer 5/5 + Save/Load all done.
+Feature: Full GUT suite 913/913 green, 4740 asserts. Provider-envelope persistence (ADR-0001) + drop provider shipped; DS-009 pity-persistence passes end-to-end.
+Task: NEXT → Technical Setup → Pre-Production gate (/test-setup, /ux-design), then /gate-check production. No blocking persistence work remains.
 <!-- /STATUS -->
 
-## ⇒ HANDOFF FOR NEXT SESSION (2026-07-17) — Sprint 1 DONE, Core layer Complete
+## ⇒ HANDOFF FOR NEXT SESSION (2026-07-17b) — Save/Load epic + DS-009 DONE
+
+**Full Save/Load Foundation epic built and closed (6/6), DS-009 release-blocker cleared.** User chose "Full Save/Load epic" over a stopgap; built the whole ADR-0001 provider-envelope system, then implemented DS-009 against it. Zero Agent/Task subagents (never-1M constraint held). Suite **869 → 913 green, 4740 asserts** (+44: SL-1..SL-6 + DS-009; each story's count-rise verified exactly).
+
+**What shipped (all `src/`, NOT `src/core/` — the ADR-0001 file-I/O purity carve-out):**
+- `src/persistence/save_load_service.gd` (`SaveLoadService`, RefCounted, injected LogSink + injectable file backend): provider registry (fail-loud dup), `snapshot_envelope`/`restore_envelope`, SL-PRED-1 version predicate (`==`→RESTORE, `<`→MIGRATE=behaviorally-REFUSE@v1, `>`→REFUSE, missing/non-int→REFUSE; REFUSE leaves state untouched), two-phase order-independent restore (Phase 1 restore facts / Phase 2 rederive), atomic write (tmp → full failure surface `open`/`store_string` bool/`get_error` → flush-before-close → rotate one-gen `.bak` → rename), Release-firing 2 MiB budget guard, int-cast discipline (`as_int`), opaque preservation of unregistered provider keys (deep-copied), `save(slot)`/`load(slot)` + `.bak` fallback, never-destroy-unparseable (`JSON.new().parse()` — instance parse, quiet, never global push_error), `save_emergency()` (identical envelope+atomic path).
+- `src/persistence/file_backend.gd` (`FileBackend`): real `FileAccess`/`DirAccess` behind a thin seam.
+- `src/core/drop_system/drop_system.gd` — the `&"drop"` provider: `snapshot()`/`restore()`/`rederive()` over the two pity maps (`_proto_pity_credit`, `_boss_pity_counter`), int-cast on restore via a LOCAL `_restore_int_map` (NOT `SaveLoadService.as_int` — core must not import persistence; the provider protocol is satisfied STRUCTURALLY/duck-typed, zero core→persistence coupling).
+
+**Tests:** `tests/unit/persistence/` (save_load_service, envelope_predicate, atomic_write, budget_opaque, emergency_recovery, drop_provider + reusable `fake_file_backend.gd` with failure-injection knobs) + `tests/integration/persistence/drop_roundtrip_test.gd` + **`tests/integration/drop_system/pity_persistence_test.gd`** (DS-009 / AC-DS-28: full-path round-trip + post-reload boundary — advance `+= c`/`+= 1` from restored 72→75 / 7→8, next qualifying attempt fires the pre-roll guarantee → drop + reset, RNG untouched).
+
+**Bookkeeping done:** SL-1..SL-6 story files → Done; save-load/EPIC.md → Complete; drop-system Story 009 + EPIC.md → Done (9/9); production/epics/index.md both rows → Complete + Core paragraph/suite counts updated (913/913). ADR-0001 groundwork amendment (4.6→4.7 re-validation, two-pity-map envelope) landed earlier this session.
+
+**Registration note:** No boot/autoload seam exists yet (ADR-0004 boot sequencer is an unbuilt Technical-Setup deliverable) — DS-009/SL-6 registration is exercised by the integration harness standing in for boot (`register_provider(&"drop", …)`). Real boot wiring registers `&"drop"` alongside the other 4 providers (`progression`/`inventory`/`workshop`/`settings`) when those systems are built (ADR-0001 additive, no format-version bump).
+
+**NEXT:** Technical Setup → Pre-Production gate (`/test-setup`, `/ux-design`) then `/gate-check production`. Persistence no longer blocks ship. VC-7 (on-device iOS budget measurement) is a deferred vertical-slice hardware pass, not MVP code.
+
+---
+
+## ⇒ (SUPERSEDED) HANDOFF (2026-07-17) — Sprint 1 DONE, Core layer Complete
 
 **Sprint 1 is implemented and closed.** Autonomous continuation under "implement all stories in this sprint" (zero Agent/Task subagents — never-1M constraint held throughout). State to resume from:
 

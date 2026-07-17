@@ -3,8 +3,8 @@
 > **Layer**: Core
 > **GDD**: design/gdd/drop-system.md
 > **Architecture Module**: Drop System (Core)
-> **Status**: Ready
-> **Stories**: 9 stories (2026-07-17) — 8 Logic (Ready) + 1 Integration (Blocked on Save/Load)
+> **Status**: ✅ Complete (9/9, 2026-07-17) — 8 Logic + 1 Integration (DS-009) all Done; release-blocker cleared
+> **Stories**: 9 stories (2026-07-17) — 8 Logic + 1 Integration, all Done
 
 ## Overview
 
@@ -60,15 +60,15 @@ This epic is complete when:
 
 | # | Story | Type | Status | ADR (primary) |
 |---|-------|------|--------|---------------|
-| 001 | DropSystem host, VICTORY trigger & DS-1 roll core | Logic | Ready | ADR-0006 |
-| 002 | Condition assembly — exact match, stacking, unknown key | Logic | Ready | ADR-0003 |
-| 003 | Pool iteration — dedup, independent rolls, empty pool | Logic | Ready | ADR-0006 |
-| 004 | Prototype gradient pity (DS-2) | Logic | Ready | ADR-0006 |
-| 005 | Boss-grade deterministic floor pity (DS-3) | Logic | Ready | ADR-0006 |
-| 006 | Determinism — ID-order, stream-sync, reproducibility | Logic | Ready | ADR-0006 |
-| 007 | Beacon (×2.0) & DS-F-LEVEL rate injection | Logic | Ready | ADR-0006 |
-| 008 | Scrap yield & rarity-ordering invariant | Logic | Ready | ADR-0003 |
-| 009 | Pity-counter persistence across save/load | Integration | **Blocked** (Save/Load) | ADR-0006 |
+| 001 | DropSystem host, VICTORY trigger & DS-1 roll core | Logic | ✅ Done | ADR-0006 |
+| 002 | Condition assembly — exact match, stacking, unknown key | Logic | ✅ Done | ADR-0003 |
+| 003 | Pool iteration — dedup, independent rolls, empty pool | Logic | ✅ Done | ADR-0006 |
+| 004 | Prototype gradient pity (DS-2) | Logic | ✅ Done | ADR-0006 |
+| 005 | Boss-grade deterministic floor pity (DS-3) | Logic | ✅ Done | ADR-0006 |
+| 006 | Determinism — ID-order, stream-sync, reproducibility | Logic | ✅ Done | ADR-0006 |
+| 007 | Beacon (×2.0) & DS-F-LEVEL rate injection | Logic | ✅ Done | ADR-0006 |
+| 008 | Scrap yield & rarity-ordering invariant | Logic | ✅ Done | ADR-0003 |
+| 009 | Pity-counter persistence across save/load | Integration | ✅ Done (2026-07-17) | ADR-0006, ADR-0001 |
 
 **Build order**: 001 (anchor) → 002 / 003 / 004 / 005 / 008 (all depend only on 001) →
 006 (composes 004 + 005) → 007 (needs 001 + a pity-guaranteed part from 005) →
@@ -89,7 +89,9 @@ the 1 gated release-blocker (AC-DS-28) placed —
 
 ## Next Step
 
-Stories are written. Run `/story-readiness production/epics/drop-system/story-001-dropsystem-host-victory-trigger-ds1-roll-core.md`
-→ `/dev-story` to begin implementation from the anchor. Work stories in `Depends on:` order.
-Story 009 stays **Blocked** until the Save/Load system (ADR-0001) defines the pity-map
-serialization interface.
+✅ **Epic complete (9/9, 2026-07-17).** All 8 Logic stories + the DS-009 Integration
+capstone are implemented and Done. DS-009 (AC-DS-28, release-blocker) was unblocked and
+closed the moment the Save/Load epic (SL-1..SL-6) landed the `&"drop"` provider — its
+integration test (`tests/integration/drop_system/pity_persistence_test.gd`) round-trips
+both pity maps through the real SaveLoadService path and proves the post-reload guarantee
+boundary. Suite 913/913 GUT green. No remaining Drop System work.
