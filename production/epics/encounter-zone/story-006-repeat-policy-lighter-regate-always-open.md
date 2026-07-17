@@ -1,11 +1,11 @@
 # Story 006: Repeat policy — LIGHTER_REGATE delta re-gate & ALWAYS_OPEN
 
 > **Epic**: Encounter Zone System
-> **Status**: Ready
+> **Status**: Done
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -30,11 +30,11 @@
 
 *From GDD `design/gdd/encounter-zone.md`, scoped to this story:*
 
-- [ ] **AC-EZ-21** (BLOCKING, Unit): Boss 2 `LIGHTER_REGATE` **delta** re-gate at 3. GIVEN Boss 2, `defeated_once = true`, `wins_at_last_defeat = 10`, `regate_params.required_wins = 3`. `zone_win_count = 13` → delta 3 → `UNLOCKED`; `zone_win_count = 12` → delta 2 → `LOCKED`. Discriminator vs raw-counter: a raw impl returns `UNLOCKED` at `zone_win_count = 12` (`12 >= 3`) — assert `LOCKED`.
-- [ ] **AC-EZ-22** (BLOCKING, Unit): re-gate **re-locks the boss at the moment of defeat** — the central delta-counter discriminator. GIVEN Boss 1 just defeated at `zone_win_count = 6` → `wins_at_last_defeat = 6`, `defeated_once = true`, `regate_params.required_wins = 2`, `zone_win_count` still `6` → delta 0 → `LOCKED`. Discriminator: BOTH the raw-counter bug (`6 >= 2`) AND an ignore-`defeated_once` first-access impl (`6 >= 6`) return UNLOCKED — assert `LOCKED`. Proves `LIGHTER_REGATE` does not collapse into `ALWAYS_OPEN`.
-- [ ] **AC-EZ-23** (BLOCKING, Unit): re-gate met after banking the delta. GIVEN Boss 1, `defeated_once = true`, `wins_at_last_defeat = 6`, `regate_params.required_wins = 2`. `zone_win_count = 8` → delta 2 → `UNLOCKED`; `zone_win_count = 7` → delta 1 → `LOCKED`. The 7→LOCKED / 8→UNLOCKED boundary is the `>=` discriminator on the delta.
-- [ ] **AC-EZ-39** (BLOCKING, Unit): re-access path gated on `defeated_once` *(verifies EC-EZ-09)*. **A (negative):** Boss 1, `defeated_once = false`, win_count 3, first-access 6, re-gate 2 → `LOCKED` (first-access applies; 3 < 6). With `wins_at_last_defeat` unset (0), win_count 3 PASSES the delta re-gate (`3 − 0 = 3 ≥ 2`) but FAILS first-access — an impl ignoring `defeated_once` returns UNLOCKED. **B (positive):** `defeated_once = false`, win_count 6, first-access 6 → `UNLOCKED` (an impl that never unlocks pre-defeat fails this).
-- [ ] **AC-EZ-52** (BLOCKING, Unit): `repeat_policy = ALWAYS_OPEN`. GIVEN a boss with first-access `gate_type = WIN_COUNT`, `required_wins = 6`, `repeat_policy = ALWAYS_OPEN`, `defeated_once = true`, `win_count = 0` → `UNLOCKED` (permanently accessible after first clear). GIVEN the same boss `defeated_once = false`, `win_count = 0` → first-access gate still applies (`LOCKED`) — ALWAYS_OPEN only takes effect post-first-defeat.
+- [x] **AC-EZ-21** (BLOCKING, Unit): Boss 2 `LIGHTER_REGATE` **delta** re-gate at 3. GIVEN Boss 2, `defeated_once = true`, `wins_at_last_defeat = 10`, `regate_params.required_wins = 3`. `zone_win_count = 13` → delta 3 → `UNLOCKED`; `zone_win_count = 12` → delta 2 → `LOCKED`. Discriminator vs raw-counter: a raw impl returns `UNLOCKED` at `zone_win_count = 12` (`12 >= 3`) — assert `LOCKED`.
+- [x] **AC-EZ-22** (BLOCKING, Unit): re-gate **re-locks the boss at the moment of defeat** — the central delta-counter discriminator. GIVEN Boss 1 just defeated at `zone_win_count = 6` → `wins_at_last_defeat = 6`, `defeated_once = true`, `regate_params.required_wins = 2`, `zone_win_count` still `6` → delta 0 → `LOCKED`. Discriminator: BOTH the raw-counter bug (`6 >= 2`) AND an ignore-`defeated_once` first-access impl (`6 >= 6`) return UNLOCKED — assert `LOCKED`. Proves `LIGHTER_REGATE` does not collapse into `ALWAYS_OPEN`.
+- [x] **AC-EZ-23** (BLOCKING, Unit): re-gate met after banking the delta. GIVEN Boss 1, `defeated_once = true`, `wins_at_last_defeat = 6`, `regate_params.required_wins = 2`. `zone_win_count = 8` → delta 2 → `UNLOCKED`; `zone_win_count = 7` → delta 1 → `LOCKED`. The 7→LOCKED / 8→UNLOCKED boundary is the `>=` discriminator on the delta.
+- [x] **AC-EZ-39** (BLOCKING, Unit): re-access path gated on `defeated_once` *(verifies EC-EZ-09)*. **A (negative):** Boss 1, `defeated_once = false`, win_count 3, first-access 6, re-gate 2 → `LOCKED` (first-access applies; 3 < 6). With `wins_at_last_defeat` unset (0), win_count 3 PASSES the delta re-gate (`3 − 0 = 3 ≥ 2`) but FAILS first-access — an impl ignoring `defeated_once` returns UNLOCKED. **B (positive):** `defeated_once = false`, win_count 6, first-access 6 → `UNLOCKED` (an impl that never unlocks pre-defeat fails this).
+- [x] **AC-EZ-52** (BLOCKING, Unit): `repeat_policy = ALWAYS_OPEN`. GIVEN a boss with first-access `gate_type = WIN_COUNT`, `required_wins = 6`, `repeat_policy = ALWAYS_OPEN`, `defeated_once = true`, `win_count = 0` → `UNLOCKED` (permanently accessible after first clear). GIVEN the same boss `defeated_once = false`, `win_count = 0` → first-access gate still applies (`LOCKED`) — ALWAYS_OPEN only takes effect post-first-defeat.
 
 ---
 
@@ -96,7 +96,17 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/encounter_zone/repeat_policy_test.gd` — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/encounter_zone/repeat_policy_test.gd`, 5 tests, all green (GUT 9.7.1, Godot 4.7.stable). Covers AC-EZ-21 (LIGHTER_REGATE **delta** re-gate — LOCKED at raw 12 where a raw-counter impl unlocks), AC-EZ-22 (re-lock at defeat, delta 0 → LOCKED — the central discriminator against BOTH raw-counter and ignore-`defeated_once` impls), AC-EZ-23 (delta banked, 7→LOCKED / 8→UNLOCKED `>=` boundary), AC-EZ-39 (pre-defeat applies first-access not re-gate; A negative + B positive), AC-EZ-52 (ALWAYS_OPEN post-defeat / first-access still applies pre-defeat).
+
+---
+
+## Completion Notes (2026-07-17)
+
+- Restructured `EncounterResolver.evaluate_boss_gate` to route on the boss's OWN `defeated_once` (read via the injected progress interface): **false → `_evaluate_first_access`** (Story 005's `gate_type` logic, unchanged, regardless of `repeat_policy` — EC-EZ-09 / AC-EZ-39); **true → `_evaluate_repeat_access`** (`repeat_policy`). Added `_evaluate_repeat_access` + `_evaluate_lighter_regate`; extended `stub_progress.gd` with the `wins_at_last_defeat(boss_id)` snapshot seam.
+- **The delta is load-bearing.** `LIGHTER_REGATE` → `UNLOCKED iff (win_count − wins_at_last_defeat) >= regate_params.required_wins`. Reading the raw counter would satisfy any re-gate the instant the boss first died (collapsing LIGHTER_REGATE into ALWAYS_OPEN). At the defeat instant the delta is 0 → the boss re-locks (DEFEATED is a genuine resting state, AC-EZ-22 — the discriminator that beats both the raw-counter bug and an ignore-`defeated_once` first-access impl). `wins_at_last_defeat` is a per-boss snapshot owned by Exploration Progress; this story only reads it.
+- **`ALWAYS_OPEN`** → permanently UNLOCKED post-first-defeat with no re-gate; before first defeat the first-access gate still applies (AC-EZ-52 B). `FULL_REGATE` stays reserved (Story 007) and any unset/reserved repeat policy is fail-safe LOCKED.
+- **Downstream re-derivation (closed-story reconciliation):** EZ-6's `defeated_once` routing changed the verdict for a defeated boss with no `repeat_policy`. EZ-5's `test_ez5_shared_counter…` evaluates Boss 1 with `defeated_once = true` (it was set as Boss 2's prerequisite) and asserts UNLOCKED per AC-EZ-20's "both UNLOCKED". Updated EZ-5's `_boss_1()` fixture to carry `repeat_policy = ALWAYS_OPEN` so its post-defeat verdict stays UNLOCKED — which is what "both UNLOCKED" implies once repeat semantics exist. EZ-5's first-access assertions (undefeated Boss 1) are unaffected. Re-verified: EZ-5 still 9/9 green.
+- No new global `class_name` (methods on the existing resolver). Full suite rose by exactly +5 to **84 scripts / 838 tests / 4509 asserts**, all green.
 
 ---
 

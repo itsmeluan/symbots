@@ -1,11 +1,11 @@
 # Story 005: Boss gate WIN_COUNT first-access & sequencing
 
 > **Epic**: Encounter Zone System
-> **Status**: Ready
+> **Status**: Done
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -32,14 +32,14 @@
 
 *Both bosses read one shared `zone_win_count` (Rule 8a) at their own `required_wins` threshold.*
 
-- [ ] **AC-EZ-16** (BLOCKING, Unit): Boss 1 — 5 wins = `LOCKED`. GIVEN `zone_win_count = 5`, `defeated_once = false`, THEN `LOCKED`.
-- [ ] **AC-EZ-17** (BLOCKING, Unit): Boss 1 — exactly 6 wins = `UNLOCKED` (`>=` discriminator). A `> 6` impl stays LOCKED; assert `UNLOCKED`.
-- [ ] **AC-EZ-18** (BLOCKING, Unit): Boss 1 — 7 wins = `UNLOCKED` (no upper-bound "window" regression).
-- [ ] **AC-EZ-19** (BLOCKING, Unit): Boss 2 — threshold at 10 (sequencing precondition satisfied). GIVEN Boss 1 `defeated_once = true`, `zone_win_count = 9` → Boss 2 `LOCKED`; same with `zone_win_count = 10` → Boss 2 `UNLOCKED` (`>= 10` discriminator — a `> 10` impl stays LOCKED at 10).
-- [ ] **AC-EZ-20** (BLOCKING, Unit): shared-counter dual gate. GIVEN `zone_win_count = 6`, Boss 1 not yet defeated, THEN Boss 1 `UNLOCKED` **and** Boss 2 `LOCKED` (6 ≥ 6 but 6 < 10). GIVEN `zone_win_count = 10` **and** Boss 1 `defeated_once = true`, THEN **both** `UNLOCKED`. Discriminator: an impl using one flag for "any boss unlocked" opens Boss 2 at 6 — assert Boss 2 `LOCKED` at 6.
-- [ ] **AC-EZ-56** (BLOCKING, Unit): Boss 2 sequencing precondition (`requires_defeated`). GIVEN Boss 2 `gate_params.requires_defeated = <Boss 1 boss_id>`, `zone_win_count = 10`, Boss 1 `defeated_once = false`, THEN Boss 2 `LOCKED` (threshold met, prerequisite unmet). GIVEN the same with Boss 1 `defeated_once = true`, THEN Boss 2 `UNLOCKED`. Discriminator: a threshold-only impl opens Boss 2 at 10 regardless of Boss 1.
-- [ ] **AC-EZ-58** (BLOCKING, Unit): `requires_defeated` broken reference is fail-safe *(verifies EC-EZ-12)*. GIVEN Boss 2 `gate_params.requires_defeated = "no_such_boss"`, `zone_win_count = 10`, THEN Boss 2 `LOCKED` and unofferable, content error logged naming the boss + the unresolved value. Discriminator: a fail-**open** impl returns `UNLOCKED` at win_count ≥ 10.
-- [ ] **AC-EZ-40a** (BLOCKING, Unit): Exploration Progress absent — no crash, safe defaults *(verifies EC-EZ-11)*. GIVEN a null/not-connected progress stub, WIN_COUNT gate → win counter reads 0, state `LOCKED`, provisional **warning** (not error) logged, no crash; OPEN gate → `UNLOCKED`.
+- [x] **AC-EZ-16** (BLOCKING, Unit): Boss 1 — 5 wins = `LOCKED`. GIVEN `zone_win_count = 5`, `defeated_once = false`, THEN `LOCKED`.
+- [x] **AC-EZ-17** (BLOCKING, Unit): Boss 1 — exactly 6 wins = `UNLOCKED` (`>=` discriminator). A `> 6` impl stays LOCKED; assert `UNLOCKED`.
+- [x] **AC-EZ-18** (BLOCKING, Unit): Boss 1 — 7 wins = `UNLOCKED` (no upper-bound "window" regression).
+- [x] **AC-EZ-19** (BLOCKING, Unit): Boss 2 — threshold at 10 (sequencing precondition satisfied). GIVEN Boss 1 `defeated_once = true`, `zone_win_count = 9` → Boss 2 `LOCKED`; same with `zone_win_count = 10` → Boss 2 `UNLOCKED` (`>= 10` discriminator — a `> 10` impl stays LOCKED at 10).
+- [x] **AC-EZ-20** (BLOCKING, Unit): shared-counter dual gate. GIVEN `zone_win_count = 6`, Boss 1 not yet defeated, THEN Boss 1 `UNLOCKED` **and** Boss 2 `LOCKED` (6 ≥ 6 but 6 < 10). GIVEN `zone_win_count = 10` **and** Boss 1 `defeated_once = true`, THEN **both** `UNLOCKED`. Discriminator: an impl using one flag for "any boss unlocked" opens Boss 2 at 6 — assert Boss 2 `LOCKED` at 6.
+- [x] **AC-EZ-56** (BLOCKING, Unit): Boss 2 sequencing precondition (`requires_defeated`). GIVEN Boss 2 `gate_params.requires_defeated = <Boss 1 boss_id>`, `zone_win_count = 10`, Boss 1 `defeated_once = false`, THEN Boss 2 `LOCKED` (threshold met, prerequisite unmet). GIVEN the same with Boss 1 `defeated_once = true`, THEN Boss 2 `UNLOCKED`. Discriminator: a threshold-only impl opens Boss 2 at 10 regardless of Boss 1.
+- [x] **AC-EZ-58** (BLOCKING, Unit): `requires_defeated` broken reference is fail-safe *(verifies EC-EZ-12)*. GIVEN Boss 2 `gate_params.requires_defeated = "no_such_boss"`, `zone_win_count = 10`, THEN Boss 2 `LOCKED` and unofferable, content error logged naming the boss + the unresolved value. Discriminator: a fail-**open** impl returns `UNLOCKED` at win_count ≥ 10.
+- [x] **AC-EZ-40a** (BLOCKING, Unit): Exploration Progress absent — no crash, safe defaults *(verifies EC-EZ-11)*. GIVEN a null/not-connected progress stub, WIN_COUNT gate → win counter reads 0, state `LOCKED`, provisional **warning** (not error) logged, no crash; OPEN gate → `UNLOCKED`.
 
 ---
 
@@ -104,7 +104,19 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/encounter_zone/boss_gate_wincount_test.gd` — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/encounter_zone/boss_gate_wincount_test.gd`, 9 tests, all green (GUT 9.7.1, Godot 4.7.stable). Covers AC-EZ-16/17/18 (Boss 1 threshold 5/6/7 — the `>=`-vs-`>` discriminator at 6), AC-EZ-19 (Boss 2 9/10 with sequencing satisfied), AC-EZ-20 (dual gate off ONE shared counter — Boss 2 LOCKED at 6), AC-EZ-56 (sequencing precondition), AC-EZ-58 (dangling prerequisite → fail-safe LOCKED + `ez_requires_defeated_unresolved` error naming boss + value), AC-EZ-40a (absent progress → WIN_COUNT LOCKED + `ez_progress_absent` **warning** / OPEN UNLOCKED, no crash — split into two tests).
+
+---
+
+## Completion Notes (2026-07-17)
+
+- Added `EncounterResolver.evaluate_boss_gate(boss, zone, progress) -> GateState` (+ private `_evaluate_win_count_gate` / `_zone_has_boss`). Pure function of `(boss, zone, injected-progress)`; no live scene, no mid-battle re-eval. Progress read via a duck-typed interface (`win_count(zone_id)` + `is_boss_defeated(boss_id)`).
+- **Fail-safe is encoded in the enum ordinal.** New `enum GateState { LOCKED, UNLOCKED }` deliberately breaks the project's `INVALID = 0` convention — `GateState` is a pure runtime verdict, never serialized to `.tres`, so `LOCKED = 0` is the fail-safe default: every fall-through, unhandled/reserved gate type, dangling `requires_defeated`, or absent-progress read lands on LOCKED. UNLOCKED is only ever reached by an explicit affirmative decision (Control Manifest guardrail — never fail-open, the AC-EZ-58 discriminator).
+- **Threshold is `>=`, not `>`** (AC-EZ-17/19 discriminator: a `> N` impl stays LOCKED at exactly N). **The two bosses read ONE shared `zone_win_count` but each compares it to its own `required_wins`** — no single "any boss unlocked" flag, so Boss 2 stays LOCKED at 6 while Boss 1 opens (AC-EZ-20).
+- **Sequencing AND-gates the threshold.** When `gate_params.requires_defeated` is present it is resolved against this zone's `boss_encounters`; the gate opens only when the win threshold is met AND the resolved prerequisite's `defeated_once` is true. An unresolvable name is fail-safe LOCKED + content error — "unresolvable" is NEVER treated as "no prerequisite" (AC-EZ-56/58).
+- **Absent-progress fallback** (null stub, the MVP dev-period default until Exploration Progress ships): counter reads 0 → WIN_COUNT bosses LOCK with a provisional **warning** (`ez_progress_absent`, not an error); OPEN bosses are UNLOCKED and log nothing (AC-EZ-40a).
+- Test gotcha handled: `StubProgress.set_wins()` returns `RefCounted`, so a chained `.mark_defeated()` dispatches dynamically → Variant; the chained vars are explicitly typed `: RefCounted` to avoid a "Cannot infer type" whole-file parse skip. Added `stub_progress.gd` (chainable, preloaded, no `class_name`).
+- No new global `class_name` (`GateState` is an enum on the existing resolver; methods on the same host). Full suite rose by exactly +9 to **83 scripts / 833 tests / 4500 asserts**, all green.
 
 ---
 

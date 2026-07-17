@@ -1,12 +1,33 @@
 # Active Session State
 
 <!-- STATUS -->
-Epic: Sprint 1 planned (Core close) — Encounter Zone + Drop System, both storied & Ready; 3 of 5 Core epics already Complete
-Feature: Sprint 1 (2026-07-17→07-31) + sprint-status.yaml + QA plan all written; DS-9 Blocked (Save/Load). Suite baseline 762/762, 4268 asserts (no code touched this session — all markdown/planning)
-Task: NEXT → /story-readiness on an anchor (EZ-1 or DS-1, both zero-dep) → /dev-story. Start implementing Sprint 1.
+Epic: Sprint 1 COMPLETE — Core layer fully Complete (5/5). Encounter Zone (8/8) + Drop System (8/9, DS-009 Blocked on Save/Load) both closed.
+Feature: Full GUT suite 869/869 green, 4606 asserts. All Core code built + tested against DI seams + fixtures.
+Task: NEXT → Technical Setup → Pre-Production gate (/test-setup, /ux-design), then /gate-check production. Land Save/Load (ADR-0001) to unblock DS-009.
 <!-- /STATUS -->
 
-## ⇒ HANDOFF FOR NEXT SESSION (2026-07-17 EOD) — Sprint 1 implementation
+## ⇒ HANDOFF FOR NEXT SESSION (2026-07-17) — Sprint 1 DONE, Core layer Complete
+
+**Sprint 1 is implemented and closed.** Autonomous continuation under "implement all stories in this sprint" (zero Agent/Task subagents — never-1M constraint held throughout). State to resume from:
+
+- **Encounter Zone epic CLOSED (8/8).** All 8 EZ stories implemented in `src/core/encounter_zone/` + closed via lean bookkeeping (Status→Done, ACs checked, Test Evidence `[x] Complete`, Completion Notes). Shipped: value types (`ZoneDef`/`TerrainPatch`/`SpawnEntry`/`BossEncounter`), `EncounterResolver` (EZ-1 clamp, EZ-2 weighted walk, `filter_valid` sub-pool exclusions + empty-pool sentinel, WILD/BOSS TBC handoff, WIN_COUNT first-access + `requires_defeated` sequencing, LIGHTER_REGATE delta re-gate + ALWAYS_OPEN, gate-param validation + reserved-gate fail-safe LOCKED), and `ZoneContentLinter` (EZ-8, 11 ADVISORY offline content linters proven against fixtures). Test files under `tests/unit/encounter_zone/`.
+- **Drop System epic CLOSED (8/9).** DS-1..DS-8 implemented + closed (prior sessions). **DS-009 stays Blocked** on the Not-Started Save/Load system (ADR-0001 must define the pity-map serialization interface) — AC-DS-28 (pity persistence) is a release-blocker.
+- **Full GUT suite: 869/869 green, 4606 asserts** (EZ dir 68 tests). EZ-8 added exactly +21 (848→869). `--import` run before every GUT pass with new `class_name`; counts verified to rise by exactly the number added.
+- **`production/epics/index.md`** updated: both Core rows → Complete, Core layer → **fully Complete (5/5)**, Next Step → Technical Setup gate.
+
+**NEXT ACTIONS (in order):**
+1. **Technical Setup → Pre-Production gate:** `/test-setup` (scaffold CI workflow + tests/integration structure), `/ux-design` (interaction-patterns + accessibility-requirements). Both are pre-gate blockers that don't exist yet.
+2. **Architect Save/Load (ADR-0001 is Accepted, no code)** — the natural next epic; unblocks DS-009 / AC-DS-28, which the game can't ship without. Worth surfacing to the user.
+3. `/gate-check production` once the above land.
+
+**IMPLEMENTATION GOTCHAS (still binding, bit us every Core epic):**
+- `Godot --headless --import` BEFORE GUT for any new `class_name`, or GUT silently skips the uncompilable `_test.gd` and stays green at the OLD count. Verify the count rose by exactly #tests added.
+- Type every test `var` (`var x: int = …`) — untyped `:=` off a Variant source throws "Cannot infer type" → whole-file parse skip while suite stays green.
+- `src/core/` stays pure: injected seeded RNG (never global `randf()`/`RngService`), diagnostics via injected LogSink (never `push_warning`/`push_error` from `src/`), content defs read-only.
+
+---
+
+## ⇒ (SUPERSEDED) HANDOFF (2026-07-17 EOD) — Sprint 1 implementation
 **Do this first in the new session.** Three planning skills ran back-to-back this session (all markdown only, zero code, zero Agent/Task subagents — the never-1M constraint is still binding). State to resume from:
 
 1. **`/create-stories drop-system` — DONE.** 9 Drop System stories written to `production/epics/drop-system/story-001..009-*.md` (8 Logic **Ready** + Story 009 Integration **Blocked** on the Not-Started Save/Load system — AC-DS-28 is a release-blocker). EPIC.md Stories table + `production/epics/index.md` Drop row (→ "9 stories") + Core-layer paragraph updated. All 12 TR-drop + 30 BLOCKING ACs + AC-DS-28 placed. **All 5 Core epics are now storied.**

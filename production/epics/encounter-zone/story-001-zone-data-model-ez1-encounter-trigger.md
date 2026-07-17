@@ -1,11 +1,11 @@
 # Story 001: Zone data model & EZ-1 encounter trigger
 
 > **Epic**: Encounter Zone System
-> **Status**: Ready
+> **Status**: Done
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -30,11 +30,11 @@
 
 *From GDD `design/gdd/encounter-zone.md`, scoped to this story:*
 
-- [ ] **AC-EZ-01** (BLOCKING, Unit): `encounter_rate = 0.0` never triggers. GIVEN rate 0.0 and any seed, WHEN EZ-1 runs 10,000 steps, THEN `triggered == false` every step.
-- [ ] **AC-EZ-02** (BLOCKING, Unit): legal rate boundaries + out-of-range clamping *(verifies EC-EZ-05)*. **A:** rate 1.0, 10,000 steps → triggers every step. **B:** rate 1.5 → content error logged, effective rate clamped to 1.0. **C:** rate −0.3 → error logged, clamped to 0.0, never triggers. The content-error log is the observable proving clamping.
-- [ ] **AC-EZ-03** (BLOCKING, Unit): `<` operator discrimination via injected draws. GIVEN a mock RNG returning scripted draws `[0.14, 0.15, 0.16]` at rate 0.15, THEN `triggered == [true, false, false]`. The `0.15` draw is the discriminator: strict `<` yields `false` (a `<=` impl yields `true`).
-- [ ] **AC-EZ-59** (BLOCKING, Unit): EZ-1 encounter-rate modifier hook. **A (Jammer):** rate 0.15, `active_modifier = 0.1` → `effective_rate == 0.015` (exact); a draw of `0.10` → `triggered == false`, where base 0.15 would have fired (0.10 < 0.15) — the single draw discriminates hook-applied vs hook-ignored. **B (Lure, no clamp):** rate 0.35, `active_modifier = 2.5` → `effective_rate == 0.875` (exact, NOT clamped to 1.0). **C (identity):** no modifier → `active_modifier == 1.0`, base EZ-1 unchanged. **D (clamp ceiling):** rate 0.5, `active_modifier = 2.5` → `clamp(1.25) == 1.0`. `0.15×0.1`, `0.35×2.5` exact in IEEE-754 — no epsilon.
-- [ ] **AC-EZ-57** (BLOCKING, Unit): zone-level `spawn_enabled == false` → all patches inert (Rule 1 / EC-EZ-10). GIVEN a zone `spawn_enabled = false` with a valid populated terrain patch, WHEN a step is taken, THEN EZ-1 never rolls, EZ-2 is never called, no `enemy_id` resolved, no crash. Discriminator: an impl checking only enemy-level `spawn_enabled` still triggers — assert zero encounters.
+- [x] **AC-EZ-01** (BLOCKING, Unit): `encounter_rate = 0.0` never triggers. GIVEN rate 0.0 and any seed, WHEN EZ-1 runs 10,000 steps, THEN `triggered == false` every step.
+- [x] **AC-EZ-02** (BLOCKING, Unit): legal rate boundaries + out-of-range clamping *(verifies EC-EZ-05)*. **A:** rate 1.0, 10,000 steps → triggers every step. **B:** rate 1.5 → content error logged, effective rate clamped to 1.0. **C:** rate −0.3 → error logged, clamped to 0.0, never triggers. The content-error log is the observable proving clamping.
+- [x] **AC-EZ-03** (BLOCKING, Unit): `<` operator discrimination via injected draws. GIVEN a mock RNG returning scripted draws `[0.14, 0.15, 0.16]` at rate 0.15, THEN `triggered == [true, false, false]`. The `0.15` draw is the discriminator: strict `<` yields `false` (a `<=` impl yields `true`).
+- [x] **AC-EZ-59** (BLOCKING, Unit): EZ-1 encounter-rate modifier hook. **A (Jammer):** rate 0.15, `active_modifier = 0.1` → `effective_rate == 0.015` (exact); a draw of `0.10` → `triggered == false`, where base 0.15 would have fired (0.10 < 0.15) — the single draw discriminates hook-applied vs hook-ignored. **B (Lure, no clamp):** rate 0.35, `active_modifier = 2.5` → `effective_rate == 0.875` (exact, NOT clamped to 1.0). **C (identity):** no modifier → `active_modifier == 1.0`, base EZ-1 unchanged. **D (clamp ceiling):** rate 0.5, `active_modifier = 2.5` → `clamp(1.25) == 1.0`. `0.15×0.1`, `0.35×2.5` exact in IEEE-754 — no epsilon.
+- [x] **AC-EZ-57** (BLOCKING, Unit): zone-level `spawn_enabled == false` → all patches inert (Rule 1 / EC-EZ-10). GIVEN a zone `spawn_enabled = false` with a valid populated terrain patch, WHEN a step is taken, THEN EZ-1 never rolls, EZ-2 is never called, no `enemy_id` resolved, no crash. Discriminator: an impl checking only enemy-level `spawn_enabled` still triggers — assert zero encounters.
 
 ---
 
@@ -99,7 +99,18 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/encounter_zone/ez1_encounter_trigger_test.gd` — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/encounter_zone/ez1_encounter_trigger_test.gd`, 10 tests, all green (GUT 9.7.1, Godot 4.7.stable). Covers AC-EZ-01 (two seeds), AC-EZ-02 (A/B/C boundaries + clamp + content-error code/detail), AC-EZ-03 (strict `<` at the 0.15 discriminator), AC-EZ-59 (A/B/C/D modifier hook), AC-EZ-57 (inert zone, zero RNG draw).
+
+---
+
+## Completion Notes (2026-07-17)
+
+- Delivered the value-type schema in `src/core/encounter_zone/` as typed `.tres`-backed Resources (ADR-0003): `ZoneDef` (Rule 1), `TerrainPatch` (Rule 2, with `TerrainType` + `DensityClass` enums), `SpawnEntry` (Rule 2 `{enemy_id, spawn_weight, is_farmable_target}`), and `BossEncounter` (Rule 6 field shapes only — `Placement`/`GateType`/`RepeatPolicy` enums declared; gate LOGIC deferred to Stories 005–007). Every enum uses `INVALID = 0` as the unset sentinel and is documented APPEND-ONLY (`.tres` stores raw ints), matching the EnemyDef/PartDef discipline.
+- The resolution host `EncounterResolver` is a pure DI `RefCounted` (ADR-0006): injected seeded `RandomNumberGenerator` + `LogSink` + an optional Enemy-DB reader (unused by EZ-1; Stories 002/003 consume it). No autoload, no `RngService` construction, no global `randf()`. Draws go through `_rng.call(&"randf")` so GDScript RNG doubles dispatch (the RNG-ptrcall memory shared with DropSystem).
+- **EZ-1 = two distinct clamps.** `effective_encounter_rate` validates the AUTHORED `encounter_rate` to `[0,1]` FIRST — an out-of-range value logs `ez_encounter_rate_out_of_range` (detail names the value) and clamps (AC-EZ-02 B/C) — then clamps the post-modifier product to `[0,1]` with NO log (the Lure-over-1.0 case, AC-EZ-59 D). Conflating the two would spam false content errors on every over-1.0 Lure.
+- **`spawn_enabled == false` short-circuits before the draw**, not after: `roll_encounter` returns `false` with zero RNG calls (AC-EZ-57 discriminator), so an inert zone never advances the deterministic stream and EZ-2 is never reached. The test arranges a valid populated patch with a firing rate + a `Const(0.0)` RNG that WOULD fire if ever drawn, and asserts `call_count == 0`.
+- Reused the Drop System RNG doubles (`res://tests/unit/drop_system/rng_doubles.gd`) and the shared `spy_log_sink.gd` — no new test infrastructure. Full suite green at **79 scripts / 808 tests / 4423 asserts** (was 78 / 798); the +10 count rise confirms no `class_name`/import silent-skip despite adding 5 new global classes (ran `--import` before GUT).
+- No `.tres` content authored — the real MVP zone resource is a deferred content pass (EPIC.md), validated later by the Story 008 linters. This story ships the engine + schema against DI seams + fixtures only.
 
 ---
 

@@ -1,11 +1,11 @@
 # Story 003: Sub-pool validation & empty-pool sentinel
 
 > **Epic**: Encounter Zone System
-> **Status**: Ready
+> **Status**: Done
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -30,13 +30,13 @@
 
 *From GDD `design/gdd/encounter-zone.md`, scoped to this story:*
 
-- [ ] **AC-EZ-26** (BLOCKING, Unit): empty sub-pool *(verifies EC-EZ-01)*. GIVEN `enemy_subpool = []`, forced EZ-1 trigger, THEN EZ-2 returns `StringName("")`, content error logged (naming `terrain_type` + `zone_id`), no crash, stub caller starts no battle.
-- [ ] **AC-EZ-27** (BLOCKING, Unit): disabled enemy excluded *(verifies EC-EZ-02 + EC-EZ-10)*. pool `{iron_crawler w10, retired_bot w10}`, `retired_bot spawn_enabled=false`, 1,000 draws → `retired_bot` never returned, `iron_crawler` all 1,000, no error for iron_crawler.
-- [ ] **AC-EZ-28** (BLOCKING, Unit): missing enemy excluded + error. pool `{known_enemy w10, ghost_id w5}`, `ghost_id` has no entry → error logged naming ghost_id, contributes 0 to `total_weight`, only `known_enemy` returned.
-- [ ] **AC-EZ-29** (BLOCKING, Unit): all-disabled drains to empty → chains to EC-EZ-01 (sentinel + error). Tests composition of EC-EZ-02 exclusion into EC-EZ-01.
-- [ ] **AC-EZ-30** (BLOCKING, Unit): BOSS in terrain pool excluded *(verifies EC-EZ-03)*. `{iron_crawler w10 WILD, zone_boss_1 w5 BOSS}` → error naming zone_boss_1 + slot, excluded from `total_weight`, only iron_crawler returned.
-- [ ] **AC-EZ-32** (BLOCKING, Unit): `spawn_weight = 0` excluded with **warning** *(verifies EC-EZ-04 — zero)*. `{iron_crawler w10, empty_shell w0, volt_drone w5}` → warning (not error) for empty_shell, `total_weight = 15`, empty_shell never returned.
-- [ ] **AC-EZ-33** (BLOCKING, Unit): negative weight → **error**, excluded *(verifies EC-EZ-04 — negative)*. `{iron_crawler w10, corrupt_entry w−3}` → error (severity distinct from the w0 warning), excluded, `total_weight = 10`.
+- [x] **AC-EZ-26** (BLOCKING, Unit): empty sub-pool *(verifies EC-EZ-01)*. GIVEN `enemy_subpool = []`, forced EZ-1 trigger, THEN EZ-2 returns `StringName("")`, content error logged (naming `terrain_type` + `zone_id`), no crash, stub caller starts no battle.
+- [x] **AC-EZ-27** (BLOCKING, Unit): disabled enemy excluded *(verifies EC-EZ-02 + EC-EZ-10)*. pool `{iron_crawler w10, retired_bot w10}`, `retired_bot spawn_enabled=false`, 1,000 draws → `retired_bot` never returned, `iron_crawler` all 1,000, no error for iron_crawler.
+- [x] **AC-EZ-28** (BLOCKING, Unit): missing enemy excluded + error. pool `{known_enemy w10, ghost_id w5}`, `ghost_id` has no entry → error logged naming ghost_id, contributes 0 to `total_weight`, only `known_enemy` returned.
+- [x] **AC-EZ-29** (BLOCKING, Unit): all-disabled drains to empty → chains to EC-EZ-01 (sentinel + error). Tests composition of EC-EZ-02 exclusion into EC-EZ-01.
+- [x] **AC-EZ-30** (BLOCKING, Unit): BOSS in terrain pool excluded *(verifies EC-EZ-03)*. `{iron_crawler w10 WILD, zone_boss_1 w5 BOSS}` → error naming zone_boss_1 + slot, excluded from `total_weight`, only iron_crawler returned.
+- [x] **AC-EZ-32** (BLOCKING, Unit): `spawn_weight = 0` excluded with **warning** *(verifies EC-EZ-04 — zero)*. `{iron_crawler w10, empty_shell w0, volt_drone w5}` → warning (not error) for empty_shell, `total_weight = 15`, empty_shell never returned.
+- [x] **AC-EZ-33** (BLOCKING, Unit): negative weight → **error**, excluded *(verifies EC-EZ-04 — negative)*. `{iron_crawler w10, corrupt_entry w−3}` → error (severity distinct from the w0 warning), excluded, `total_weight = 10`.
 
 ---
 
@@ -102,7 +102,17 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/encounter_zone/ez2_subpool_validation_test.gd` — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/encounter_zone/ez2_subpool_validation_test.gd`, 7 tests, all green (GUT 9.7.1, Godot 4.7.stable). Covers AC-EZ-26 (empty pool → sentinel + `ez_empty_subpool` error naming zone_id+terrain_type), AC-EZ-27 (disabled silently excluded, spy total 0, 1000 draws all iron_crawler), AC-EZ-28 (missing ghost_id → `ez_spawn_enemy_missing`, total_weight 10), AC-EZ-29 (all-disabled drains → sentinel + single empty error), AC-EZ-30 (BOSS wrong-class → `ez_spawn_enemy_wrong_class` naming id+slot, total_weight 10), AC-EZ-32 (w0 → **warning** `ez_spawn_weight_zero`, total_weight 15), AC-EZ-33 (w−3 → **error** `ez_spawn_weight_negative`, total_weight 10).
+
+---
+
+## Completion Notes (2026-07-17)
+
+- Added `EncounterResolver.filter_valid(raw_subpool, terrain_type) -> Array[SpawnEntry]` + `resolve_enemy(zone, patch) -> StringName` (EZ-3). `filter_valid` runs the exclusion cascade with **deliberately distinct severities** (Control Manifest guardrail); `resolve_enemy` chains filter → EZ-2 select and owns the empty-pool sentinel.
+- **Severity discipline is the load-bearing spec.** Weight checks run BEFORE Enemy-DB resolution, so a malformed-weight entry reports on its weight regardless of id: `spawn_weight < 0` → **error** `ez_spawn_weight_negative`; `spawn_weight == 0` → **warning** `ez_spawn_weight_zero` (AC-EZ-32 vs 33 assert the two channels are distinct). Then id resolution: missing → **error** `ez_spawn_enemy_missing`; `spawn_enabled == false` → **silent** exclusion (retirement is graceful, EC-EZ-10 — AC-EZ-27 asserts spy.total()==0 for the survivor); non-WILD in a terrain slot → **error** `ez_spawn_enemy_wrong_class` naming id + slot.
+- **Empty-pool guard lives in `resolve_enemy`, not `select_enemy`.** Placing it there gives the error zone/terrain context (`ez_empty_subpool` names zone_id + terrain_type) AND avoids calling `randi_range(1, 0)` on a drained pool. Both authored-`[]` (AC-EZ-26) and drained-by-filter (AC-EZ-29) reach the same sentinel `StringName("")`; the disabled exclusion stays silent so the ONLY diagnostic on a fully-drained pool is the single empty-pool error.
+- **Test doubles.** Reused `spy_log_sink.gd` (errors/warns/total() channels). Added `stub_enemy_reader.gd` (mirrors the `get_enemy(id) -> EnemyDef` read seam, chainable `.add(id, class, enabled)`, throwaway defs it owns — no `DirAccess`, no shared-def mutation). Reused `ez_rng_int_doubles.gd` for the 1000-draw AC-EZ-27 exclusion sweep.
+- No new global `class_name` (both methods on the existing resolver; helpers are preloaded non-`_test.gd` files), so the full suite rose by exactly +7 to **81 scripts / 821 tests / 4467 asserts**, all green.
 
 ---
 

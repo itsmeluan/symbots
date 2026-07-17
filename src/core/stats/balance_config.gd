@@ -220,3 +220,20 @@ extends Resource
 @export var overheat_self_damage_pct: float = 0.10
 @export var overheat_reset_heat: int = 20
 @export var thermal_move_heat_bonus: int = 5
+
+# ---------------------------------------------------------------------------
+# Drop System scrap-yield tuning (ADR-0003; GDD Drop System Rule 9). APPEND-ONLY.
+# ---------------------------------------------------------------------------
+
+## Rule 9 per-rarity Scrap yield when a part is scrapped, indexed by the
+## [enum PartDef.Rarity] value (1=Common, 2=Rare, 3=Boss-grade, 4=Prototype).
+## Index 0 is the reserved/invalid rarity sentinel and is never looked up — mirrors
+## the [member drop_rate_by_rarity] index-0-reserved pattern. GDD Tuning Knobs:
+## Common 5, Rare 20, Boss-grade 60, Prototype 35 (so the array reads
+## `[_, 5, 20, 60, 35]` in enum-index order).
+## [b]Load-bearing ordering invariant[/b] (DS-8 / AC-DS-19): read by VALUE the
+## yields must satisfy `COMMON < RARE < PROTOTYPE < BOSS_GRADE` — deliberately NOT
+## numeric-rarity-index order (Prototype 35 sits between Rare 20 and Boss-grade 60).
+## No legal retune may invert a step; `DropSystem.get_scrap_yield` is the read seam
+## and the DS-8 test asserts the three `<` comparisons programmatically.
+@export var scrap_yield_by_rarity: Array[int] = [0, 5, 20, 60, 35]

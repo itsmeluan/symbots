@@ -1,11 +1,11 @@
 # Story 004: WILD/BOSS encounter handoff to TBC
 
 > **Epic**: Encounter Zone System
-> **Status**: Ready
+> **Status**: Done
 > **Layer**: Core
 > **Type**: Integration
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -30,7 +30,7 @@
 
 *From GDD `design/gdd/encounter-zone.md`, scoped to this story:*
 
-- [ ] **AC-EZ-15** (BLOCKING, Integration): correct handoff — both classes. Stub TBC records `(enemy_id, is_boss, fleeable)`. **Scenario A (WILD):** GIVEN pool `{bolt_skitter w8, iron_crawler w2}`, a stub EZ-1 forced to `triggered = true` and EZ-2 seeded to pick `bolt_skitter`, THEN stub TBC receives exactly one call `("bolt_skitter", false, true)` (WILD is fleeable). **Scenario B (BOSS):** GIVEN an `OPEN` boss `boss_id = "zone_boss"`, player initiates the boss encounter, THEN stub TBC receives `("zone_boss", true, false)` (boss not fleeable). Scenario B guards against a `return true` fleeable flag Scenario A alone cannot catch.
+- [x] **AC-EZ-15** (BLOCKING, Integration): correct handoff — both classes. Stub TBC records `(enemy_id, is_boss, fleeable)`. **Scenario A (WILD):** GIVEN pool `{bolt_skitter w8, iron_crawler w2}`, a stub EZ-1 forced to `triggered = true` and EZ-2 seeded to pick `bolt_skitter`, THEN stub TBC receives exactly one call `("bolt_skitter", false, true)` (WILD is fleeable). **Scenario B (BOSS):** GIVEN an `OPEN` boss `boss_id = "zone_boss"`, player initiates the boss encounter, THEN stub TBC receives `("zone_boss", true, false)` (boss not fleeable). Scenario B guards against a `return true` fleeable flag Scenario A alone cannot catch.
 
 ---
 
@@ -77,7 +77,17 @@
 **Story Type**: Integration
 **Required evidence**: `tests/integration/encounter_zone/tbc_handoff_test.gd` — must exist and pass (stub TBC; no live scene).
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/integration/encounter_zone/tbc_handoff_test.gd`, 3 tests, all green (GUT 9.7.1, Godot 4.7.stable). Covers AC-EZ-15 A (WILD `{bolt_skitter w8, iron_crawler w2}`, roll 4 → exactly one handoff `("bolt_skitter", false, true)`), AC-EZ-15 B (OPEN boss → exactly one `("zone_boss", true, false)`, `fleeable == false` asserted as the hardcoded-true discriminator), plus an impl-note guard (empty pool → sentinel + **zero** handoffs — the no-battle-on-no-encounter contract, guarding the deferred live AC-EZ-42).
+
+---
+
+## Completion Notes (2026-07-17)
+
+- Added a duck-typed TBC battle-start seam to `EncounterResolver` (4th optional ctor param `tbc: Variant`, borrowed) + two entry points: `start_wild_encounter(zone, patch) -> StringName` (composes EZ-3 filter + EZ-2 select via `resolve_enemy`, hands off once as WILD) and `start_boss_encounter(boss: BossEncounter)` (hands an accessible boss off once). Core never hard-references the live `BattleController` (Control Manifest) — the stub records the triple.
+- **Fleeability is decided in ONE place.** Both paths route through `_hand_to_tbc(enemy_id, is_boss)`, which computes `fleeable = not is_boss` (WILD flees, BOSS does not — TBC Rule 7). This makes the invariant structural: the WILD and BOSS paths cannot diverge into a copy-paste `fleeable` bug, which is exactly what AC-EZ-15 B guards (a `fleeable = true` constant would pass Scenario A and fail only B).
+- **Sentinel → no handoff.** `start_wild_encounter` short-circuits on the Story 003 sentinel (`StringName("")`) and never calls TBC — "no encounter" starts no battle. Asserted by the guard test; the *live* Overworld-transition version (AC-EZ-42) is deferred integration per the story's Out of Scope.
+- Boss accessibility (OPEN / WIN_COUNT / sequencing / repeat policy) is Stories 005–007 — this story assumes an offerable boss and does not evaluate gates. WILD-in-boss-slot (AC-EZ-31) is Story 007.
+- No new global `class_name` (methods on the existing resolver; `StubTbc` is an inner class of the test — no registry pollution). Full suite rose by exactly +3 to **82 scripts / 824 tests / 4478 asserts**, all green.
 
 ---
 

@@ -1,11 +1,11 @@
 # Story 007: Beacon (×2.0) & DS-F-LEVEL rate injection
 
 > **Epic**: Drop System
-> **Status**: Ready
+> **Status**: Done
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -30,7 +30,7 @@
 
 *From GDD `design/gdd/drop-system.md`, scoped to this story:*
 
-- [ ] **AC-DS-31** (BLOCKING, Unit): Salvage Beacon injection (Rule 12a) **+ DS-F-LEVEL level factor** (ELZS erratum). Rare part base 0.25, no conditions.
+- [x] **AC-DS-31** (BLOCKING, Unit): Salvage Beacon injection (Rule 12a) **+ DS-F-LEVEL level factor** (ELZS erratum). Rare part base 0.25, no conditions.
   - **Scenario A** (Beacon, MID band): `beacon_used_this_battle = true`, enemy level 4 (MID, mult 1.0) → rate = clamp(0.25 × 1.0 × 2.0) = **0.50**; draw 0.40 (< 0.50) → drops, `beacon_drop_multiplier_applied == true`. Discriminator: a no-injection impl uses 0.25 and does **not** drop at 0.40.
   - **Scenario A2** (Beacon, HIGH band — DS-F-LEVEL discriminator): `beacon_used_this_battle = true`, enemy level 6 (HIGH, mult 1.5) → rate = clamp(0.25 × 1.5 × 2.0) = **0.75**; draw 0.60 (< 0.75) → drops. Discriminator: an impl wiring Beacon but ignoring `level_rarity_mult` returns 0.50, so 0.60 ≥ 0.50 → does not drop — caught.
   - **Scenario B** (flee, no injection): `beacon_used_this_battle = true`, outcome `FLED` → awards nothing, `beacon_drop_multiplier_applied == false` (Rule 1 victory-only).
@@ -93,7 +93,17 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/drop_system/beacon_level_injection_test.gd` — must exist and pass. (The DS-F-LEVEL cross-system integration gate AC-ELZS-11 lives in `tests/integration/drop_system/` and is owned by the ELZS erratum Done condition.)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/drop_system/beacon_level_injection_test.gd`, 5 tests, all green (GUT 9.7.1, Godot 4.7.stable). Covers AC-DS-31 A/A2/B/C/D. The DS-F-LEVEL cross-system integration gate AC-ELZS-11 (`tests/integration/drop_system/`) remains owned by the ELZS erratum Done condition.
+
+---
+
+## Completion Notes (2026-07-17)
+
+- Replaced Story 001's `_LEVEL_RARITY_MULT_DEFAULT` / `_BEACON_FACTOR_DEFAULT` (both `1.0`) with the real factors inside `_effective_drop_rate`: `clamp(base × level_rarity_mult × Π(conditions) × beacon_factor, 0, 1)`. Added `BEACON_MULTIPLIER = 2.0`, `LEVEL_BAND_MID_FLOOR = 3` / `LEVEL_BAND_HIGH_FLOOR = 6`, a `LevelBand { EARLY, MID, HIGH }` enum, and the data-driven `_RARE_LEVEL_MULTS` band→mult table (0.5 / 1.0 / 1.5).
+- **Production interface decision (satisfies the AC-ELZS-11 binding obligation):** `resolve_drops(outcome, pool, fired, enemy_level := -1, beacon_used := false)` accepts `enemy_level: int` and resolves the band→Rare-mult **internally** (`_level_band` + `_level_rarity_mult`). The battle host therefore passes the raw enemy level, not a precomputed mult. A negative `enemy_level` (the default) applies **no** level scaling (mult 1.0) — the documented opt-out that keeps every DS-1..DS-6 unit fixture at its original unscaled rate. AC-ELZS-11's integration fixtures should bind to the `enemy_level: int` form.
+- **Only the Rare column is level-scaled.** `_level_rarity_mult` returns `1.0` for every non-Rare rarity — the Prototype-row-is-1.0 invariant that DS-2's `N_PROTO_PITY` calibration depends on is encoded directly in that guard.
+- **Beacon is VICTORY-only and part-only.** `beacon_factor = 2.0` enters the product only within the post-victory path; the observable `beacon_drop_multiplier_applied` is reset to `false` at every `resolve_drops` entry and set `true` only on VICTORY-with-Beacon, so a flee/loss (which returns before the factor is applied) always reads `false`. The consumable channel is never touched (there is no consumable path in this core). A pity-guaranteed part is pre-roll, so the Beacon never multiplies a rate for it (AC-DS-31 D — asserted via `call_count == 0`).
+- **White-box call-site fallout:** `condition_assembly_test.gd` (4 sites) and `ds1_roll_core_test.gd` (1 site) call the private `_effective_drop_rate` directly; updated to the 4-arg form `(part, fired, -1, 1.0)`, preserving every asserted rate. Caught via the `class_name`/import gotcha — GUT silently dropped both files and stayed green at a *lower* count until the arg mismatch was fixed and the count rose back to the expected 34.
 
 ---
 

@@ -1,11 +1,11 @@
 # Story 001: DropSystem host, VICTORY-only trigger & DS-1 roll core
 
 > **Epic**: Drop System
-> **Status**: Ready
+> **Status**: Done
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -30,12 +30,12 @@
 
 *From GDD `design/gdd/drop-system.md`, scoped to this story:*
 
-- [ ] **AC-DS-03** (BLOCKING, Unit): rate > 1.0 pre-clamp guarantees the drop *(verifies EC-DS-04)*. Common `scrap_bolt` (0.70), `arm_broken`(×1.5)+`targeting_active`(×1.3) fired (product 1.365 → clamp 1.0). Draw 0.001 → drops; draw 0.99 → drops; `effective_drop_rate == 1.0` both. FAIL: returned unclamped 1.365, or drop false for any draw < 1.0.
-- [ ] **AC-DS-04** (BLOCKING, Unit): strict-`<` boundary — the canonical `<` vs `<=` discriminator. Rare `servo_arm`, rate 0.25. Draw 0.25 → `false` (0.25 not < 0.25); draw 0.24 → `true`. FAIL: draw 0.25 returns true (indicates `<=`).
-- [ ] **AC-DS-05** (BLOCKING, Unit): no conditions fired → base rates *(verifies EC-DS-01)*. Pool [Common 0.70, Rare 0.25, Boss-grade 0.001], empty fired set, draws (ID-asc) 0.65/0.20/0.0005 → all drop at base. Boss-grade draw 0.002 → no drop (0.002 ≥ 0.001). FAIL: conditions applied on empty set; Boss-grade treated as rate 0.0.
-- [ ] **AC-DS-11** (BLOCKING, Unit): victory-only gate. `scrap_bolt`, RNG always 0.65 (< 0.70). VICTORY → one emit; DEFEAT → zero emits, RNG not called; FLED → zero emits, RNG not called. FAIL: non-VICTORY drops; VICTORY zero despite 0.65 < 0.70.
-- [ ] **AC-DS-20** (BLOCKING, Unit): instances emitted at `upgrade_tier = 0` for all rarities *(verifies R8)*. One part per rarity (`armor_bolt` Common 0.70, `core_shield` Prototype 0.05, `forge_core` Boss-grade 0.001, `servo_arm` Rare 0.25); draws ID-asc [0.0009, 0.0009, 0.0009, 0.0009] (all < 0.001, tightest strict-`<` boundary) → 4 instances, each `upgrade_tier == 0`. FAIL: any tier ≠ 0; Boss-grade fails to drop at 0.0009.
-- [ ] **AC-DS-27** (BLOCKING, Unit): Phase-6 output list contract. Pool `servo_arm` (Rare 0.25), no conditions, draw 0.20 (< 0.25) → resolution returns a list with exactly one `PartInstance{part_id: 'servo_arm', upgrade_tier: 0}`. FAIL: list null/empty; wrong part_id; tier ≠ 0.
+- [x] **AC-DS-03** (BLOCKING, Unit): rate > 1.0 pre-clamp guarantees the drop *(verifies EC-DS-04)*. Common `scrap_bolt` (0.70), `arm_broken`(×1.5)+`targeting_active`(×1.3) fired (product 1.365 → clamp 1.0). Draw 0.001 → drops; draw 0.99 → drops; `effective_drop_rate == 1.0` both. FAIL: returned unclamped 1.365, or drop false for any draw < 1.0.
+- [x] **AC-DS-04** (BLOCKING, Unit): strict-`<` boundary — the canonical `<` vs `<=` discriminator. Rare `servo_arm`, rate 0.25. Draw 0.25 → `false` (0.25 not < 0.25); draw 0.24 → `true`. FAIL: draw 0.25 returns true (indicates `<=`).
+- [x] **AC-DS-05** (BLOCKING, Unit): no conditions fired → base rates *(verifies EC-DS-01)*. Pool [Common 0.70, Rare 0.25, Boss-grade 0.001], empty fired set, draws (ID-asc) 0.65/0.20/0.0005 → all drop at base. Boss-grade draw 0.002 → no drop (0.002 ≥ 0.001). FAIL: conditions applied on empty set; Boss-grade treated as rate 0.0.
+- [x] **AC-DS-11** (BLOCKING, Unit): victory-only gate. `scrap_bolt`, RNG always 0.65 (< 0.70). VICTORY → one emit; DEFEAT → zero emits, RNG not called; FLED → zero emits, RNG not called. FAIL: non-VICTORY drops; VICTORY zero despite 0.65 < 0.70.
+- [x] **AC-DS-20** (BLOCKING, Unit): instances emitted at `upgrade_tier = 0` for all rarities *(verifies R8)*. One part per rarity (`armor_bolt` Common 0.70, `core_shield` Prototype 0.05, `forge_core` Boss-grade 0.001, `servo_arm` Rare 0.25); draws ID-asc [0.0009, 0.0009, 0.0009, 0.0009] (all < 0.001, tightest strict-`<` boundary) → 4 instances, each `upgrade_tier == 0`. FAIL: any tier ≠ 0; Boss-grade fails to drop at 0.0009.
+- [x] **AC-DS-27** (BLOCKING, Unit): Phase-6 output list contract. Pool `servo_arm` (Rare 0.25), no conditions, draw 0.20 (< 0.25) → resolution returns a list with exactly one `PartInstance{part_id: 'servo_arm', upgrade_tier: 0}`. FAIL: list null/empty; wrong part_id; tier ≠ 0.
 
 ---
 
@@ -100,7 +100,16 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/drop_system/ds1_roll_core_test.gd` — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/drop_system/ds1_roll_core_test.gd`, 6 tests / 22 asserts, all green (GUT 9.7.1, Godot 4.7.stable). Covers AC-DS-03/04/05/11/20/27.
+
+---
+
+## Completion Notes (2026-07-17)
+
+- Implemented `src/core/drop_system/drop_system.gd` (DI RefCounted host) + `inventory_sink.gd` seam.
+- Canonical DS-1 formula built full-shape with `level_rarity_mult`/`beacon` pinned to 1.0 and `pity_guaranteed` hard-false (Stories 004/005/007 slot in later).
+- **RNG-double gotcha discovered + solved**: a statically-typed `_rng.randf()` ptrcall-bypasses a GDScript test-double override, so the draw goes through `_rng.call(&"randf")`. Test doubles need `@warning_ignore("native_method_override")`. Extracted to shared `tests/unit/drop_system/rng_doubles.gd`; saved to project memory.
+- Verified: full suite green, 0 regressions.
 
 ---
 

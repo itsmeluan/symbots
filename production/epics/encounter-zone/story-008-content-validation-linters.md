@@ -1,11 +1,11 @@
 # Story 008: Content-validation linters
 
 > **Epic**: Encounter Zone System
-> **Status**: Ready
+> **Status**: Done
 > **Layer**: Core
 > **Type**: Config/Data
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -30,17 +30,17 @@
 
 *From GDD `design/gdd/encounter-zone.md`, scoped to this story:*
 
-- [ ] **AC-EZ-10** (ADVISORY, Content Val): `SPARSE` → `encounter_rate == 0.07` (`abs(rate − 0.07) < 1e-9`).
-- [ ] **AC-EZ-11** (ADVISORY, Content Val): `STANDARD` → `0.15` (within 1e-9).
-- [ ] **AC-EZ-12** (ADVISORY, Content Val): `DENSE` → `0.35` (within 1e-9).
-- [ ] **AC-EZ-13** (ADVISORY, Content Val): pacing ratio. `rate[DENSE] / rate[STANDARD] >= 1.6` (default 2.33 passes). Enforces Tuning Knob warning 2.
-- [ ] **AC-EZ-14** (ADVISORY, Content Val): unknown `density_class` (e.g. `"SWAMP"`) → content error logged + `encounter_rate` defaults to STANDARD 0.15 (conservative fallback, never DENSE).
-- [ ] **AC-EZ-47** (ADVISORY, Content Val): exactly 1 zone entry, `spawn_enabled = true`, valid `zone_id`.
-- [ ] **AC-EZ-48** (ADVISORY, Content Val): zone has 3–4 terrain patches; every patch `enemy_subpool.size() >= 1`; every entry `spawn_weight >= 1`.
-- [ ] **AC-EZ-49** (ADVISORY, Content Val): exactly 2 boss entries — Boss1 `WIN_COUNT`/`required_wins=6`/`regate 2`/`LIGHTER_REGATE`, Boss2 `WIN_COUNT`/`required_wins=10`/`regate 3`/`LIGHTER_REGATE`, both `OVERWORLD`. Boss2 carries `gate_params.requires_defeated == <Boss1 boss_id>`; Boss1 carries none. `required_wins[Boss2] − required_wins[Boss1] >= 3` (10 − 6 = 4 passes). No MVP boss uses `WAVE`/`REACH`/`DUNGEON_RUSH`.
-- [ ] **AC-EZ-50** (ADVISORY, Content Val): de-duplicated WILD enemy count across all patches ∈ [6, 10] (target ~8).
-- [ ] **AC-EZ-51** (ADVISORY, Content Val): every `boss_id` resolves to a `BOSS`-class, `spawn_enabled` Enemy DB entry.
-- [ ] **AC-EZ-54** (ADVISORY, Content Val): terrain-identity invariants (Rule 2a). **A (identity enemy):** every patch contains ≥ 1 `enemy_id` present in no other patch → error naming any failing patch. **A2 (identity-enemy weight floor):** at least one such patch-exclusive enemy is **≥ 10% of its patch's `total_weight`** → warning below the floor. **B (farmable weight floor):** every `SpawnEntry` with `is_farmable_target == true` has `spawn_weight >= 0.20 * patch.total_weight` → warning below the floor.
+- [x] **AC-EZ-10** (ADVISORY, Content Val): `SPARSE` → `encounter_rate == 0.07` (`abs(rate − 0.07) < 1e-9`).
+- [x] **AC-EZ-11** (ADVISORY, Content Val): `STANDARD` → `0.15` (within 1e-9).
+- [x] **AC-EZ-12** (ADVISORY, Content Val): `DENSE` → `0.35` (within 1e-9).
+- [x] **AC-EZ-13** (ADVISORY, Content Val): pacing ratio. `rate[DENSE] / rate[STANDARD] >= 1.6` (default 2.33 passes). Enforces Tuning Knob warning 2.
+- [x] **AC-EZ-14** (ADVISORY, Content Val): unknown `density_class` (e.g. `"SWAMP"`) → content error logged + `encounter_rate` defaults to STANDARD 0.15 (conservative fallback, never DENSE).
+- [x] **AC-EZ-47** (ADVISORY, Content Val): exactly 1 zone entry, `spawn_enabled = true`, valid `zone_id`.
+- [x] **AC-EZ-48** (ADVISORY, Content Val): zone has 3–4 terrain patches; every patch `enemy_subpool.size() >= 1`; every entry `spawn_weight >= 1`.
+- [x] **AC-EZ-49** (ADVISORY, Content Val): exactly 2 boss entries — Boss1 `WIN_COUNT`/`required_wins=6`/`regate 2`/`LIGHTER_REGATE`, Boss2 `WIN_COUNT`/`required_wins=10`/`regate 3`/`LIGHTER_REGATE`, both `OVERWORLD`. Boss2 carries `gate_params.requires_defeated == <Boss1 boss_id>`; Boss1 carries none. `required_wins[Boss2] − required_wins[Boss1] >= 3` (10 − 6 = 4 passes). No MVP boss uses `WAVE`/`REACH`/`DUNGEON_RUSH`.
+- [x] **AC-EZ-50** (ADVISORY, Content Val): de-duplicated WILD enemy count across all patches ∈ [6, 10] (target ~8).
+- [x] **AC-EZ-51** (ADVISORY, Content Val): every `boss_id` resolves to a `BOSS`-class, `spawn_enabled` Enemy DB entry.
+- [x] **AC-EZ-54** (ADVISORY, Content Val): terrain-identity invariants (Rule 2a). **A (identity enemy):** every patch contains ≥ 1 `enemy_id` present in no other patch → error naming any failing patch. **A2 (identity-enemy weight floor):** at least one such patch-exclusive enemy is **≥ 10% of its patch's `total_weight`** → warning below the floor. **B (farmable weight floor):** every `SpawnEntry` with `is_farmable_target == true` has `spawn_weight >= 0.20 * patch.total_weight` → warning below the floor.
 
 ---
 
@@ -105,7 +105,20 @@
 **Story Type**: Config/Data
 **Required evidence**: `tests/unit/encounter_zone/content_validation_test.gd` — offline linter over fixtures; must exist and pass. (Smoke-check parity with `production/qa/smoke-*.md` when the real zone `.tres` is later authored.)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/encounter_zone/content_validation_test.gd`, 21 tests, all green (GUT 9.7.1, Godot 4.7.stable). Each linter is exercised with a pass fixture AND a fail/discriminator fixture: density anchors 0.07/0.15/0.35 + off-band (AC-EZ-10/11/12), pacing ratio 2.33-pass / 1.4-fail (AC-EZ-13), unknown band → error + STANDARD-not-DENSE fallback (AC-EZ-14), zone scope valid / empty-id / disabled (AC-EZ-47), patch scope valid / 5-patch / empty-pool + weight-0 (AC-EZ-48), boss config canonical / missing back-reference / gap-2 / WAVE-gate (AC-EZ-49), WILD count 8-pass / 5-fail / 11-fail (AC-EZ-50), boss-id resolution BOSS+enabled / wrong-class + missing (AC-EZ-51), terrain identity valid / cosmetic-shared-pool (54A error) / token-exclusive (54A2 warning) / farmable-at-15% (54B warning).
+
+---
+
+## Completion Notes (2026-07-17)
+
+- Implemented as a **separate** `ZoneContentLinter` (`src/core/encounter_zone/zone_content_linter.gd`) — a `class_name … extends RefCounted` with no RNG and no scene, distinct from `EncounterResolver`. The linter needs neither an RNG resolver nor the TBC seam, so keeping it off the resolver keeps the runtime path's dependency surface honest. Constructor injects the LogSink + (optional) Enemy-DB reader only.
+- **Severity is spec-load-bearing** (matches the AC tags): structural/scope faults (unknown density band, zone/patch scope, boss config, WILD count, boss-id resolution, terrain-identity **A** "no exclusive enemy") are **errors** that flip the return `false`; the Rule 2a weight-floor shortfalls (**A2** identity-enemy < 10%, **B** farmable < 20%) are **warnings** that log but never flip the return — authoring nudges, not shipping blockers.
+- `density_band_rate` unknown-band fallback is **conservative STANDARD (0.15), never DENSE** (AC-EZ-14) — an unrecognized band must not silently become a fast-farm biome. `INVALID (0)` and any out-of-range int both hit the `match` default arm → `ez_unknown_density_class` error + 0.15.
+- `validate_pacing_ratio(dense, standard)` takes rates as **params** (not read off a def) so a fixture can drive both a passing 2.33 and a failing 1.4 ratio without authoring an off-band patch.
+- `validate_boss_config` enforces the **structure** of Rule 11 (2 bosses / OVERWORLD / WIN_COUNT / LIGHTER_REGATE / Boss2→Boss1 `requires_defeated` back-reference / escalation gap `w2−w1 >= 3`), NOT the literal 6/10 tuning values — so a future re-tune of the win thresholds doesn't have to touch the linter, only the eventual `.tres`.
+- Terrain identity (AC-EZ-54) uses a `_patch_membership` helper that counts, per `enemy_id`, how many DISTINCT patches contain it (dedup within a patch); an enemy with membership 1 is patch-exclusive. **A** requires ≥1 exclusive per patch (else error); **A2** requires ≥1 exclusive at ≥10% of that patch's total weight (else warning) — the two-tier check closes the token-exclusive loophole a plain "has an exclusive" test would miss.
+- Content defs are read **read-only** throughout — no `duplicate()`, no field mutation, no `DirAccess` scanning (ADR-0003 / Control Manifest). The real MVP zone `.tres` remains a **deferred** authoring pass (OQ-EZ-1); these linters are the acceptance gate it will later be validated against.
+- New global `class_name ZoneContentLinter` required `--import` before GUT (silent-skip trap avoided). Suite rose by exactly **+21 to 869 tests / 4606 asserts**, all green (EZ dir 47→68).
 
 ---
 

@@ -1,11 +1,11 @@
 # Story 006: Determinism — ID-ascending order, stream-sync on guarantees, reproducibility
 
 > **Epic**: Drop System
-> **Status**: Ready
+> **Status**: Done
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -30,10 +30,10 @@
 
 *From GDD `design/gdd/drop-system.md`, scoped to this story:*
 
-- [ ] **AC-DS-21** (BLOCKING, Unit): parts rolled AND reported in ID-ascending order *(verifies R10 ordering)*. Pool with IDs sorting alpha < beta < gamma (inserted non-alphabetically), a call-recording stub returning draws that make all three drop → (a) RNG calls issued alpha→beta→gamma, AND (b) the Phase-6 drop list (filtered to dropped) is ordered alpha→beta→gamma (matching roll order, not insertion order). FAIL: insertion-order iteration on the roll pass; or the report list diverges from roll order.
-- [ ] **AC-DS-10** (BLOCKING, Unit): pity guarantee skips the RNG draw *(verifies EC-DS-06)*. A (single guarantee): pool [`forge_core` guaranteed, `servo_arm` 0.25], stub one draw 0.20 → `forge_core` drops via guarantee (no draw), `servo_arm` consumes 0.20 and drops, total RNG calls = **1**. B (**two simultaneous guarantees — stream-position discriminator**): pool ID-asc [`alpha_core` guaranteed, `beta_core` guaranteed, `gamma_arm` Rare 0.25], stub armed with a **single** draw 0.20 → both cores drop via guarantee (neither consumes a draw), `gamma_arm` consumes the one 0.20 (< 0.25) and drops, total RNG calls = **1**, three instances. FAIL: 2+ draws consumed (a guaranteed part advanced the stream); `gamma_arm` reads a stale/absent draw (stub exhausted → error).
-- [ ] **AC-DS-18** (BLOCKING, Unit): deterministic reproducibility *(verifies R10)*. Two DropSystem instances, same injected seed, same two populated pity maps (`pity_credit['delta_core'] = 42` AND `break_pity_counter['forge_core'] = 5`); pool [`delta_core` Prototype all 3 fired, `forge_core` Boss-grade qualifying break, `servo_arm` Rare no conditions]; both resolve the same VICTORY payload → (a) identical drop lists (same part_ids, same order), AND (b) identical post-resolution state on **both** maps (`pity_credit['delta_core']` = 0 if dropped else 45; `break_pity_counter['forge_core']` = 0 if dropped else 6). FAIL: divergence in the drop list or *either* map (a shared global RNG singleton, or a shared static pity map).
-- [ ] **AC-DS-02** (BLOCKING, Unit): defeat/flee → no drops, no pity change *(verifies EC-DS-07)*. `pity_credit['proto_arms'] = 12` and `break_pity_counter['forge_core'] = 5`, non-empty fired set; DEFEAT (then FLED) → zero emits, **both** maps unchanged, RNG not called. FAIL: any emit; either counter changes.
+- [x] **AC-DS-21** (BLOCKING, Unit): parts rolled AND reported in ID-ascending order *(verifies R10 ordering)*. Pool with IDs sorting alpha < beta < gamma (inserted non-alphabetically), a call-recording stub returning draws that make all three drop → (a) RNG calls issued alpha→beta→gamma, AND (b) the Phase-6 drop list (filtered to dropped) is ordered alpha→beta→gamma (matching roll order, not insertion order). FAIL: insertion-order iteration on the roll pass; or the report list diverges from roll order.
+- [x] **AC-DS-10** (BLOCKING, Unit): pity guarantee skips the RNG draw *(verifies EC-DS-06)*. A (single guarantee): pool [`forge_core` guaranteed, `servo_arm` 0.25], stub one draw 0.20 → `forge_core` drops via guarantee (no draw), `servo_arm` consumes 0.20 and drops, total RNG calls = **1**. B (**two simultaneous guarantees — stream-position discriminator**): pool ID-asc [`alpha_core` guaranteed, `beta_core` guaranteed, `gamma_arm` Rare 0.25], stub armed with a **single** draw 0.20 → both cores drop via guarantee (neither consumes a draw), `gamma_arm` consumes the one 0.20 (< 0.25) and drops, total RNG calls = **1**, three instances. FAIL: 2+ draws consumed (a guaranteed part advanced the stream); `gamma_arm` reads a stale/absent draw (stub exhausted → error).
+- [x] **AC-DS-18** (BLOCKING, Unit): deterministic reproducibility *(verifies R10)*. Two DropSystem instances, same injected seed, same two populated pity maps (`pity_credit['delta_core'] = 42` AND `break_pity_counter['forge_core'] = 5`); pool [`delta_core` Prototype all 3 fired, `forge_core` Boss-grade qualifying break, `servo_arm` Rare no conditions]; both resolve the same VICTORY payload → (a) identical drop lists (same part_ids, same order), AND (b) identical post-resolution state on **both** maps (`pity_credit['delta_core']` = 0 if dropped else 45; `break_pity_counter['forge_core']` = 0 if dropped else 6). FAIL: divergence in the drop list or *either* map (a shared global RNG singleton, or a shared static pity map).
+- [x] **AC-DS-02** (BLOCKING, Unit): defeat/flee → no drops, no pity change *(verifies EC-DS-07)*. `pity_credit['proto_arms'] = 12` and `break_pity_counter['forge_core'] = 5`, non-empty fired set; DEFEAT (then FLED) → zero emits, **both** maps unchanged, RNG not called. FAIL: any emit; either counter changes.
 
 ---
 
@@ -85,7 +85,16 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/drop_system/determinism_test.gd` — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/drop_system/determinism_test.gd`, 5 tests, all green (GUT 9.7.1, Godot 4.7.stable). Covers AC-DS-21/10/18/02.
+
+---
+
+## Completion Notes (2026-07-17)
+
+- **No new production code.** DS-6 is a capstone that proves emergent determinism properties already composed by Stories 001/003/004/005: the ID-ascending sort in `_resolved_pool` drives both the roll pass and the report list (they iterate the same ordered sequence, so they cannot diverge — AC-DS-21); the pre-roll guarantee in both `_roll_prototype`/`_roll_boss_grade` skips the draw (AC-DS-10); `_rng` + `_proto_pity_credit` + `_boss_pity_counter` are all instance fields, never static (AC-DS-18); the victory-only early return precedes every draw (AC-DS-02).
+- **AC-DS-21 order discriminator**: three Rare parts are sculpted to distinct rates (0.10/0.20/0.30) via a single fired ×0.4/×0.8/×1.2 condition, inserted non-alphabetically. Queued draws [0.05, 0.15, 0.25] make **all three** drop *only* when consumed in ID-ascending order — any other iteration order shrinks the drop set. The test therefore witnesses draw order, not merely report order.
+- **AC-DS-18 reproducibility** uses two independent instances built from two `RandomNumberGenerator`s seeded identically (production draws via `call(&"randf")`, which dispatches to the native method on a real generator). Both pity maps are populated so a shared-static-state bug in *either* map would surface; post-state is also asserted consistent with each part's drop outcome (credit 0-or-45, counter 0-or-6).
+- **AC-DS-02** loops DEFEAT (2) and FLED (3) through the same assertions — every non-VICTORY int is gated identically, with a `Const(0.01)` stub that would drop everything if a draw ever leaked past the gate (call_count 0 proves it did not).
 
 ---
 

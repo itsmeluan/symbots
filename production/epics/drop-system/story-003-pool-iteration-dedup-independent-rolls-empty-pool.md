@@ -1,11 +1,11 @@
 # Story 003: Pool iteration — unique-ID dedup, independent rolls, empty/disabled pool
 
 > **Epic**: Drop System
-> **Status**: Ready
+> **Status**: Done
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -30,9 +30,9 @@
 
 *From GDD `design/gdd/drop-system.md`, scoped to this story:*
 
-- [ ] **AC-DS-12** (BLOCKING, Unit): independent per-part rolls, no pool dilution *(verifies R2)*. 5-part pool [Common `bolt_plate` 0.70, Common `wire_coil` 0.70, Common `grip_ring` 0.70, Rare `servo_arm` 0.25, Common `armor_seal` 0.70], no conditions, draws ID-asc [0.65, 0.65, 0.65, **0.10**, 0.65] → all 5 drop; `servo_arm` rate = 0.25; RNG called exactly 5×. Second: 10-part pool, `servo_arm` draw 0.10 → drops (rate still 0.25, not ÷10). FAIL: `servo_arm` fails to drop at 0.10 (pool-normalization bug: 0.25÷5 = 0.05, draw 0.10 ≥ 0.05 → no drop).
-- [ ] **AC-DS-08** (BLOCKING, Unit): duplicate part ID → deduped to one roll *(verifies EC-DS-08)*. Pool lists `servo_arm` (Rare 0.25) twice, RNG stub one draw 0.20 (< 0.25) → RNG called **exactly once**, **exactly one** `servo_arm` instance. Second: draw 0.30 (≥ 0.25) → RNG called once, zero instances. FAIL: RNG called twice / two instances (independent-trials bug); zero rolls (over-dedup dropping the part entirely).
-- [ ] **AC-DS-06** (BLOCKING, Unit): empty/disabled pool → zero drops, no crash *(verifies EC-DS-02)*. A: empty pool → `[]`. B: all `drop_enabled = false` → `[]`. C: mixed → only the enabled part rolled (disabled not rolled, stream not advanced for it). FAIL: exception; disabled emitted; disabled consumes a draw.
+- [x] **AC-DS-12** (BLOCKING, Unit): independent per-part rolls, no pool dilution *(verifies R2)*. 5-part pool [Common `bolt_plate` 0.70, Common `wire_coil` 0.70, Common `grip_ring` 0.70, Rare `servo_arm` 0.25, Common `armor_seal` 0.70], no conditions, draws ID-asc [0.65, 0.65, 0.65, **0.10**, 0.65] → all 5 drop; `servo_arm` rate = 0.25; RNG called exactly 5×. Second: 10-part pool, `servo_arm` draw 0.10 → drops (rate still 0.25, not ÷10). FAIL: `servo_arm` fails to drop at 0.10 (pool-normalization bug: 0.25÷5 = 0.05, draw 0.10 ≥ 0.05 → no drop).
+- [x] **AC-DS-08** (BLOCKING, Unit): duplicate part ID → deduped to one roll *(verifies EC-DS-08)*. Pool lists `servo_arm` (Rare 0.25) twice, RNG stub one draw 0.20 (< 0.25) → RNG called **exactly once**, **exactly one** `servo_arm` instance. Second: draw 0.30 (≥ 0.25) → RNG called once, zero instances. FAIL: RNG called twice / two instances (independent-trials bug); zero rolls (over-dedup dropping the part entirely).
+- [x] **AC-DS-06** (BLOCKING, Unit): empty/disabled pool → zero drops, no crash *(verifies EC-DS-02)*. A: empty pool → `[]`. B: all `drop_enabled = false` → `[]`. C: mixed → only the enabled part rolled (disabled not rolled, stream not advanced for it). FAIL: exception; disabled emitted; disabled consumes a draw.
 
 ---
 
@@ -83,7 +83,14 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/drop_system/pool_iteration_test.gd` — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/drop_system/pool_iteration_test.gd`, 3 tests, all green (GUT 9.7.1, Godot 4.7.stable). Covers AC-DS-12/08/06.
+
+---
+
+## Completion Notes (2026-07-17)
+
+- Added `DropSystem._resolved_pool()` — filters `drop_enabled == false`, dedups to unique part IDs (first occurrence wins), returns ID-ascending. Runs *before* any draw, so a disabled or deduped-away part never advances the seeded RNG stream (draw-count assertions are the discriminator).
+- No `÷ pool_size` term — each retained part is an independent Bernoulli trial at its own rate (verified: `servo_arm` drops at 0.10 in both a 5-part and a 10-part pool).
 
 ---
 

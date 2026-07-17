@@ -1,11 +1,11 @@
 # Story 005: Boss-grade deterministic floor pity (DS-3)
 
 > **Epic**: Drop System
-> **Status**: Ready
+> **Status**: Done
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -30,13 +30,13 @@
 
 *From GDD `design/gdd/drop-system.md`, scoped to this story:*
 
-- [ ] **AC-DS-16** (BLOCKING, Unit): trigger at counter = 8, not 7 *(verifies EC-16/DS-3 boundary)*. A: counter 7, qualifying break `core_broken`, draw 0.60 (> 0.5) → `7 ≥ 8` false → fails → counter 8. B: counter 8, qualifying break → guaranteed, RNG not called, counter → 0, emitted. FAIL: fires at 7; B calls RNG or no reset.
-- [ ] **AC-DS-17** (BLOCKING, Unit): nominal increment from a low counter. `forge_core` counter **0**, qualifying break (effective rate 0.001 × 500 = 0.5), draw 0.60 (> 0.5) → no drop → counter → **1**. Second: from 1, qualifying break, draw 0.60 → counter → **2**. FAIL: stays 0 (increment path never taken); jumps past 1; resets on failure.
-- [ ] **AC-DS-09** (BLOCKING, Unit): Boss-grade won without qualifying break → counter NOT incremented *(verifies EC-DS-05)*. `forge_core` counter 3, empty fired set, draw 0.5 → rate 0.001, 0.5 ≥ 0.001 → no drop, counter stays **3**. FAIL: → 4; reset to 0; drop true.
-- [ ] **AC-DS-30** (BLOCKING, Unit): counter resets to 0 on a NATURAL drop below threshold. `forge_core` counter **5**, qualifying break, draw 0.30 (< 0.5) → natural drop (threshold 8 not reached) → counter → **0**, one instance. FAIL: stays 5; → 6 (`+= 1` on a *drop* instead of reset).
-- [ ] **AC-DS-24** (BLOCKING, Unit): pity counters are per-part-ID, not global. A (one at pity): `forge_core` counter 8 (qualifying break) + `volt_cannon` counter 2 (qualifying break), `volt_cannon` draw 0.60 → `forge_core` guaranteed (counter → 0, emitted, RNG not consumed); `volt_cannon` roll 0.60 ≥ 0.5 → no drop, counter → 3. B (**both at pity, joint guarantee**): both counter 8, both qualifying breaks, stub armed with **zero** draws → both guaranteed, both counters → 0, total RNG calls = **0**, **two** instances. FAIL: shared-counter reset; missing update; any RNG call; either instance missing.
-- [ ] **AC-DS-01** (BLOCKING, Unit): emit contract *(verifies EC-DS-09)*. A pity-guaranteed `forge_core` on VICTORY → Inventory mock receives exactly one `receive_part_instance({part_id:'forge_core', upgrade_tier:0})` and `break_pity_counter['forge_core']` resets to 0. FAIL: 0 or 2+ calls; `upgrade_tier ≠ 0`; counter not reset.
-- [ ] **AC-DS-26** (BLOCKING, Unit): `drop_enabled` gates the pity update — negative AND positive. A (negative): `forge_core` `drop_enabled = false`, counter 3, qualifying break → counter stays **3**, no emit, RNG not consumed. B (**positive companion**): same fixture `drop_enabled = true`, counter 3, qualifying break, draw 0.60 (roll fails) → counter → **4**, no emit. FAIL: A → 4 (pity update before the enabled check); **B stays 3** (increment omitted entirely — A alone passes trivially for that bug).
+- [x] **AC-DS-16** (BLOCKING, Unit): trigger at counter = 8, not 7 *(verifies EC-16/DS-3 boundary)*. A: counter 7, qualifying break `core_broken`, draw 0.60 (> 0.5) → `7 ≥ 8` false → fails → counter 8. B: counter 8, qualifying break → guaranteed, RNG not called, counter → 0, emitted. FAIL: fires at 7; B calls RNG or no reset.
+- [x] **AC-DS-17** (BLOCKING, Unit): nominal increment from a low counter. `forge_core` counter **0**, qualifying break (effective rate 0.001 × 500 = 0.5), draw 0.60 (> 0.5) → no drop → counter → **1**. Second: from 1, qualifying break, draw 0.60 → counter → **2**. FAIL: stays 0 (increment path never taken); jumps past 1; resets on failure.
+- [x] **AC-DS-09** (BLOCKING, Unit): Boss-grade won without qualifying break → counter NOT incremented *(verifies EC-DS-05)*. `forge_core` counter 3, empty fired set, draw 0.5 → rate 0.001, 0.5 ≥ 0.001 → no drop, counter stays **3**. FAIL: → 4; reset to 0; drop true.
+- [x] **AC-DS-30** (BLOCKING, Unit): counter resets to 0 on a NATURAL drop below threshold. `forge_core` counter **5**, qualifying break, draw 0.30 (< 0.5) → natural drop (threshold 8 not reached) → counter → **0**, one instance. FAIL: stays 5; → 6 (`+= 1` on a *drop* instead of reset).
+- [x] **AC-DS-24** (BLOCKING, Unit): pity counters are per-part-ID, not global. A (one at pity): `forge_core` counter 8 (qualifying break) + `volt_cannon` counter 2 (qualifying break), `volt_cannon` draw 0.60 → `forge_core` guaranteed (counter → 0, emitted, RNG not consumed); `volt_cannon` roll 0.60 ≥ 0.5 → no drop, counter → 3. B (**both at pity, joint guarantee**): both counter 8, both qualifying breaks, stub armed with **zero** draws → both guaranteed, both counters → 0, total RNG calls = **0**, **two** instances. FAIL: shared-counter reset; missing update; any RNG call; either instance missing.
+- [x] **AC-DS-01** (BLOCKING, Unit): emit contract *(verifies EC-DS-09)*. A pity-guaranteed `forge_core` on VICTORY → Inventory mock receives exactly one `receive_part_instance({part_id:'forge_core', upgrade_tier:0})` and `break_pity_counter['forge_core']` resets to 0. FAIL: 0 or 2+ calls; `upgrade_tier ≠ 0`; counter not reset.
+- [x] **AC-DS-26** (BLOCKING, Unit): `drop_enabled` gates the pity update — negative AND positive. A (negative): `forge_core` `drop_enabled = false`, counter 3, qualifying break → counter stays **3**, no emit, RNG not consumed. B (**positive companion**): same fixture `drop_enabled = true`, counter 3, qualifying break, draw 0.60 (roll fails) → counter → **4**, no emit. FAIL: A → 4 (pity update before the enabled check); **B stays 3** (increment omitted entirely — A alone passes trivially for that bug).
 
 ---
 
@@ -99,7 +99,16 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/drop_system/boss_grade_pity_test.gd` — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/drop_system/boss_grade_pity_test.gd`, 7 tests, all green (GUT 9.7.1, Godot 4.7.stable). Covers AC-DS-16/17/09/30/24/01/26.
+
+---
+
+## Completion Notes (2026-07-17)
+
+- Added `DropSystem._roll_boss_grade()` on the Boss-grade branch of `_roll_part()`. Per-Boss-grade-ID `_boss_pity_counter` int map, `M_BOSS_PITY = 8`. Qualifying break = `_fired_condition_count(part, fired) >= 1`. Pre-roll guarantee (skips the draw), `+= 1` per qualifying-break miss, reset-on-any-drop, counter untouched on a non-qualifying win (AC-DS-09 — no break-failure tail).
+- **AC-DS-26 A** (disabled part's counter must not advance) is satisfied structurally: `_resolved_pool` filters `drop_enabled == false` before the loop, so a disabled part never reaches the pity path. The positive companion B (enabled → counter advances on a miss) is the discriminator against an omitted increment.
+- **AC-DS-24 B joint guarantee** confirms a determinism property DS-6 will generalize: because every guarantee is pre-roll, two parts at threshold in one pass emit two instances while drawing the RNG zero times — the stream position is guarantee-count-independent.
+- Added `get_break_pity_counter` / `set_break_pity_counter` accessors (Story 009 persistence + test arrange seam).
 
 ---
 

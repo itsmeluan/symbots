@@ -3,8 +3,8 @@
 > **Layer**: Core
 > **GDD**: design/gdd/encounter-zone.md
 > **Architecture Module**: Encounter Zone (Core)
-> **Status**: Ready
-> **Stories**: 8 stories created 2026-07-17 (6 Logic, 1 Integration, 1 Config/Data) — not yet implemented
+> **Status**: Done — all 8 stories implemented & closed 2026-07-17
+> **Stories**: 8 stories (6 Logic, 1 Integration, 1 Config/Data) — all Done
 
 ## Overview
 
@@ -58,14 +58,14 @@ This epic is complete when:
 
 | # | Story | Type | Status | ADR | Covers |
 |---|-------|------|--------|-----|--------|
-| 001 | Zone data model & EZ-1 encounter trigger | Logic | Ready | ADR-0006 (primary), ADR-0003 | TR-ez-001, TR-ez-003 |
-| 002 | EZ-2 weighted enemy selection | Logic | Ready | ADR-0006 | TR-ez-001 |
-| 003 | Sub-pool validation & empty-pool sentinel | Logic | Ready | ADR-0003 (primary), ADR-0002 | TR-ez-002 |
-| 004 | WILD/BOSS encounter handoff to TBC | Integration | Ready | ADR-0007 (primary), ADR-0002 | TR-ez-001 |
-| 005 | Boss gate WIN_COUNT first-access & sequencing | Logic | Ready | ADR-0007 (primary), ADR-0002 | TR-ez-004, TR-ez-005, TR-ez-006, TR-ez-008 |
-| 006 | Repeat policy — LIGHTER_REGATE delta re-gate & ALWAYS_OPEN | Logic | Ready | ADR-0007 | TR-ez-005, TR-ez-007 |
-| 007 | Gate params validation & reserved-gate fail-safe | Logic | Ready | ADR-0007 (primary), ADR-0003 | TR-ez-008 |
-| 008 | Content-validation linters | Config/Data | Ready | ADR-0003 | TR-ez-009, TR-ez-010 |
+| 001 | Zone data model & EZ-1 encounter trigger | Logic | Done | ADR-0006 (primary), ADR-0003 | TR-ez-001, TR-ez-003 |
+| 002 | EZ-2 weighted enemy selection | Logic | Done | ADR-0006 | TR-ez-001 |
+| 003 | Sub-pool validation & empty-pool sentinel | Logic | Done | ADR-0003 (primary), ADR-0002 | TR-ez-002 |
+| 004 | WILD/BOSS encounter handoff to TBC | Integration | Done | ADR-0007 (primary), ADR-0002 | TR-ez-001 |
+| 005 | Boss gate WIN_COUNT first-access & sequencing | Logic | Done | ADR-0007 (primary), ADR-0002 | TR-ez-004, TR-ez-005, TR-ez-006, TR-ez-008 |
+| 006 | Repeat policy — LIGHTER_REGATE delta re-gate & ALWAYS_OPEN | Logic | Done | ADR-0007 | TR-ez-005, TR-ez-007 |
+| 007 | Gate params validation & reserved-gate fail-safe | Logic | Done | ADR-0007 (primary), ADR-0003 | TR-ez-008 |
+| 008 | Content-validation linters | Config/Data | Done | ADR-0003 | TR-ez-009, TR-ez-010 |
 
 **8 stories: 6 Logic, 1 Integration, 1 Config/Data.** Build order: **001 (anchor) → {002, 003, 005, 008}**; **004** depends on 002 + 003; **006** and **007** depend on 005. Story 001 delivers the `ZoneDef`/`TerrainPatch`/`SpawnEntry`/`BossEncounter` value types + the injected-RNG/LogSink/Enemy-DB resolver host + EZ-1; 002 the EZ-2 weighted walk; 003 the `filter_valid` sub-pool exclusions + empty-pool sentinel; 004 the WILD/BOSS handoff to a stub TBC; 005 the WIN_COUNT first-access + `requires_defeated` sequencing (with the fail-safe LOCKED broken-ref); 006 the delta re-gate + ALWAYS_OPEN; 007 gate-param validation + reserved-gate fail-safe; 008 the offline content linters.
 
@@ -77,4 +77,4 @@ This epic is complete when:
 
 ## Next Step
 
-Run `/story-readiness production/epics/encounter-zone/story-001-zone-data-model-ez1-encounter-trigger.md` then `/dev-story` to begin implementation. Work through stories in dependency order (001 anchor first). The other Ready-unstoried Core epic is Drop System — `/create-stories drop-system`.
+**Epic complete (2026-07-17).** All 8 stories implemented, tested, and closed. The engine + offline content linters are built and proven against DI seams and fixtures; the real MVP zone `.tres` (one zone, 3–4 patches from ~8 WILD, 2 bosses) remains a deferred authoring pass (OQ-EZ-1) that these linters will validate. With Drop System also closed, the **Core layer is complete (5/5 epics)** — next is the Technical Setup → Pre-Production gate (`/test-setup`, `/ux-design`).

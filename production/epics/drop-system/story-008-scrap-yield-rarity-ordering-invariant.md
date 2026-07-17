@@ -1,11 +1,11 @@
 # Story 008: Scrap yield & rarity-ordering invariant
 
 > **Epic**: Drop System
-> **Status**: Ready
+> **Status**: Done
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -30,7 +30,7 @@
 
 *From GDD `design/gdd/drop-system.md`, scoped to this story:*
 
-- [ ] **AC-DS-19** (BLOCKING, Unit): Scrap yield per rarity + ordering invariant *(verifies R9)*. VALUE assertions (four, exact): `get_scrap_yield(COMMON) == 5`, `get_scrap_yield(RARE) == 20`, `get_scrap_yield(PROTOTYPE) == 35`, `get_scrap_yield(BOSS_GRADE) == 60`. ORDERING assertions (three explicit booleans, evaluated programmatically): `get_scrap_yield(COMMON) < get_scrap_yield(RARE)`; `get_scrap_yield(RARE) < get_scrap_yield(PROTOTYPE)`; `get_scrap_yield(PROTOTYPE) < get_scrap_yield(BOSS_GRADE)`. FAIL: any value wrong, or any ordering assertion false (an inverted step — e.g. Prototype ≥ Boss-grade — rewards scrapping the rarer part).
+- [x] **AC-DS-19** (BLOCKING, Unit): Scrap yield per rarity + ordering invariant *(verifies R9)*. VALUE assertions (four, exact): `get_scrap_yield(COMMON) == 5`, `get_scrap_yield(RARE) == 20`, `get_scrap_yield(PROTOTYPE) == 35`, `get_scrap_yield(BOSS_GRADE) == 60`. ORDERING assertions (three explicit booleans, evaluated programmatically): `get_scrap_yield(COMMON) < get_scrap_yield(RARE)`; `get_scrap_yield(RARE) < get_scrap_yield(PROTOTYPE)`; `get_scrap_yield(PROTOTYPE) < get_scrap_yield(BOSS_GRADE)`. FAIL: any value wrong, or any ordering assertion false (an inverted step — e.g. Prototype ≥ Boss-grade — rewards scrapping the rarer part).
 
 ---
 
@@ -71,7 +71,16 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/drop_system/scrap_yield_test.gd` — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/drop_system/scrap_yield_test.gd`, 2 tests, all green (GUT 9.7.1, Godot 4.7.stable). Covers AC-DS-19 (four exact values + three ordering booleans).
+
+---
+
+## Completion Notes (2026-07-17)
+
+- Added `BalanceConfig.scrap_yield_by_rarity: Array[int] = [0, 5, 20, 60, 35]` (append-only, at the end of the config), indexed by the `PartDef.Rarity` enum value with index 0 the reserved sentinel — the same layout as `drop_rate_by_rarity`. Values in enum-index order are Common 5 / Rare 20 / Boss-grade 60 / Prototype 35; by VALUE that is the intended `COMMON < RARE < PROTOTYPE < BOSS_GRADE` (Prototype 35 sits between Rare 20 and Boss-grade 60 — deliberately not numeric-index order).
+- Added `DropSystem.get_scrap_yield(rarity) -> int`, reading the table read-only from the injected config (no literals in logic). An out-of-range rarity logs `drop_unknown_rarity` and returns 0, matching `_base_rate`'s graceful-degradation contract.
+- The test asserts the four exact values AND the three `<` orderings **programmatically** (`assert_true(proto < boss, …)`), so an inverted retune fails the build rather than passing silently past a prose comment.
+- Yields come from `BalanceConfig.new()` `@export` defaults (the DI source for unit tests). The authored `assets/data/balance_config.tres` was not touched — adding the field is safe for the `.tres` round-trip (Godot serializes by property name; the resource loads the default for the absent property). Authoring the production `.tres` value + the ContentValidator assertion is separate content work.
 
 ---
 

@@ -1,11 +1,11 @@
 # Story 002: Condition assembly — exact-match, multiplicative stacking, unknown-key tolerance
 
 > **Epic**: Drop System
-> **Status**: Ready
+> **Status**: Done
 > **Layer**: Core
 > **Type**: Logic
 > **Manifest Version**: 2026-07-14
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-07-17
 
 ## Context
 
@@ -30,10 +30,10 @@
 
 *From GDD `design/gdd/drop-system.md`, scoped to this story:*
 
-- [ ] **AC-DS-22** (BLOCKING, Unit): condition matching is exact-string *(verifies R5)*. Part condition `arm_broken`; fired set = {`ARM_BROKEN`, `arm_break`} (neither is `arm_broken`) → no multiplier applied, rate = 0.25, no log error. FAIL: case-insensitive/substring match applies ×1.5.
-- [ ] **AC-DS-23** (BLOCKING, Unit): multipliers stack multiplicatively; unfired conditions excluded *(verifies R3)*. Prototype `delta_core` (0.05), three ×1.5 conditions, exactly 2 of 3 fired → rate = clamp(0.05 × 1.5 × 1.5) = **0.1125**. Scenario A: draw 0.11 → drops (none-applied impl at 0.05 and additive impl at 0.10 both fail to drop). Scenario B: draw 0.15 → no drop (an all-three-applied impl at 0.16875 would wrongly drop). FAIL: A does not drop, or B drops.
-- [ ] **AC-DS-07** (BLOCKING, Unit): unknown condition key logged + skipped *(verifies EC-DS-03)*. Rare `servo_arm` with `arm_broken`(×1.5), `UNKNOWN_KEY_XYZ`(×2.0), `targeting_active`(×1.3); `arm_broken`+`targeting_active` fired; draw 0.41 → rate = clamp(0.25 × 1.5 × 1.3) = 0.4875, drops, exactly one content error names `UNKNOWN_KEY_XYZ`, no crash. Second: draw 0.70 → no drop (applying the ×2.0 would give 0.975 and falsely drop). FAIL: exception; unknown multiplier applied; no log.
-- [ ] **AC-DS-25** (BLOCKING, Unit): outcome-fact conditions apply their multipliers — unit half of AD-1. Part with `zero_defeats`(×1.5), base 0.25; fired set = {`zero_defeats`} (injected directly as a Set of strings) → rate = clamp(0.25 × 1.5) = **0.375**. Scenario A: draw 0.30 → drops (an ignore-multiplier impl at 0.25 does not). Scenario B: draw 0.40 → no drop (an additive `0.25 + 0.5 = 0.75` impl would wrongly drop). FAIL: A does not drop; B drops.
+- [x] **AC-DS-22** (BLOCKING, Unit): condition matching is exact-string *(verifies R5)*. Part condition `arm_broken`; fired set = {`ARM_BROKEN`, `arm_break`} (neither is `arm_broken`) → no multiplier applied, rate = 0.25, no log error. FAIL: case-insensitive/substring match applies ×1.5.
+- [x] **AC-DS-23** (BLOCKING, Unit): multipliers stack multiplicatively; unfired conditions excluded *(verifies R3)*. Prototype `delta_core` (0.05), three ×1.5 conditions, exactly 2 of 3 fired → rate = clamp(0.05 × 1.5 × 1.5) = **0.1125**. Scenario A: draw 0.11 → drops (none-applied impl at 0.05 and additive impl at 0.10 both fail to drop). Scenario B: draw 0.15 → no drop (an all-three-applied impl at 0.16875 would wrongly drop). FAIL: A does not drop, or B drops.
+- [x] **AC-DS-07** (BLOCKING, Unit): unknown condition key logged + skipped *(verifies EC-DS-03)*. Rare `servo_arm` with `arm_broken`(×1.5), `UNKNOWN_KEY_XYZ`(×2.0), `targeting_active`(×1.3); `arm_broken`+`targeting_active` fired; draw 0.41 → rate = clamp(0.25 × 1.5 × 1.3) = 0.4875, drops, exactly one content error names `UNKNOWN_KEY_XYZ`, no crash. Second: draw 0.70 → no drop (applying the ×2.0 would give 0.975 and falsely drop). FAIL: exception; unknown multiplier applied; no log.
+- [x] **AC-DS-25** (BLOCKING, Unit): outcome-fact conditions apply their multipliers — unit half of AD-1. Part with `zero_defeats`(×1.5), base 0.25; fired set = {`zero_defeats`} (injected directly as a Set of strings) → rate = clamp(0.25 × 1.5) = **0.375**. Scenario A: draw 0.30 → drops (an ignore-multiplier impl at 0.25 does not). Scenario B: draw 0.40 → no drop (an additive `0.25 + 0.5 = 0.75` impl would wrongly drop). FAIL: A does not drop; B drops.
 
 ---
 
@@ -87,7 +87,14 @@
 **Story Type**: Logic
 **Required evidence**: `tests/unit/drop_system/condition_assembly_test.gd` — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Complete — `tests/unit/drop_system/condition_assembly_test.gd`, 4 tests, all green (GUT 9.7.1, Godot 4.7.stable). Covers AC-DS-22/23/07/25.
+
+---
+
+## Completion Notes (2026-07-17)
+
+- Hardened `DropSystem._condition_product` with (a) `StringName`-normalized exact match (no case-fold/substring) and (b) a canonical `_CANONICAL_CONDITION_KEYS` vocabulary set — a key outside it is logged once via `LogSink.warn(&"drop_unknown_condition_key", …)` and skipped, its multiplier never applied, never a crash (AC-DS-07 / EC-DS-03).
+- **Non-blocking flag — vocabulary drift**: GDD Rule 5's enumerated list, the shipped Part-DB `.tres` roster, and the pity-story ACs disagree on the exact key set. The vocabulary const admits the *union* (Rule 5 canonical + authored-drift keys `low_hp_victory`/`overheat_kill`/`thermal_finish`/`core_overload`) so real content never emits spurious runtime errors, while genuine typos (`UNKNOWN_KEY_XYZ`) stay excluded. This needs a Rule-5-vs-roster reconciliation (doc cleanup, not a code blocker) — see active.md.
 
 ---
 
