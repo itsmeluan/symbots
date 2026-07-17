@@ -1,10 +1,21 @@
 # Active Session State
 
 <!-- STATUS -->
-Epic: Symbot Assembly (Core layer) — ✅ CLOSED via per-story gate 2026-07-16 (7/7 Complete)
-Feature: StatPipeline SA-F1 + SymbotBuild owner + CP-F3 ordering — suite 657/657, 53 scripts
-Task: NEXT → /create-stories synergy-system (SYN-F4 folds on Assembly's final_stat snapshot)
+Epic: Synergy System (Core layer) — ✅ IMPLEMENTED 2026-07-16 (5/5 stories Done, engine complete)
+Feature: SynergySystem count→activate→aggregate + evaluate/evaluate_silent/preview — suite 689/689, 58 scripts
+Task: NEXT → /create-stories turn-based-combat (consumes Assembly snapshot + synergy block)
 <!-- /STATUS -->
+
+## Session Extract — Synergy System epic IMPLEMENTED (all 5 stories) 2026-07-16
+- **Directive:** "implement all stories from this epic" (synergy-system, immediately after `/create-stories` wrote the 5 files). Done inline, zero Agent/Task subagents (never-1M constraint still binding).
+- **Production code (src/core/synergy/):** `synergy_tier_def.gd` (`SynergyTierDef` DI value object — id/requirements/stat_delta/effects; deliberately NOT a `.tres`, OQ-1 open); `synergy_system.gd` (`SynergySystem` RefCounted — 3 entry points `evaluate`/`evaluate_silent`/`preview` over ONE private `_compute` = count→activate→aggregate; `cached_bonus_block`+`active_synergies` never null; SYN-F4 is CONSUMER's job, only emits delta; all diagnostics via injected LogSink `warn` channel).
+- **Tests (5 files, +32 tests):** `tests/unit/synergy/` — core_evaluate (11), aggregation (7), effect_dedup_order (5), evaluate_silent (3), preview (6). Support: `synergy_fixtures.gd` (duck-typed `TagPart` holder, null-capable for AC-SYN-19 B) + `spy_log_sink.gd` (preload, not class_name — ADR-0002 §5).
+- **DoD gates proven:** AC-SYN-05b `String(tier_id)` sort discriminator (content authored reverse-alpha → keep-first must follow alphabetical, not file, order — the StringName intern trap); `evaluate_silent()` emit-free (counter==0); `preview()` cache-write-free/emit-free incl. AC-SYN-13 B add-only-delta-shortcut discriminator (displaced part's tags MUST be subtracted).
+- **GOTCHA HIT + FIXED (same class as Assembly):** `synergy_preview_test.gd` `var warns_before := _log.warns.size()` — `_log` untyped → Variant → "Cannot infer type" parse error → GUT silently skipped the whole file (green at 683/57, only 4 of 5 suites, 26 not 32 tests). Caught by count arithmetic (32 written − 26 landed = one 6-test file). Fix: `var warns_before: int = …` ×3. Re-ran: **689/689 green, 58 scripts, 4024 asserts** (was 657/53; +32 tests, +5 scripts — count rose exactly, no silent skip). Ran `--import` first (2 new class_name scripts registered).
+- **No python3 scan owed:** SynergySystem introduces NO new floor/ceil — integer sums only.
+- **Deferred as designed:** SYN-F4 (TR-syn-010) consumer-owned (TBC/Workshop at `StatMath.effective_stat`); synergy tier `.tres` content blocked on OQ-1 (format)/OQ-2 (values)/OQ-3 (effect IDs from TBC) — engine built against injected `Array[SynergyTierDef]` seam.
+- **Bookkeeping done:** 5 story files Status→Done + evidence box checked; EPIC.md Status→Done + Stories table Done + Implementation Record; index.md Synergy row→✅ Done + Core layer-status (2 of 5 Core epics implemented) + Next Step.
+- **NEXT:** `/create-stories turn-based-combat` (largest Core epic — 42 reqs — consumes both Assembly's `final_stat` snapshot and the synergy bonus block at BATTLE_INIT).
 
 ## Session Extract — Symbot Assembly per-story gate CLOSED (7/7) 2026-07-16
 - **Directive:** "formally close the epic symbot-assembly through the per-story gate (/code-review + /story-done, lean) as was done for Consumable/Passive DB." Done inline/lean (never-1M constraint; zero Agent/Task subagents; review-mode.txt = lean).

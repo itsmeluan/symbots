@@ -3,8 +3,8 @@
 > **Layer**: Core
 > **GDD**: design/gdd/synergy-system.md
 > **Architecture Module**: Synergy (Core)
-> **Status**: Ready
-> **Stories**: Not yet created — run `/create-stories synergy-system`
+> **Status**: Done — all 5 stories implemented & tested 2026-07-16 (engine complete; content authoring deferred, see below)
+> **Stories**: 5 stories, all Done — SynergySystem engine implemented, 32 GUT tests green
 
 ## Overview
 
@@ -56,6 +56,32 @@ This epic is complete when:
   the `String(tier_id)` sort — not content-file order — decides keep-first
 - `preview()` and `evaluate_silent()` are proven emit-free / cache-write-free by test
 
+## Stories
+
+| # | Story | Type | Status | ADR | Covers |
+|---|-------|------|--------|-----|--------|
+| 001 | SynergySystem core — SYN-F1 counting, SYN-F2 activation, evaluate() + synergy_changed | Logic | Done | ADR-0005 (primary), ADR-0002 | TR-syn-001/002/007/011/012/013 |
+| 002 | Cumulative & combined tier aggregation (SYN-F3 stat_delta) | Logic | Done | ADR-0005 | TR-syn-003/004 |
+| 003 | Effect dedup & alphabetical tier-ID ordering (SYN-F3 effects) | Logic | Done | ADR-0005 | TR-syn-005/006/014 |
+| 004 | evaluate_silent() battle path (no emit, no self-lock) | Logic | Done | ADR-0005 (primary), ADR-0002 | TR-syn-008 |
+| 005 | preview() pure read-only hypothetical | Logic | Done | ADR-0008 (primary), ADR-0005 | TR-syn-009 |
+
+**5 stories, all Logic.** Build order: **001 (anchor) → {002, 003, 004, 005}** — 002–005 all depend on 001 and are mutually independent. Story 001 delivers the `SynergySystem` RefCounted owner + `SynergyTierDef` runtime type + the count→activate→evaluate spine; 002 adds `stat_delta` depth, 003 the effect dedup/ordering (carries the AC-SYN-05b DoD gate), 004 the silent battle path, 005 the read-only `preview()`.
+
+**Coverage**: TR-syn-001…009, 011…014 covered. **TR-syn-010 (SYN-F4 `max(0, base+delta)`) is deliberately NOT storied here** — it is **consumer-owned** (AC-SYN-06 / AC-SYN-10), applied in TBC + Workshop UI at `StatMath.effective_stat` / `CombatantSnapshot.effective_stat` per ADR-0005 / the control manifest. It discharges when those consumers are built.
+
+**Deferred / out of scope (not stories):**
+- **Synergy tier `.tres` content authoring** — blocked on OQ-1 (data format: dedicated `SynergyDatabase.tres` vs part of Part DB), OQ-2 (MVP stat values + 7-tier cumulative-budget validation), OQ-3 (feasible effect IDs from the TBC GDD registry). These stories build the **engine** against an injected `Array[SynergyTierDef]` DI test seam; real content is a later pass once those OQs resolve.
+- **SYN-F4 consumer application** — see TR-syn-010 above.
+
+## Implementation Record (2026-07-16)
+
+All 5 stories implemented inline and verified:
+- **Production**: `src/core/synergy/synergy_system.gd` (`SynergySystem` — 3 entry points over one private `_compute` core), `src/core/synergy/synergy_tier_def.gd` (`SynergyTierDef` DI value object).
+- **Tests**: 5 GUT suites under `tests/unit/synergy/` (32 tests total), + `synergy_fixtures.gd` / `spy_log_sink.gd` support. Full suite **689/689 green, 4024 asserts** (baseline 657/657 → +32).
+- **DoD gates proven**: AC-SYN-05b `String(tier_id)` sort discriminator (reverse-alpha fixture); `evaluate_silent()` emit-free; `preview()` cache-write-free / emit-free incl. the AC-SYN-13 B add-only delta-shortcut discriminator.
+- **Deferred as designed**: SYN-F4 (TR-syn-010) consumer-owned; synergy tier `.tres` content blocked on OQ-1/2/3 — engine built against the injected `Array[SynergyTierDef]` seam.
+
 ## Next Step
 
-Run `/create-stories synergy-system` to break this epic into implementable stories.
+Synergy engine is complete. Remaining before this epic fully closes to content: resolve OQ-1/2/3 and author the synergy tier `.tres` roster (a later content pass). Next Core epic: continue with `/create-stories` for the next Core-layer system, or `/create-epics` if Core epics remain undefined.
