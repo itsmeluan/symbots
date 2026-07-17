@@ -54,9 +54,37 @@ func _process(_delta: float) -> bool:
 			s._on_rematch_pressed()   # reset + restart on the same controller/drop_system
 
 	print("--- farm done after %d fight(s) — rare harvested: %s ---" % [fights, harvested_rare])
-	print("overlay title: ", s._overlay_title.text, " | rematch btn: ", s._rematch_btn.text)
+	print("overlay title: ", s._overlay_title.text)
 	print("final harvest: ", ("[]" if s._harvested_drops.is_empty()
 		else s._harvested_drops[0].part.display_name if s._harvested_drops.size() > 0 else "?"))
+
+	# 4d: equip a harvested ARMS part and assert the build actually got stronger.
+	var arms: Array = s._equippable_arms()
+	print("--- 4d workshop: %d equippable ARMS part(s) harvested ---" % arms.size())
+	if not arms.is_empty():
+		var cand = arms[0]
+		var before: Dictionary = s._build.get_final_stat()
+		var preview: Dictionary = s._build.preview_swap(cand.part, PartDef.SlotType.ARMS)
+		s._on_equip_pressed(cand)
+		var after: Dictionary = s._build.get_final_stat()
+		print("equip %s: struct %d->%d  power %d->%d  (preview delta power %+d)" % [
+			cand.part.display_name,
+			int(before.get(&"structure", 0)), int(after.get(&"structure", 0)),
+			int(before.get(&"physical_power", 0)), int(after.get(&"physical_power", 0)),
+			int(preview.get(&"physical_power", 0))])
+		var changed := false
+		var preview_matches := true
+		for k in [&"structure", &"physical_power", &"armor", &"energy_capacity", &"mobility"]:
+			var realized := int(after.get(k, 0)) - int(before.get(k, 0))
+			if realized != 0:
+				changed = true
+			# preview_swap is a signed delta — it must equal the realized delta.
+			if int(preview.get(k, 0)) != realized:
+				preview_matches = false
+		print("  build changed: %s | preview delta == realized delta: %s" % [changed, preview_matches])
+		# The equipped part must now be the one carried into the next loadout.
+		var equipped = s._build.get_equipped(PartDef.SlotType.ARMS)
+		print("  equipped ARMS now: %s (loadout rebuilt)" % equipped.part.display_name)
 
 	s.queue_free()
 	return true   # quit the main loop

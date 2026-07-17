@@ -36,11 +36,16 @@ var _atk: MoveDef
 var _cfg: BalanceConfig
 var _enemy_def: EnemyDef
 var _enemy_spec: Dictionary = {}
-var _loadout                                   # SymbotLoadout — reused each rematch
+var _loadout                                   # SymbotLoadout — rebuilt after an equip
 var _loot_pool: Array[PartDef] = []
 var _drop_system: DropSystem                   # created ONCE so pity survives rematches
 var _harvested_drops: Array = []               # last fight's PartInstances (Phase 4d re-equip)
 var _fired_events: Dictionary = {}
+
+# --- 4d workshop state (the live build the workshop re-equips into) ---
+var _build: SymbotBuild
+var _core_element
+var _slot_types: Array = []
 
 # --- Part-Break subscriber state (presentation-tier glue, unbuilt in src/) ---
 var _arm_break_hp: int = 0
@@ -72,11 +77,11 @@ var _player_heat_label: Label
 var _attack_btn: Button
 var _target_btns: Dictionary = {}              # StringName sub_target -> Button
 
-# --- 4c reveal overlay refs ---
+# --- 4c/4d overlay refs (reveal + workshop share one overlay, modes swap content) ---
 var _overlay: Control
 var _overlay_title: Label
 var _overlay_body: VBoxContainer
-var _rematch_btn: Button
+var _overlay_buttons: VBoxContainer
 
 
 func _ready() -> void:
@@ -105,16 +110,11 @@ func _setup_battle() -> void:
 	var enemy_catalog := load(ENEMY_CATALOG_PATH) as EnemyCatalog
 
 	var starters := _pick_stock_starters(part_catalog)
-	var build := SymbotBuild.with_starters(starters, _cfg, _log)
-	var base_stats := build.get_final_stat()
-	var core_element = starters[PartDef.SlotType.CORE].part.element
-	var part_defs: Array = []
-	for slot_type in starters:
-		part_defs.append(starters[slot_type].part)
-	_atk = _make_basic_attack(core_element)
-	_loadout = SymbotLoadout.make(
-		0, base_stats, [_atk, null, null, null], build.get_passive_pool(),
-		core_element, part_defs)
+	_build = SymbotBuild.with_starters(starters, _cfg, _log)
+	_slot_types = starters.keys()
+	_core_element = starters[PartDef.SlotType.CORE].part.element
+	_atk = _make_basic_attack(_core_element)
+	_rebuild_loadout()
 
 	_enemy_def = _find_enemy(enemy_catalog, TARGET_ENEMY)
 	_arm_break_hp = _break_hp_for_region(_enemy_def, &"arm")
@@ -140,6 +140,19 @@ func _setup_battle() -> void:
 	_controller.hit_resolved.connect(_on_hit_resolved)
 	_controller.battle_ended.connect(_on_battle_ended)
 	_start_fight()
+
+
+# Rebuild the frozen loadout from the live _build — called at setup and after every
+# workshop equip, so the NEXT fight is driven by the upgraded stats/passives.
+func _rebuild_loadout() -> void:
+	var part_defs: Array = []
+	for slot in _slot_types:
+		var inst: PartInstance = _build.get_equipped(slot)
+		if inst != null:
+			part_defs.append(inst.part)
+	_loadout = SymbotLoadout.make(
+		0, _build.get_final_stat(), [_atk, null, null, null],
+		_build.get_passive_pool(), _core_element, part_defs)
 
 
 # Reset per-fight break state and (re)start the encounter on the SAME controller.
@@ -392,12 +405,24 @@ func _build_overlay() -> void:
 	_overlay_body.add_theme_constant_override("separation", 8)
 	vb.add_child(_overlay_body)
 
-	_rematch_btn = Button.new()
-	_rematch_btn.text = "LUTAR DE NOVO"
-	_rematch_btn.custom_minimum_size = Vector2(0, 60)
-	_rematch_btn.add_theme_font_size_override("font_size", 20)
-	_rematch_btn.pressed.connect(_on_rematch_pressed)
-	vb.add_child(_rematch_btn)
+	_overlay_buttons = VBoxContainer.new()
+	_overlay_buttons.add_theme_constant_override("separation", 8)
+	vb.add_child(_overlay_buttons)
+
+
+# Add a full-width action button to the overlay's button strip (touch ≥44px height).
+func _overlay_button(text: String, on_press: Callable) -> void:
+	var btn := Button.new()
+	btn.text = text
+	btn.custom_minimum_size = Vector2(0, 56)
+	btn.add_theme_font_size_override("font_size", 20)
+	btn.pressed.connect(on_press)
+	_overlay_buttons.add_child(btn)
+
+
+func _clear_overlay_buttons() -> void:
+	for child in _overlay_buttons.get_children():
+		child.queue_free()
 
 
 func _add_target_btn(row: HBoxContainer, group: ButtonGroup, text: String,
@@ -530,20 +555,17 @@ func _show_reveal(drops: Array) -> void:
 		_overlay_line("Nada se soltou desta vez.", 18, Color(0.75, 0.76, 0.80))
 		_overlay_line("Lute de novo para forçar o drop.", 14, Color(0.60, 0.61, 0.65))
 	else:
-		var got_rare := false
 		for d in drops:
 			var rarity = d.part.rarity
 			var mark := "★ " if rarity >= PartDef.Rarity.RARE else "• "
 			_overlay_line("%s%s   [%s]" % [
 				mark, d.part.display_name, _rarity_text(rarity)],
 				20, _rarity_color(rarity))
-			if rarity >= PartDef.Rarity.RARE:
-				got_rare = true
-		if got_rare:
-			_overlay_line("Peça rara colhida — pronta para a Oficina (4d).",
-				14, Color(0.60, 0.61, 0.65))
 
-	_rematch_btn.text = "LUTAR DE NOVO"
+	_clear_overlay_buttons()
+	if not _equippable_arms().is_empty():
+		_overlay_button("OFICINA  →", _show_workshop)
+	_overlay_button("LUTAR DE NOVO", _on_rematch_pressed)
 	_overlay.visible = true
 
 
@@ -553,7 +575,8 @@ func _show_defeat() -> void:
 	_clear_overlay_body()
 	_overlay_line("Seu Symbot virou sucata.", 18, Color(0.80, 0.55, 0.55))
 	_overlay_line("Nenhuma peça colhida.", 14, Color(0.60, 0.61, 0.65))
-	_rematch_btn.text = "LUTAR DE NOVO"
+	_clear_overlay_buttons()
+	_overlay_button("LUTAR DE NOVO", _on_rematch_pressed)
 	_overlay.visible = true
 
 
@@ -562,6 +585,101 @@ func _on_rematch_pressed() -> void:
 	_start_fight()
 	_refresh()
 	_log_label.text = "Outra Rustcrawler se aproxima. Quebre o BRAÇO para colher."
+
+
+# ---------------------------------------------------------------------------
+# 4d workshop — equip a harvested ARMS part; preview + realized stat delta.
+# ---------------------------------------------------------------------------
+# Harvested drops that fit the ARMS slot (the ones the workshop can install).
+func _equippable_arms() -> Array:
+	var out: Array = []
+	for d in _harvested_drops:
+		if d.part.slot_type == PartDef.SlotType.ARMS:
+			out.append(d)
+	return out
+
+
+func _show_workshop() -> void:
+	_overlay_title.text = "OFICINA"
+	_overlay_title.add_theme_color_override("font_color", COL_PLAYER)
+	_clear_overlay_body()
+
+	var equipped: PartInstance = _build.get_equipped(PartDef.SlotType.ARMS)
+	var equipped_name := equipped.part.display_name if equipped != null else "—"
+	_overlay_line("BRAÇO equipado:  %s" % equipped_name, 15, Color(0.80, 0.82, 0.86))
+	_overlay_line("Peças colhidas para o BRAÇO:", 14, Color(0.60, 0.61, 0.65))
+
+	var current := _build.get_final_stat()
+	for cand in _equippable_arms():
+		var is_equipped: bool = equipped != null and equipped.part.id == cand.part.id
+		_overlay_line("%s  [%s]%s" % [
+			cand.part.display_name, _rarity_text(cand.part.rarity),
+			"   (equipado ✓)" if is_equipped else ""],
+			18, _rarity_color(cand.part.rarity))
+		if not is_equipped:
+			# preview_swap returns a SIGNED DELTA dict (hypothetical − current),
+			# not absolute stats — rebuild the "after" row from current + delta.
+			var delta := _build.preview_swap(cand.part, PartDef.SlotType.ARMS)
+			var after := current.duplicate()
+			for k in delta:
+				after[k] = int(current.get(k, 0)) + int(delta[k])
+			_render_delta(current, after)
+
+	_clear_overlay_buttons()
+	for cand in _equippable_arms():
+		var is_equipped: bool = equipped != null and equipped.part.id == cand.part.id
+		if not is_equipped:
+			_overlay_button("EQUIPAR  %s" % cand.part.display_name,
+				_on_equip_pressed.bind(cand))
+	_overlay_button("← VOLTAR À BATALHA", _on_rematch_pressed)
+	_overlay.visible = true
+
+
+func _on_equip_pressed(cand: PartInstance) -> void:
+	var before := _build.get_final_stat()
+	var result := _build.equip_part(PartDef.SlotType.ARMS, cand)
+	if not bool(result.get("ok", false)):
+		_overlay_line("EQUIP RECUSADO: %s — %s" % [
+			result.get("reason", "?"), result.get("message", "")],
+			15, COL_ENEMY)
+		return
+	var after := _build.get_final_stat()
+	_rebuild_loadout()   # the next fight runs on the stronger Symbot
+
+	# Re-render the workshop showing the realized delta (matches the preview exactly).
+	_overlay_title.text = "OFICINA — %s equipado" % cand.part.display_name
+	_clear_overlay_body()
+	_overlay_line("★ %s instalado no BRAÇO." % cand.part.display_name, 18, _rarity_color(cand.part.rarity))
+	_overlay_line("Seu Symbot ficou mais forte:", 15, COL_PLAYER)
+	_render_delta(before, after)
+	_clear_overlay_buttons()
+	_overlay_button("← VOLTAR À BATALHA", _on_rematch_pressed)
+
+
+# Render a compact stat-delta block (only stats that changed get an arrow row).
+func _render_delta(before: Dictionary, after: Dictionary) -> void:
+	var any := false
+	for key in [&"structure", &"physical_power", &"armor", &"energy_capacity", &"mobility"]:
+		var b := int(before.get(key, 0))
+		var a := int(after.get(key, 0))
+		if a == b:
+			continue
+		any = true
+		var up := a > b
+		_overlay_line("%s  %d → %d  (%+d)" % [_stat_label(key), b, a, a - b],
+			15, COL_PLAYER if up else COL_ENEMY)
+	if not any:
+		_overlay_line("(sem mudança de stat)", 14, Color(0.60, 0.61, 0.65))
+
+
+func _stat_label(key: StringName) -> String:
+	match key:
+		&"structure": return "ESTRUTURA "
+		&"physical_power": return "DANO FÍS. "
+		&"armor": return "ARMADURA  "
+		&"energy_capacity": return "ENERGIA   "
+		&"mobility": return "MOBILIDADE"
+	return String(key)
 
 
 func _clear_overlay_body() -> void:
