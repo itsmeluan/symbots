@@ -1,10 +1,18 @@
 # Active Session State
 
 <!-- STATUS -->
-Epic: Vertical Slice (Pre-Production) — Phase 4a headless harness COMPLETE. Loop proven end-to-end on real core+content.
-Feature: assemble stock Symbot → break Rustcrawler arm → harvest RARE reinforced_servo_arm → re-equip → felt stat delta (physical_power +11). 913/913 GUT green.
-Task: NEXT → Phase 4b (battle screen Control) per BUILD-PLAN — first interactive UI; needs Luan to run Godot + report. Balance retune of rustcrawler.tres logged as slice Finding 4.
+Epic: Vertical Slice (Pre-Production) — Phases 4a–4d COMPLETE. Full core loop playable + playtest-validated on real core+content.
+Feature: break Rustcrawler arm → PILHAGEM reveal → OFICINA equip (preview==realized delta) → LUTAR DE NOVO on the stronger build. Reward loop confirmed by Luan.
+Task: NEXT → Phase 4e (playtest debrief + REPORT.md, PROCEED/PIVOT/KILL). Two REPORT risk lines: (1) drop_conditions are multipliers-not-gates; (2) single-part reward loop validated, build-composition fantasy out of slice scope.
 <!-- /STATUS -->
+
+## Session Extract — Vertical Slice Phases 4b–4d COMPLETE + playtest-validated 2026-07-17f
+- Built the full interactive slice in `prototypes/symbots-vertical-slice/battle_screen.gd` (+ `_smoke_screen.gd` headless regression). All-code Control UI, ADR-0008 signal-driven, touch-first ≥56px. Reuses real BattleController/SymbotBuild/DropSystem; synthesizes only basic_attack MoveDef + Part-Break subscriber.
+- 4b battle screen: structure/energy/break bars, ARM/HEAD/CORE target picker, ATTACK. 4c PILHAGEM reveal: authentic DropSystem RNG, DropSystem+seeded RNG created ONCE and reused across rematches so gradient pity accumulates (RARE fight 6). LUTAR DE NOVO reuses same BattleController. 4d OFICINA: current ARMS + candidates with preview_swap delta, EQUIPAR, VOLTAR À BATALHA → next fight on upgraded build.
+- TWO bugs caught by the smoke-runner (not the type-checker): (1) _start_fight didn't reset _current_target → rematches never re-hit arm (fixed: reset to ARM + toggle); (2) preview_swap returns a SIGNED DELTA dict (hypo−current), not absolute stats — panel rendered it as absolute; fixed by after = current+delta. Now preview delta == realized delta (verified headless). Realized equip: struct 42→45, power 24→35.
+- PLAYTEST (Luan, F6): "hits ficaram mais fortes… me senti mais forte e não foi só sobre números. senti que meu esforço me recompensou." Scope caveat he raised: single-part reward LOOP validated; full build-COMPOSITION fantasy (multi-slot synergy, effects, attack choice) out of slice scope, untested — REPORT risk line.
+- DESIGN FINDING (for REPORT): drop_conditions are rate MULTIPLIERS not gates — a part drops at base rate even without its break; breaking only boosts the rate (MHW-authentic). Faithful to the system; flag as a Production design decision.
+- NEXT: Phase 4e — playtest debrief (skill Phase 5 questions) + REPORT.md (PROCEED/PIVOT/KILL) + prototypes/index.md row. BUILD-PLAN Velocity Log already updated (4a–4d, all day 1).
 
 ## Session Extract — Vertical Slice Phase 4a headless harness COMPLETE 2026-07-17e
 - CONCEPT: Symbots vertical slice — validation Q: "stock Symbot → break a component → harvest the targeted part → re-equip → feel stronger, ~3 min unguided; AND buildable at representative quality on the existing core?" Scope: 1v1, team-swap CUT. Art quality: headless (no UI yet); 4b+ = touch-first Control per ADR-0008.
