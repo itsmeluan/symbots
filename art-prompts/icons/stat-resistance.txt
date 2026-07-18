@@ -1,0 +1,33 @@
+ASSET: Icon — Stat Glyph: RESISTANCE
+TARGET FILE: assets/art/icons/stat_resistance.png
+CANVAS: 32x32 px (monochrome stat glyph, white on transparent)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: RESISTANCE stat glyph. Canvas 32x32 px. Monochrome, white on transparent.
+
+Resistance reduces incoming energy/elemental damage. The icon must communicate:
+deflection of energy, element repulsion, a barrier against elemental force.
+
+ICON DESIGN: A deflection chevron / energy-ward motif:
+- Two or three parallel angular chevrons (V-shapes pointing LEFT — the direction
+  of deflection, as if energy approaches from the right and is deflected away to
+  the left by the chevron geometry).
+- The chevrons are bold, angled at approximately 60 degrees. They stack vertically
+  with equal spacing (like multiple wave-deflection bars).
+- The leftmost/outermost chevron is the largest; inner chevrons are progressively
+  smaller (or all the same size — both work; equal size is cleaner at 32x32).
+- 2px stroke, hard angular corners (no rounded bends in the chevron angles).
+
+DISTINCTION FROM ARMOR: Armor is a shield (static protective form).
+Resistance is deflection chevrons (dynamic, directional — energy bouncing off).
+Armor = physical; Resistance = elemental. The directionality of the chevrons
+communicates the "deflect" action vs. the shield's "absorb" stance.
+
+NOTE: The Flame Chevron (Thermal element glyph) points UPWARD.
+Resistance chevrons point LEFT. Different direction, different context.
+The art-bible forbids confusing element glyphs with UI semantics — these must
+be clearly distinct at 32x32.
+
+NEGATIVE: No upward-pointing chevrons (that is the Flame Chevron / Thermal glyph).
+No shield shape (that is Armor). No color. No element glyph. No photoreal.

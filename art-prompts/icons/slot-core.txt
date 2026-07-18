@@ -1,0 +1,35 @@
+ASSET: Icon — Slot Glyph: CORE
+TARGET FILE: assets/art/icons/slot_core.png
+CANVAS: 32x32 px (monochrome slot glyph icon)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: CORE slot glyph. Canvas 32x32 px. Monochrome, white on transparent.
+
+The CORE slot icon for the Workshop slot frame. This is a SLOT MARKER GLYPH —
+a monochrome outline that appears inside an empty Workshop slot frame to indicate
+"this is where the CORE goes." It is NOT the rendered CORE sphere asset
+(which is a Workshop/UI-only 256x256 colored 3D-feeling sphere).
+
+Per art-bible §3.3 and §5.3: the CORE is the only fully-organic-contour object in
+the game — a smooth sphere. The slot glyph reflects this unique identity by being the
+only CIRCULAR glyph in the slot icon set. This is the explicit exception: circles are
+forbidden in combat UI (break pips, reticles) but the CORE glyph is not a combat
+control — it is a slot marker in the Workshop, where the circle communicates
+"this is the one spherical, non-angular thing in the game."
+
+ICON DESIGN: A sphere outline — a perfect circle:
+- A clean circle outline, 2px stroke weight
+- Centered within the 32x32 canvas with ~4px margin on all sides
+- An inner design hint: two or three faint concentric interior lines OR a subtle
+  cross/meridian line (like a globe's latitude/longitude lines) to make the circle
+  read as a SPHERE rather than a flat disc or ring
+- The meridian lines are 1px, subtler than the outer circle stroke
+- The overall form is immediately "sphere" at 32x32 — simple and singular
+
+IMPORTANT DESIGN NOTE: This is the ONLY circular slot glyph. All seven other slot
+glyphs are angular/rectilinear. The CORE's circle is a deliberate exception that
+communicates "this slot is different — the thing that goes here is unique."
+
+NEGATIVE: No flat disc (it reads as sphere via meridian lines). No complex interior
+detail. No color fills. No element glyph. No weapon or limb silhouette. No photoreal.

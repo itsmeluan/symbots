@@ -1,7 +1,7 @@
 SYMBOTS — ART PROMPT MASTER INDEX
 ===================================
 Generated: 2026-07-18
-Total prompt files: 82
+Total prompt files: 89 (+ 3 support files: _README, _style-guide, _index = 92 on disk)
 Naming convention: prompt filename stem matches .tres entity id (underscores → hyphens)
 Target PNG paths mirror assets/art/<category>/<stem>.png
 Status column: TODO = not yet generated in Pixel Lab
@@ -110,7 +110,7 @@ overworld/map-background.txt                  | assets/art/overworld/map_backgro
 overworld/encounter-marker-frame.txt          | assets/art/overworld/encounter_marker_frame.png             | 96x96 chamfered encounter presence ring         | TODO
 
 ===================================
-CATEGORY: icons (15 files)
+CATEGORY: icons (27 files)
 ===================================
 PROMPT FILE                                   | TARGET PNG                                                  | DESCRIPTION                                     | STATUS
 icons/slot-head.txt                           | assets/art/icons/slot_head.png                              | 32x32 HEAD slot glyph — sensor crest silhouette | TODO
@@ -121,6 +121,7 @@ icons/slot-legs.txt                           | assets/art/icons/slot_legs.png  
 icons/slot-weapon.txt                         | assets/art/icons/slot_weapon.png                            | 32x32 WEAPON slot glyph — forward-pointing barrel| TODO
 icons/slot-chipset.txt                        | assets/art/icons/slot_chipset.png                           | 32x32 CHIPSET slot glyph — PCB chip with traces | TODO
 icons/slot-energy-cell.txt                    | assets/art/icons/slot_energy_cell.png                       | 32x32 ENERGY_CELL slot glyph — battery with terminals| TODO
+icons/slot-core.txt                           | assets/art/icons/slot_core.png                              | 32x32 CORE slot glyph — sphere outline (only circular slot glyph; Workshop/UI only)| TODO
 icons/element-volt.txt                        | assets/art/icons/element_volt.png                           | 32x32 Lightning Fork glyph, Volt cyan #2FE8E8   | TODO
 icons/element-thermal.txt                     | assets/art/icons/element_thermal.png                        | 32x32 Flame Chevron glyph, Thermal amber #F0900A| TODO
 icons/element-kinetic.txt                     | assets/art/icons/element_kinetic.png                        | 32x32 Impact Ring glyph, Kinetic silver #D8DDE6 | TODO
@@ -128,6 +129,17 @@ icons/rarity-common.txt                       | assets/art/icons/rarity_common.p
 icons/rarity-rare.txt                         | assets/art/icons/rarity_rare.png                            | 72x72 Rare rarity frame — 2 borders + diamond pip| TODO
 icons/rarity-boss.txt                         | assets/art/icons/rarity_boss.png                            | 72x72 Boss-Grade frame — 3 borders + star + glow| TODO
 icons/rarity-prototype.txt                    | assets/art/icons/rarity_prototype.png                       | 72x72 Prototype frame — irregular border + warning| TODO
+icons/stat-structure.txt                      | assets/art/icons/stat_structure.png                         | 32x32 STRUCTURE stat glyph — armored plate/panel motif| TODO
+icons/stat-armor.txt                          | assets/art/icons/stat_armor.png                             | 32x32 ARMOR stat glyph — angular chamfered shield| TODO
+icons/stat-resistance.txt                     | assets/art/icons/stat_resistance.png                        | 32x32 RESISTANCE stat glyph — left-pointing deflection chevrons| TODO
+icons/stat-physical-power.txt                 | assets/art/icons/stat_physical_power.png                    | 32x32 PHYSICAL POWER stat glyph — mechanical fist/hammer impact| TODO
+icons/stat-energy-power.txt                   | assets/art/icons/stat_energy_power.png                      | 32x32 ENERGY POWER stat glyph — radial burst (no element shapes)| TODO
+icons/stat-mobility.txt                       | assets/art/icons/stat_mobility.png                          | 32x32 MOBILITY stat glyph — rightward arrow / speed indication| TODO
+icons/stat-targeting.txt                      | assets/art/icons/stat_targeting.png                         | 32x32 TARGETING stat glyph — open crosshair with cardinal ticks| TODO
+icons/stat-processing.txt                     | assets/art/icons/stat_processing.png                        | 32x32 PROCESSING stat glyph — chip with diagonal corner traces| TODO
+icons/stat-cooling.txt                        | assets/art/icons/stat_cooling.png                           | 32x32 COOLING stat glyph — mechanical fan blades / heatsink fins| TODO
+icons/stat-energy-capacity.txt                | assets/art/icons/stat_energy_capacity.png                   | 32x32 ENERGY CAPACITY stat glyph — tall battery near-full fill| TODO
+icons/stat-recharge.txt                       | assets/art/icons/stat_recharge.png                          | 32x32 RECHARGE stat glyph — battery cell with upward arrow (replenishment rate)| TODO
 
 ===================================
 CATEGORY: workshop (3 files)
@@ -139,5 +151,5 @@ workshop/slot-frame-filled.txt                | assets/art/workshop/slot_frame_f
 
 ===================================
 END OF INDEX
-Total: 82 prompt files covering all MVP art assets
+Total: 89 prompt files covering all MVP art assets (3+10+16+8+7+6+5+4+27+3)
 ===================================

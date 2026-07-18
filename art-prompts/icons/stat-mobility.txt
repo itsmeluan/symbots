@@ -1,0 +1,32 @@
+ASSET: Icon — Stat Glyph: MOBILITY
+TARGET FILE: assets/art/icons/stat_mobility.png
+CANVAS: 32x32 px (monochrome stat glyph, white on transparent)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: MOBILITY stat glyph. Canvas 32x32 px. Monochrome, white on transparent.
+
+Mobility affects turn order and evasion. Higher mobility = acts sooner and
+potentially avoids some attacks. The icon must communicate: speed, agility,
+turn priority, being-first.
+
+ICON DESIGN: A forward-movement arrow / speed boot motif:
+- A bold rightward-pointing arrow — the clearest "speed/forward" glyph at 32x32.
+  The arrow is angular with a sharp triangular head (not rounded) and a thick
+  rectangular tail. The arrow fills the canvas to be as bold and readable as possible.
+- Optional refinement: two parallel forward arrows (one slightly behind the other,
+  both pointing right) — the "double chevron" speed read. Only if both arrows
+  read clearly at 32x32; if it gets busy, use the single bold arrow.
+- The arrow(s) point RIGHT (direction the combatant "moves forward" in turn order).
+- 2-3px stroke weight on the arrow to be bold and readable.
+
+ALTERNATIVE if arrows feel too generic: A mechanical boot/foot silhouette with
+a forward-sweep motion line — the LEGS slot but in motion. A single angular
+boot/tread shape with 2-3 parallel speed lines trailing behind it to the left.
+
+DISTINCTION FROM STAT ICONS: Mobility is the only directional stat icon (it has
+a clear rightward pointing direction). All other stat icons are symmetrical or
+orientation-neutral.
+
+NEGATIVE: No circular form (that is Kinetic Impact Ring). No energy burst (Energy Power).
+No color. No element glyph. No photoreal. No curved or organic shapes.

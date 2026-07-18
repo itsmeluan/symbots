@@ -1,0 +1,27 @@
+ASSET: Icon — Stat Glyph: ARMOR
+TARGET FILE: assets/art/icons/stat_armor.png
+CANVAS: 32x32 px (monochrome stat glyph, white on transparent)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: ARMOR stat glyph. Canvas 32x32 px. Monochrome, white on transparent.
+
+Armor reduces incoming physical damage. The icon must communicate: damage
+mitigation, physical protection, deflection of force.
+
+ICON DESIGN: A shield / layered plate motif:
+- A classic shield outline — but angular and chamfered (not a medieval heraldic
+  shield with rounded curves). Think: a geometric kite-shield or hexagonal shield
+  form with hard flat edges and a slight taper to a bottom point.
+- Chamfered top corners (45-degree cuts at the upper-left and upper-right of
+  the shield — consistent with the game's machined-geometry visual language).
+- A horizontal band across the upper third of the shield interior (a reinforcement
+  bar — the Ironclad heavy-plate aesthetic applied to a shield form).
+- 2px outline, 1px interior band line. Bold and compact.
+
+DISTINCTION FROM STRUCTURE: Structure is a flat plate (horizontal panel).
+Armor is a shield (angled, protective, slightly taller than wide). The taper to
+a bottom point is the key shape differentiator.
+
+NEGATIVE: No curved organic shield shape (angular/chamfered). No color.
+No element glyph. No sword or weapon overlaid on the shield. No photoreal.

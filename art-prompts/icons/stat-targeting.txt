@@ -1,0 +1,33 @@
+ASSET: Icon — Stat Glyph: TARGETING
+TARGET FILE: assets/art/icons/stat_targeting.png
+CANVAS: 32x32 px (monochrome stat glyph, white on transparent)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: TARGETING stat glyph. Canvas 32x32 px. Monochrome, white on transparent.
+
+Targeting affects accuracy and the ability to hit specific break regions.
+Higher targeting = more reliable hits on targeted regions. The icon must
+communicate: precision, aim, hitting a specific point.
+
+ICON DESIGN: A precision reticle / crosshair motif — but angular:
+- A small diamond or square in the CENTER (the target point).
+- Four short straight lines extending from the center diamond outward in the
+  four cardinal directions (up, down, left, right) — like a crosshair's tick marks.
+  These are SHORT (about 4-5px each) and do NOT connect to the canvas edge.
+  They terminate with a small perpendicular end cap (like a surveying reticle).
+- The gap between the center diamond and the tick lines is visible — the classic
+  "open" reticle with a center dot and separated tick marks.
+- 2px center diamond, 1-2px tick lines.
+
+DISTINCTION FROM hud-target-reticle.txt (the 128x128 HUD overlay):
+That asset is a large chamfered RECTANGLE used as a targeting overlay in combat.
+This icon is a small 32x32 CROSSHAIR GLYPH used to represent the Targeting STAT
+in the Workshop and UI. They serve different purposes and must not be confused.
+
+The crosshair motif is the clearest "accuracy/aim" read. The "open" reticle
+(center point with separated ticks, not connected lines) is the precision signal.
+
+NEGATIVE: No circular outer ring (the Impact Ring / Kinetic element glyph uses
+concentric circles — avoid confusion by keeping this icon non-circular in its
+outer structure). No color. No element glyph. No filled solid disc. No photoreal.

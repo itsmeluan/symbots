@@ -1,0 +1,28 @@
+ASSET: Icon — Stat Glyph: STRUCTURE
+TARGET FILE: assets/art/icons/stat_structure.png
+CANVAS: 32x32 px (monochrome stat glyph, white on transparent)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: STRUCTURE stat glyph. Canvas 32x32 px. Monochrome, white on transparent.
+
+Structure is the bot's HP — the primary survivability stat. When Structure reaches
+zero the bot is defeated. The icon must communicate: integrity, durability, the body
+holding together.
+
+ICON DESIGN: A structural plate / armored panel motif:
+- A thick rectangular or hexagonal plate shape (the silhouette of a single armor
+  panel — the bot's body plating). Wide, solid, protective.
+- A visible panel-line or seam across the face (one horizontal or diagonal line
+  across the plate surface) — communicates "engineered plating," not a blank disc.
+- Optionally: a small crack or stress mark at one corner at 20% of full stroke weight
+  (very faint — implies "this is what you're protecting") but keep this subtle.
+- 2px outline weight for the outer plate shape, 1px for the interior seam.
+- Centered, bold, reads as "armor/body" at 16x16 minimum.
+
+VISUAL LOGIC: Structure is the resource that maps to the Structure bar (green fill).
+The icon's plate-shape echoes the plating language of the CHASSIS slot —
+"the body holding together" is the core read.
+
+NEGATIVE: No heart shape (this is a machine game — heart = organic health, not
+structure). No HP-cross symbol. No color. No element glyph. No photoreal.

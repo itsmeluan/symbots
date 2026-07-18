@@ -1,0 +1,34 @@
+ASSET: Icon — Stat Glyph: PHYSICAL POWER
+TARGET FILE: assets/art/icons/stat_physical_power.png
+CANVAS: 32x32 px (monochrome stat glyph, white on transparent)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: PHYSICAL POWER stat glyph. Canvas 32x32 px. Monochrome, white on transparent.
+
+Physical Power determines the damage of Kinetic (physical) attacks. The icon
+must communicate: striking force, impact, mechanical brute strength.
+
+ICON DESIGN: A clenched fist / impact motif — but mechanized:
+- A mechanical fist or gauntlet silhouette: a compact boxy fist shape with
+  angular knuckle geometry (not an organic human fist — a mechanical arm's
+  terminal end in a striking position, like the forearm-and-fist of the ARMS slot).
+- The fist is angled forward-and-slightly-down (the melee strike angle, consistent
+  with art-bible WEAPON angle for melee = down-and-inward).
+- Knuckle plates visible: 3-4 rectangular knuckle segments across the top of the fist
+  (Ironclad-style — flat geometric plates).
+- A small impact starburst or stress lines radiating from the knuckle face
+  (1-2 short straight lines, NOT a circular starburst — keep it angular).
+- 2px fist outline, 1px knuckle lines and impact marks.
+
+ALTERNATIVE (if fist reads unclear at 32x32): A heavy hammer-strike silhouette —
+a rectangular hammer head making contact with a flat surface, with 2-3 angular
+impact lines radiating from the contact point. Same "force on impact" read.
+
+DISTINCTION FROM ENERGY POWER: Physical Power = contact/impact (fist/hammer,
+mechanical contact). Energy Power = projected energy (bolt/burst, no physical contact).
+The presence or absence of a direct contact motif is the differentiator.
+
+NEGATIVE: No energy glow or projected blast (that is Energy Power). No color.
+No element glyph (this is a stat icon, not an element marker). No organic fist
+(angular mechanical form). No photoreal.

@@ -1,0 +1,35 @@
+ASSET: Icon — Stat Glyph: ENERGY POWER
+TARGET FILE: assets/art/icons/stat_energy_power.png
+CANVAS: 32x32 px (monochrome stat glyph, white on transparent)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: ENERGY POWER stat glyph. Canvas 32x32 px. Monochrome, white on transparent.
+
+Energy Power determines the damage of energy-based attacks (Volt and Thermal elements).
+The icon must communicate: projected energy, a discharged burst, ranged force.
+
+ICON DESIGN: An energy burst / projected bolt motif:
+- A compact starburst or radial burst shape — angular rays (4-6 rays) projecting
+  outward from a small center point. NOT a circle: the center is a small diamond
+  or square, and the rays are straight angular lines of varying length
+  (longest rays in the cardinal directions, shorter rays between them).
+- The rays are straight and hard-edged (not curved, not flame-like — this is
+  mechanical energy, not organic fire).
+- Alternatively: a compact forward-facing bolt/emitter shape — a small circle
+  (the emitter) with 3-4 straight lines projecting forward-right in a focused
+  burst pattern (like a laser or arc discharge in the forward direction).
+- 2px center shape, 1-2px ray/bolt lines.
+
+DISTINCTION FROM PHYSICAL POWER: Energy Power has NO contact point — energy
+is projected outward. The star/burst radiating from center (or forward-burst from
+emitter) reads as "projected force, not contact force."
+
+DISTINCTION FROM ELEMENT GLYPHS: This is a generic energy stat icon, not
+affiliated with any specific element (Volt/Thermal/Kinetic). It must NOT look like
+the Lightning Fork (Volt) or Flame Chevron (Thermal). Use a radial burst or
+simple multi-ray motif that reads as "energy output" without implying a specific element.
+
+NEGATIVE: No Lightning Fork shape (Volt glyph). No upward Vs (Thermal glyph).
+No concentric circles (Kinetic / Impact Ring glyph). No color. No organic flame.
+No contact/impact lines. No photoreal.

@@ -1,0 +1,36 @@
+ASSET: Icon — Stat Glyph: COOLING
+TARGET FILE: assets/art/icons/stat_cooling.png
+CANVAS: 32x32 px (monochrome stat glyph, white on transparent)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: COOLING stat glyph. Canvas 32x32 px. Monochrome, white on transparent.
+
+Cooling reduces heat buildup per action (the passive heat-dissipation rate).
+Higher cooling = lower heat accumulation = longer before overheat risk.
+The icon must communicate: heat dissipation, thermal management, cooling airflow.
+
+ICON DESIGN: A mechanical fan / heat-fin motif:
+- A fan blade assembly: 4 angular blades arranged radially around a small center
+  hub (a square or circle at center). The blades are angular/swept — not organic
+  curved propeller blades but hard-angled fan vanes (like a cooling fan in
+  an industrial machine — flat rectangular blades at a swept angle).
+- Each blade is a parallelogram or swept rectangle, approximately equal in size,
+  rotated 90 degrees from each other (4-blade fan = one blade per quadrant).
+- The center hub is a small solid square (2x2 px) — the axle.
+- Total form: a compact 4-blade fan wheel, approximately 24x24 px to leave 4px
+  margin on all sides within the 32x32 canvas.
+- 2px blade outlines (or filled blades — whichever reads more clearly at 32x32).
+
+ALTERNATIVE: Heat dissipation fins — a compact row of 4-5 parallel vertical
+rectangular fins, like a heatsink cross-section. Each fin is a thin rectangle,
+the fins are evenly spaced, and the base bar connecting them is at the bottom.
+This reads clearly as "heatsink / cooling" at small sizes.
+
+COOLING VS HEAT (hud-heat-meter.txt): The heat meter icon (if needed) would
+represent the current heat level. The Cooling STAT icon represents the passive
+dissipation rate. Fan/fins = "actively reducing heat" = Cooling stat.
+
+NEGATIVE: No snowflake shape (organic/fantasy cooling — this is a mechanical
+game with fans and heatsinks, not ice). No Flame Chevron (not Thermal element).
+No color. No element glyph. No organic curves on the blades. No photoreal.

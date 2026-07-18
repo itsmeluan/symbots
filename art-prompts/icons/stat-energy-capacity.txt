@@ -1,0 +1,34 @@
+ASSET: Icon — Stat Glyph: ENERGY CAPACITY
+TARGET FILE: assets/art/icons/stat_energy_capacity.png
+CANVAS: 32x32 px (monochrome stat glyph, white on transparent)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: ENERGY CAPACITY stat glyph. Canvas 32x32 px. Monochrome, white on transparent.
+
+Energy Capacity is the maximum Energy the bot can hold (the "pool size"). Higher
+capacity = more moves before running empty. The icon must communicate:
+storage capacity, a reservoir that holds charge, the SIZE of the energy pool.
+
+ICON DESIGN: A large/full battery cell motif:
+- A tall rectangular battery/cell outline — taller and more prominent than the
+  ENERGY_CELL SLOT glyph, to communicate "maximum capacity / full pool."
+- Terminal contacts at the top: the standard positive/negative terminal tabs
+  protruding above the cell body (same as slot-energy-cell.txt).
+- FULL CHARGE INDICATOR: the interior of the cell is shown as MOSTLY FILLED
+  with horizontal fill lines or a fill block — approximately 80-90% filled
+  (communicating "capacity" / "how full this can be," not current charge).
+  The fill is represented by 3-4 horizontal lines inside the cell body, or
+  a solid inner fill block leaving only a small empty space at the top.
+- 2px cell outline, 1px fill lines or fill block outline.
+
+DISTINCTION FROM STAT-RECHARGE: Energy Capacity = the SIZE of the pool (full
+or large cell). Recharge = the FLOW into the pool (cell with an upward arrow).
+Capacity emphasizes the container; Recharge emphasizes the replenishment rate.
+
+DISTINCTION FROM SLOT-ENERGY-CELL: The slot glyph is the same battery form
+but with only a charge stripe (not a near-full fill), used to identify the slot.
+The capacity stat icon shows a near-full fill state to communicate "maximum size."
+
+NEGATIVE: No upward arrow (that is Recharge). No circuit traces (that is
+Processing/Chipset). No color. No element glyph. No organic shapes. No photoreal.

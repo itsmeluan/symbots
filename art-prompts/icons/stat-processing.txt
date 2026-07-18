@@ -1,0 +1,31 @@
+ASSET: Icon — Stat Glyph: PROCESSING
+TARGET FILE: assets/art/icons/stat_processing.png
+CANVAS: 32x32 px (monochrome stat glyph, white on transparent)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: PROCESSING stat glyph. Canvas 32x32 px. Monochrome, white on transparent.
+
+Processing affects how quickly the bot computes actions and may govern
+synergy evaluation speed or AI response time. The icon must communicate:
+computation, data processing, intelligence throughput.
+
+ICON DESIGN: A processor node / circuit-compute motif:
+- A small square or octagonal chip shape in the center (the processor die —
+  slightly more complex than the CHIPSET slot glyph).
+- Short connector traces radiating from the chip's FOUR CORNERS diagonally
+  outward (not the cardinal directions — diagonal traces distinguish Processing
+  from Targeting which uses cardinal-direction ticks).
+- Each diagonal trace terminates in a small square connector pad.
+- The result: a chip with 4 diagonal connections to 4 corner pads — a classic
+  PCB "component with traces" silhouette.
+- 2px chip outline, 1px trace lines, 2x2 px corner pads.
+
+DISTINCTION FROM CHIPSET SLOT GLYPH (slot-chipset.txt): The CHIPSET slot glyph
+has traces radiating from the chip edges/sides in multiple directions and represents
+the slot category. The PROCESSING stat glyph has only 4 diagonal corner traces
+and represents the speed/throughput of computation. Shape is similar but the
+diagonal-corner-only trace pattern differentiates at 32x32.
+
+NEGATIVE: No cardinal-direction ticks (that is Targeting). No color.
+No element glyph. No battery terminals (that is Energy Cell). No photoreal.

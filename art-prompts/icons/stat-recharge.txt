@@ -1,0 +1,36 @@
+ASSET: Icon — Stat Glyph: RECHARGE
+TARGET FILE: assets/art/icons/stat_recharge.png
+CANVAS: 32x32 px (monochrome stat glyph, white on transparent)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: RECHARGE stat glyph. Canvas 32x32 px. Monochrome, white on transparent.
+
+Recharge is the rate at which Energy replenishes each turn. Higher Recharge =
+recover Energy faster. The icon must communicate: flowing replenishment,
+energy returning, regeneration rate.
+
+ICON DESIGN: A cell-plus-upward-arrow motif:
+- A compact battery/cell form (smaller than the Energy Capacity icon — roughly
+  the lower half of the canvas, 14x18 px) with terminal tabs at the top.
+- A bold UPWARD-POINTING ARROW above or overlapping the top of the cell —
+  the arrow exits from the cell's positive terminal pointing upward, communicating
+  "energy flowing INTO the cell from above / energy regenerating."
+- The arrow is 2-3px wide, pointed head, straight vertical shaft.
+- The cell and arrow together occupy the canvas — the arrow is approximately
+  the same visual weight as the cell body.
+- 2px outline on both the cell and the arrow shaft/head.
+
+ALTERNATIVE arrangement: A small cell on the left, a rightward circular cycle
+arrow on the right (the refresh/cycle symbol — a circular arrow indicating
+"this replenishes on a cycle"). If the circular arrow reads as a cycle/refresh
+at 32x32, use this as the alternative. The circular arrow should be angular
+(squared corners, not smoothly rounded).
+
+DISTINCTION FROM ENERGY CAPACITY: Capacity shows a FULL cell (the pool size).
+Recharge shows a cell WITH AN ARROW (the flow/rate of refilling). The arrow
+is the key differentiator — the upward motion communicates "rate of return."
+
+NEGATIVE: No downward arrow (that would communicate draining, not recharging).
+No circular concentric rings (Kinetic Impact Ring). No color. No element glyph.
+No curved organic shapes. No photoreal.
