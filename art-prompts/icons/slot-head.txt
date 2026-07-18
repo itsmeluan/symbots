@@ -1,0 +1,30 @@
+ASSET: Icon — Slot Glyph: HEAD
+TARGET FILE: assets/art/icons/slot_head.png
+CANVAS: 32x32 px (monochrome slot glyph icon)
+PERSPECTIVE: Front-facing flat icon
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: HEAD slot glyph. Canvas 32x32 px. Monochrome, flat icon design.
+
+A small symbolic icon representing the HEAD equipment slot in the Workshop,
+inventory, and combat target-picker UIs. Per art-bible §3.2: HEAD = compact,
+elevated, with a dominant horizontal sensor feature (visor band / lens cluster).
+
+This icon is a GLYPH (monochrome silhouette/outline) — it communicates slot type
+through shape alone. It renders in C-6 UI White #E8E8E8 on a C-1 HUD Dark #1E2229
+plate (placed by UI programmer). The sprite should be drawn as white on transparent.
+
+ICON DESIGN: A stylized helmet/sensor head form:
+- A compact rounded-top form (the head shape — widest at the mid, slight taper top)
+- A dominant horizontal visor/sensor bar across the face (the mandatory HEAD feature)
+- The visor bar is the single most recognizable element — at 32x32 it must be clear
+- Simple, bold, readable at 16x16 if scaled down (minimum legibility target)
+- Flat, 2px outline weight, minimal interior detail
+
+The icon should suggest: sensor crest, elevated, horizontal optic sweep.
+
+GREYSCALE: It IS greyscale — white on transparent. Works as a monochrome overlay.
+
+NEGATIVE: No color fills. No element glyph (that is a separate icon). No complex
+mechanical detail. No robot body — just the HEAD zone silhouette. No photoreal.

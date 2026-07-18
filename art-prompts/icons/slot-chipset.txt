@@ -1,0 +1,25 @@
+ASSET: Icon — Slot Glyph: CHIPSET
+TARGET FILE: assets/art/icons/slot_chipset.png
+CANVAS: 32x32 px (monochrome slot glyph icon)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: CHIPSET slot glyph. Canvas 32x32 px. Monochrome, white on transparent.
+
+The CHIPSET slot icon. CHIPSET = embedded processing/intelligence module.
+Per art-bible §3.3: flush-embedded in CHASSIS, no silhouette protrusion. The icon
+communicates the electronic/processing nature of this slot.
+
+ICON DESIGN: A circuit board / chip form:
+- A small square or rectangular chip form (smaller than the CHASSIS icon — compact)
+- Circuit trace lines radiating from the chip body at its corners or edges
+  (like PCB trace lines extending outward — the Boltwell circuit-board vocabulary
+  but in generic glyph form)
+- A small dot or square in the center of the chip body (processor die or core element)
+- The circuit traces communicate "electronic / processing" at a glance
+- 2px outline, trace lines at 1px, clean and technical
+
+The icon communicates: "logic. Intelligence. Embedded processing module."
+
+NEGATIVE: No limb shape. No weapon. No chassis body mass. No color.
+No complex detail beyond circuit traces. No photoreal.

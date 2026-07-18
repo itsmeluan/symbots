@@ -1,0 +1,58 @@
+ASSET: Overworld — Map Background (full-field backdrop)
+TARGET FILE: assets/art/overworld/map_background.png
+CANVAS: 1024x600 px (full overworld field backdrop — matches iOS landscape target viewport)
+PERSPECTIVE: Top-down, slight atmospheric depth implied by value gradient
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Overworld: Full-field Map Background. Canvas 1024x600 px. Top-down backdrop.
+
+The widest, most ambient visual in the game — the full backdrop for the overworld
+map. Per art-bible §2.1: "warm mid-range natural light; high ambient lift so Symbot
+silhouettes never sink into terrain shadow; mid-morning/mid-afternoon register;
+never dark enough to threaten at the navigation layer."
+
+Per §3.5: "low-frequency, irregular, lower-saturation" so bots read as figure.
+
+THIS IS THE STAGE, NOT THE SUBJECT. Everything in this image exists to recede behind
+the player token and enemy markers that overlay it.
+
+COMPOSITION:
+A stylized top-down mechanical wilderness. The field fills with varied ground surfaces
+— the base tile textures at large scale with some compositional variation:
+- Center-field: most open / most Ironmoss Green #3D7A4A — clear walking space
+- Edges and corners: denser variation — Alloy Ochre #C49A35 stone patches, Circuit
+  Teal #2B6E68 circuit-root traces, sparse debris storytelling props
+- Upper area: slightly cooler/more teal (distant atmospheric lean, not dramatic)
+- Lower area: slightly warmer/more ochre (foreground warmth lean)
+
+ENVIRONMENTAL STORYTELLING ELEMENTS (large scale, still LOW-FREQUENCY):
+- A few large partially-visible spent chassis frames at the map edges (implied
+  history without cluttering the play field)
+- Crystal formations or industrial debris at corners only — the zone vocabulary
+  present but not competing with the play area
+- Circuit-trace paths running diagonally across the field (suggest old power routes)
+
+LIGHTING: Per §2.1 — warm key from upper-right, cool fill from below. Manifested
+in this top-down view as: slightly warmer upper-right corner, slightly cooler
+lower-left. Soft and subtle — the difference is ~10% saturation variation, not a
+dramatic light/shadow split. NO baked shadow under any element.
+
+FIGURE/GROUND CONTRACT: When a 64x96 player sprite or 128x128 enemy sprite is
+placed on this background, the sprite must immediately read as FIGURE against this
+GROUND. The background must be at least 2 stops lower in contrast than any bot sprite.
+
+PALETTE: World palette only (art-bible §4.1):
+Ironmoss Green #3D7A4A, Alloy Ochre #C49A35, Slate Gunmetal #374350,
+Wilderness Amber #C4721A (matte accents only, no glyph),
+Circuit Teal #2B6E68, Bone White #F2EDDF (structural fragment highlights only).
+NO element colors. NO semantic UI colors. NO Harvest Crimson except at literal edges
+(hazard zone tinting would be a zone overlay, not baked in here).
+
+GREYSCALE TEST: In greyscale the background reads as a varied mid-low-contrast
+ground texture. No single element stands out — it is all background.
+
+NEGATIVE: No UI chrome. No element glyphs. No bot sprites. No characters. No drop
+shadows baked in. No Flame Chevron amber objects (§4.1 matte-amber rule). No photoreal.
+No PBR. No baked directional shadow that would compete with overworld sprite shadows.
+No high-contrast props that would read as figures.

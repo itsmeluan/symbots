@@ -1,0 +1,57 @@
+ASSET: UI — Overlay Card (Victory / Defeat / Reward reveal modal)
+TARGET FILE: assets/art/ui/overlay_card.png
+CANVAS: 512x320 px (9-slice modal card; used for victory results, defeat screen, loot reveal)
+9-SLICE MARGINS: Left 24px, Right 24px, Top 24px, Bottom 24px
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+UI element: Overlay Card Modal. Canvas 512x320 px. 9-slice. Used for Victory/Defeat/Reward.
+
+The largest UI surface in the game — a full-screen-width modal card that appears
+over the battle background for victory results, defeat, and loot reveal moments.
+It must feel significant without being harsh. Per art-bible §2.4 (Victory) and §2.5
+(Defeat): Victory warms and lifts; Defeat cools and drains.
+
+GENERATE TWO VARIANTS:
+
+VARIANT 1 — VICTORY CARD (overlay_card_victory.png):
+The reward moment — warm, resolved, luminous. Per §2.4: "warm exhale, satisfaction with
+ownership." The card should feel like a trophy case opening.
+
+- OUTER EDGE: Reward Gold #E8B820 — 2px border (the achievement moment uses gold)
+- CHAMFERED CORNERS: 45-degree cuts, ~20px diagonal (large card, large chamfer)
+- BODY FILL: C-2 Mid Panel #2C3340 (standard panel fill — the warmth comes from the
+  border and any content placed inside, not from an orange body)
+- INNER BORDER: 1px Reward Gold #E8B820 at 1px inset from outer edge
+  (double-gold-line frame — premium feel)
+- SOFT INNER GLOW: 8px inner glow at ~15% opacity in Reward Gold #E8B820, bleeding
+  inward from the border — the "warm luminous" quality of victory
+- TOP ACCENT: 2px Reward Gold line along the top inner edge (the card reads as
+  lit from above — the trophy moment has a soft top-light)
+
+VARIANT 2 — DEFEAT CARD (overlay_card_defeat.png):
+The analytical moment — cool, still, temporary. Per §2.5: "clear-eyed sting of a
+disproved hypothesis — reset, not shame." Not harsh. Weighted but not punishing.
+
+- OUTER EDGE: C-5 Divider #4B5668 — 2px (no gold, no warmth)
+- CHAMFERED CORNERS: same 20px diagonal geometry
+- BODY FILL: C-1 HUD Dark #1E2229 (drops to the darkest surface — the scene flattens)
+- INNER BORDER: 1px C-5 #4B5668 at inset
+- SOFT INNER GLOW: 8px inner glow at ~10% opacity in Circuit Teal #2B6E68 (cool,
+  analytical tone — not red punishment, just the cool drain of a failed experiment)
+- TOP ACCENT: none (no bevel highlight — the defeat card is flat, no uplift)
+
+SHARED ANATOMY (both variants):
+- No rounded corners on either variant
+- No content baked in (text, icons, XP numbers all placed by UI programmer)
+- A subtle texture in the body fill area: very faint (3%) noise suggesting a
+  machined/industrial surface — the card feels solid, not empty
+- The 24px margins contain the border + chamfer geometry cleanly
+
+GREYSCALE TEST: Victory card has a bright border (gold = high luminance) with a
+warm inner glow. Defeat card has a mid-grey border and darker body. Both read as
+distinct states in greyscale by border luminance contrast.
+
+NEGATIVE: NO ROUNDED CORNERS. No harsh red on the defeat card (losses are not
+punishment — cool teal, not anger-red). No Danger Red #CC3020 on defeat card.
+No gradient body fill. No decorative content in the stretch zone. No photoreal.

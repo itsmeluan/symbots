@@ -1,0 +1,52 @@
+ASSET: UI Button — Target-Select Button (ARM / HEAD / CORE region choices)
+TARGET FILE: assets/art/ui/buttons/ui_btn_target_normal.png
+CANVAS: 192x56 px (9-slice — same as generic button)
+9-SLICE MARGINS: Left 16px, Right 16px, Top 8px, Bottom 8px
+
+Also generate: ui_btn_target_selected.png (amber-bordered selected state)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+UI element: Target-Select Button (ARM / HEAD / CORE / WEAPON / LEGS region selector).
+Canvas 192x56 px. 9-slice. Two variants: normal and selected.
+
+These are the buttons in the combat target picker (PG-06 in interaction-patterns.md)
+where the player selects which enemy break region to aim at. Each button represents
+one targetable region (ARM, HEAD, CORE, etc.) and shows the element badge and
+effectiveness arrow (placed by UI programmer — not baked into this sprite).
+
+NORMAL STATE (ui_btn_target_normal.png):
+Same construction as generic button Normal, but with a left-side accent stripe:
+- A 4px vertical accent stripe at the LEFT edge (inside the chamfer margin) in
+  C-5 Divider #4B5668 — slightly lighter than the body, implying a region-tab.
+- Body: C-3 #3A4455 (same as generic Normal)
+- Outer edge: C-5 #4B5668
+- Chamfered corners: same 45-degree cuts
+- The accent stripe at left leaves room for the break pip icon overlay (the slot
+  glyph appears here in-engine); the stripe itself has no icon baked in.
+
+SELECTED STATE (ui_btn_target_selected.png):
+When the player selects this target region, the button gets amber treatment because
+target-selection is a HARVEST DECISION — the amber/Thermal reference is intentional
+(it matches the break pip urgency register and the "break region = harvest opportunity"
+read):
+- OUTER EDGE: Thermal Amber #F0900A — 2px border in amber (SELECTED = harvest focus)
+- LEFT ACCENT STRIPE: Thermal Amber #F0900A at 60% — the left-side strip lights amber
+- BODY: C-3 #3A4455 (same — the selection is communicated by the border, not body)
+- Soft outer amber glow: 2px at ~20% opacity
+- CHAMFERED CORNERS: same geometry, same cuts
+
+NON-COLOR CHANNEL (selected): The 2px amber border is a luminance change AND a
+width change from Normal (1px vs 2px border). Both changes are greyscale-readable.
+
+BREAK REGION INDICATOR: The left-side accent stripe is where the UI programmer
+overlays the break pip icon (ARM glyph, HEAD glyph, etc.). Keep the stripe clear
+of decorative content — it is a placement zone.
+
+GREYSCALE TEST: Normal vs Selected — the Selected state has a visibly brighter and
+slightly wider outer border. Readable in greyscale by border contrast difference.
+
+9-SLICE MARGINS: Left 16px, Right 16px, Top 8px, Bottom 8px.
+
+NEGATIVE: NO ROUNDED CORNERS. No solid amber fill on the body (amber = selection border
+only). No element glyphs baked in. No label text. No organic curves. No photoreal.

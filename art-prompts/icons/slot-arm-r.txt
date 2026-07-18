@@ -1,0 +1,21 @@
+ASSET: Icon — Slot Glyph: ARMS (Right)
+TARGET FILE: assets/art/icons/slot_arm_r.png
+CANVAS: 32x32 px (monochrome slot glyph icon)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: ARMS (Right) slot glyph. Canvas 32x32 px. Monochrome, white on transparent.
+
+Mirror of slot-arm-l.png. Identical arm form, mirrored to point RIGHT.
+In practice the UI programmer may simply flip slot-arm-l.png horizontally —
+but a dedicated right-arm icon is provided for clarity in context menus and
+inventory where left/right distinction may matter.
+
+ICON DESIGN: Same as ARMS (Left) but mirrored:
+- The arm extends to the RIGHT overall
+- Upper arm, elbow, forearm, hand/wrist face
+- Mount node at the shoulder (right side)
+- 2px outline, same proportions as the left arm icon
+
+NEGATIVE: Same as slot-arm-l. No weapon. No chassis. No color. No element glyph.
+No photoreal.

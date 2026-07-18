@@ -1,0 +1,26 @@
+ASSET: Icon — Slot Glyph: ARMS (Left)
+TARGET FILE: assets/art/icons/slot_arm_l.png
+CANVAS: 32x32 px (monochrome slot glyph icon)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: ARMS (Left) slot glyph. Canvas 32x32 px. Monochrome, white on transparent.
+
+The left ARM slot icon. ARMS = extend laterally from CHASSIS, the power limbs.
+At 32x32 this is an arm/limb silhouette pointing left (the left arm, viewed
+from front-facing perspective — arm extends to the player's right visually = LEFT arm
+of the bot). For simplicity, generate as a LEFT-POINTING arm shape.
+
+ICON DESIGN: A simplified mechanical arm form:
+- An upper arm rectangular segment (shoulder-to-elbow)
+- An elbow joint implied (slight angle change)
+- A forearm segment tapering slightly toward the hand end
+- A flat or slightly-angled hand/wrist face (where WEAPON would attach)
+- The arm points LEFT overall (it is the left arm)
+- A mount node implied at the shoulder end (where it attaches to CHASSIS)
+- 2px outline weight, no complex interior detail
+
+The icon communicates: "limb, extending sideways, left side."
+
+NEGATIVE: No WEAPON attached (that is a separate slot). No CHASSIS body included.
+No color. No element glyph. No complex mechanical detail. No photoreal.

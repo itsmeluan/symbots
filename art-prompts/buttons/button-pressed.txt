@@ -1,0 +1,40 @@
+ASSET: UI Button — Pressed State
+TARGET FILE: assets/art/ui/buttons/ui_btn_generic_pressed.png
+CANVAS: 192x56 px (9-slice, same geometry as Normal/Hover)
+9-SLICE MARGINS: Left 16px, Right 16px, Top 8px, Bottom 8px
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+UI element: Generic Button — Pressed (active/depressed) state. Canvas 192x56 px. 9-slice.
+
+The button's appearance at the moment the player taps/clicks and the action fires.
+Per art-bible §7.4: "crisp, mechanical, snappy — chrome animates like a machine actuating
+(quick ease-out, decisive settle)." The pressed state is the machine ACTUATING.
+
+VISUAL CHANGE FROM NORMAL:
+The button reads as physically depressed — pushed in. Two simultaneous changes:
+1. The body DARKENS: drops to C-1 HUD Dark #1E2229 or slightly above it — the surface
+   recedes as if compressed into the panel behind it.
+2. The top highlight INVERTS: the 1px lighter line moves to the BOTTOM inner edge
+   instead of the top (the classic pressed-button bevel inversion — light now catches
+   the bottom because the surface is depressed).
+3. Outer edge: C-5 Divider #4B5668 but slightly darker shade, or C-1 — pressed inward.
+4. No glow of any kind in the pressed state (action is firing, not hovering).
+
+ANATOMY:
+1. OUTER EDGE: C-5 #4B5668 or near C-1 (slightly compressed look)
+2. BUTTON BODY: C-1 HUD Dark #1E2229 — the darkest the button gets
+3. BOTTOM HIGHLIGHT: 1px lighter line on BOTTOM inner edge (inverted from Normal)
+4. TOP EDGE: no highlight (recessed)
+5. CHAMFERED CORNERS: identical geometry — same 45-degree cuts, same margin
+
+The pressed state is held for only 1-2 frames in the game (quick actuate, quick return).
+The sprite captures the fully-pressed moment.
+
+GREYSCALE TEST: Reads as darker than Normal state. The body fill distinction
+(C-3 Normal vs C-1 Pressed) is a clear luminance step visible in greyscale.
+
+9-SLICE: Same margins, featureless dark body in the stretch zone.
+
+NEGATIVE: No glow. No Info Blue outline. No label text baked in. NO ROUNDED CORNERS.
+No organic curves. No gradient. No photoreal.

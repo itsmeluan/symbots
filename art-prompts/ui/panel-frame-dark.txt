@@ -1,0 +1,42 @@
+ASSET: UI — Panel Frame Dark (recessed/inset sub-panel)
+TARGET FILE: assets/art/ui/panel_frame_dark.png
+CANVAS: 256x256 px (9-slice — margins 12px all sides; tighter than the standard panel)
+9-SLICE MARGINS: Left 12px, Right 12px, Top 12px, Bottom 12px
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+UI element: Dark/Inset Panel Frame. Canvas 256x256 px. 9-slice sub-panel background.
+
+A recessed variant of the standard panel — used for sub-panels that sit INSIDE the
+standard panel frame. For example: the stat value display area within an inventory card,
+or the active move detail area within the move panel. The dark panel reads as "sunken
+into" the parent panel surface.
+
+ANATOMY:
+1. OUTER EDGE: 1px C-1 HUD Dark #1E2229 — this is the recessed "shadow" edge
+   (darker than C-5, implying the sub-panel is pressed into the surface)
+2. CHAMFERED CORNERS: 45-degree cuts, ~10px diagonal (slightly tighter than the
+   standard panel — it is a sub-panel, proportionally smaller)
+3. BODY FILL: C-1 HUD Dark #1E2229 — the darkest UI surface color
+   This reads as the deepest/most recessed surface layer
+4. INNER BORDER: 1px C-5 Divider #4B5668 at 1px inset from the outer edge —
+   provides separation between the dark fill and the parent C-2 surface below it
+   (when this sub-panel sits on a standard panel, the C-5 inner border lifts it
+   slightly from the C-1 base)
+5. No top accent highlight (this surface is recessed — light doesn't catch it)
+
+9-SLICE CENTER: Flat C-1 #1E2229 fill, zero decoration.
+
+VISUAL RELATIONSHIP TO STANDARD PANEL:
+Standard panel (C-2 #2C3340 fill) > Dark panel sub-area (C-1 #1E2229 fill).
+The three-layer depth hierarchy is: C-1 (deepest) → C-2 (mid) → C-3 (interactive surface).
+This dark panel occupies the C-1 layer, reading as most recessed.
+
+USES: Value display wells, active-item slots in inventory when viewing detail,
+the core XP bar background, any inset display area.
+
+GREYSCALE TEST: Visibly darker than the standard panel fill. The inner C-5 border
+lifts it from the absolute darkness (provides a 1px brighter edge that frames the void).
+
+NEGATIVE: NO ROUNDED CORNERS. No gradient. No glow. No organic curves. No tiling
+decoration in stretch zone. No photoreal.

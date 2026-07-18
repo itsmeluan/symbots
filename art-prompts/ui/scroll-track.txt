@@ -1,0 +1,46 @@
+ASSET: UI — Scrollbar Track + Grabber
+TARGET FILE: assets/art/ui/scroll_track.png
+CANVAS: 16x256 px (9-slice, vertical orientation — left/right margins 2px; top/bottom margins 12px)
+9-SLICE MARGINS: Left 2px, Right 2px, Top 12px, Bottom 12px
+  (12px end caps for the track terminations; center stretches vertically)
+
+Also generate: assets/art/ui/scroll_grabber.png
+  Canvas: 16x48 px (the draggable grabber — NOT 9-sliced; fixed size)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+UI element: Scrollbar Track + Grabber. Vertical scrollbar for inventory and catalog panels.
+Track: 16x256 px 9-slice. Grabber: 16x48 px fixed.
+
+TRACK ANATOMY (16x256 px, 9-slice vertical):
+A narrow vertical channel that the grabber slides within. The track is recessed —
+it reads as a groove cut into the panel surface.
+
+- Width: 16px total; the visible track is 8px centered (4px left margin, 4px right)
+- Track fill: C-1 HUD Dark #1E2229 (recessed groove)
+- Track edges (L+R): 1px C-5 Divider #4B5668 on each side of the groove
+- Track end caps (top/bottom, 12px each): rounded ends for the groove terminus
+  EXCEPTION TO CHAMFER RULE: scrollbar track ends may use small radius (4px) because
+  the track is a SLOT (a contained groove), not a panel or button. This is the
+  only rounded element in the UI. Per art-bible §3.6: "chamfer = interactive surfaces."
+  The scrollbar track is not an interactive surface — it is a channel.
+- Stretch zone (vertical center): flat C-1 fill flanked by C-5 edge lines
+
+GRABBER ANATOMY (16x48 px, fixed):
+The draggable scroll handle. This IS an interactive surface — it uses chamfered corners.
+
+- OUTER EDGE: 1px C-5 Divider #4B5668
+- GRABBER BODY: C-3 Interactive Surface #3A4455
+- CHAMFERED CORNERS: 45-degree cuts at all four corners, ~4px diagonal
+  (proportional to the small 16x48 canvas)
+- CENTER GRIP DETAIL: 3 horizontal 1px lines centered vertically on the grabber,
+  spaced 3px apart, in C-5 #4B5668 — the classic "grip lines" that communicate
+  "drag me." These must be visible at the 16x48 display size.
+- HOVER STATE: grabber body brightens to C-2 #2C3340; grip lines lighten
+
+GREYSCALE TEST: Track reads as a dark recessed groove; grabber reads as a lighter
+raised handle sitting within the groove. Clear figure/ground.
+
+NEGATIVE: NO ROUNDED CORNERS on the grabber. NO organic curves on the grabber.
+The track may have slight end-cap radius (scrollbar exception above). No photoreal.
+No gradient fill. No glow.

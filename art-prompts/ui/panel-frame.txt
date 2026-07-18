@@ -1,0 +1,37 @@
+ASSET: UI — Panel Frame (standard, 9-slice background)
+TARGET FILE: assets/art/ui/panel_frame.png
+CANVAS: 256x256 px (9-slice — all four margins 16px; center is the stretchable zone)
+9-SLICE MARGINS: Left 16px, Right 16px, Top 16px, Bottom 16px
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+UI element: Standard Panel Frame. Canvas 256x256 px. 9-slice panel background.
+
+The foundational panel background for all HUD cards, info boxes, and UI containers
+in Symbots. Unlike the hud-log-panel-frame (which is a transparent-center ring),
+this panel has a SOLID filled background — it is the full opaque surface that
+UI content sits on top of.
+
+ANATOMY:
+1. OUTER EDGE: 1px C-5 Divider #4B5668 — the outermost line
+2. CHAMFERED CORNERS: 45-degree cuts at all four corners, ~14px diagonal
+   (the chamfer fits within the 16px margin cleanly — the cut resolves inside the margin)
+3. BODY FILL: C-2 Mid Panel #2C3340 — the main surface color
+   This is the default "mid" register — above the HUD Dark base plate but below
+   the Interactive surface. Content (text, icons) placed on this reads at good contrast.
+4. INNER BORDER: 1px C-5 #4B5668 at 1px inset from the outer edge —
+   a double-line frame effect (outer + inner edge) that gives the panel visual depth
+5. TOP EDGE ACCENT: 1px C-5 #4B5668 at the very top inner edge, slightly lighter
+   variant — very subtle bevel implying top-down light source (workshop-bench-lamp metaphor)
+
+9-SLICE CENTER (the stretchable zone):
+Flat C-2 #2C3340 fill, zero decoration. The center must tile without artifacts.
+
+USES: Enemy card background, move-panel container, Workshop stat display background,
+any info box that needs to present content on a mid-grey surface.
+
+GREYSCALE TEST: The panel reads as a flat dark-grey rectangle with a subtle border
+and four distinct chamfered corners. The corners are the signature element.
+
+NEGATIVE: NO ROUNDED CORNERS. No gradient fill in the center zone. No glow. No
+organic curves. No tiling decoration in the stretch zone. No photoreal.

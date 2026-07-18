@@ -1,0 +1,49 @@
+ASSET: Overworld — Terrain Accent Tile (scrap/rubble scatter variant)
+TARGET FILE: assets/art/overworld/terrain_accent_tile.png
+CANVAS: 64x64 px (top-down, designed to overlay on the base tile — transparency supported)
+PERSPECTIVE: Top-down (direct overhead view)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Overworld tile: Terrain Accent / Scrap Scatter. Canvas 64x64 px. Top-down.
+Transparent background — overlaid on terrain-base-tile.png as a decoration layer.
+
+This tile adds sparse environmental storytelling detail on top of the base ground.
+Per art-bible §6.5: "Debris implies prior Symbots: a spent chassis or a broken part
+half-buried in a zone tells the player 'others came before' — and rewards looking."
+These accents are the game's narrative without text.
+
+CONTENT: Small scattered debris elements — half-buried machine components, broken
+panel fragments, mechanical detritus partially reclaimed by the environment.
+The elements should be SPARSE (2-3 objects per tile maximum, with lots of empty
+transparent area so the tile is used as scatter decoration, not wall-to-wall cover).
+
+ELEMENT OPTIONS (choose 2-3 per tile, vary when generating multiple variants):
+- A small broken panel fragment (Slate Gunmetal #374350 metal, worn edges)
+- A partially-buried gear or joint component (Alloy Ochre #C49A35 oxidized)
+- A short circuit-vine tendril (Circuit Teal #2B6E68) growing over a metal fragment
+- A cracked energy cell casing (dark, inert — no glow; just the casing remains)
+- Scattered small hex-head bolts or rivets (Bone White #F2EDDF structural details)
+
+VISUAL RULES:
+- Each element is LOW-FREQUENCY and LOW-CONTRAST against the base tile
+- Elements are partial (half-buried, obscured) — not fully legible as specific parts.
+  This communicates "remains of something" without being identifiable as a game item.
+- No element should visually compete with a bot sprite placed nearby.
+- Elements have organic weathering (vegetation growing over them, mineral deposits)
+- NO GLOW, NO EMISSIVE effects on any debris element (they are inert/spent)
+
+TRANSPARENCY: The tile has a transparent background — it composites over the base
+tile. Only the debris elements are opaque. Sparse placement = mostly transparent.
+
+GENERATE 3 VARIANTS for variety scatter:
+- Variant A: more circuit-vine and organic overgrowth (Vegetation zone lean)
+- Variant B: more angular panel fragments (Industrial-Debris zone lean)
+- Variant C: mixed, neutral (general wilderness)
+
+GREYSCALE TEST: In greyscale the debris elements read as slightly higher texture
+than the base tile — visible but not dominant. They are decoration, not features.
+
+NEGATIVE: No recognizable in-game part icons on the debris (these are ambient world
+storytelling, not collectible indicators). No glowing elements. No enemy markers.
+No UI chrome. No photoreal. No high-contrast foreground objects. No baked shadow.

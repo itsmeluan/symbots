@@ -1,0 +1,38 @@
+ASSET: UI — Horizontal Divider Rule
+TARGET FILE: assets/art/ui/divider_horizontal.png
+CANVAS: 256x4 px (9-slice stretchable; only left/right margins matter)
+9-SLICE MARGINS: Left 8px, Right 8px, Top 0px, Bottom 0px
+  (end caps are 8px; the center 240px stretches horizontally)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+UI element: Horizontal Divider Rule. Canvas 256x4 px. 9-slice (horizontal stretch).
+
+A thin horizontal rule used to visually separate sections within a panel —
+between stat groups in the Workshop, between log entries, between menu items.
+Reads as a precise engineered line, not a decorative embellishment.
+
+ANATOMY (256x4 px, top-to-bottom):
+- Row 1 (1px): C-1 HUD Dark #1E2229 — shadow above the rule
+- Row 2 (2px): C-5 Divider #4B5668 — the rule itself (the visible line)
+- Row 3 (1px): C-2 Mid Panel #2C3340 — subtle highlight below, lifts the rule
+  from the background (implies a machined groove carved into the panel surface)
+
+The 4px total height gives the rule a slight engraved quality — not just a 1px line
+but a narrow groove with shadow above and highlight below.
+
+END CAPS (left 8px / right 8px):
+The end caps may taper slightly — the outermost 1px at each end can fade to C-1
+(as if the groove meets the panel wall), giving a natural terminus. Or simply
+terminate cleanly at the 8px margin — both are acceptable.
+
+STRETCH ZONE (center 240px+):
+The 3-row stripe (C-1 / C-5 / C-2) tiles horizontally without any modification.
+Flat stripes — no decoration, no ticks, no end ornaments in the stretch zone.
+
+GREYSCALE TEST: At 4px height the three distinct brightness rows (dark / mid / light)
+read as an engraved line in any surface.
+
+NEGATIVE: No organic curves. No rounded end caps. No gradient. No glow. No decorative
+ticks or marks in the center zone. No photoreal. Keep it minimal — this is a separator,
+not a feature.

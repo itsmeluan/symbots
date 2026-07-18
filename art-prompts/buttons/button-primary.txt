@@ -1,0 +1,54 @@
+ASSET: UI Button — Primary Action Button (ATTACK / EQUIP / CONTINUE)
+TARGET FILE: assets/art/ui/buttons/ui_btn_primary_normal.png
+CANVAS: 256x64 px (9-slice — slightly larger than generic button; primary actions get more visual weight)
+9-SLICE MARGINS: Left 20px, Right 20px, Top 10px, Bottom 10px
+
+Also generate hover and pressed variants:
+  ui_btn_primary_hover.png   — same canvas, hover treatment
+  ui_btn_primary_pressed.png — same canvas, pressed treatment
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+UI element: Primary Action Button (ATTACK / EQUIP / CONTINUE).
+Canvas 256x64 px. 9-slice. Three state variants.
+
+This is the most important interactive element in the game. In combat it is the
+ATTACK button; in the Workshop it is EQUIP; between battles it is CONTINUE.
+It must read as the primary/default action at a glance — higher visual weight
+than generic buttons, clearly the "do the thing" element.
+
+NORMAL STATE:
+The Primary Button uses C-4 Active/Selected #4090CC (Info Blue) as its BODY fill —
+not C-3 like generic buttons. This is the game's selection/interactive semantic color,
+applied here at full saturation because this IS the primary interaction.
+
+ANATOMY:
+1. OUTER EDGE: C-4 Info Blue #4090CC — 2px border (thicker than generic 1px)
+2. BUTTON BODY: C-4 #4090CC fill — the whole button reads "active/selected"
+3. TOP HIGHLIGHT: 1px lighter blue-white (#6EB0E8 approximation) along top inner edge
+   — same bevel convention, but in the blue register
+4. CHAMFERED CORNERS: 45-degree cuts, ~18px diagonal (slightly larger chamfer than
+   generic button because this canvas is bigger — proportionally matched)
+5. INNER ACCENT: a very subtle 1px inner border at 1px inset from the outer edge
+   in a slightly darker blue (#2870A0 approximation) — gives the button depth
+
+HOVER STATE (ui_btn_primary_hover.png):
+- Body: slightly brighter blue, near #50A0DC
+- Outer edge: C-6 UI White #E8E8E8 at ~80% — the primary button "lights up" more
+  than generic on hover (it is the primary action)
+- Outer glow: 3px soft white glow at ~25% opacity
+
+PRESSED STATE (ui_btn_primary_pressed.png):
+- Body: darker blue #1E5C8C (pressed in, darkens)
+- Top highlight inverts to bottom (same bevel inversion as generic pressed)
+- Outer edge: C-4 or slightly darker
+
+GREYSCALE TEST (all states): The Primary Button is the BRIGHTEST / HIGHEST CONTRAST
+button on screen in all states. It must stand out from generic buttons in greyscale
+by luminance difference.
+
+9-SLICE: 20px margins contain the chamfered corners and 2px border.
+Featureless C-4 fill in center stretch zone.
+
+NEGATIVE: NO ROUNDED CORNERS. No Thermal or Volt element colors (Info Blue is the
+semantic here, not an element). No label text baked in. No organic curves. No photoreal.

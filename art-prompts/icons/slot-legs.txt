@@ -1,0 +1,24 @@
+ASSET: Icon — Slot Glyph: LEGS
+TARGET FILE: assets/art/icons/slot_legs.png
+CANVAS: 32x32 px (monochrome slot glyph icon)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: LEGS slot glyph. Canvas 32x32 px. Monochrome, white on transparent.
+
+The LEGS slot icon. LEGS = ground-contact, the bot's stance foundation, always
+the lowest element. The icon must communicate: legs, ground, stance, foundation.
+
+ICON DESIGN: A stylized bipedal stance form — viewed from front:
+- Two leg columns side by side, symmetric
+- Each leg has an upper section (thigh) and a lower section (shin/foot)
+- Foot contact implied at the bottom (the lowest element — flat ground-contact feet)
+- Mount connection implied at the top of each leg (where they join the CHASSIS)
+- Overall shape: wider at the hip connection, narrowing or parallel down to the feet
+- Feet spread slightly outward (planted stance — communicates "foundation")
+- 2px outline, minimal interior detail, readable at 16x16
+
+The icon communicates: "stance. Ground contact. Foundation of the bot."
+
+NEGATIVE: No CHASSIS body above the hip mount. No head. No arms. No color.
+No element glyph. No complex mechanical detail. No photoreal.

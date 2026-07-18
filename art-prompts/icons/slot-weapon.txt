@@ -1,0 +1,26 @@
+ASSET: Icon — Slot Glyph: WEAPON
+TARGET FILE: assets/art/icons/slot_weapon.png
+CANVAS: 32x32 px (monochrome slot glyph icon)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: WEAPON slot glyph. Canvas 32x32 px. Monochrome, white on transparent.
+
+The WEAPON slot icon. WEAPON = the only slot that extends FORWARD (toward the target).
+Per art-bible §3.3: "The only slot expected to break the CHASSIS silhouette boundary
+outward (forward/horizontal); the weapon must 'point.'"
+
+ICON DESIGN: An abstract weapon-forward form:
+- A bold horizontal or slightly angled forward element — the weapon pointing right
+  (toward the enemy, which is on the right side of the combat screen by convention)
+- A barrel/shaft running left-to-right (horizontal)
+- A slightly wider/emphasized "business end" at the right (the emitter/tip/head —
+  the part that points toward the target)
+- A narrower mount end at the left (where it connects to the ARM)
+- 2px outline, simple interior, bold and direct
+
+The icon communicates: "weapon. It points. The threat comes from this."
+
+NEGATIVE: No limb shape. No chassis shape. No melee weapon angled downward in
+this icon (generic slot glyph uses the forward-horizontal reading). No color.
+No element glyph. No complex mechanical detail. No photoreal.

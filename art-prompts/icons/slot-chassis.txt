@@ -1,0 +1,25 @@
+ASSET: Icon — Slot Glyph: CHASSIS
+TARGET FILE: assets/art/icons/slot_chassis.png
+CANVAS: 32x32 px (monochrome slot glyph icon)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: CHASSIS slot glyph. Canvas 32x32 px. Monochrome, white on transparent.
+
+The CHASSIS slot icon. CHASSIS = the torso/body plate — always the widest element,
+the mass anchor of the bot. The icon must communicate: torso/body/core housing.
+
+ICON DESIGN: A stylized broad torso form:
+- Wide rectangular or trapezoidal shape (wider than tall, or equally proportioned)
+- Shoulder notches at the upper-left and upper-right corners where ARMS would attach
+  (two small rectangular notches cut from the upper corners — attachment grammar
+  visualized in the icon)
+- A small circular or diamond void in the center of the chest face (implied CORE
+  socket — this is the CHASSIS, which houses the CORE)
+- Lower edge is straight (where LEGS would attach below)
+- Bold outline, simple interior, 2px line weight
+
+The icon communicates: "the body. The widest part. The anchor."
+
+NEGATIVE: No HEAD or LEGS elements in this icon. No weapon protrusion. No color.
+No element glyph. No complex panel-line detail. No photoreal.

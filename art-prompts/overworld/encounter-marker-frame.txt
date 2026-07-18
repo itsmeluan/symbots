@@ -1,0 +1,51 @@
+ASSET: Overworld — Encounter Marker Frame / Enemy Presence Ring
+TARGET FILE: assets/art/overworld/encounter_marker_frame.png
+CANVAS: 96x96 px (square frame overlaid behind enemy markers on the map)
+PERSPECTIVE: Top-down flat UI overlay
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Overworld: Encounter Marker Frame. Canvas 96x96 px. Top-down map overlay.
+
+A visual frame/ring rendered behind an enemy sprite marker on the overworld map
+to indicate its presence zone and provide a consistent base for the enemy indicator.
+The enemy sprite sits centered within this frame; the frame provides the
+"this is an encounter point" visual signal without overwhelming the enemy sprite above it.
+
+ANATOMY:
+The frame is a subtle chamfered-rectangular ring (per UI shape grammar §3.6 —
+hard edges, no organic curves). The center is transparent — the enemy sprite
+renders on top of this frame.
+
+RING GEOMETRY:
+- Overall: 96x96 px outer bounds
+- Ring border: 4px on all sides
+- Chamfered corners: 45-degree cuts, ~10px diagonal
+- Center: transparent (alpha = 0) — the enemy sprite goes here
+- Effective inner transparent zone: approximately 80x80 px
+
+STATES (generate 2 variants):
+
+VARIANT 1 — IDLE/PATROL marker (enemy not yet aggroed):
+- Ring fill: Harvest Crimson #B33020 at ~60% opacity — the environmental danger
+  color from world palette (§4.1). This is the "enemy presence" signal in the world
+  context (not UI red — this is §4.6 zone tinting, the world-surface hazard color).
+- Ring outer edge: 1px C-5 Divider #4B5668 for separation from the background
+- Optional: a very subtle slow pulse would be applied by the animator — the sprite
+  captures the mid-cycle state (solid 60% opacity)
+
+VARIANT 2 — ACTIVE/ENCOUNTER TRIGGERED (player is about to engage):
+- Ring fill: Harvest Crimson #B33020 at ~90% opacity (more intense as trigger fires)
+- Outer edge: Harvest Crimson at full opacity (the ring "lights up")
+- Slight outer spread: 2-3px soft blur at 30% opacity beyond the ring
+
+NON-COLOR CHANNEL: The ring shape (a rectangle of defined presence) communicates
+"encounter zone" separate from color. In greyscale the ring reads as a border
+around the transparent center where an enemy sprite would appear.
+
+GREYSCALE TEST: Ring border (mid-tone) against transparent center and the map
+background below — reads as a framing rectangle with chamfered corners.
+
+NEGATIVE: No circular ring (this is a chamfered rectangular frame per UI shape
+grammar). No rounded corners. No UI Dark background fill in the center (transparent).
+No element glyphs on the frame. No photoreal. No organic curves on the frame itself.

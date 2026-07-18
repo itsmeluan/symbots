@@ -1,0 +1,50 @@
+ASSET: Overworld — Base Terrain Tile (seamless ground)
+TARGET FILE: assets/art/overworld/terrain_base_tile.png
+CANVAS: 64x64 px (seamlessly tileable — all four edges must tile without visible seam)
+PERSPECTIVE: Top-down (direct overhead view — Pokémon-style overworld)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Overworld tile: Base Terrain. Canvas 64x64 px. Top-down, seamlessly tileable.
+
+The ground surface tile that fills the overworld map. This is the world's
+"stage" — it must recede behind Symbots and the player sprite. Per art-bible §3.5
+and §6.2: the environment must be LOW-FREQUENCY (broad shapes, gentle gradients,
+sparse high-detail accents) so Symbots read as figure against it.
+
+CONTENT: A matte, stylized ground surface combining the mechanical wilderness:
+- PRIMARY BASE: Ironmoss Green #3D7A4A — the dominant ground color (overgrown
+  mechanical wilderness, vegetation cover as the baseline)
+- SECONDARY ACCENT: Alloy Ochre #C49A35 at ~20% coverage — dry earth or stone
+  patches showing through the vegetation
+- TERTIARY: Circuit Teal #2B6E68 at ~5% — exposed circuitry running like roots
+  through the ground surface (the world is part machine)
+- TEXTURE CHARACTER: low-frequency organic texture — broad soft patches, no
+  pixel-noise. The texture reads as "ground" at any zoom level, not wallpaper.
+  Think: gentle variations in a matte painted surface, not pixel-art stippling.
+
+SEAMLESS TILING REQUIREMENT:
+All four edges must tile without visible seam lines. Use symmetrical or offset
+noise patterns that avoid regular repetition at the tile boundary.
+- No hard edges at tile boundaries
+- No obviously repeating detail pattern (Pokémon-style tiling avoidance)
+- The tile must hold up for a 12x8 grid of tiles without looking like a grid
+
+LOW-FREQUENCY REQUIREMENT (art-bible §3.5):
+- No high-contrast detail — the ground never competes with the Symbot silhouette
+- Maximum contrast within the tile: the difference between the lightest and
+  darkest pixel should be LOW (the tile is low-contrast ground)
+- No individual elements (plants, rocks, wires) that are visually prominent enough
+  to catch the eye without a bot nearby
+
+WORLD PALETTE ONLY: Ironmoss Green #3D7A4A, Alloy Ochre #C49A35, Circuit Teal #2B6E68.
+No other colors. No Harvest Crimson (hazard), no Bone White (structural highlights),
+no element colors on the ground surface.
+
+GREYSCALE TEST: In greyscale the tile reads as a mid-tone matte ground surface —
+no high-contrast elements, even ground saturation.
+
+NEGATIVE: No bot sprites. No UI chrome. No Flame Chevron glyph or other element
+glyphs on the ground. No matte amber surfaces with element markers (art-bible §4.1
+matte-amber discipline: amber on ground is NEVER glyphed). No photoreal. No PBR.
+No hard tile edges. No baked lighting or baked shadow.

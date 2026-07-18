@@ -1,0 +1,39 @@
+ASSET: UI Button — Disabled State
+TARGET FILE: assets/art/ui/buttons/ui_btn_generic_disabled.png
+CANVAS: 192x56 px (9-slice, same geometry)
+9-SLICE MARGINS: Left 16px, Right 16px, Top 8px, Bottom 8px
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+UI element: Generic Button — Disabled state. Canvas 192x56 px. 9-slice.
+
+The button's appearance when the action is unavailable (not enough energy, wrong
+context, gate not met). Must communicate "unavailable" without removing the button
+from the layout — the player needs to know the action EXISTS but cannot be taken.
+
+VISUAL CHANGE FROM NORMAL:
+Full desaturation plus opacity drop. The button recedes visually without disappearing.
+
+ANATOMY:
+1. OUTER EDGE: C-5 Divider #4B5668 but at ~50% opacity (faded, not sharp)
+2. BUTTON BODY: C-2 Mid Panel #2C3340 — same as empty bar track, implying "depleted"
+3. NO top highlight (flat, no bevel — the button is inert)
+4. CHAMFERED CORNERS: same geometry but edges feel less crisp (the fading handles this)
+5. Overall alpha: ~60% opacity on the entire sprite (the UI programmer applies this
+   in-engine, but the sprite itself should be drawn at the slightly-muted palette)
+
+OPTIONAL INERT INDICATOR: A very subtle diagonal cross-hatch or slight noise texture
+at low opacity over the body fill — communicates "inactive" as a non-color channel.
+Keep it subtle (3-5% texture variation at most — the opacity drop is the primary signal).
+
+NON-COLOR CHANNEL: The label text placed by the UI programmer will also be dimmed
+(C-7 Secondary Text #98A4B4 instead of C-6 Primary #E8E8E8 on disabled buttons).
+The sprite provides the dimmed background; the text color change is the co-channel.
+
+GREYSCALE TEST: The disabled button is visibly lower luminance and lower contrast
+than the Normal button, without disappearing. It recedes without vanishing.
+
+9-SLICE: Same margins. Featureless muted fill in stretch zone.
+
+NEGATIVE: No color highlight. No glow. No Info Blue (not interactive). No label text.
+NO ROUNDED CORNERS. No organic curves. No photoreal.
