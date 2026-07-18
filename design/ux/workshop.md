@@ -97,10 +97,11 @@ Ranked by what the player must perceive first (drives all zone decisions):
 
 1. **The Symbot composite** — the bot on its stand, the subject and the expression
    (art-bible §2.6 mood-carrying element). Always visible.
-2. **The 6 build slots** — what is equipped in each and which is currently selected.
-   (8 logical slots; CHIPSET + ENERGY_CELL read as internal indicators, CORE shown as a
-   Workshop-only slot with its level badge — CORE is render-invisible *in play* but
-   present here per the memory decision.)
+2. **The 8 build slots** — what is equipped in each and which is currently selected.
+   (8 logical slots total: HEAD / ARMS / LEGS / WEAPON / CHASSIS are the player-swappable
+   exterior; CHIPSET + ENERGY_CELL read as internal indicators; CORE is a Workshop-only
+   slot with its level badge — render-invisible *in play* but present here per the memory
+   decision.)
 3. **Effective stats** (post-synergy SYN-F4) and, during a preview, the **signed stat
    delta** with up/down arrow glyphs (§2.6 non-color cue).
 4. **Synergy indicators** — active tiers + progress toward the next threshold; the
@@ -134,6 +135,28 @@ session) and the Mac dev/launch platform. A three-column composition:
 > filmstrip** at the bottom of Z3 (thumb-reachable; does not occlude the bot or Z4).
 > Selecting a candidate populates Z4. This keeps the bot and the comparison visible at
 > the same time as the choice — the core "see the consequence before commit" read.
+
+### Synergy Indicator Ordering (resolves Synergy DCO-2)
+
+The synergy panel order is a UX priority rule — it is **not** inherited from the
+`active_synergies` emission order (that order is alphabetical-by-tier-ID for system
+determinism, Synergy Rule 3, and is not a UX priority). Indicators sort by:
+
+1. **Group by state**: `active` → `progressing` (1+ toward a reachable threshold) →
+   `inactive`. Active tiers always read first; a tier the player is one part away from
+   reads before a cold one — protects Beat 1 ("what am I building toward").
+2. **Within a group**: descending **current tag count** (closest-to-threshold first).
+3. **Constituent-before-combined**: a combined tier (e.g., Ironclad-VOLT) is listed
+   *after* both its constituent single-tag tiers, and its dual-track readout
+   (`Ironclad 3/3 ✓ · VOLT 1/3`, Synergy §396) must never visually imply the constituents
+   are deactivated or replaced — all three are simultaneously active (Synergy Rule 3 /
+   DCO-2 constraint).
+
+**Overflow (resolves DCO-1):** when build-relevant tiers exceed the 3–8 display cap, the
+lowest-priority tiers by this rule collapse into a `+N more ›` affordance that opens
+`BUILD SUMMARY` (which lists every active tier incl. overflow). Silent-drop is forbidden
+(Synergy DCO-1) — the `+N more` count keeps the hidden tiers legible. *(Verified by
+AC-WS-10.)*
 
 ### Component Inventory
 
@@ -213,7 +236,9 @@ inspected; Build Status doubles as the EC-CP-05 legality banner.)*
 | **Upgrade at cap** | Part at its tier cap (Common +3, per Part-DB Rule 10) | `UPGRADE` replaced by a "Max tier" label |
 | **Invalid build** | A core swap orphans over-level parts (EC-CP-05) | Build Status banner = ⚠ + lists offending parts; over-level parts greyed in the rail with "Core level N required"; "cannot enter combat while invalid" |
 | **Under-level part in picker** | `part.level_req > core level` | Greyed filmstrip entry + "Core level N required"; not equippable |
+| **Filmstrip empty (no candidates)** | Selected slot has zero eligible parts in inventory | Filmstrip shows an empty-state line — "No parts for this slot yet" — instead of an empty strip; the currently equipped part (if any) stays inspectable in Z4 so `UPGRADE` remains reachable. Distinct from *Empty slot* (which is about the slot being unfilled, not the picker being empty). |
 | **Loading / save-on-enter** | Screen entry (Workshop is the save point) | Brief; no spinner unless the save write is async — if async, a quiet inline "Saving…" not a blocking modal |
+| **Save failed (on enter/exit)** | Autosave write returns error (ADR-0001 atomic-write failure) | A **non-blocking** inline notice — "Couldn't save — your last change may not be kept" — with a `Retry` action; the player is **not** told the change persisted. Exit is not forced; the unsaved state is never silently swallowed. On repeated failure, fall through to the ADR-0001 `save_emergency()` path. No modal that traps the player in the calm hub (art-bible §2.6 — no urgency cue). *(Verified by AC-WS-11.)* |
 | **Rarity overlay** | Per equipped part rarity | Common = none · Rare = element glow · Boss = radiant · Prototype = flicker — all bounded to <3 flashes/sec (accessibility §1.4) |
 
 ---
@@ -254,7 +279,7 @@ actions (`PREVIEW`/`EQUIP` or `UPGRADE`) → Z4 detail expanders → top bar (`�
 | **`EQUIP`** | **`part_equipped`** | ⚠ **Persistent build write** → deferred autosave quiesce (ADR-0001/0002). Architecture attention. |
 | **`UPGRADE`** | **`part_upgraded`** + Scrap debit | ⚠ **Persistent economy write** (Scrap balance + part tier). Architecture attention. |
 | Rotate / expand / open summary | *(none)* | Pure presentation |
-| Exit to Overworld | Autosave (Workshop is the save point) | Deferred-autosave quiesce on screen teardown (ADR-0002) |
+| Exit to Overworld | Autosave (Workshop is the save point) | Deferred-autosave quiesce on screen teardown (ADR-0002); **on write failure, surface the Save-failed notice + Retry (ADR-0001), do not report success** |
 
 > Two actions modify persistent state — `EQUIP` (build) and `UPGRADE` (economy + tier).
 > Both are flagged for the architecture team; the UI **owns neither** — it calls into the
@@ -292,7 +317,7 @@ own each element (ADR-0008: the UI subscribes and calls, it does not hold game s
 
 | Data | Source System | R / W | Notes |
 |------|---------------|-------|-------|
-| Current build (6 slots + equipped parts) | Assembly (symbot-assembly) | R | Feeds the live composite |
+| Current build (8 slots + equipped parts) | Assembly (symbot-assembly) | R | Feeds the live composite |
 | Part definitions (stats, rarity, element, manufacturer, `level_req`, effects) | Part Database (`part_catalog.tres`) | R | Static content |
 | Effective stats (11) | Stat Pipeline (`src/core/stats/`, ADR-0005) | R | SYN-F4 composition point |
 | Hypothetical stat delta | Stat Pipeline hypothetical derive | R | `compute_stat_delta()` — read-only, no write |
@@ -373,6 +398,14 @@ Target tier: **GAG Basic + selected WCAG 2.1 AA** (per `design/accessibility-req
   the composite within one frame budget (16.6ms target) with no visible stall.
 - **AC-WS-09** — With reduced-motion enabled, no animation exceeds a static state change;
   auto-rotate is paused; nothing flashes > 3/sec.
+- **AC-WS-10** — Synergy indicators render in state-priority order (active → progressing →
+  inactive; within a group, descending tag count; combined listed after its constituents),
+  never in `active_synergies` emission order. When build-relevant tiers exceed the display
+  cap, a `+N more ›` affordance shows the exact hidden count and opens BUILD SUMMARY; no
+  relevant tier is silently dropped. *(Synergy DCO-1 / DCO-2)*
+- **AC-WS-11** — When an autosave write fails, the screen shows a non-blocking "couldn't
+  save" notice with `Retry`, never a success confirmation, and does not force exit; repeated
+  failure invokes `save_emergency()`. *(ADR-0001)*
 
 ---
 
