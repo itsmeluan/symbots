@@ -2,9 +2,53 @@
 
 <!-- STATUS -->
 Epic: Pre-Production gate-gap closure — /gate-check pre-production returned CONCERNS (4 presentation-tier gaps). User chose "close gaps first, then re-gate". stage.txt stays Pre-Production.
-Feature: UX specs + art bible §5-9. hud.md + main-menu.md + pause.md DONE. art-bible §5-9 + AD-ART-BIBLE sign-off DONE 2026-07-17 (v0.2, all 9 sections; sign-off APPROVED in-role, faction-name decision carried forward). ALL 4 AUTHORING GAPS CLOSED.
-Task: NEXT → /ux-review hud|main-menu|pause (gate quality-check "all key-screen specs passed /ux-review" still needs verdicts — the 3 new specs are In Design), THEN re-run /gate-check pre-production for a clean PASS. Cross-cutting follow-through: battle.md needs a small add for in-battle pause-affordance placement + the PG-08 fading-log chrome refinement (flagged in hud.md/pause.md + art-bible §7.5 Open Questions — do NOT edit battle.md without a /ux-review that acknowledges them).
+Feature: UX specs + art bible §5-9. hud.md + main-menu.md + pause.md DONE. art-bible §5-9 + AD-ART-BIBLE sign-off DONE 2026-07-17 (v0.2, all 9 sections; sign-off APPROVED in-role, faction-name decision carried forward). §5 corrected 2026-07-17 to add the player-mechanic avatar (see handoff). ALL 4 AUTHORING GAPS CLOSED.
+Task: NEXT (post-/clear) → /ux-review hud|main-menu|pause (gate quality-check "all key-screen specs passed /ux-review" still needs verdicts — the 3 new specs are In Design), THEN re-run /gate-check pre-production for a clean PASS. Cross-cutting follow-through: battle.md needs a small add for in-battle pause-affordance placement + the PG-08 fading-log chrome refinement (flagged in hud.md/pause.md + art-bible §7.5 Open Questions — do NOT edit battle.md without a /ux-review that acknowledges them).
 <!-- /STATUS -->
+
+## ⇒ HANDOFF FOR NEXT SESSION (post-/clear, 2026-07-17g) — ux-review the 3 specs, then re-gate
+
+**Read this block first, then `design/art/art-bible.md` §5 and the 3 UX specs.** All FOUR
+Pre-Production gate authoring gaps are CLOSED. One quality-check remains before a clean PASS.
+
+**DONE this session:**
+- **art-bible §5–9 authored** (`design/art/art-bible.md`, now v0.2, all 9 sections; header
+  Status = Complete). §5 Character / §6 Environment / §7 UI-HUD / §8 Asset Standards / §9
+  Reference Direction — all derived from the locked §1–4 (no new palette/shape/color).
+  **AD-ART-BIBLE sign-off = APPROVED [2026-07-17]**, authored in-role (formal director-panel
+  spawn N/A — lean mode skips it + subagent spawning disabled per durable instruction; recorded
+  exactly like /gate-check's skipped Director Panel). Carried-forward open decision: the 4
+  faction NAMES (§3.8 placeholders) still pending narrative team.
+- **§5 CORRECTED after user feedback** (important — do not re-erase): the game HAS a player
+  avatar. Two identity layers now in §5.1–§5.2:
+  (1) **The Mechanic** = player avatar, a human engineer; overworld walk sprite (Pokémon-style)
+      + shown at the Oficina bench + a battle-intro cameo; customization = **Masc/Fem + a simple
+      color/palette choice**, nothing deeper; **NO combat stats** (no HP/level/attributes) —
+      cosmetic/narrative identity only; world-palette, lower-saturation than any Symbot (§3.5).
+  (2) **The Build/CORE** = combat character; ALL progression here (CORE levels on battle-XP,
+      parts carry stats). Pokémon trainer/creature split, named as such.
+  Old §5.2–5.5 renumbered → §5.3–5.6 (CORE / bot-read / pose / LOD); external refs in §8.3 and
+  §9 updated. Verified 5.1→5.6 sequential, all §5 cross-refs resolve.
+
+**NEXT ACTIONS (in order):**
+1. **`/ux-review hud`, `/ux-review main-menu`, `/ux-review pause`** — the 3 specs are In Design;
+   the Pre-Prod→Production gate quality-check "all key-screen UX specs have passed /ux-review"
+   needs a recorded verdict (APPROVED or NEEDS-REVISION-accepted) for each. **Author the reviews
+   INLINE — NO Agent/Task subagents** (durable constraint; same as gate-check's skipped panel).
+2. **Re-run `/gate-check pre-production`** — all 4 ❌ artifacts from
+   `production/gate-checks/gate-check-pre-production-to-production-2026-07-17.md` are now present;
+   expect a clean PASS (or CONCERNS only on the optional entity-inventory, which is non-blocking).
+3. On PASS: user decides whether to advance `production/stage.txt` → Production (they previously
+   chose to stay Pre-Production until gaps closed; ask before advancing).
+
+**WATCH-OUTS carried forward:**
+- **Do NOT edit `design/ux/battle.md` unilaterally.** Two needed additions are flagged as Open
+  Questions (in-battle pause-affordance placement; PG-08 boxed-log → fading-corner-log refinement,
+  also noted in art-bible §7.5). They land only via a /ux-review that explicitly acknowledges them.
+- Review mode = **lean** (`production/review-mode.txt`); stage = **Pre-Production**
+  (`production/stage.txt`) — do not advance without user say-so.
+- Optional/non-blocking: `/asset-spec` → `design/assets/entity-inventory.md` (gate recommends, not
+  requires). The mechanic avatar (§5.2) + Symbot parts would be its entities if run.
 
 ## Session Extract — Vertical Slice Phases 4b–4d COMPLETE + playtest-validated 2026-07-17f
 - Built the full interactive slice in `prototypes/symbots-vertical-slice/battle_screen.gd` (+ `_smoke_screen.gd` headless regression). All-code Control UI, ADR-0008 signal-driven, touch-first ≥56px. Reuses real BattleController/SymbotBuild/DropSystem; synthesizes only basic_attack MoveDef + Part-Break subscriber.
