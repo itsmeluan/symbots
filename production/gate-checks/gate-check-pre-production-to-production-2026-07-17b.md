@@ -101,6 +101,6 @@ explicitly non-required and safely deferrable into early Production.
 
 ### Stage advance
 
-`production/stage.txt` **not yet advanced** — pending user decision (previously chose to stay
-Pre-Production until gaps closed; gaps are now closed). Advance to `Production` on user say-so,
-optionally after running `/asset-spec` for the entity inventory.
+`production/stage.txt` **advanced `Pre-Production` → `Production` on 2026-07-17** by explicit user
+say-so, after all four gaps closed and the entity inventory written. The project is now in the
+**Production** stage — Epic/Feature/Task tracking is active and the status line reflects Production.
