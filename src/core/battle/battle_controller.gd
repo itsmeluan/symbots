@@ -271,12 +271,20 @@ static func _mobility_of(c: Combatant) -> int:
 		c.statuses.shock_penalty())
 
 
-## Recompute and store the round's turn order from the living roster (living team +
-## living enemy). Called at every ROUND_START (Story 004).
+## Recompute and store the round's turn order. Called at every ROUND_START (Story 004).
+##
+## Only the ACTIVE Symbot fights — benched Symbots do NOT take independent turns
+## (they are switched in on demand; BattleContext: "benched ones simply aren't ticked").
+## The roster is therefore exactly `[active, enemy]` (each included only while alive),
+## NOT the whole living team. Putting the bench in `turn_order` makes `_run_turns` park
+## on a benched Symbot's phantom turn so the enemy never acts (bug found 2026-07-18 by
+## the multi-Symbot view-signal suite — the first test to drive `_run_turns` with a bench).
 func compute_initiative() -> Array:
-	var roster: Array = _ctx.living_team()
-	if _ctx.enemy.is_alive():
-		roster.append(_ctx.enemy)
+	# TODO(Luan): build `roster` from the ACTIVE Symbot + the enemy, each appended only
+	# when `is_alive()`. Use `_ctx.active()` (returns the fielded team[active_index]) and
+	# `_ctx.enemy`. Do NOT use `_ctx.living_team()` — that is what caused the bug.
+	var roster: Array = []
+	# <-- write the ~4 lines here: append active if alive, append enemy if alive.
 	_ctx.turn_order = initiative_order(roster)
 	return _ctx.turn_order
 
@@ -493,16 +501,23 @@ func _resolve_player_action(actor: Combatant, action: Dictionary) -> bool:
 func _resolve_player_move(actor: Combatant, action: Dictionary) -> void:
 	var move: MoveDef = action.get("move")
 	var part_heat: int = int(action.get("part_heat_generation", 0))
+	var actor_cid: StringName = _combatant_id(actor)
 	match move.behavior:
 		MoveDef.Behavior.DAMAGE:
 			var sub: StringName = action.get("sub_target", BattleResolver.STRUCTURE)
 			var is_weapon: bool = bool(action.get("is_weapon_slot", false))
 			var crit: float = float(action.get("crit_mult", 1.0))
+			var enemy_cid: StringName = _combatant_id(_ctx.enemy)
 			_resolver.resolve_damage_move(actor, _ctx.enemy, move, sub, crit, 0)
+			# Structure mutation is applied inside the resolver AFTER hit_resolved fires.
+			structure_changed.emit(enemy_cid, _ctx.enemy.current_structure,
+				_ctx.enemy.max_structure, false)
 			actor.current_energy -= move.energy_cost  # DAMAGE-move energy is paid here
+			energy_changed.emit(actor_cid, actor.current_energy, actor.max_energy_capacity)
 			_passives.dispatch_on_hit(actor, _passive_pool_for(actor), move, is_weapon,
 				_ctx.enemy, _cfg)
 			if not _ctx.enemy.is_alive():  # victory BEFORE heat recoil (AC-TBC-09)
+				_down(_ctx.enemy)  # emit combatant_downed for the enemy before the terminal cascade
 				_end_battle(Outcome.VICTORY)
 				return
 			apply_move_heat(actor, part_heat, move.element == PartDef.Element.THERMAL)
@@ -522,12 +537,16 @@ func _resolve_enemy_action(enemy: Combatant) -> void:
 	var target: Combatant = _ctx.active()
 	var move: MoveDef = _default_enemy_move(enemy)
 	_resolver.resolve_damage_move(enemy, target, move, BattleResolver.STRUCTURE, 1.0, 0)
+	# Structure mutation is applied inside the resolver AFTER hit_resolved fires.
+	structure_changed.emit(_combatant_id(target), target.current_structure,
+		target.max_structure, true)
 	if not target.is_alive():
 		_down(target)
 		if _ctx.team_wiped():
 			_end_battle(Outcome.DEFEAT)
 		else:
 			_state = BattleState.FORCED_SWITCH  # await the player's replacement pick
+			forced_switch_required.emit()
 
 
 # ===========================================================================
@@ -586,6 +605,7 @@ func _resolve_forced_switch(action: Dictionary) -> void:
 ## DEFEAT. Returns true when the loop must stop (parked or ended).
 func _handle_turn_start_death(actor: Combatant) -> bool:
 	if actor.is_enemy:
+		_down(actor)  # enemy Burn-died at turn start — emit combatant_downed before VICTORY
 		_end_battle(Outcome.VICTORY)
 		return true
 	if _ctx.team_wiped():
@@ -593,6 +613,7 @@ func _handle_turn_start_death(actor: Combatant) -> bool:
 		return true
 	if actor == _ctx.active():
 		_state = BattleState.FORCED_SWITCH
+		forced_switch_required.emit()
 		return true  # await the free replacement pick
 	return false  # a benched Symbot can't Burn-tick on its own turn; defensive
 
@@ -622,20 +643,34 @@ func use_item(item: Dictionary, target_index: int) -> bool:
 
 
 ## Apply one consumable effect, clamped, and return the net change (0 if it did nothing).
+## Emits [signal structure_changed], [signal heat_changed], or [signal energy_changed]
+## AFTER the mutation, but only when the net change is non-zero (the caller rejects
+## zero-net uses before the turn is consumed, so any emission here represents a real change).
 func _apply_item_effect(target: Combatant, effect: int, amount: int) -> int:
+	var cid: StringName = _combatant_id(target)
 	match effect:
 		ItemEffect.RESTORE_STRUCTURE:
 			var before: int = target.current_structure
 			target.current_structure = mini(target.max_structure, before + amount)
-			return target.current_structure - before
+			var net: int = target.current_structure - before
+			if net != 0:
+				structure_changed.emit(cid, target.current_structure, target.max_structure,
+					not target.is_enemy)
+			return net
 		ItemEffect.REDUCE_HEAT:
 			var before_h: int = target.current_heat
 			target.current_heat = maxi(0, before_h - amount)
-			return before_h - target.current_heat
+			var net_h: int = before_h - target.current_heat
+			if net_h != 0:
+				heat_changed.emit(cid, target.current_heat, target.is_overheated)
+			return net_h
 		ItemEffect.RESTORE_ENERGY:
 			var before_e: int = target.current_energy
 			target.current_energy = mini(target.max_energy_capacity, before_e + amount)
-			return target.current_energy - before_e
+			var net_e: int = target.current_energy - before_e
+			if net_e != 0:
+				energy_changed.emit(cid, target.current_energy, target.max_energy_capacity)
+			return net_e
 		_:
 			return 0
 
@@ -646,6 +681,7 @@ func _apply_item_effect(target: Combatant, effect: int, amount: int) -> int:
 
 func _check_end() -> bool:
 	if not _ctx.enemy.is_alive():
+		_down(_ctx.enemy)  # defensive: guarantee combatant_downed fired for the enemy (idempotent)
 		_end_battle(Outcome.VICTORY)
 		return true
 	if _ctx.team_wiped():
@@ -685,6 +721,8 @@ func _end_battle(outcome: int) -> void:
 ## Down a combatant: flag it and cleanse all statuses (EC-TBC-14 — a DOWNED combatant
 ## starts clean if ever revived). Emits [signal combatant_downed] after mutation.
 func _down(c: Combatant) -> void:
+	if c.is_downed:
+		return  # idempotent — never emit combatant_downed twice for the same combatant
 	c.is_downed = true
 	c.statuses.clear()
 	combatant_downed.emit(_combatant_id(c), not c.is_enemy)

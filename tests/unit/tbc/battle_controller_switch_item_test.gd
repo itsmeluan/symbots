@@ -233,3 +233,38 @@ func test_benched_statuses_freeze_while_active_takes_its_turn() -> void:
 	assert_eq(bench.statuses.count(), 1, "the benched Burn did NOT decrement/expire — frozen (AC-TBC-18 A)")
 	assert_eq(bench.statuses.burn_tick(), 5, "the benched Burn still reads its snapshot potency")
 	assert_eq(bench.current_structure, bench_structure_before, "the benched Symbot took no Burn damage while frozen")
+
+
+# ---------------------------------------------------------------------------
+# REGRESSION (bug found 2026-07-18): compute_initiative rostered the whole
+# living_team, so a benched Symbot got a phantom turn — _run_turns parked on it as
+# a player action and the ENEMY never acted. Only [active, enemy] may be in turn_order.
+# The pre-existing freeze test above drives begin_turn/end_turn directly and so never
+# exercised the full turn loop; this one runs _run_turns with a 3-Symbot team.
+# ---------------------------------------------------------------------------
+
+func test_bench_symbot_gets_no_turn_and_enemy_acts_in_multi_symbot_battle() -> void:
+	_start(BattleController.EncounterType.WILD)
+	var ctx := _bc.context()
+	assert_eq(ctx.team.size(), 3, "arrange: a full 3-Symbot team is fielded")
+
+	# Composition: turn_order is exactly [active, enemy] — the two benched Symbots are excluded.
+	assert_eq(ctx.turn_order.size(), 2, "turn_order excludes the bench — only the active Symbot + the enemy")
+	for c in ctx.turn_order:
+		if not c.is_enemy:
+			assert_eq(c.symbot_id, ctx.active().symbot_id,
+				"the only team member in turn_order is the ACTIVE Symbot, never a benched one")
+
+	# Behaviour: after the player's turn, the ENEMY actually acts (it damages the active),
+	# proving the loop did not park on a benched Symbot's phantom turn and skip the enemy.
+	var active_hp_before: int = ctx.active().current_structure
+	var move := MoveDef.new()
+	move.behavior = MoveDef.Behavior.DAMAGE
+	move.power_tier = MoveDef.PowerTier.STANDARD
+	move.damage_type = PartDef.DamageType.PHYSICAL
+	move.element = PartDef.Element.KINETIC
+	move.energy_cost = 0
+	_bc.submit_action({"type": BattleController.ActionType.MOVE, "move": move, "part_heat_generation": 0})
+
+	assert_lt(ctx.active().current_structure, active_hp_before,
+		"the enemy took its turn and damaged the active — the bench did not steal the enemy's slot")

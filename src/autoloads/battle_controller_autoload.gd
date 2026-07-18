@@ -6,11 +6,9 @@
 ## is_battle_active() (the save-quiesce gate) and that ADR-0004 requires for a
 ## persistent-lifetime signal source (the Battle scene is queue_free()'d; this is not).
 ##
-## Signal forwarding: the 3 EXISTING BattleController signals (battle_ended,
-## battle_start_refused, hit_resolved) are RE-DECLARED here and forwarded from the
-## per-session RefCounted via _on_* handlers connected when the RefCounted is created.
-## DO NOT add the ~14 view-signals declared in the plan §5 here — those are Phase 2-A
-## (next wave) and will be added to the core BattleController then forwarded here.
+## Signal forwarding: all BattleController signals (the original 3 + the 16 Phase 2-A
+## view-signals) are RE-DECLARED here and forwarded from the per-session RefCounted via
+## _on_* handlers connected when the RefCounted is created.
 ##
 ## ADR-0004 inertness rule: zero _ready work. No I/O, no catalog loads, no signal
 ## connections, no cross-autoload reads in _ready. The FSM is driven only by
@@ -39,24 +37,60 @@ signal battle_start_refused(invalid_symbot_ids: Array, offending_parts: Array)
 signal hit_resolved(move: MoveDef, damage: int, target: Combatant, sub_target: StringName)
 
 # ---------------------------------------------------------------------------
-# Phase 2-A: forward view-signals here (next wave — do NOT add until core declares them)
+# Phase 2-A: view-signals — re-declared and forwarded from the per-session RefCounted.
+# The HUD-facing surface is complete; the 2 stub signals (break_region_updated,
+# enrage_changed) are forwarded here but will not fire until Part-Break integration.
 # ---------------------------------------------------------------------------
-# signal action_pending(actor_is_player: bool)
-# signal action_resolving()
-# signal round_started(round_number: int, turn_order: Array)
-# signal turn_started(combatant_id: StringName, is_player: bool)
-# signal turn_skipped(combatant_id: StringName)
-# signal structure_changed(combatant_id: StringName, new_value: int, max_value: int, is_player: bool)
-# signal energy_changed(combatant_id: StringName, new_value: int, max_value: int)
-# signal heat_changed(combatant_id: StringName, new_value: int, is_overheated: bool)
-# signal status_applied(combatant_id: StringName, status_id: StringName, duration: int)
-# signal status_expired(combatant_id: StringName, status_id: StringName)
-# signal status_ticked(combatant_id: StringName, status_id: StringName, damage: int)
-# signal combatant_downed(combatant_id: StringName, is_player: bool)
-# signal forced_switch_required()
-# signal overheat_triggered(combatant_id: StringName, self_damage: int)
-# signal break_region_updated(enemy_id: StringName, region_id: StringName, new_hp: int, max_hp: int, is_broken: bool)
-# signal enrage_changed(enemy_id: StringName, broken_count: int, enrage_pct: float)
+
+## Forwarded from BattleController. See source for full doc.
+signal action_pending(actor_is_player: bool)
+
+## Forwarded from BattleController. See source for full doc.
+signal action_resolving()
+
+## Forwarded from BattleController. See source for full doc.
+signal round_started(round_number: int, turn_order: Array)
+
+## Forwarded from BattleController. See source for full doc.
+signal turn_started(combatant_id: StringName, is_player: bool)
+
+## Forwarded from BattleController. See source for full doc.
+signal turn_skipped(combatant_id: StringName)
+
+## Forwarded from BattleController. See source for full doc.
+signal structure_changed(combatant_id: StringName, new_value: int, max_value: int, is_player: bool)
+
+## Forwarded from BattleController. See source for full doc.
+signal energy_changed(combatant_id: StringName, new_value: int, max_value: int)
+
+## Forwarded from BattleController. See source for full doc.
+signal heat_changed(combatant_id: StringName, new_value: int, is_overheated: bool)
+
+## Forwarded from BattleController. See source for full doc.
+## NOTE: not emitted in Phase 2-A (status_applied integration gap — see core TODO).
+signal status_applied(combatant_id: StringName, status_id: StringName, duration: int)
+
+## Forwarded from BattleController. See source for full doc.
+signal status_expired(combatant_id: StringName, status_id: StringName)
+
+## Forwarded from BattleController. See source for full doc.
+signal status_ticked(combatant_id: StringName, status_id: StringName, damage: int)
+
+## Forwarded from BattleController. See source for full doc.
+signal combatant_downed(combatant_id: StringName, is_player: bool)
+
+## Forwarded from BattleController. See source for full doc.
+signal forced_switch_required()
+
+## Forwarded from BattleController. See source for full doc.
+signal overheat_triggered(combatant_id: StringName, self_damage: int)
+
+## Forwarded from BattleController. STUB — Part-Break integration pending.
+signal break_region_updated(enemy_id: StringName, region_id: StringName, new_hp: int,
+	max_hp: int, is_broken: bool)
+
+## Forwarded from BattleController. STUB — Part-Break integration pending.
+signal enrage_changed(enemy_id: StringName, broken_count: int, enrage_pct: float)
 
 # ---------------------------------------------------------------------------
 # Per-session state
@@ -139,11 +173,32 @@ func state() -> BattleController.BattleState:
 # ---------------------------------------------------------------------------
 
 func _connect_bc_signals() -> void:
+	# Original 3 signals
 	_bc.battle_ended.connect(Callable(self, "_on_battle_ended"))
 	_bc.battle_start_refused.connect(Callable(self, "_on_battle_start_refused"))
 	_bc.hit_resolved.connect(Callable(self, "_on_hit_resolved"))
-	# Phase 2-A: connect forwarding for view-signals here when they exist on _bc.
+	# Phase 2-A view-signals (12 emitting + 2 stubs)
+	_bc.action_pending.connect(Callable(self, "_on_action_pending"))
+	_bc.action_resolving.connect(Callable(self, "_on_action_resolving"))
+	_bc.round_started.connect(Callable(self, "_on_round_started"))
+	_bc.turn_started.connect(Callable(self, "_on_turn_started"))
+	_bc.turn_skipped.connect(Callable(self, "_on_turn_skipped"))
+	_bc.structure_changed.connect(Callable(self, "_on_structure_changed"))
+	_bc.energy_changed.connect(Callable(self, "_on_energy_changed"))
+	_bc.heat_changed.connect(Callable(self, "_on_heat_changed"))
+	_bc.status_applied.connect(Callable(self, "_on_status_applied"))
+	_bc.status_expired.connect(Callable(self, "_on_status_expired"))
+	_bc.status_ticked.connect(Callable(self, "_on_status_ticked"))
+	_bc.combatant_downed.connect(Callable(self, "_on_combatant_downed"))
+	_bc.forced_switch_required.connect(Callable(self, "_on_forced_switch_required"))
+	_bc.overheat_triggered.connect(Callable(self, "_on_overheat_triggered"))
+	_bc.break_region_updated.connect(Callable(self, "_on_break_region_updated"))
+	_bc.enrage_changed.connect(Callable(self, "_on_enrage_changed"))
 
+
+# ---------------------------------------------------------------------------
+# Forwarders — original 3 signals
+# ---------------------------------------------------------------------------
 
 func _on_battle_ended(outcome: int, enemy_id: StringName, fired_break_events: Dictionary,
 		xp_value: int, completion_bonus_xp: int, is_first_boss_defeat: bool,
@@ -159,3 +214,75 @@ func _on_battle_start_refused(invalid_symbot_ids: Array, offending_parts: Array)
 func _on_hit_resolved(move: MoveDef, damage: int, target: Combatant,
 		sub_target: StringName) -> void:
 	hit_resolved.emit(move, damage, target, sub_target)
+
+
+# ---------------------------------------------------------------------------
+# Forwarders — Phase 2-A view-signals
+# ---------------------------------------------------------------------------
+
+func _on_action_pending(actor_is_player: bool) -> void:
+	action_pending.emit(actor_is_player)
+
+
+func _on_action_resolving() -> void:
+	action_resolving.emit()
+
+
+func _on_round_started(round_number: int, turn_order: Array) -> void:
+	round_started.emit(round_number, turn_order)
+
+
+func _on_turn_started(combatant_id: StringName, is_player: bool) -> void:
+	turn_started.emit(combatant_id, is_player)
+
+
+func _on_turn_skipped(combatant_id: StringName) -> void:
+	turn_skipped.emit(combatant_id)
+
+
+func _on_structure_changed(combatant_id: StringName, new_value: int, max_value: int,
+		is_player: bool) -> void:
+	structure_changed.emit(combatant_id, new_value, max_value, is_player)
+
+
+func _on_energy_changed(combatant_id: StringName, new_value: int, max_value: int) -> void:
+	energy_changed.emit(combatant_id, new_value, max_value)
+
+
+func _on_heat_changed(combatant_id: StringName, new_value: int, is_overheated: bool) -> void:
+	heat_changed.emit(combatant_id, new_value, is_overheated)
+
+
+func _on_status_applied(combatant_id: StringName, status_id: StringName,
+		duration: int) -> void:
+	status_applied.emit(combatant_id, status_id, duration)
+
+
+func _on_status_expired(combatant_id: StringName, status_id: StringName) -> void:
+	status_expired.emit(combatant_id, status_id)
+
+
+func _on_status_ticked(combatant_id: StringName, status_id: StringName,
+		damage: int) -> void:
+	status_ticked.emit(combatant_id, status_id, damage)
+
+
+func _on_combatant_downed(combatant_id: StringName, is_player: bool) -> void:
+	combatant_downed.emit(combatant_id, is_player)
+
+
+func _on_forced_switch_required() -> void:
+	forced_switch_required.emit()
+
+
+func _on_overheat_triggered(combatant_id: StringName, self_damage: int) -> void:
+	overheat_triggered.emit(combatant_id, self_damage)
+
+
+func _on_break_region_updated(enemy_id: StringName, region_id: StringName, new_hp: int,
+		max_hp: int, is_broken: bool) -> void:
+	break_region_updated.emit(enemy_id, region_id, new_hp, max_hp, is_broken)
+
+
+func _on_enrage_changed(enemy_id: StringName, broken_count: int, enrage_pct: float) -> void:
+	enrage_changed.emit(enemy_id, broken_count, enrage_pct)
