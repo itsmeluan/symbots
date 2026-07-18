@@ -3,7 +3,7 @@
 > **Status**: Ready for Review
 > **Author**: Luan + ux-designer
 > **Last Updated**: 2026-07-18
-> **Journey Phase(s)**: Home base / between-encounters (no player-journey map yet — see Open Questions)
+> **Journey Phase(s)**: Home base / between-encounters (validated against game-concept core loop + onboarding; full player-journey map deferred — OQ4 resolved)
 > **Template**: UX Spec
 
 ---
@@ -171,7 +171,7 @@ AC-WS-10.)*
 | Component | Type | Content | Interactive | Pattern |
 |-----------|------|---------|-------------|---------|
 | Slot entry ×8 | Toggle/list item | Slot icon + label (CORE, CHASSIS, CHIPSET, ENERGY CELL, HEAD, ARMS, LEGS, WEAPON); shows equipped part's rarity glyph/glow | Yes — selects the slot | PC-01; selected = highlighted state |
-| Build Summary | Button | Opens full readout (all 11 stats, every active synergy incl. overflow per DCO-1, all passive/active effect names by `display_name`) | Yes | PC-01 → sub-panel |
+| Build Summary | Button | Opens an **in-Workshop overlay** (not a handoff to Inventory — resolves OQ7): full readout of the *current build* — all 11 stats, every active synergy incl. overflow per DCO-1, all passive/active effect names by `display_name` | Yes | PC-01 → in-screen overlay |
 
 **Z3 — Stage**
 | Component | Type | Content | Interactive | Pattern |
@@ -179,18 +179,30 @@ AC-WS-10.)*
 | Symbot composite | Rendered sprite stack | 8-layer live composite (assembly Visual/Audio table); rarity overlays per equipped part; swaps in-frame on equip/preview | Yes (rotate) | new pattern — "Turntable" |
 | Rotate controls | Button ×2 | `‹` `›` manual rotate; idle = slow auto-rotate | Yes | PC-01 |
 | Core badge + XP bar | Data display | `CORE LV n` + XP progress `cur / next` (core-progression reads) | Tap → core detail | PG-01-like bar |
-| Part Picker filmstrip | Horizontal list | Inventory filtered to selected slot, sorted by build-relevance (slot/rarity/family, inventory UI-Req-3/4); under-level parts greyed + "Core level N required" | Yes — tap = set candidate; long-press = inspect | PC-02 + new "Filmstrip" |
+| Part Picker filmstrip | Horizontal **scrolling** list | Inventory filtered to selected slot, sorted by build-relevance (slot/rarity/family, inventory UI-Req-3/4); under-level parts greyed + "Core level N required"; a trailing **`⊞ All ›`** affordance hands off to the Inventory grid (filtered to the slot) and returns the chosen candidate (resolves OQ6) | Yes — tap = set candidate; long-press = inspect | PC-02 + PG-06 + new "Filmstrip" |
 
 **Z4 — Detail Panel**
 | Component | Type | Content | Interactive | Pattern |
 |-----------|------|---------|-------------|---------|
 | Part card | Card | Candidate/equipped part: thumbnail, name, rarity + element + manufacturer badges (each with non-color glyph, accessibility §1.3) | Tap → full detail popover | PC-02 |
-| Stat Comparison | Data table | Headline POWER/ARMOR/MOBILITY: `current → delta` with **up/down arrow glyph** (§2.6 non-color cue); `(i)` expands to full 11 stats | Yes (`i` expand) | new "Stat Delta Row" |
+| Stat Comparison | Data table | Headline **POWER / ARMOR / MOBILITY** (display labels — see mapping note): `current → delta` with **up/down arrow glyph** (§2.6 non-color cue); `(i)` expands to the full 11 canonical stats by their real keys | Yes (`i` expand) | new "Stat Delta Row" |
 | Synergy block | Indicator list | Build-relevant tiers (3–8): active / progressing / inactive states + combined dual-track (Synergy UI-Req-1); pips + "N more to activate"; preview shows would-activate/would-lose distinctly (non-color, UI-Req-3) | Yes — tap tier = effect detail (DCO-4) | new "Synergy Indicator" |
 | PREVIEW button | Button | Try the candidate *on the bot* (composite sprite swap + synergy preview), no commit (DCO-3 explicit touch gesture) | Yes | PC-01 |
 | EQUIP button | Button | Commit the equip (`part_equipped`); displaced part → inventory (AC-SA-04) | Yes | PC-01 |
-| UPGRADE button | Button | (Equipped-part mode) next-tier stat gain + **Scrap cost**; disabled if unaffordable or at tier cap (Common +3) | Yes | PG-05 affordable/disabled |
+| UPGRADE button | Button | (Equipped-part mode) next-tier preview using the **same delta idiom** as a swap — headline 3 + `(i)` full 11 (Part-DB Rule 10 multiplies **all** stats ×1.15→×2.00) — plus a **skill unlock/enhance callout** when `upgrade_effects[next_tier]` exists (Move DB `display_name`); **Scrap cost** (economy-owned, values TBD — resolves OQ5); disabled if unaffordable or at tier cap (Common +3 / Rare+ +5) | Yes | PG-05 affordable/disabled |
 | Build Status banner | Status banner | Combat-legality (EC-CP-05): ✓ "All systems go" (legal) OR ⚠ list of over-level parts blocking combat (non-color icon + text) | Tap → detail when invalid | new "Build Status" |
+
+> **Headline stat mapping (resolves OQ2):** the 11 canonical stat keys (`structure`,
+> `armor`, `resistance`, `physical_power`, `energy_power`, `mobility`, `targeting`,
+> `processing`, `cooling`, `energy_capacity`, `recharge` — symbot-assembly §Formula 1)
+> contain **no aggregate "POWER" key**. The headline row is a curated display summary:
+> - **POWER** = the build's *active* power stat — `physical_power` **or** `energy_power`,
+>   selected by the equipped **Weapon's `damage_type`** (the same rule the basic attack
+>   uses, symbot-assembly line 86). If no Weapon is equipped (or the choice is ambiguous),
+>   show the larger of the two, labelled with which one it is.
+> - **ARMOR** = the literal `armor` key. **MOBILITY** = the literal `mobility` key.
+> - `(i)` expands to **all 11 canonical stats by their real keys** — the headline never
+>   hides a stat, it only curates the first read. *(Verified by AC-WS-02.)*
 
 ### ASCII Wireframe
 
@@ -367,8 +379,10 @@ Target tier: **GAG Basic + selected WCAG 2.1 AA** (per `design/accessibility-req
   Z4 action buttons must not truncate their verbs.
 - **Number formatting:** stat values and the Scrap balance are locale-formatted (thousands
   separator differs — `12,450` vs `12.450`).
-- **Proper nouns:** manufacturer (Ironclad/Scrapjaw/Boltwell) and element (Volt/Thermal/
-  Kinetic) names are proper nouns — whether they localize is **OQ3**.
+- **Proper nouns:** manufacturer (Ironclad/Scrapjaw/Boltwell) **and** element (Volt/Thermal/
+  Kinetic) names **stay canonical across all locales** — they are not translated (resolves
+  OQ3). Only number formatting and the surrounding descriptive/UI strings localize. Keep
+  these names out of the `tr()` string table so no locale can accidentally override them.
 
 ---
 
@@ -377,15 +391,19 @@ Target tier: **GAG Basic + selected WCAG 2.1 AA** (per `design/accessibility-req
 - **AC-WS-01** — Selecting a slot docks a filmstrip filtered to that slot type; parts with
   `level_req > core level` render greyed with "Core level N required" and cannot be set as a
   candidate.
-- **AC-WS-02** — Setting a candidate displays a signed delta for POWER/ARMOR/MOBILITY with an
-  up/down arrow glyph; `(i)` expands to all 11 stats; no build state is written
-  (`compute_stat_delta()` is read-only).
+- **AC-WS-02** — Setting a candidate displays a signed delta for the headline row
+  (POWER = the active power stat by the equipped Weapon's `damage_type`; ARMOR = `armor`;
+  MOBILITY = `mobility`) with an up/down arrow glyph; `(i)` expands to all 11 canonical stats
+  by their real keys; no build state is written (`compute_stat_delta()` is read-only).
 - **AC-WS-03** — `PREVIEW` swaps the composite sprite to the candidate and shows
   would-activate / would-lose synergy states without committing; `✕` restores the equipped
   sprite; `EQUIP` commits, fires `part_equipped`, and moves the displaced part to inventory.
-- **AC-WS-04** — With an equipped part selected and Scrap ≥ cost, `UPGRADE` raises the tier
-  and debits Scrap; with Scrap < cost `UPGRADE` is disabled and states the deficit; at the
-  tier cap it shows "Max tier".
+- **AC-WS-04** — With an equipped part selected, the upgrade preview shows the next-tier
+  delta using the **same headline-3 + `(i)`-full-11 idiom** as a swap (Rule 10 scales all
+  stats), and surfaces a skill unlock/enhance callout whenever `upgrade_effects[next_tier]`
+  is defined. With Scrap ≥ cost, `UPGRADE` raises the tier and debits Scrap; with Scrap < cost
+  it is disabled and states the deficit; at the tier cap (Common +3 / Rare+ +5) it shows
+  "Max tier". *(Resolves OQ5. Scrap cost values are economy-owned, not fixed by this spec.)*
 - **AC-WS-05** — After a core swap that orphans an over-level part, Build Status shows ⚠
   listing each offending part, those parts grey in the rail, and combat entry is blocked
   until resolved (EC-CP-05).
@@ -394,8 +412,12 @@ Target tier: **GAG Basic + selected WCAG 2.1 AA** (per `design/accessibility-req
 - **AC-WS-07** — All interactive targets are ≥ 44×44pt; a keyboard-only user can select a
   slot, set/preview/equip a part, and upgrade using focus + Enter in the documented focus
   order.
-- **AC-WS-08** — The screen opens within ≤ [perf budget, OQ1] ms; equipping a part updates
-  the composite within one frame budget (16.6ms target) with no visible stall.
+- **AC-WS-08** — The screen reaches interactive within **≤ 150 ms** of content-ready
+  (excluding the deliberate art-directed §2.6 fade-in), and the save-on-enter write
+  (≤ 50 ms, ADR-0001) runs deferred without blocking interaction; equipping a part updates
+  the composite within one frame budget (16.6ms target) with no visible stall. *(Budget
+  proposed from ADR-0001 load <100ms / ADR-0004 boot / ADR-0005 microsecond derive; subject
+  to on-device calibration — same posture as battle.md AC-18/19. Resolves OQ1.)*
 - **AC-WS-09** — With reduced-motion enabled, no animation exceeds a static state change;
   auto-rotate is paused; nothing flashes > 3/sec.
 - **AC-WS-10** — Synergy indicators render in state-priority order (active → progressing →
@@ -409,18 +431,39 @@ Target tier: **GAG Basic + selected WCAG 2.1 AA** (per `design/accessibility-req
 
 ---
 
-## Open Questions
+## Resolved Questions
 
-- **OQ1** — Exact screen-open performance budget (ms). Needs architecture/perf confirmation
-  (feeds AC-WS-08).
-- **OQ2** — The three "headline" stats (POWER/ARMOR/MOBILITY) → the real 11-stat vocabulary:
-  are these aggregate labels or literal stats? Confirm against the Stat Pipeline / GDD.
-- **OQ3** — Do manufacturer/element proper nouns localize, or stay canonical across locales?
-- **OQ4** — No player-journey map at `design/player-journey.md` — context-on-arrival
-  assumptions are unvalidated. Template at `.claude/docs/templates/player-journey.md`.
-- **OQ5** — Upgrade UI granularity: per-stat gains or a summary line? Confirm against Part-DB
-  Rule 10 upgrade curve (10/20/40/80/160).
-- **OQ6** — Filmstrip scaling: how does it behave when a slot has many candidates? May need a
-  "see all" handoff to `inventory.md` (grid view).
-- **OQ7** — Is `BUILD SUMMARY` an in-Workshop panel or a handoff to `inventory.md`? Defines
-  the boundary with the (not-yet-written) Inventory screen spec.
+All 7 open questions resolved 2026-07-18 (Luan + ux-designer). Each resolution is
+reflected in the section noted.
+
+- **OQ1 — Screen-open perf budget → RESOLVED.** Interactive within **≤ 150 ms** of
+  content-ready (excluding the deliberate §2.6 fade); save-on-enter (≤ 50 ms, ADR-0001) runs
+  deferred. Proposed from ADR-0001/0004/0005; subject to on-device calibration. *(→ AC-WS-08.)*
+- **OQ2 — Headline stat mapping → RESOLVED.** POWER/ARMOR/MOBILITY are curated display labels,
+  not raw keys. **POWER** = the active power stat selected by the equipped Weapon's
+  `damage_type` (`physical_power` or `energy_power`; larger of the two if no Weapon); **ARMOR**
+  = `armor`; **MOBILITY** = `mobility`. `(i)` always expands to all 11 canonical keys — the
+  headline curates, never hides. *(→ Layout "Headline stat mapping" note + AC-WS-02.)*
+- **OQ3 — Proper-noun localization → RESOLVED.** **Everything canonical** — neither element
+  (Volt/Thermal/Kinetic) nor manufacturer (Ironclad/Scrapjaw/Boltwell) names are translated;
+  kept out of the `tr()` table. Only numbers + descriptive strings localize. *(→ Localization.)*
+- **OQ4 — Player-journey validation → RESOLVED (deferred artifact).** Context-on-arrival is
+  validated against the documented game-concept core loop + onboarding; the full
+  `design/player-journey.md` is deferred until a second screen needs it. *(→ Header.)*
+- **OQ5 — Upgrade UI granularity → RESOLVED.** Reuse the swap delta idiom (headline 3 + `(i)`
+  full 11; Rule 10 scales all stats), plus a skill unlock/enhance callout when
+  `upgrade_effects[next_tier]` exists. Per-tier **Scrap cost values are economy-owned** (not
+  fixed here; the "10/20/40/80/160" placeholder was unsourced — Rule 10 defers cost to a
+  Workshop-System/economy owner). *(→ UPGRADE component + AC-WS-04.)*
+- **OQ6 — Filmstrip scaling → RESOLVED.** Horizontal scrolling strip sorted by build-relevance
+  with a trailing **`⊞ All ›`** handoff to the Inventory grid (filtered to the slot), returning
+  the chosen candidate. *(→ Part Picker filmstrip component.)*
+- **OQ7 — BUILD SUMMARY location → RESOLVED.** In-Workshop **overlay** (current-build readout is
+  Workshop-owned data), **not** an Inventory handoff. Boundary: BUILD SUMMARY = this overlay;
+  the "all owned parts" grid (OQ6 handoff) = the Inventory screen. *(→ Build Summary component.)*
+
+> **Forward contract:** OQ6/OQ7 assume a future `design/ux/inventory.md` (only the GDD
+> `design/gdd/inventory.md` exists today). When that screen is authored it inherits: (a) a
+> slot-filtered grid entry point reachable from the Workshop filmstrip's `⊞ All ›`, returning a
+> candidate; (b) ownership of the part *collection* (browse/filter/scrap), leaving current-build
+> readout to the Workshop's BUILD SUMMARY overlay.
