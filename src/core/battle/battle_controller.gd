@@ -280,11 +280,16 @@ static func _mobility_of(c: Combatant) -> int:
 ## on a benched Symbot's phantom turn so the enemy never acts (bug found 2026-07-18 by
 ## the multi-Symbot view-signal suite — the first test to drive `_run_turns` with a bench).
 func compute_initiative() -> Array:
-	# TODO(Luan): build `roster` from the ACTIVE Symbot + the enemy, each appended only
-	# when `is_alive()`. Use `_ctx.active()` (returns the fielded team[active_index]) and
-	# `_ctx.enemy`. Do NOT use `_ctx.living_team()` — that is what caused the bug.
+	# The roster is the ACTIVE Symbot + the enemy, each appended only while alive.
+	# NOT `_ctx.living_team()` — that put benched Symbots in `turn_order`, giving them
+	# phantom turns so `_run_turns` parked on the bench and the enemy never acted.
+	# Guarding each append keeps a downed active out of the order during a FORCED_SWITCH
+	# window, so the enemy still gets its turn (matches `forced_switch_required`).
 	var roster: Array = []
-	# <-- write the ~4 lines here: append active if alive, append enemy if alive.
+	if _ctx.active().is_alive():
+		roster.append(_ctx.active())
+	if _ctx.enemy.is_alive():
+		roster.append(_ctx.enemy)
 	_ctx.turn_order = initiative_order(roster)
 	return _ctx.turn_order
 
