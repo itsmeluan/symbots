@@ -12,7 +12,10 @@
 extends Node
 
 ## The core EnemyDB instance that holds the indexed catalog. All lookups delegate to it.
-var _db: EnemyDB = EnemyDB.new()
+## Referenced via preload (not the `EnemyDB` class_name) — the autoload singleton is also
+## named EnemyDB and shadows the class_name, so `EnemyDB.new()` here resolves to Nil.
+const EnemyDBCore := preload("res://src/core/content/enemy_db.gd")
+var _db := EnemyDBCore.new()
 
 ## Delegate: indexes [param catalog] into the id→def map.
 ## Called by BootScreen sequencer (ADR-0004 boot step 2), never in _ready.

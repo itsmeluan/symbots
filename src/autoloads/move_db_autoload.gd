@@ -12,7 +12,10 @@
 extends Node
 
 ## The core MoveDB instance that holds the indexed catalog. All lookups delegate to it.
-var _db: MoveDB = MoveDB.new()
+## Referenced via preload (not the `MoveDB` class_name) — the autoload singleton is also
+## named MoveDB and shadows the class_name, so `MoveDB.new()` here resolves to Nil.
+const MoveDBCore := preload("res://src/core/content/move_db.gd")
+var _db := MoveDBCore.new()
 
 ## Delegate: indexes [param catalog] into the id→def map.
 ## Called by BootScreen sequencer (ADR-0004 boot step 2), never in _ready.

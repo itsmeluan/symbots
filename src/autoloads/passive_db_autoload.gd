@@ -12,7 +12,10 @@
 extends Node
 
 ## The core PassiveDB instance that holds the indexed catalog. All lookups delegate to it.
-var _db: PassiveDB = PassiveDB.new()
+## Referenced via preload (not the `PassiveDB` class_name) — the autoload singleton is also
+## named PassiveDB and shadows the class_name, so `PassiveDB.new()` here resolves to Nil.
+const PassiveDBCore := preload("res://src/core/content/passive_db.gd")
+var _db := PassiveDBCore.new()
 
 ## Delegate: indexes [param catalog] into the id→def map.
 ## Called by BootScreen sequencer (ADR-0004 boot step 2), never in _ready.

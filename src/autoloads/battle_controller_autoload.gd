@@ -161,11 +161,29 @@ func submit_action(action: Dictionary) -> void:
 		_bc.submit_action(action)
 
 
+## Record a fired break event on the per-session BattleController so the VICTORY
+## payload accretes a de-duplicated set (Story 014). Called by the Battle screen's
+## Part-Break subscriber once a region's cumulative damage crosses its break_hp.
+## No-op if no battle is active.
+func note_break_event(event_id: StringName) -> void:
+	if _bc != null:
+		_bc.note_break_event(event_id)
+
+
 ## Current FSM state — for test introspection. Returns BATTLE_INIT when no battle active.
 func state() -> BattleController.BattleState:
 	if _bc == null:
 		return BattleController.BattleState.BATTLE_INIT
 	return _bc.state()
+
+
+## The live per-session BattleContext, or null between battles. The Battle screen reads
+## this to refresh its bars inside signal handlers (NEVER in _process — that is the
+## forbidden view_state_polling; a pull inside a signal handler is legal, ADR-0008).
+func context() -> BattleContext:
+	if _bc == null:
+		return null
+	return _bc.context()
 
 
 # ---------------------------------------------------------------------------

@@ -71,10 +71,22 @@ func goto_main_menu() -> void:
 ## Navigate to the Overworld. If the Overworld has been keep-alive'd (hidden during
 ## battle), restores it. If not yet instantiated, creates it.
 ## Only valid after SaveLoad restore + rederive are complete (ADR-0004 §5).
-## TODO (Overworld story): instantiate Overworld, call setup(_ctx), add. On restore
-## from battle: show() + set process_mode = PROCESS_MODE_INHERIT.
+## On restore from battle keep-alive: show() + PROCESS_MODE_INHERIT (idempotent).
 func goto_overworld() -> void:
-	pass  # TODO: instantiate/restore Overworld when authored
+	# Already alive (keep-alive'd during a battle) — restore rather than re-create.
+	if _overworld != null:
+		_overworld.process_mode = Node.PROCESS_MODE_INHERIT
+		_overworld.show()
+		return
+
+	var scene: PackedScene = load("res://src/scenes/overworld_screen.tscn")
+	if scene == null:
+		Log.sink.warn(&"overworld_screen_not_found", {})
+		return
+	var overworld: Screen = scene.instantiate()
+	add_child(overworld)          # _ready runs here — node refs valid for setup()
+	overworld.setup(_ctx)         # inject the ServiceContext (ADR-0008 §1)
+	_overworld = overworld
 
 
 ## Enter battle from Overworld. Hides + disables Overworld (keep-alive); creates
@@ -106,20 +118,17 @@ func enter_battle(encounter_payload: Dictionary) -> void:
 		_overworld.hide()
 		_overworld.process_mode = Node.PROCESS_MODE_DISABLED
 
-	# TODO (Phase 4 / BattleScreen story): instantiate BattleScreen, call
-	# setup(_ctx), add to self. Guard with a null check so import stays clean
-	# while BattleScreen.tscn is not yet authored.
-	# Example (do not activate until BattleScreen exists):
-	#   var battle_scene: PackedScene = load("res://src/scenes/battle_screen.tscn")
-	#   if battle_scene == null:
-	#       Log.sink.warn(&"battle_screen_not_found", {})
-	#       _transitioning = false
-	#       return
-	#   var battle: Screen = battle_scene.instantiate()
-	#   add_child(battle)
-	#   battle.setup(_ctx)
-	#   _active_screen = battle
-	Log.sink.warn(&"battle_screen_stub", {"reason": "BattleScreen not yet authored (Phase 4)"})
+	var battle_scene: PackedScene = load("res://src/scenes/battle_screen.tscn")
+	if battle_scene == null:
+		Log.sink.warn(&"battle_screen_not_found", {})
+		_transitioning = false
+		return
+	var battle: Screen = battle_scene.instantiate()
+	add_child(battle)               # _ready builds the UI
+	battle.setup(_ctx)              # inject ServiceContext + subscribe (ADR-0008 §1)
+	# begin_encounter is BattleScreen-specific (not on the Screen base) — call by name.
+	battle.call(&"begin_encounter", encounter_payload)
+	_active_screen = battle
 	_transitioning = false
 
 
@@ -140,13 +149,43 @@ func _on_encounter_resolved(result: int, encounter_type: int) -> void:
 	_transitioning = false
 
 
-## Open the Workshop screen over the Overworld.
-## TODO (Workshop story): instantiate WorkshopScreen, add as overlay.
+## Open the Workshop over the Overworld. Keeps the Overworld alive but hidden +
+## PROCESS_MODE_DISABLED (same keep-alive discipline as battle entry, ADR-0004 §3), then
+## instantiates + injects the WorkshopScreen as the active foreground screen.
 func open_workshop() -> void:
-	pass  # TODO: implement when WorkshopScreen is authored
+	if _transitioning or _active_screen != null:
+		return  # already have a foreground screen (workshop or battle) — ignore re-entry
+	_transitioning = true
+	get_viewport().gui_release_focus()
+
+	if _overworld != null:
+		_overworld.hide()
+		_overworld.process_mode = Node.PROCESS_MODE_DISABLED
+
+	var scene: PackedScene = load("res://src/scenes/workshop_screen.tscn")
+	if scene == null:
+		Log.sink.warn(&"workshop_screen_not_found", {})
+		_restore_overworld()
+		_transitioning = false
+		return
+	var workshop: Screen = scene.instantiate()
+	add_child(workshop)          # _ready builds the UI
+	workshop.setup(_ctx)         # inject ServiceContext + subscribe (ADR-0008 §1)
+	_active_screen = workshop
+	_transitioning = false
 
 
-## Close the Workshop screen and return to Overworld.
-## TODO (Workshop story): queue_free WorkshopScreen.
+## Close the Workshop and restore the Overworld from keep-alive.
 func close_workshop() -> void:
-	pass  # TODO: implement when WorkshopScreen is authored
+	if _active_screen != null:
+		_active_screen.queue_free()
+		_active_screen = null
+	_restore_overworld()
+	_transitioning = false
+
+
+## Shared keep-alive restore: show + re-enable the Overworld (ADR-0004 §3).
+func _restore_overworld() -> void:
+	if _overworld != null:
+		_overworld.process_mode = Node.PROCESS_MODE_INHERIT
+		_overworld.show()

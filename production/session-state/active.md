@@ -6,6 +6,57 @@ Feature: Presentation-tier authoring complete (all 4 gate gaps closed: hud/main-
 Task: DONE 2026-07-18b → WORKSHOP UX SPEC COMPLETE (`design/ux/workshop.md`, Status=Ready for Review). Signature screen; all 18 sections authored via /ux-design. Layout anchored to a user-supplied reference mock (landscape 3-column: Z1 top bar / Z2 slot rail / Z3 rotating-turntable stage + docked candidate filmstrip / Z4 context detail-panel). Reference reconciled to current canon: (a) MVP = Scrap-only currency (gem/cube counters reserved space, not rendered — cube≈Alpha Designs/blueprints); (b) busy diorama/sparks CUT per art-bible §2.6 calm-stable-background; (c) PREVIEW=try-on-bot (sprite swap + synergy preview, no commit, DCO-3) vs EQUIP=commit `part_equipped`; (d) headline 3 stats POWER/ARMOR/MOBILITY + (i)→full 11 (mapping is OQ2); (e) BUILD STATUS = EC-CP-05 legality banner; (f) UPGRADE added as the MVP Scrap sink (Part-DB Rule 10 curve 10/20/40/80/160), shown when an equipped part is inspected. 2 new-design forks user-approved: PREVIEW/EQUIP semantics + headline-stat set. 9 ACs (AC-WS-01..09), 7 OQs. entity-inventory #25 → "Specced (UX — pending /ux-review)". NEXT: `/ux-review workshop` (author INLINE — no Agent/Task subagents), then the remaining 6 unspecced screens (inventory/world-map/overworld/settings/victory/defeat). PRIOR 2026-07-18a → §3.8 MANUFACTURER-MODEL REFRAME (user co-design): manufacturer = surface-finish + set-synergy identity, ORTHOGONAL to role (mass/§3.2, set by CHASSIS) AND element (color/§4.2). Role UNLOCKED per manufacturer (any manufacturer × any role × any element) to maximize part-combination freedom. Coherence audit: blast-radius tiny — schema (part_def/part_validator: manufacturer/element/chassis_archetype already 3 independent fields), all GDDs, and content needed ZERO changes; only art-bible re-coupled role via a retired "mass tendency" column. Wrote: (1) art-bible §3.8 full rewrite (3-var surface scheme; 3 manufacturers Ironclad/Scrapjaw/Boltwell + **wild = evolved-organic/biome-adaptive** exception; guardrails: seams stay engineered so wild≠fauna, biome variation = shared base + per-terrain overlay §8.2); (2) §3.4 wild far-organic sentence; (3) §3.9 checklist "three surface variables"; (4) full art-bible faction→manufacturer terminology sweep (Doc-Status resolution note, §1 Principle 2, §5.4 enemy read, §8.4 naming token `[manufacturer]`∈{ironclad,scrapjaw,boltwell,wild} + retired-placeholder caveat); (5) entity-inventory #5 → Reference(resolved) + blocker line struck, #3 "× rarity × faction" → "× manufacturer"; (6) game-concept.md coherence pass — fixed the ONE genuine conflict (line 206 "Damage types **and factions** use color coding" → element carries color, manufacturers = surface finish per new model) + 4 synonym cleanups (89/142/173/286 faction→manufacturer). FINAL VERIFY grep design/ = CLEAN (only residual "faction" = generic template examples in empty registry/entities.yaml `entities: []`, not the retired model). Whole-project coherence GUARANTEED per user Message B. **GATE ADVISORY #2 DISSOLVED**: "4 faction names owed by narrative before faction art" (gate-check-...2026-07-17b.md §Advisory #2) RESOLVED — faction/part art unblocked; left gate doc unedited (historical). Memory: project-manufacturer-identities + project-art-bible-deferred-decisions + MEMORY.md index updated. 2 non-blocking notes to user: existing ~16 .tres keep 1-element-per-manufacturer lean (schema permits mixing, open Alpha); role×manufacturer content coverage is part-db roster scope. PRIOR 2026-07-17j → FIRST PRODUCTION WORK: /asset-spec (solo) for entity #1 The Mechanic → design/assets/specs/mechanic-assets.md written (ASSET-001 overworld walk 64×96 · ASSET-002 Oficina idle 256² · ASSET-003 battle-intro cameo 256²; 2 masc/fem variants, palette via ONE shared palette-swap ShaderMaterial). Inline technical pass (no subagent): 0 blocking conflicts, memory ~1.5MB negligible, 1 draw call each; 2 refinements folded (64×96 portrait cell; shared recolor shader + flat indexed regions). Created design/assets/asset-manifest.md (3 assets, all Needed). entity-inventory #1 → Specced. 2 open flags: `char_` naming prefix extends §8.4 (ratify next art-bible touch); confirm tiers/atlas w/ UI programmer at impl. PRIOR: stage.txt advanced Pre-Production → **Production** (user "sim"). Gate report Stage-advance note updated to record it. Prior this session: (1) /ux-review hud|main-menu|pause all APPROVED; (2) /gate-check pre-production RE-RAN → PASS (14/14, 0 blockers, report ...2026-07-17b.md); (3) /asset-spec → design/assets/entity-inventory.md (36 entities + 10 screens). Deferred (correctly, not edited): battle.md in-battle pause-affordance placement + PG-08 fading-log chrome (Open Questions in hud.md/pause.md/art-bible §7.5); 4 faction names (art-bible §3.8) owed by narrative before faction art. NEXT (production, user's choice) → /ux-design the 7 unspecced screens (workshop/inventory/world-map/overworld/settings/victory/defeat), OR /asset-spec entity work, OR pick up sprint-1 stories.
 <!-- /STATUS -->
 
+## ⇒ PLAYABLE VERTICAL SLICE WIRED + VERIFIED (2026-07-18d)
+
+User goal (standing authorization): "keep going until we have a game I can play and test
+(walking on map, finding enemies, battling, building on workshop)." **DONE + headless-verified.**
+
+**Launch (Mac):** `/Applications/Godot.app/Contents/MacOS/Godot --path /Volumes/SSDLuan/Projetos/symbots`
+(or open the project in the Godot editor and press Play — main_scene = `res://src/scenes/game.tscn`).
+
+**The loop that now runs** (all-code placeholder UI, prototype REWRITTEN to production `Screen`
+standards — no import from `prototypes/`):
+- `boot_screen.gd` → loads 4 catalogs + balance, RngService.init, assembles PlayerInventory +
+  starters + SymbotBuild.with_starters + SynergySystem + ServiceContext, `TBC.set_config`,
+  `ScreenManager.set_context` → `goto_overworld()`.
+- `overworld_screen.gd` (NEW) — walk (WASD/arrows in `_physics_process` + tap-to-move; taps in
+  `_unhandled_input` — PROCESS_MODE_DISABLED-safe) into any of 6 enemy markers (real EnemyDB) →
+  `_ctx.screens.enter_battle({enemy_id, encounter_type})`. Has a WORKSHOP button.
+- `battle_screen.gd` (NEW, rewrite of the 744-line prototype) — target ARM/HEAD/CORE (ButtonGroup).
+  Region hits fill the break meter (`floor(dmg × break_spillover)` to structure); CORE hits deal
+  full damage. Break arm/head → `TBC.note_break_event(&"arm_broken")` (the harvest gate). On
+  VICTORY `DropSystem.resolve_drops` gated on the fired break-set → parts land in `ctx.inventory`.
+  CONTINUE → `EventBus.encounter_resolved` → ScreenManager frees battle, restores overworld.
+- `workshop_screen.gd` (NEW) — 8 slots × candidate list from `inventory.parts_for_slot` × live
+  stat readout. Select a harvested part → `preview_swap` delta (pure, no mutation) → EQUIP commits
+  via `SymbotBuild.equip_part` (displaces old part back to inventory). Signal-driven refresh.
+
+**Seam fixes made this session:**
+- `TBC` autoload +`note_break_event()` +`context()` proxies.
+- `ServiceContext` +`balance: BalanceConfig`; wired in boot.
+- `ScreenManager` filled `goto_overworld`/`enter_battle`/`open_workshop`/`close_workshop` +
+  `_restore_overworld` (keep-alive: hide + PROCESS_MODE_DISABLED, restore on return).
+- **`PlayerInventory.add()` alias** — `SymbotBuild.equip_part` calls `_inventory.add(current)` on
+  displacement, but the concrete store only had `receive_part_instance`; the equip tests use a
+  double that has `add`, so this was a latent production-only crash. Fixed by aliasing.
+- Workshop `_on_equip_pressed` re-entrancy: `equip_part` emits `stats_changed`/`part_equipped`
+  synchronously → `_refresh` nulls `_candidate` mid-method; captured `part_id`/`slot` up front.
+
+**Verified headless** (throwaway SceneTree driver, not shipped):
+navigate → battle → break arm (`fired={arm_broken}`) → CORE-kill → VICTORY → parts to inventory →
+overworld restored → open workshop → equip `ironclad_aegis_frame` into CHASSIS → **structure 42→57**
+(matched the previewed +15 delta) → displaced common returned → close → overworld restored. **Zero
+script errors.** Boot smoke clean (`boot_complete{starters:8}`, `overworld_entered{markers:6}`).
+**GUT 956/956 green, 4837 asserts** (unchanged by these edits — nothing broken).
+
+**NOTE for hands-on play:** to harvest, target the enemy's ARM/HEAD until the break bar fills
+(that's the drop gate), THEN switch target to CORE to actually finish it — hitting only a broken
+region deals reduced spillover damage and you'll lose the DPS race (the battle log hints this).
+
+**Not done (out of slice scope):** no save/load persistence across app restarts (session-only
+inventory/build); no XP/leveling on victory; no consumables/switch/flee UI paths; placeholder art
+only (ColorRects/Labels, no sprites). None of these block the walk→fight→harvest→build loop.
+
 ## ⇒ ACTIVE WORK (2026-07-18c) — /team-ui battle pipeline, Phase 3 in progress
 
 **Pipeline**: `/team-ui battle` (review mode = lean). Source of truth = `design/ux/battle.md`

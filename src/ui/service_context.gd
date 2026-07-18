@@ -39,3 +39,13 @@ var progression  ## : CoreProgression
 ## Injected diagnostics channel. Never call push_warning/push_error from a screen —
 ## always route through this LogSink (global_push_diagnostics forbidden, ADR-0002).
 var log: LogSink
+
+## The session's owned-part store (harvest drops + displaced parts). The WorkshopScreen
+## reads this for equip candidates; DropSystem and SymbotBuild write to it.
+## Type is Variant until PlayerInventory is stable (concrete InventorySink, no class_name).
+var inventory  ## : PlayerInventory
+
+## The loaded BalanceConfig (boot step 2b). The Battle screen constructs its per-fight
+## DropSystem with this. Screens never mutate it — read-only tuning data.
+var balance: BalanceConfig
+

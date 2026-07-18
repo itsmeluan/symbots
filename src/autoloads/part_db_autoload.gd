@@ -12,7 +12,11 @@
 extends Node
 
 ## The core PartDB instance that holds the indexed catalog. All lookups delegate to it.
-var _db: PartDB = PartDB.new()
+## Referenced via preload (not the `PartDB` class_name) because the autoload singleton
+## is ALSO named PartDB — the class_name is shadowed by the singleton, so `PartDB.new()`
+## here would resolve to the not-yet-assigned singleton (Nil). (autoload/class_name collision)
+const PartDBCore := preload("res://src/core/content/part_db.gd")
+var _db := PartDBCore.new()
 
 ## Delegate: indexes [param catalog] into the id→def map.
 ## Called by BootScreen sequencer (ADR-0004 boot step 2), never in _ready.

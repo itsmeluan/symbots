@@ -13,7 +13,10 @@
 extends Node
 
 ## The core ConsumableDB instance that holds the indexed catalog. All lookups delegate to it.
-var _db: ConsumableDB = ConsumableDB.new()
+## Referenced via preload (not the `ConsumableDB` class_name) — the autoload singleton is also
+## named ConsumableDB and shadows the class_name, so `ConsumableDB.new()` here resolves to Nil.
+const ConsumableDBCore := preload("res://src/core/content/consumable_db.gd")
+var _db := ConsumableDBCore.new()
 
 ## Delegate: indexes [param catalog] into the id→def map.
 ## Called by BootScreen sequencer (ADR-0004 boot step 2), never in _ready.
