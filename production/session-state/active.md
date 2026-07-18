@@ -1,9 +1,9 @@
 # Active Session State
 
 <!-- STATUS -->
-Epic: Vertical Slice (Pre-Production) — Phases 4a–4d COMPLETE. Full core loop playable + playtest-validated on real core+content.
-Feature: break Rustcrawler arm → PILHAGEM reveal → OFICINA equip (preview==realized delta) → LUTAR DE NOVO on the stronger build. Reward loop confirmed by Luan.
-Task: NEXT → Phase 4e (playtest debrief + REPORT.md, PROCEED/PIVOT/KILL). Two REPORT risk lines: (1) drop_conditions are multipliers-not-gates; (2) single-part reward loop validated, build-composition fantasy out of slice scope.
+Epic: Pre-Production gate-gap closure — /gate-check pre-production returned CONCERNS (4 presentation-tier gaps). User chose "close gaps first, then re-gate". stage.txt stays Pre-Production.
+Feature: UX specs + art bible §5-9. hud.md + main-menu.md + pause.md DONE. art-bible §5-9 + AD-ART-BIBLE sign-off DONE 2026-07-17 (v0.2, all 9 sections; sign-off APPROVED in-role, faction-name decision carried forward). ALL 4 AUTHORING GAPS CLOSED.
+Task: NEXT → /ux-review hud|main-menu|pause (gate quality-check "all key-screen specs passed /ux-review" still needs verdicts — the 3 new specs are In Design), THEN re-run /gate-check pre-production for a clean PASS. Cross-cutting follow-through: battle.md needs a small add for in-battle pause-affordance placement + the PG-08 fading-log chrome refinement (flagged in hud.md/pause.md + art-bible §7.5 Open Questions — do NOT edit battle.md without a /ux-review that acknowledges them).
 <!-- /STATUS -->
 
 ## Session Extract — Vertical Slice Phases 4b–4d COMPLETE + playtest-validated 2026-07-17f

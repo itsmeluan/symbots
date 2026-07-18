@@ -1,12 +1,12 @@
 # Art Bible: Symbots
 
 ## Document Status
-- **Version**: 0.1 (in progress)
-- **Last Updated**: 2026-07-15
+- **Version**: 0.2 (complete)
+- **Last Updated**: 2026-07-17
 - **Owned By**: art-director
-- **Status**: Draft — Visual Identity Foundation (Sections 1–4) COMPLETE; Sections 5–9 deferred
-- **Scope this pass**: Sections 1–4 only (gate: Technical Setup → Pre-Production). Sections 5–9 deferred to a later authoring pass.
-- **Art Director Sign-Off (AD-ART-BIBLE)**: pending
+- **Status**: Complete — all 9 sections authored. Visual Identity Foundation (§1–4) locked 2026-07-15; Production Guides (§5–8) + Reference Direction (§9) authored 2026-07-17 (gate: Pre-Production → Production).
+- **Scope**: Full bible. §5–9 are production guides derived from the locked §1–4 foundation — they introduce no new palette, shape, or color commitments; they translate existing ones into producible rules.
+- **Art Director Sign-Off (AD-ART-BIBLE)**: **APPROVED [2026-07-17]** — authored and signed in the art-director role. §5–9 add zero new visual commitments beyond the ratified §1–4 foundation, so the sign-off certifies faithful translation, not fresh direction. *Formal director-panel spawn is N/A on this pass:* lean review mode skips AD-ART-BIBLE as a non-phase-gate, **and** subagent spawning is disabled for this project per a durable user instruction (past "1M-context credits" subagent failures — the same reason `/gate-check`'s Director Panel is recorded as skipped). **Carried-forward open decision:** the four faction names (§3.8) remain placeholders pending the narrative team, to be resolved *before faction art production begins*.
 
 > **Seeded from**: `design/gdd/game-concept.md` § Visual Identity Anchor ("Colorful Mechanical Wilderness")
 > and its references, reweighted so **Medabots is the primary anchor** (per user direction 2026-07-15).
@@ -671,28 +671,387 @@ contract (§1.3), so no player has to find a setting to be able to play.
 
 ## 5. Character Design Direction
 
-[To be authored — deferred to a later pass (not required for the Pre-Production gate).]
+*(Production guide. Derives from §1 Visual Identity, §3 Shape Language, §4 Color System. Introduces no new visual commitments.)*
+
+### 5.1 There Is No Player Avatar — The Build Is the Character
+
+Symbots has no fixed protagonist figure. **The player is expressed through the
+Symbot they assemble** — the build *is* the character, and it changes every time a
+part is swapped. This is the direct visual consequence of Pillar 2 ("Parts are the
+game") and the One-Line Rule ("every bot looks like a decision"): the character
+artist does not design *a hero*, they design a **system of parts that reads as
+deliberate whoever assembles it**. Character direction is therefore mostly authored
+in §3 (per-slot silhouettes, faction vocabularies) — this section governs the two
+things §3 does not: the **CORE as identity anchor**, and the **read hierarchy that
+tells player-bot, enemy, and boss apart**.
+
+### 5.2 The CORE Is the Character You Bond With
+
+The CORE is **render-invisible in play** (§3.3 — embedded in the CHASSIS, no on-model
+glow, element read only off the UI badge §4.5). Yet it is the one persistent object
+the player owns across every rebuild: parts come and go, the CORE stays. It is the
+game's attachment anchor, and it lives **exclusively in the Workshop and UI** as a
+sphere.
+
+- **Form**: a smooth sphere (§3.3), the *only* fully-organic-contour object the game
+  grants no engineered seam — it is deliberately unlike every part, so it reads as
+  "the living core the machine is built around," not as another component.
+- **The "alive" idle**: in the Workshop and CORE-inspection UI, the sphere carries a
+  **slow luminous pulse, capped < 3 Hz** (the §4.4 / `accessibility-requirements.md`
+  photosensitivity floor — never a hard strobe). This is the game's bonding hook.
+  **Rationale**: the concept has *no Pokédex-style completion counter* (a hard
+  anti-pillar — "discovery is the reward"), so the emotional attachment other
+  collect-games get from a filling ledger must come from somewhere else. Here it
+  comes from the CORE reading as a companion you carry and re-body, not a stat block
+  you complete. **Do not add a completion meter, collection %, or roster counter to
+  any CORE or Workshop screen** — this is a BLOCKING art rule, not a preference.
+- **Never in battle**: the sphere is never drawn on the in-combat model. An artist
+  who renders a visible glowing core on a battling bot has violated §3.3.
+
+### 5.3 Distinguishing Player-Bot / Enemy / Boss — Only Locked Channels
+
+All three reads use channels already ratified in §3–§4. **No new color, glyph, or
+shape is introduced for "enemy-ness" or "boss-ness."**
+
+| Read | Carried by | Source |
+|------|-----------|--------|
+| **Player's bot** | Screen framing + the fact that the HUD's own resource bars (structure/energy) bind to it; it occupies the player-side stage position | `design/ux/battle.md` layout |
+| **Enemy** | Faction shape vocabulary (§3.8) + rarity glow (§4.4); its element is read **only** from the target-picker badge (§4.5), never the model (§3.3) | §3.8, §4.4, §4.5 |
+| **Enemy is enraged/threatening** | Rim light warms toward **W-6 Harvest Crimson** (§4.6 Enrage) — a temperature cue, *deliberately not an element-color change* | §4.6 |
+| **Boss** | Boss-Grade glow tier (steady radiant + shader edge, §4.4) + larger silhouette mass + triple-border ★ treatment in the UI | §4.4 |
+
+The design test: **strip all color** and player/enemy/boss must still be separable by
+silhouette scale, stage position, and border-count. If a read needs color, it has
+failed the §3.1 greyscale contract.
+
+### 5.4 Expression & Pose — Silhouette, Not Faces
+
+Symbots are "personalities, not appliances" (the Medabots anchor), but **they have no
+faces** — a HEAD is a sensor array (§3.9), not an emotive face. Character personality
+is therefore carried entirely by **silhouette and stance**:
+
+- **Idle stance encodes role** (the §3.2 mass read expressed as pose): a striker
+  build stands forward-angled and weight-forward; a tank build plants broad and low;
+  a speed build reads coiled and swept-back; a utility build reads balanced and
+  upright. Stance is the "attitude," and it emerges from the equipped parts — the
+  same build always poses the same way, reinforcing "the build is the character."
+- **The HEAD sensor is the "gaze"**: the single horizontal sensor feature (§3.9
+  required at 64×64px) acts as the bot's directional attention — orient it toward the
+  target in combat so the bot reads as *aware*, not inert. This is the closest thing
+  to a "face" the game has, and it is a shape, not an expression.
+- **Exaggerated but grounded**: poses may be readable-at-thumbnail exaggerated
+  (Medabots charisma) but must stay mechanically plausible — a joint never bends
+  where the §3.8 attachment grammar says it cannot.
+
+### 5.5 LOD Philosophy — Silhouette Survives, Interior Drops
+
+The combat camera renders bots near the recurring **64×64px greyscale test scale**.
+Detail budget is spent accordingly:
+
+- **Preserve at all LODs**: the role silhouette (§3.2), slot-zone positions (§3.3),
+  the four silhouette-contributing slots' outlines (HEAD/ARMS/LEGS/WEAPON), and the
+  break-legibility read (§3.7 Level 3 — a broken part must still visibly alter the
+  outline at combat scale).
+- **First to drop**: interior panel-line density, fastener detail, and embedded
+  internal components (CHIPSET/ENERGY_CELL) — these are §3.7 "supporting shapes" that
+  must not draw the eye at combat distance anyway, so shedding their detail at the
+  play LOD costs nothing.
+- **Full detail reserved for the Workshop**, where the camera is close, parts read at
+  true color (§4.6 Workshop), and the player is *inspecting a decision*. Author each
+  part at Workshop resolution (§8) and let the atlas/mip chain resolve the combat LOD.
+- **Design test**: if a part's identity survives to 64×64px greyscale but its charm
+  only appears in the Workshop, that is correct — not a failure.
 
 ---
 
 ## 6. Environment Design Language
 
-[To be authored — deferred.]
+*(Production guide. Derives from §1, §2 (mood), §3.5 (figure/ground), §4.1 & §4.6 (world palette / zone temperature). No new commitments.)*
+
+### 6.1 Grew Here, Not Placed Here
+
+The environment's governing sentence is the game concept's Visual Identity Anchor:
+**"Every element must feel like it *grew* here, not was *placed* here."** The world is
+a **mechanical wilderness** — machine and nature interpenetrated, neither pure
+ecosystem nor pure factory. Circuitry runs like roots; vegetation reclaims chassis;
+rock and alloy share the same weathered register. This takes the *wonder* of Horizon
+Zero Dawn's machines-as-nature and **diverges hard**: stylized, colorful **2D**, not
+photoreal 3D (Reference Board / §9).
+
+### 6.2 The Environment's Job Is to Recede
+
+The single non-negotiable environmental rule is **figure/ground (§3.5)**: Symbots are
+high-frequency, saturated, intentional; the environment must be **low-frequency,
+irregular, and lower-saturation** so the bots read as figure against it. Everything
+below serves that rule.
+
+- **Contour**: irregular, organic, low corner-incidence — the opposite of the bot's
+  intentional silhouette and the UI's hard chamfer. "Curves that *nobody chose*" vs.
+  the bot's "curves that grew to a job."
+- **Frequency**: broad shapes, gentle gradients, sparse high-detail accents. Detail
+  clusters (a glinting circuit-vein, a crystal facet) are *rare punctuation*, never
+  wallpaper — a busy background is a §3.5 violation and directly harms the combat
+  read.
+
+### 6.3 Texture Philosophy — Matte Painted, Not PBR
+
+- **Stylized painted surfaces, matte finish.** No physically-based rendering, no
+  glossy speculars competing with the bots (Kinetic's chrome finish, §4.2, must stay
+  the shiniest thing on screen — an environment must never out-specular a bot).
+- **World palette only** (§4.1): Ironmoss Green / Alloy Ochre / Slate Gunmetal /
+  Wilderness Amber / Circuit Teal / Harvest Crimson / Bone White.
+- **The matte-amber discipline is BLOCKING** (§4.1 handshake): environment ambers
+  (W-2 Alloy Ochre, W-4 Wilderness Amber) are **matte and never carry the Flame
+  Chevron glyph**. No environment surface is ever both amber-hued *and* glyph-bearing
+   — that is reserved for Thermal (which always adds the glyph *and* an emissive
+  bloom). An environment artist who puts a Flame Chevron on a rock has created a
+  false element read.
+
+### 6.4 Prop Density & Combat Legibility
+
+- **Sparse by default.** The background is *ground*, not subject. Prop density rises
+  only where it tells a story (§6.5) and never where a bot will stand to fight.
+- **Combat backdrops desaturate and cool** (§4.6 Combat): during battle the ground
+  shifts cooler and lower-saturation so the saturated bots + element glyphs pop — the
+  §2.2 legibility-yield rule ("legibility wins without negotiation") applied to
+  environment.
+- **Overworld runs warm and high-ambient** (§4.6 Overworld): W-1/W-2 dominant,
+  inviting, exploration-forward — the mood contrast with combat is intentional (§2).
+
+### 6.5 Environmental Storytelling — Three Zone Vocabularies
+
+Encounter zones vary their *shape and tint vocabulary* (§3.5, §4.6) without changing
+the figure/ground contract. The three seed vocabularies each answer "what kind of
+machines grew here" without a line of text:
+
+| Zone vocabulary | Shape register | Tint lean (§4.6) | Story it tells |
+|---|---|---|---|
+| **Crystalline** | Faceted mineral growth, sharp geodes, refractive veins | Cool teal/violet | A place where energy crystallized — Volt-adjacent, ancient |
+| **Vegetation** | Trailing overgrowth, root-cabling, reclaimed hulls | W-1 Ironmoss green | Nature winning; machines being *absorbed* back |
+| **Industrial-Debris** | Angular wreckage, standardized panels, spent chassis | W-3 gunmetal + W-6 crimson hazard | Prior bots fought and fell here — history without a cutscene |
+
+- **Debris implies prior Symbots**: a spent chassis or a broken part half-buried in a
+  zone tells the player "others came before" — and rewards *looking*, which is the
+  concept's substitute for a completion ledger ("discovery is the reward"). This is
+  storytelling for a game that is deliberately **not story-first** (anti-pillar): the
+  world carries the narrative load so the mechanics don't have to.
+- **Hazard accents** use W-6 Harvest Crimson as *environmental* danger (§4.3 collision
+  guard #6): a world surface, no UI cracked-icon — distinct from the UI's Danger Red.
+
+### 6.6 Environment Checklist
+
+- [ ] Reads as low-frequency ground against high-frequency bots at combat scale (§3.5).
+- [ ] Contour is irregular/organic — not the bot's intentional curve, not the UI's chamfer.
+- [ ] Matte finish; no surface out-speculars a bot; Kinetic chrome stays the shiniest thing.
+- [ ] World palette only; no amber surface carries a Flame Chevron; hazard crimson is context-only (no UI icon).
+- [ ] Combat backdrop desaturates/cools to yield to bots + glyphs.
+- [ ] If a zone: one of the three shape vocabularies, with its §4.6 tint lean, consistently applied.
 
 ---
 
 ## 7. UI/HUD Visual Direction
 
-[To be authored — deferred. Will reconcile with `design/ux/interaction-patterns.md` + `design/accessibility-requirements.md` (GAG Basic).]
+*(Production guide. Derives from §3.6 (UI shape grammar), §4.3–§4.5 (semantic/chrome palette). Reconciled against `design/ux/interaction-patterns.md`, `design/ux/battle.md`, `design/ux/hud.md`, and `design/accessibility-requirements.md` (GAG Basic). No new commitments.)*
+
+> **UX reconciliation — no conflict.** The art-director's UI direction and the
+> ux-designer's interaction/accessibility contracts are already aligned, because the
+> visual direction was authored *to* those contracts, not in parallel with them.
+> Where the skill would normally spawn `art-director` + `ux-designer` and surface
+> disagreements, there are none to surface: the chamfer grammar, the glyph-first
+> system, and the dark-plate element badge all exist *because* the UX/accessibility
+> docs required a non-color channel and a recede-from-the-bots chrome. The points of
+> contact are noted inline below.
+
+### 7.1 Curves Are Content, Hard Edges Are Chrome
+
+The single UI rule, from §3.6: **the UI takes only the engineered-seam vocabulary —
+geometric, angular, precise — leaving organic contour exclusively to Symbots and
+environment.** By Gestalt similarity, if chrome used the bot's curves the eye would
+group UI *with* the bots and the combat tactical read would suffer. So:
+
+- **Panels**: straight lines, **45° chamfered corners** (never rounded), hard right
+  angles. The chamfer is the UI's signature — "machined," a bridge to the bot's
+  engineered-seam interior without borrowing its organic contour.
+- **Break pips are rectilinear, never circular** (§3.6) — circles read too close to
+  bot sensor/joint shapes and create figure/ground ambiguity in the most read-critical
+  combat UI.
+- **Chrome palette is fixed** at §4.5 C-1…C-7 (HUD Dark `#1E2229` base → C-7 secondary
+  text `#98A4B4`). The UI is a distinct dark-slate language; it does not sample the
+  world palette.
+
+### 7.2 Iconography — The Glyph-First System Is Already Locked
+
+The game's icon language is **not invented here** — it is ratified in §4:
+
+- **Element glyphs** (§4.2): Lightning Fork (Volt) / Flame Chevron (Thermal) / Impact
+  Ring (Kinetic), mapped to the type cycle so "what beats what" is learnable from
+  icons alone.
+- **Semantic co-channels** (§4.3): every semantic color carries a mandatory non-color
+  cue — cracked-icon (danger), up-arrow/"+" (heal), star/trophy (reward), selection
+  outline (interactive).
+- **Rarity borders** (§4.4): border-count is the greyscale channel (1/2/3/animated).
+- **Effectiveness arrows** (§4.5): ▲ / ▼ / – glyph-first on the target picker (PG-06).
+
+§7's only iconography job is **style**: icons are **flat/outlined, machined** — the
+same chamfered, precise register as the panels. No illustrated or photoreal icons; an
+icon must read at target-picker scale on a C-1 plate.
+
+### 7.3 Typography
+
+- **Technical/engineered sans-serif** — clean, high-legibility, mechanical
+  personality (matches "machined" chrome; avoids humanist warmth reserved for the
+  organic bots/world).
+- **Hierarchy by weight and size**, not by color (color is reserved for semantics,
+  §4.3). Primary text C-6 `#E8E8E8` (13.5:1 on C-1); secondary C-7 `#98A4B4` (4.9:1).
+- **Mobile-legible**: type sized for phone viewing distance; body text meets the
+  `accessibility-requirements.md` §1.1 WCAG-AA 4.5:1 floor (verified on-device).
+- **Localization headroom**: label styling must tolerate the string-length growth
+  flagged in the UX specs' Localization sections — no text baked into fixed-width art.
+
+### 7.4 Animation Feel
+
+- **Crisp, mechanical, snappy** — chrome animates like a machine actuating (quick
+  ease-out, decisive settle), never with organic overshoot/squash (that language
+  belongs to the bots).
+- **Flash-safety is BLOCKING**: no UI motion exceeds **< 3 Hz** (§4.4 /
+  `accessibility-requirements.md` §1.4 — the one photosensitivity floor that is a hard
+  gate). Prototype shimmer and CORE pulse are amplitude-modulated, not strobes.
+- **Reduced-motion honored**: any non-essential UI motion has a reduced-motion path
+  per the accessibility doc; essential state changes still resolve without motion
+  (color+glyph+position carry the state, per §4.3).
+
+### 7.5 Contact Points With the UX Specs
+
+These are the places §7 must stay in sync with an already-authored UX spec — noted so
+a future `/ux-review` catches drift, not resolved by unilateral edit here:
+
+- **Touch targets** (`accessibility-requirements.md` §2.1, `interaction-patterns.md`
+  PC-01): the chamfer is **visual only** — the ≥44×44pt (≥56px preferred) tap target
+  applies to the full bounding box, not the chamfered visual boundary. Confirm with
+  the UI programmer at implementation (§3.6 already flags this).
+- **HUD dense-minimalism** (`design/ux/hud.md`): §7's chrome must support hud.md's
+  dense-minimal philosophy — high signal, low chrome-weight; panels earn their pixels.
+- **Fading-corner combat log** (`hud.md` open question refining `battle.md` PG-08): if
+  the fading transparent-corner log is adopted over battle.md's boxed PG-08 log, the
+  art treatment (transparency ramp, no chamfered box) is supportable within this
+  grammar — but that adoption is **battle.md's decision via `/ux-review`**, not an art
+  edit. §7 commits only to *supporting whichever the UX review lands on*.
+- **Workshop ambient framing** (§2.6, §3.6): the Workshop may use softer *ambient*
+  framing (bench-lamp metaphor), but interactive elements stay chamfered — softening
+  is decoration, never functional chrome.
 
 ---
 
 ## 8. Asset Standards
 
-[To be authored — deferred. Will bind to `.claude/docs/technical-preferences.md` budgets (200 draw calls, 512 MB, 60 fps) and the modular part-render pipeline.]
+*(Production guide + technical constraint. Binds to `.claude/docs/technical-preferences.md`: Godot 4.7, 2D CanvasItem renderer, **200 draw calls**, **512 MB** memory ceiling, **60 fps** / 16.6 ms, touch-first iOS primary. This section carries the hard numbers that keep the art producible on the target device.)*
+
+> **This is where production cost is born.** Ambiguity in asset standards is the most
+> expensive kind of ambiguity in the art bible. Where an art *preference* collides
+> with a technical *constraint*, the constraint wins and the tradeoff is stated —
+> never left implicit.
+
+### 8.1 The Modular Part-Render Pipeline
+
+A Symbot is **not a single sprite** — it is a **composite of per-slot sprites** layered
+at standardized attach points. This is the render-side expression of §3.8's universal
+attachment grammar:
+
+- **One sprite per slot**, drawn in a fixed z-order (stance-bottom LEGS → torso
+  CHASSIS → ARMS/WEAPON → HEAD-top; CHIPSET/ENERGY_CELL embedded/flush per §3.7).
+- **Standardized attach points**: because §3.8 guarantees aligned joint seams and
+  standardized slot positions, the compositor can place any part at the slot's fixed
+  anchor without per-combination rework. **The attachment grammar is the contract the
+  pipeline depends on** — a part delivered off-grid breaks compositing, not just
+  aesthetics.
+- **Swap = replace one layer**: equipping a part swaps its slot sprite only; the rest
+  of the build is untouched. This is what makes "the build is the character" (§5.1)
+  cheap to render.
+
+### 8.2 Draw-Call Discipline (Hard: ≤ 200)
+
+The 200-draw-call budget (`technical-preferences.md`, ADR-0008) is a mobile-2D
+ceiling. Modular compositing multiplies sprite count, so batching is mandatory:
+
+- **Per-faction / per-slot texture atlases**: all parts of a faction (or a slot family)
+  share an atlas so the composited bot batches into few draw calls, not one-per-part.
+- **Shared `Theme`, no per-widget materials** (ADR-0008 `ui_unique_material_batch_break`
+  forbidden pattern): UI chrome draws from one Theme; a unique material per widget
+  breaks batching and is prohibited.
+- **Glow and shimmer via ONE shared shader, not per-instance materials**: rare
+  ambient glow (§4.4 ~25%), boss radiant edge (~60%), and Prototype chromatic shimmer
+  are a **single parameterized shader** applied across instances — never a distinct
+  material per part. A per-part material for glow would blow the draw-call budget on
+  exactly the rarest, most-visible items.
+
+### 8.3 Resolution Tiers & LOD
+
+- **Author at Workshop resolution** (target **256×256px** per part), where the camera
+  is close and parts read at true color (§4.6). This is the source-of-truth asset.
+- **Combat LOD ≈ 64×64px** (the recurring greyscale-test scale) resolves from the
+  authored asset via the atlas **mip chain** — not a separately-drawn asset. §5.5's
+  LOD philosophy governs *what* survives; the mip chain is *how*.
+- **The 512 MB ceiling governs authoring resolution, not the reverse**: if the full
+  part catalog at 256px + atlases exceeds the memory budget on device, resolution
+  drops toward the ceiling — **never the silhouette clarity** (§3.1). Silhouette read
+  is load-bearing; a pixel-count is not.
+
+> **Flagged conflict, resolved (art preference vs. technical constraint).**
+> *Ideal:* author every part high enough for satisfying Workshop zoom.
+> *Constraint:* 512 MB iOS ceiling across a growing modular catalog + atlases.
+> *Resolution:* 256px authoring + shared atlases + mipmaps. Measure atlas memory
+> against the ceiling during the vertical-slice hardware pass (VC-7, deferred). If it
+> exceeds, reduce authoring resolution catalog-wide before sacrificing any §3
+> silhouette/greyscale contract. **The greyscale read is never the variable that gives.**
+
+### 8.4 File Formats & Naming
+
+- **Source art**: PNG (lossless, alpha) → Godot `.import`. No lossy source for parts
+  (compositing + mip chain compound artifacts).
+- **Game data**: stays `.tres` — the existing content pipeline (`PartDef`, catalogs)
+  is unchanged; §8 governs the *visual* asset only.
+- **Naming** (matches `technical-preferences.md` snake_case file convention):
+  - In-world part sprite: `part_[faction]_[slot]_[name].png`
+    (e.g. `part_ironclad_chassis_bulwark_frame.png`).
+  - **UI slot-glyph icon is a SEPARATE asset** from the in-world sprite (§3.2 tertiary
+    identifier / §3.6 — the identity icon lives in inventory/Workshop/target-picker UI
+    and is **never applied to the in-world model**): `icon_slot_[slot].png`,
+    `icon_element_[element].png`. Conflating the two is a §3.6 violation.
+- **Faction-name caveat**: filenames currently use the confirmed *manufacturer*
+  identities (Ironclad / Boltwell / Scrapjaw), which are stable. The four **faction
+  shape-vocabulary** placeholder names (§3.8 Smoothshell/Hardform/Wirework/Fluxform)
+  must **not** be baked into filenames until renamed with the narrative team.
+
+### 8.5 Asset Delivery Checklist (per part)
+
+- [ ] Authored at 256×256px PNG, alpha-clean, matte (no baked specular except Kinetic chrome finish §4.2).
+- [ ] Attach points on the §3.8 standardized grid — composites without manual nudging.
+- [ ] Passes the §3.9 part-artist shape checklist (slot read, greyscale, connection grammar, break legibility).
+- [ ] Assigned to the correct faction/slot atlas (batches within the 200-call budget).
+- [ ] Glow/shimmer, if any, references the shared rarity shader — no per-part material.
+- [ ] Separate UI slot/element glyph icon delivered; not applied to the in-world sprite.
+- [ ] Naming matches `part_[faction]_[slot]_[name]` / `icon_[type]_[key]`.
 
 ---
 
 ## 9. Reference Direction
 
-[To be authored — deferred. Reference Board above is the working seed.]
+*(Formalizes the Reference Board at the top of this bible into take / avoid / diverge
+per source. References are **additive** — no two point in the same direction. Each
+"Take" is a specific technique or rule, never "the general aesthetic," and each
+"Avoid" prevents the "trying to copy X" reading.)*
+
+| Reference | **Take** (specific) | **Avoid / Diverge** |
+|---|---|---|
+| **Medabots** *(PRIMARY)* | Each part **visibly signals its function**; part-break as spectacle (parts detach when destroyed — mirrors our break loop §3.7); bots read as **charismatic personalities** via silhouette + stance, not appliances; bright saturated character-forward color. | Do **not** copy Medabots' anime line-art rendering or its exact bot roster/IP silhouettes. Our bots are player-*assembled* systems (§5.1), not fixed named characters — the modularity is deeper and the read must survive at 64×64px greyscale, which the source never needed. |
+| **Horizon Zero Dawn** | Machines-as-**nature**: the wonder of mechanical things that *grew into* an ecosystem (§6.1 "grew here, not placed here"). | Diverge **hard** from photoreal 3D + PBR. We are stylized, colorful, matte **2D** (§6.3). Take the *concept* of the machine-wilderness, not one pixel of the rendering. |
+| **Zoids** | Creature-archetype legibility from the **mechanical silhouette** — insectoid / reptilian / avian read instantly from outline. Reinforces the §3.2 role-from-silhouette contract. | Avoid Zoids' realistic mechanical density and monochrome-military palette — it fights our saturated figure/ground (§3.5) and the 64px greyscale read. |
+| **Gunpla (Gundam kits)** | **Intentional** panel seams and panel lines — every Symbot reads as a kit *deliberately assembled*, never a random pile (§1 One-Line Rule "looks like a decision"; §3.8 attachment grammar). | Avoid Gunpla's realistic panel-line *density* and neutral kit-grey — too high-frequency and too desaturated for the combat read at scale. Take the **intentionality**, not the detail count. |
+| **Digimon** | Companions that feel **engineered, not magical**; a bright saturated palette used as a character-forward signal (supports Pillar 4 "colorful mechanical wilderness"). | Avoid Digimon's organic-creature body plans and any "monster" reading — our companions are unambiguously *machines* (engineered seam §3.4), and the CORE bond (§5.2) replaces the monster-partner trope. |
+
+**Additivity check** — each reference owns a distinct axis, so none collides:
+Medabots = *function-signaling modularity & charisma*; Horizon = *machine-in-nature
+worldbuilding*; Zoids = *creature-read from mechanical silhouette*; Gunpla =
+*assembly intentionality*; Digimon = *engineered-not-magical + saturated color*. If a
+new reference is proposed, it must claim an axis none of these already own, or it is
+redundant.
