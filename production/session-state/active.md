@@ -22,12 +22,24 @@ Task: DONE 2026-07-18b → WORKSHOP UX SPEC COMPLETE (`design/ux/workshop.md`, S
   luminance sep = Deuteranopia safety); break pips = 48×24 chamfered tiles (never circular);
   status badges glyph-primary; all VFX single-shot spritesheets (3Hz gate); chamfer ninepatch
   chrome, no rounded corners; shared assets via assets/ui/theme.tres.
-- **Phase 3 (Implementation)**: ⏳ IN PROGRESS. **godot-specialist engine review RUNNING**
-  (background, model:sonnet) → produces Godot 4.7 impl notes (framework, node tree, ProgressBar
-  vs custom for chamfered bars, AnimationPlayer frame-counts for <3Hz gate, signal-driven
-  setup(ctx) binding per ADR-0008, theme.tres wiring, 4.7 gotchas, draw-call budget). NEXT after
-  it returns: hand notes → **ui-programmer** to implement BattleScreen (model:sonnet).
-- **Phase 4**: parallel review (ux-designer + art-director + accessibility-specialist).
+- **Phase 3 (Implementation)**: ⛔ **BLOCKED → pivoted to FOUNDATION-FIRST build.**
+  - godot-specialist engine review DONE (excellent notes — the BattleScreen node-tree/anim/theme
+    blueprint; captured in transcript, resume agent a5e86a91262125a92 to reuse). BUT the review
+    assumed presentation-tier infra that **does not exist**.
+  - **DISCOVERED GAP (codebase inspection 2026-07-18c)**: `project.godot` has ZERO autoloads
+    (ADR-0004 10→11 roster unbuilt); NO `src/ui/`; NO `Screen` base / `ServiceContext` /
+    `ScreenManager` / `Game` root / `BootScreen`. `BattleController` is a per-session `RefCounted`
+    (NOT autoload) declaring only 3 signals (battle_ended, battle_start_refused, hit_resolved) —
+    none of the per-stat runtime view-signals a live HUD binds to. Core battle + content logic IS
+    built. This is the "trailing-UI" antipattern the producer flagged (contract systems LEAD).
+  - **USER DECISION 2026-07-18c**: **Build the foundation first**, then resume battle screen.
+  - **NOW RUNNING** (background, godot-specialist resumed model:sonnet): a FOUNDATION IMPLEMENTATION
+    PLAN (autoload/boot roster · Screen base · ServiceContext · ScreenManager · BattleController
+    view-signal additions · ordered build sequence w/ owners+GUT obligations · 4.6→4.7 re-validation
+    flags · minimal-viable cut). Output = plan for USER APPROVAL, no code yet.
+  - NEXT: review plan → get changeset approval → implement foundation (godot-specialist/
+    gameplay-programmer/ui-programmer, all model:sonnet) → THEN resume /team-ui battle Phase 3.
+- **Phase 4**: parallel review (ux-designer + art-director + accessibility-specialist) — after impl.
 - **Phase 5**: polish.
 
 **Durable constraints in play**: (1) ALL subagent spawns MUST pass `model: sonnet` explicitly
