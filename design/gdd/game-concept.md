@@ -86,7 +86,7 @@ maximize the chance of dropping exactly the component you need?
 1. **Modular Symbot Assembly** — heads, bodies, arms, legs, weapons, and cores are individually swappable and define every stat, ability, and identity of a Symbot
 2. **Targeted Part Hunting** — defeating enemies in specific ways (breaking parts, using damage types, finishing under conditions) increases drop odds for related components
 3. **Tactical Turn-Based Combat** — turn-by-turn battle where move availability is shaped by your build; primary feel is tactical puzzle executing through a build strategy
-4. **Synergy System** — parts from the same manufacturer, boss line, or faction activate set bonuses; cross-faction mixing creates hybrid strategies
+4. **Synergy System** — parts from the same manufacturer or element activate set bonuses; cross-manufacturer mixing creates hybrid strategies
 5. **Workshop Crafting** — scrap + blueprints → new parts; parts can be upgraded, modified, and tuned to alter effects and stats
 
 ---
@@ -139,7 +139,7 @@ The session ends with a clear save point at the workshop. The hook to return: yo
 
 ### Long-Term Progression
 
-Power grows through better parts and smarter builds, not levels. Players unlock new zones by defeating zone bosses (which drop unique parts unavailable elsewhere). Each new zone introduces new part types, new synergy possibilities, and new build hypotheses. The endgame is the hunt for rare, high-tier parts and the discovery of powerful cross-faction synergies.
+Power grows through better parts and smarter builds, not levels. Players unlock new zones by defeating zone bosses (which drop unique parts unavailable elsewhere). Each new zone introduces new part types, new synergy possibilities, and new build hypotheses. The endgame is the hunt for rare, high-tier parts and the discovery of powerful cross-manufacturer synergies.
 
 The long-term "completion" is building the team that feels perfectly yours — not a checklist, but a creative achievement.
 
@@ -170,7 +170,7 @@ Combat is never just about winning. Every fight is an opportunity to farm a spec
 *Design test*: "If we're debating adding a new part, this pillar says: does it create at least one new build archetype or synergy interaction? If not, we redesign it before adding it."
 
 ### Pillar 4: Synergy Is the Endgame
-The highest mastery expression is discovering combinations that interact in unexpected ways. Set bonuses (same manufacturer/faction/boss line), cross-faction hybrids, and emergent interactions reward deep system knowledge.
+The highest mastery expression is discovering combinations that interact in unexpected ways. Set bonuses (same manufacturer or element), cross-manufacturer hybrids, and emergent interactions reward deep system knowledge.
 
 *Design test*: "If we're debating whether a mechanic belongs, this pillar says it must interact with at least two other existing systems — or we're not done designing it yet."
 
@@ -203,7 +203,7 @@ The world looks like nature, but built from gears, circuits, and alloys. Wild Sy
   *Design test*: "If you cover the part slots, does the Symbot still read as a coherent creature type?"
 - **Part readability at a glance**: Each slot type (head, body, arms, legs, weapon, core) occupies a clear visual zone. Mix-and-match parts must look intentional, not random.
   *Design test*: "Can a new player identify which part was swapped in a before/after comparison in 3 seconds?"
-- **Elemental color language**: Damage types and factions use consistent color coding across all parts, effects, and UI. Fire = amber/red, Electric = cyan/yellow, etc.
+- **Elemental color language**: Damage types (elements) use consistent color coding across all parts, effects, and UI — manufacturers are distinguished by surface finish, not color (see art-bible §3.8). Fire = amber/red, Electric = cyan/yellow, etc.
   *Design test*: "Can a player identify the element of an attack from the screen flash alone?"
 
 **Color philosophy**: Saturated but not garish. Primary world tones are warm earth + cool metal. Wild Symbots use higher saturation to signal power level — rare boss parts glow. The workshop is warmer and calmer — a safe space.
@@ -283,7 +283,7 @@ The world looks like nature, but built from gears, circuits, and alloys. Wild Sy
 ### Open Questions
 - **Core loop validation**: Is assembling your own Symbot more satisfying than catching a pre-made one? → Answered by MVP prototype
 - **Optimal part slot count**: How many slots (head, body, arms, legs, weapon, core) creates sufficient depth without overwhelming? → Answered by playtesting
-- **Set bonus threshold**: How many parts from the same faction should trigger a bonus (2? 3? 4?)? → Answered by balance design document
+- **Set bonus threshold**: How many parts from the same manufacturer should trigger a bonus (2? 3? 4?)? → Answered by balance design document
 - **Part-breaking granularity**: How many breakable parts per enemy is satisfying without being tedious? → Answered by prototype
 
 ---

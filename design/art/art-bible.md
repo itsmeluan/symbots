@@ -6,7 +6,7 @@
 - **Owned By**: art-director
 - **Status**: Complete — all 9 sections authored. Visual Identity Foundation (§1–4) locked 2026-07-15; Production Guides (§5–8) + Reference Direction (§9) authored 2026-07-17 (gate: Pre-Production → Production).
 - **Scope**: Full bible. §5–9 are production guides derived from the locked §1–4 foundation — they introduce no new palette, shape, or color commitments; they translate existing ones into producible rules.
-- **Art Director Sign-Off (AD-ART-BIBLE)**: **APPROVED [2026-07-17]** — authored and signed in the art-director role. §5–9 add zero new visual commitments beyond the ratified §1–4 foundation, so the sign-off certifies faithful translation, not fresh direction. *Formal director-panel spawn is N/A on this pass:* lean review mode skips AD-ART-BIBLE as a non-phase-gate, **and** subagent spawning is disabled for this project per a durable user instruction (past "1M-context credits" subagent failures — the same reason `/gate-check`'s Director Panel is recorded as skipped). **Carried-forward open decision:** the four faction names (§3.8) remain placeholders pending the narrative team, to be resolved *before faction art production begins*.
+- **Art Director Sign-Off (AD-ART-BIBLE)**: **APPROVED [2026-07-17]** — authored and signed in the art-director role. §5–9 add zero new visual commitments beyond the ratified §1–4 foundation, so the sign-off certifies faithful translation, not fresh direction. *Formal director-panel spawn is N/A on this pass:* lean review mode skips AD-ART-BIBLE as a non-phase-gate, **and** subagent spawning is disabled for this project per a durable user instruction (past "1M-context credits" subagent failures — the same reason `/gate-check`'s Director Panel is recorded as skipped). **Resolved decision (2026-07-18):** §3.8 was reframed — manufacturer is a **surface-finish + set-synergy identity, orthogonal to role and element** (role = mass/§3.2, element = color/§4.2). The old placeholder shape-vocabulary names (Smoothshell/Hardform/Wirework/Fluxform) are **retired**; the canonical manufacturer identities (Ironclad / Scrapjaw / Boltwell) *are* the vocabularies, and `wild` is the evolved-organic, biome-adaptive exception. No narrative rename is pending.
 
 > **Seeded from**: `design/gdd/game-concept.md` § Visual Identity Anchor ("Colorful Mechanical Wilderness")
 > and its references, reweighted so **Medabots is the primary anchor** (per user direction 2026-07-15).
@@ -56,13 +56,14 @@ a part's role, element category, and slot type from shape and silhouette alone.
 Every part must look engineered to occupy its slot — joint seams align, panel lines
 continue across the boundary, mounting geometry suggests intentional attachment. A
 swapped part must leave the Symbot reading as a deliberate build, not a collision of
-unrelated shapes. Parts from the same manufacturer/faction share a design vocabulary
-(panel-line cadence, fastener language, material register) that makes faction synergies
-visible before stats are inspected; parts from different factions still share the
-universal Symbot attachment grammar, so a mix reads as cross-faction engineering rather
-than visual noise.
+unrelated shapes. Parts from the same manufacturer share a **surface** design vocabulary
+(contour/edge character, panel-line cadence, fastener + material register) that makes
+manufacturer set-synergies visible before stats are inspected; parts from different
+manufacturers still share the universal Symbot attachment grammar, so a mix reads as
+cross-brand engineering rather than visual noise. (Manufacturer vocabulary is surface
+only — it never carries mass/role, which is the CHASSIS/§3.2 channel — see §3.8.)
 
-- **Design test**: When two parts from different factions share a slot boundary, choose
+- **Design test**: When two parts from different manufacturers share a slot boundary, choose
   the panel-line geometry that reads as intentional assembly, not an accidental seam.
 - **Serves**: Pillar 1 (Engineer, don't collect) · Pillar 5 (Build expression — your silhouette is your signature)
 
@@ -334,9 +335,12 @@ built, not grown; nature curves, engineering corners. **Resolution: organic cont
 mechanical surface detail — roundness makes them lovable and character-forward, surface engineering
 makes them machines. That is the exact register Symbots must hit.
 
-**Faction differentiation via ratio**: factions (§3.8) may shift the organic↔engineered ratio (one
-squarer/more geometric, one more fluid), but neither axis ever disappears — no faction is purely
-organic (that is fauna) or purely geometric (that is industrial equipment, not a character).
+**Manufacturer differentiation via ratio**: manufacturers (§3.8) may shift the organic↔engineered ratio (one
+squarer/more geometric, one more fluid), but neither axis ever disappears — nothing is purely
+organic (that is fauna) or purely geometric (that is industrial equipment, not a character). **`wild` sits at
+the far-organic end** of this ratio — evolved/weathered contour — yet its seams and attachment nodes stay
+engineered (it equips and drops parts through the universal attachment grammar); it is a machine that grew,
+never fauna.
 
 **Greyscale test**: interior panel-line geometry must read as crisp manufactured lines on a contoured
 surface, not surface noise. At 64×64px panel lines may vanish (correct) — at thumbnail only the organic
@@ -397,35 +401,65 @@ components (CHIPSET, ENERGY_CELL) must not draw the eye at levels 1–2. Enforce
 (environment), rectilinear/chamfered geometry (UI), and flush-embedded treatment (internal slots). A part
 artist must never design an embedded indicator that competes with CHASSIS/ARMS/LEGS/HEAD/WEAPON.
 
-### 3.8 Faction Shape Vocabularies
+### 3.8 Manufacturer Surface Vocabularies
 
-> **⚠ Placeholder names — DECISION PENDING.** The four names below (Smoothshell, Hardform, Wirework,
-> Fluxform) are **shape-vocabulary labels only**, not final. They must be renamed with the narrative
-> team **before faction art production begins**. (Tracked as a deferred decision.)
+Manufacturer is a **surface-finish identity plus a set-synergy identity** — nothing more. It is
+**orthogonal to both other read-channels**:
 
-**Constraint (Principle 2)**: every faction's parts share the **universal attachment grammar** — joint
-seams align, slot positions are standardized, panel lines can continue across faction boundaries. Faction
-vocabulary is *surface language*, not structural language.
+- **Role** is carried by mass/proportion/stance (§3.2) and set by the CHASSIS archetype (Part DB Rule 3).
+  A manufacturer **never** biases mass.
+- **Element** is carried by color + glyph (§4.2). A manufacturer **never** implies an element.
+- **Manufacturer** is carried by *surface treatment* — how the panels, edges, and fasteners are finished —
+  and by the set-synergy bonus its tag feeds.
 
-**Extensible scheme** — a faction is defined by four variables: (1) primary contour character, (2)
-panel-line cadence, (3) fastener/detail language, (4) mass-distribution tendency. Any new faction is
-specified by setting these four; the result is coherent and distinct without violating the grammar.
+So any manufacturer can wear any role and any element. An Ironclad speed build and an Ironclad tank build
+read as **different silhouettes** (speed taper vs. tank width) with the **same Ironclad finish** (hex-bolts,
+hard planar plating) — and both feed the Ironclad set-synergy bonus. This is the intended
+maximum-combination space: the player concentrates a manufacturer across *any* build to earn its set bonus.
 
-| Faction (placeholder) | Contour | Panel-line cadence | Fasteners | Mass tendency | Reads at 64×64px as |
-|---|---|---|---|---|---|
-| **Smoothshell** | High organic curve; shells/carapaces/seeds; low corner incidence | Sparse, sweeping, following the contour | Absent / flush-countersunk (seamless at a glance) | Centered, compact, "compressed" | Softest, most organic — the "alive" faction |
-| **Hardform** | Geometric, faceted, planar; curves only where function demands | Dense perpendicular grids, hard-ruled straight lines | Prominent hex bolts/rivets, readable at icon scale | Blocky, anchored, heavy | Most armored/industrial |
-| **Wirework** | Skeletal; visible structural members, designed negative space/voids | None — beams, struts, cables; structural not decorative | Cable ties, locking rings, field-assembled look | Light, extended, long/fragile | Lightest, most unusual — voids read instantly |
-| **Fluxform** | Asymmetric, directional, looks mid-motion at rest; mixed organic/angular | Diagonal ~45° slash-directional lines | Quick-release clasps, slide-locks | Forward-weighted, never centered; rear-sweeping legs | Most aggressive — asymmetry/forward-lean reads at thumbnail |
+**Constraint (Principle 2)**: every manufacturer's parts share the **universal attachment grammar** — joint
+seams align, slot positions are standardized, panel lines continue across boundaries. Manufacturer
+vocabulary is *surface language*, never structural language, and never a mass/role statement.
 
-*Wirework attachment note*: because its silhouettes have voids, the seam regions must be **solid
-structural nodes** carrying the universal attachment geometry; the voids sit between nodes, not at them.
+**Three-variable scheme** — a manufacturer is defined by exactly three surface variables: (1) primary
+contour/edge character, (2) panel-line cadence, (3) fastener + material register. (Mass distribution is
+deliberately **absent** — it belongs to role, not to manufacturer.) A new manufacturer is specified by
+setting these three; the result is distinct without touching the role or element channel.
 
-**Cross-faction mix rule**: when a build mixes factions, the seam honors the universal attachment grammar
-(matching joint cuts, compatible slot geometry). The contour/panel contrast then reads as *deliberate
-cross-faction engineering* (the player chose this) rather than accidental mismatch — "two materials
-carefully joined," not "broken." At 64×64px a single-faction bot reads coherent; a two-faction bot reads
-as intentional.
+| Manufacturer | Contour / edge character | Panel-line cadence | Fasteners + material register | Reads at 64×64px as (finish only — any role) |
+|---|---|---|---|---|
+| **Ironclad** | Geometric, faceted, planar edges; curves only where function demands | Dense perpendicular grids, hard-ruled straight lines | Prominent hex bolts/rivets, readable at icon scale; thick-plate heavy-industrial register | Most armored/industrial **finish** |
+| **Scrapjaw** | Asymmetric, directional edges that look mid-motion at rest; mixed organic/angular | Diagonal ~45° slash-directional lines | Quick-release clasps, slide-locks; scavenged-but-weaponized register | Most aggressive **finish** |
+| **Boltwell** | Exposed-structure treatment: visible members and deliberate voids used as *surface detail*, not as light mass | Beams/struts/cabling read as structure; conduits routed on the surface | Cable ties, locking rings, exposed connectors; high-tech instrument register | Most technical/exposed **finish** |
+
+*Boltwell attachment note*: where a Boltwell surface shows voids, the **seam regions must be solid
+structural nodes** carrying the universal attachment geometry; the voids sit between nodes, never at them.
+
+**`wild` — the exception (evolved, not built).** Wild parts carry **no manufacturer tag** (no set-synergy
+contribution) and **no manufactured finish**. Where branded manufacturers read as *factory-built*, wild
+reads as **grown/evolved and adapted to its environment** — its brand-slot is replaced by a **biome
+identity**, not by salvage.
+
+- **Contour** pushes to the organic/weathered end of the §3.4 ratio — but **seams and attachment nodes stay
+  engineered**: a wild bot still equips and drops parts through the universal attachment grammar, so it is a
+  machine that *grew*, never fauna. The organic↔engineered axis shifts; it never disappears (§3.4).
+- **Biome-adaptive surface**: a wild's finish integrates the local zone vocabulary (§6.5) — *crystalline*
+  (mineral, faceted, refractive veins), *vegetation* (overgrowth, root-cabling, reclaimed hulls),
+  *industrial-debris* (scavenged panels, weathered plate). The same wild base reads differently per terrain.
+  Mechanically this mirrors encounter-zone's terrain-keyed spawn sub-pools — the visual is the read of an
+  existing spawn structure, not a new axis.
+- **Role and element are free** exactly as for branded manufacturers: silhouette carries role (§3.2),
+  color/glyph carries element (§4.2).
+
+*MVP scope note*: biome variation is authored as a **shared wild base + a per-terrain palette/detail
+overlay** on the §8.2 shared shader (not a full sprite per biome). It applies to the wild *enemy* read
+(entity #6); dropped wild *parts* carry the evolved-organic finish without per-biome variants in MVP.
+
+**Cross-manufacturer mix rule**: when a build mixes manufacturers, the seam honors the universal attachment
+grammar (matching joint cuts, compatible slot geometry). The contour/panel/fastener contrast then reads as
+*deliberate cross-brand engineering* (the player chose this) rather than accidental mismatch — "two finishes
+carefully joined," not "broken." At 64×64px a single-manufacturer bot reads coherent; a mixed bot reads as
+intentional.
 
 ### 3.9 Shape Design Checklist for Part Artists
 
@@ -450,7 +484,7 @@ An outsourced artist must verify all of the following before delivery:
 **Connection grammar (§3.2, §3.8)**
 - [ ] Seam at every slot boundary is a hard-edged, geometrically precise cut.
 - [ ] Panel lines at boundaries run toward the seam, designed to continue across it.
-- [ ] Universal attachment geometry present and unmodified by faction vocabulary.
+- [ ] Universal attachment geometry present and unmodified by manufacturer vocabulary.
 
 **Break legibility (§3.7, Principle 4)**
 - [ ] Silhouette-contributing slot (HEAD/ARMS/LEGS/WEAPON)? Then removal must visibly change the bot outline. Flush/internal (CHIPSET/ENERGY_CELL/CORE) → exempt.
@@ -459,10 +493,10 @@ An outsourced artist must verify all of the following before delivery:
 **Part identity icon (§3.2, §3.6)**
 - [ ] Part has a UI identity icon (slot glyph + element where relevant) for inventory / Workshop / target-picker — **not** applied to the in-world/in-battle model.
 
-**Faction vocabulary (§3.8)**
-- [ ] Part belongs to an identified faction (or explicit cross-faction "generic").
-- [ ] Contour, panel-line cadence, and fastener language match the faction's four variables.
-- [ ] Faction-crossing builds: seam region is solid and carries standard attachment geometry (even if the silhouette is otherwise skeletal/void).
+**Manufacturer vocabulary (§3.8)**
+- [ ] Part belongs to an identified manufacturer (Ironclad / Scrapjaw / Boltwell), or is `wild` (evolved-organic, biome-adaptive, no manufacturer tag).
+- [ ] Contour, panel-line cadence, and fastener language match the manufacturer's three surface variables (contour / panel-line / fastener) — **not** its mass (mass = role, §3.2, and is manufacturer-independent).
+- [ ] Manufacturer-crossing builds: seam region is solid and carries standard attachment geometry (even if the silhouette is otherwise skeletal/void).
 
 ---
 
@@ -692,7 +726,7 @@ Symbots has **two distinct character layers**, and the art must not confuse them
 
 This is the Pokémon split exactly: the trainer walks the map and picks an appearance;
 the *creature* is what battles and grows. Combat-character direction is therefore
-mostly authored in §3 (per-slot silhouettes, faction vocabularies); §5.3–§5.6 govern
+mostly authored in §3 (per-slot silhouettes, manufacturer vocabularies); §5.3–§5.6 govern
 what §3 does not — the **CORE as the persistent bond anchor** and the **read hierarchy
 that separates player-bot / enemy / boss**.
 
@@ -770,7 +804,7 @@ shape is introduced for "enemy-ness" or "boss-ness."**
 | Read | Carried by | Source |
 |------|-----------|--------|
 | **Player's bot** | Screen framing + the fact that the HUD's own resource bars (structure/energy) bind to it; it occupies the player-side stage position | `design/ux/battle.md` layout |
-| **Enemy** | Faction shape vocabulary (§3.8) + rarity glow (§4.4); its element is read **only** from the target-picker badge (§4.5), never the model (§3.3) | §3.8, §4.4, §4.5 |
+| **Enemy** | Manufacturer surface vocabulary or the `wild` evolved-organic/biome-adaptive finish (§3.8) + rarity glow (§4.4); its element is read **only** from the target-picker badge (§4.5), never the model (§3.3) | §3.8, §4.4, §4.5 |
 | **Enemy is enraged/threatening** | Rim light warms toward **W-6 Harvest Crimson** (§4.6 Enrage) — a temperature cue, *deliberately not an element-color change* | §4.6 |
 | **Boss** | Boss-Grade glow tier (steady radiant + shader edge, §4.4) + larger silhouette mass + triple-border ★ treatment in the UI | §4.4 |
 
@@ -1027,7 +1061,7 @@ attachment grammar:
 The 200-draw-call budget (`technical-preferences.md`, ADR-0008) is a mobile-2D
 ceiling. Modular compositing multiplies sprite count, so batching is mandatory:
 
-- **Per-faction / per-slot texture atlases**: all parts of a faction (or a slot family)
+- **Per-manufacturer / per-slot texture atlases**: all parts of a manufacturer (or a slot family)
   share an atlas so the composited bot batches into few draw calls, not one-per-part.
 - **Shared `Theme`, no per-widget materials** (ADR-0008 `ui_unique_material_batch_break`
   forbidden pattern): UI chrome draws from one Theme; a unique material per widget
@@ -1065,26 +1099,26 @@ ceiling. Modular compositing multiplies sprite count, so batching is mandatory:
 - **Game data**: stays `.tres` — the existing content pipeline (`PartDef`, catalogs)
   is unchanged; §8 governs the *visual* asset only.
 - **Naming** (matches `technical-preferences.md` snake_case file convention):
-  - In-world part sprite: `part_[faction]_[slot]_[name].png`
-    (e.g. `part_ironclad_chassis_bulwark_frame.png`).
+  - In-world part sprite: `part_[manufacturer]_[slot]_[name].png`
+    (e.g. `part_ironclad_chassis_bulwark_frame.png`); `[manufacturer]` ∈ `{ironclad, scrapjaw, boltwell, wild}`.
   - **UI slot-glyph icon is a SEPARATE asset** from the in-world sprite (§3.2 tertiary
     identifier / §3.6 — the identity icon lives in inventory/Workshop/target-picker UI
     and is **never applied to the in-world model**): `icon_slot_[slot].png`,
     `icon_element_[element].png`. Conflating the two is a §3.6 violation.
-- **Faction-name caveat**: filenames currently use the confirmed *manufacturer*
-  identities (Ironclad / Boltwell / Scrapjaw), which are stable. The four **faction
-  shape-vocabulary** placeholder names (§3.8 Smoothshell/Hardform/Wirework/Fluxform)
-  must **not** be baked into filenames until renamed with the narrative team.
+- **Manufacturer token**: filenames use the canonical *manufacturer* identities
+  (Ironclad / Scrapjaw / Boltwell), plus `wild` for the no-manufacturer, evolved-organic
+  parts. These are the §3.8 vocabularies themselves — the old placeholder shape-vocabulary
+  names (Smoothshell/Hardform/Wirework/Fluxform) are retired and must not appear anywhere.
 
 ### 8.5 Asset Delivery Checklist (per part)
 
 - [ ] Authored at 256×256px PNG, alpha-clean, matte (no baked specular except Kinetic chrome finish §4.2).
 - [ ] Attach points on the §3.8 standardized grid — composites without manual nudging.
 - [ ] Passes the §3.9 part-artist shape checklist (slot read, greyscale, connection grammar, break legibility).
-- [ ] Assigned to the correct faction/slot atlas (batches within the 200-call budget).
+- [ ] Assigned to the correct manufacturer/slot atlas (batches within the 200-call budget).
 - [ ] Glow/shimmer, if any, references the shared rarity shader — no per-part material.
 - [ ] Separate UI slot/element glyph icon delivered; not applied to the in-world sprite.
-- [ ] Naming matches `part_[faction]_[slot]_[name]` / `icon_[type]_[key]`.
+- [ ] Naming matches `part_[manufacturer]_[slot]_[name]` / `icon_[type]_[key]`.
 
 ---
 
