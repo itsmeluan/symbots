@@ -2,12 +2,19 @@
 
 This set covers every authored part in `assets/data/parts/` as of 2026-07-18.
 
+> **Location note (moved 2026-07-18):** these are *production sources*, not runtime
+> assets, so they live under `production/art-sources/parts-v1/` — **outside** the
+> `assets/` tree Godot imports. A `.gdignore` in this folder keeps Godot from
+> importing the heavy intermediates. Only the small 256×256 runtime copies live in
+> `assets/art/parts/` and get imported. `manifest.json` → `runtime_path` gives the
+> `res://` path of each runtime copy.
+
 ## Folders
 
 - `final/`: isolated transparent PNGs used as the clean inputs for pixel-art conversion.
 - `source/`: lossless originals on a flat `#ff00ff` key background.
 - `reference/`: the visual reference supplied for this production pass.
-- `../<part_id>.png`: runtime-ready copies named exactly like the authored `.tres` IDs.
+- `res://assets/art/parts/<part_id>.png`: runtime-ready copies named exactly like the authored `.tres` IDs (see each part's `runtime_path` in `manifest.json`).
 
 `final/assembly-anchor.png` fixes the camera, proportions, finish, and installation direction.
 `final/attachment-rig.png` documents the shared neck, shoulder, torso, hip, and weapon-rail

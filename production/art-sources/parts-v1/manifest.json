@@ -19,7 +19,7 @@
       "paired": false,
       "transparent_source": "final/boltwell-arc-blaster.png",
       "keyed_source": "source/boltwell-arc-blaster-keyed.png",
-      "runtime_path": "../boltwell_arc_blaster.png"
+      "runtime_path": "res://assets/art/parts/boltwell_arc_blaster.png"
     },
     {
       "part_id": "boltwell_cell_mk1",
@@ -32,7 +32,7 @@
       "paired": false,
       "transparent_source": "final/boltwell-cell-mk1.png",
       "keyed_source": "source/boltwell-cell-mk1-keyed.png",
-      "runtime_path": "../boltwell_cell_mk1.png"
+      "runtime_path": "res://assets/art/parts/boltwell_cell_mk1.png"
     },
     {
       "part_id": "boltwell_logic_chip",
@@ -45,7 +45,7 @@
       "paired": false,
       "transparent_source": "final/boltwell-logic-chip.png",
       "keyed_source": "source/boltwell-logic-chip-keyed.png",
-      "runtime_path": "../boltwell_logic_chip.png"
+      "runtime_path": "res://assets/art/parts/boltwell_logic_chip.png"
     },
     {
       "part_id": "boltwell_storm_lance",
@@ -58,7 +58,7 @@
       "paired": false,
       "transparent_source": "final/boltwell-storm-lance.png",
       "keyed_source": "source/boltwell-storm-lance-keyed.png",
-      "runtime_path": "../boltwell_storm_lance.png"
+      "runtime_path": "res://assets/art/parts/boltwell_storm_lance.png"
     },
     {
       "part_id": "boltwell_surge_core",
@@ -71,7 +71,7 @@
       "paired": false,
       "transparent_source": "final/boltwell-surge-core.png",
       "keyed_source": "source/boltwell-surge-core-keyed.png",
-      "runtime_path": "../boltwell_surge_core.png"
+      "runtime_path": "res://assets/art/parts/boltwell_surge_core.png"
     },
     {
       "part_id": "boltwell_targeting_array",
@@ -84,7 +84,7 @@
       "paired": false,
       "transparent_source": "final/boltwell-targeting-array.png",
       "keyed_source": "source/boltwell-targeting-array-keyed.png",
-      "runtime_path": "../boltwell_targeting_array.png"
+      "runtime_path": "res://assets/art/parts/boltwell_targeting_array.png"
     },
     {
       "part_id": "ironclad_aegis_frame",
@@ -97,7 +97,7 @@
       "paired": false,
       "transparent_source": "final/ironclad-aegis-frame.png",
       "keyed_source": "source/ironclad-aegis-frame-keyed.png",
-      "runtime_path": "../ironclad_aegis_frame.png"
+      "runtime_path": "res://assets/art/parts/ironclad_aegis_frame.png"
     },
     {
       "part_id": "ironclad_bulwark_frame",
@@ -110,7 +110,7 @@
       "paired": false,
       "transparent_source": "final/ironclad-bulwark-frame.png",
       "keyed_source": "source/ironclad-bulwark-frame-keyed.png",
-      "runtime_path": "../ironclad_bulwark_frame.png"
+      "runtime_path": "res://assets/art/parts/ironclad_bulwark_frame.png"
     },
     {
       "part_id": "scrapjaw_bash_hammer",
@@ -123,7 +123,7 @@
       "paired": false,
       "transparent_source": "final/scrapjaw-bash-hammer.png",
       "keyed_source": "source/scrapjaw-bash-hammer-keyed.png",
-      "runtime_path": "../scrapjaw_bash_hammer.png"
+      "runtime_path": "res://assets/art/parts/scrapjaw_bash_hammer.png"
     },
     {
       "part_id": "scrapjaw_reinforced_servo_arm",
@@ -136,7 +136,7 @@
       "paired": true,
       "transparent_source": "final/scrapjaw-reinforced-servo-arm.png",
       "keyed_source": "source/scrapjaw-reinforced-servo-arm-keyed.png",
-      "runtime_path": "../scrapjaw_reinforced_servo_arm.png"
+      "runtime_path": "res://assets/art/parts/scrapjaw_reinforced_servo_arm.png"
     },
     {
       "part_id": "scrapjaw_rustcrawler_claw",
@@ -149,7 +149,7 @@
       "paired": true,
       "transparent_source": "final/scrapjaw-rustcrawler-claw.png",
       "keyed_source": "source/scrapjaw-rustcrawler-claw-keyed.png",
-      "runtime_path": "../scrapjaw_rustcrawler_claw.png"
+      "runtime_path": "res://assets/art/parts/scrapjaw_rustcrawler_claw.png"
     },
     {
       "part_id": "scrapjaw_scrap_core",
@@ -162,7 +162,7 @@
       "paired": false,
       "transparent_source": "final/scrapjaw-scrap-core.png",
       "keyed_source": "source/scrapjaw-scrap-core-keyed.png",
-      "runtime_path": "../scrapjaw_scrap_core.png"
+      "runtime_path": "res://assets/art/parts/scrapjaw_scrap_core.png"
     },
     {
       "part_id": "scrapjaw_servo_arm",
@@ -175,7 +175,7 @@
       "paired": true,
       "transparent_source": "final/scrapjaw-servo-arm.png",
       "keyed_source": "source/scrapjaw-servo-arm-keyed.png",
-      "runtime_path": "../scrapjaw_servo_arm.png"
+      "runtime_path": "res://assets/art/parts/scrapjaw_servo_arm.png"
     },
     {
       "part_id": "wild_optic_sensor",
@@ -188,7 +188,7 @@
       "paired": false,
       "transparent_source": "final/wild-optic-sensor.png",
       "keyed_source": "source/wild-optic-sensor-keyed.png",
-      "runtime_path": "../wild_optic_sensor.png"
+      "runtime_path": "res://assets/art/parts/wild_optic_sensor.png"
     },
     {
       "part_id": "wild_overdrive_cannon",
@@ -201,7 +201,7 @@
       "paired": false,
       "transparent_source": "final/wild-overdrive-cannon.png",
       "keyed_source": "source/wild-overdrive-cannon-keyed.png",
-      "runtime_path": "../wild_overdrive_cannon.png"
+      "runtime_path": "res://assets/art/parts/wild_overdrive_cannon.png"
     },
     {
       "part_id": "wild_tread_legs",
@@ -214,7 +214,7 @@
       "paired": true,
       "transparent_source": "final/wild-tread-legs.png",
       "keyed_source": "source/wild-tread-legs-keyed.png",
-      "runtime_path": "../wild_tread_legs.png"
+      "runtime_path": "res://assets/art/parts/wild_tread_legs.png"
     }
   ]
 }
