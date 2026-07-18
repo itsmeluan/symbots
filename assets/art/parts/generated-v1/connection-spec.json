@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "view": {
+    "camera": "three_quarter_front_left",
+    "character_facing": "screen_right",
+    "installation_pose": "neutral",
+    "master_visual_reference": "final/assembly-anchor.png",
+    "master_mechanical_reference": "final/attachment-rig.png"
+  },
+  "pivot_rule": "After pixel conversion, place each local pivot at the geometric center of its keyed attachment surface. Do not use the visible-art bounding-box center as the pivot.",
+  "clearance_rule": "No armor, cable, glow, outline, or effect may cross a keyed attachment boundary.",
+  "slots": {
+    "chassis": {
+      "parent_surface": "rig torso mounting cage",
+      "child_surface": "internal torso shell and lower waist locks",
+      "pivot": "center of the torso cage",
+      "required_exposed_children": [
+        "top neck collar",
+        "left shoulder ring",
+        "right shoulder ring",
+        "left hip lock",
+        "right hip lock",
+        "core access seam",
+        "chipset bay seam",
+        "energy-cell bay seam"
+      ]
+    },
+    "head": {
+      "parent_surface": "chassis top neck collar",
+      "child_surface": "head bottom circular keyed socket",
+      "pivot": "center of the neck socket",
+      "axis": "vertical"
+    },
+    "arms": {
+      "parent_surface": "chassis left and right shoulder rings",
+      "child_surface": "arm proximal circular keyed shoulder sockets",
+      "pivot": "center of each shoulder socket",
+      "piece_layout": "left/right pair separated in one logical-slot image"
+    },
+    "legs": {
+      "parent_surface": "chassis left and right hip locks",
+      "child_surface": "leg proximal circular keyed hip nodes",
+      "pivot": "center of each hip node",
+      "piece_layout": "left/right pair separated in one logical-slot image"
+    },
+    "weapon": {
+      "parent_surface": "arm forearm rail",
+      "child_surface": "weapon rear or underside keyed rail block",
+      "pivot": "center of the rail locking block",
+      "forward_axis": "screen_right"
+    },
+    "core": {
+      "parent_surface": "chassis central spherical cradle",
+      "child_surface": "core equatorial cradle groove",
+      "pivot": "sphere center",
+      "visibility": "workshop and UI only"
+    },
+    "chipset": {
+      "parent_surface": "chassis flush chipset bay",
+      "child_surface": "chipset rear edge connector",
+      "pivot": "center of the rear edge connector",
+      "visibility": "flush embedded"
+    },
+    "energy_cell": {
+      "parent_surface": "chassis flush energy-cell bay",
+      "child_surface": "cell rear keyed plug and lock lip",
+      "pivot": "center of the keyed rear plug",
+      "visibility": "flush embedded"
+    }
+  }
+}
