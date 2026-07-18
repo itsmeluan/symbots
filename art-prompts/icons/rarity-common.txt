@@ -1,0 +1,36 @@
+ASSET: Icon — Rarity Frame: COMMON
+TARGET FILE: assets/art/icons/rarity_common.png
+CANVAS: 72x72 px (rarity frame — wraps around a 64x64 part icon; 4px border on all sides)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: COMMON rarity frame. Canvas 72x72 px. Frame ring, transparent center.
+
+A frame overlay that wraps around a 64x64 part or consumable icon to communicate
+its rarity tier. The part icon renders INSIDE this frame; this frame is composited
+ON TOP of the icon as a border treatment.
+
+Per art-bible §4.4: Common = "Single Gunmetal border, 'COMMON' label. Greyscale read: 1 border."
+
+FRAME ANATOMY:
+- OUTER DIMENSIONS: 72x72 px
+- CENTER TRANSPARENT ZONE: 64x64 px (the part icon shows through here; alpha = 0)
+- BORDER: 4px on all sides (the difference between 72 and 64 divided by 2)
+- CHAMFERED CORNERS: 45-degree cuts at all four corners, ~5px diagonal
+  (the chamfer fits within the 4px border — a subtle cut at each corner of the 72px frame)
+- BORDER COLOR: C-5 Divider/Chamfer #4B5668 (the Slate Gunmetal border)
+- BORDER FILL: Flat C-5 #4B5668 — single solid border line, no inner/outer division
+- NO GLOW: Common has zero glow treatment
+- LABEL: No label text baked into this sprite. The "COMMON" label is placed by the UI programmer.
+
+GREYSCALE READ: A single mid-grey border. One distinct ring of color. This is the
+lowest-tier read — minimal, unadorned, functional.
+
+RARITY HIERARCHY POSITIONING:
+This sprite establishes the BASELINE that all higher-rarity frames build upon.
+Common = 1 border, no pip, no glow. Rare = 2 borders + pip. Boss = 3 borders + star.
+Prototype = animated border + warning. The escalation is legible in greyscale by border count.
+
+NEGATIVE: No glow. No extra borders. No pip markers. No label text baked in.
+NO ROUNDED CORNERS (chamfer only). No color other than C-5 #4B5668. No organic curves.
+No photoreal.

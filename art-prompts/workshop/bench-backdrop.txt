@@ -1,0 +1,72 @@
+ASSET: Workshop — Bench Backdrop (Workshop screen background)
+TARGET FILE: assets/art/workshop/bench_backdrop.png
+CANVAS: 1024x600 px (full workshop screen background — iOS landscape viewport)
+PERSPECTIVE: Slight front-facing angle — the view from the mechanic's position looking at the bench
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Workshop background: Bench Backdrop. Canvas 1024x600 px.
+
+The full-screen background for the Workshop / Oficina build screen. Per art-bible §2.6:
+"Neutral-to-warm indoor workshop light from above and slightly front — an articulated
+bench lamp. Even, high-ambient, low-shadow; every slot and attachment point clearly lit
+with no boundary-obscuring shadow. Background darker than subject but controlled and
+stable — no flicker, no atmospheric motion."
+
+MOOD: The lowest-energy state in the game. "The workshop as a laboratory." Focused,
+warm, exact, unhurried. The mechanic is at the bench — this is THEIR space.
+
+COMPOSITION:
+The backdrop depicts the workshop environment behind where the bot would be displayed.
+The bot and its part slots are composited on TOP of this background — so this image
+should contain NO robot sprites and NO slot frames (those are separate UI assets).
+
+BACKGROUND ELEMENTS:
+- WORKBENCH SURFACE: a sturdy industrial bench across the lower 30% of the image.
+  Surface material: Slate Gunmetal #374350 with Alloy Ochre #C49A35 wear marks.
+  The bench surface has faint panel-line geometry (Ironclad-adjacent machined surface).
+  Some tools implied on the bench edge (silhouettes of a wrench, some bolts, a tray)
+  but LOW-DETAIL and NOT the visual focus — they recede as background props.
+- BENCH LAMP: an articulated lamp arm visible in the upper portion, its head aimed
+  downward-center where the bot display area would be. The lamp is the warm light
+  source. Warm amber-white glow from the lamp head (not Thermal element — workshop
+  light is practical/physical). The lamp arm is Slate Gunmetal, functional-looking.
+- TOOL STORAGE / SHELVING: implied shelving or pegboard in the upper-left or
+  upper-right background areas — LOW-DETAIL silhouettes of organized tools,
+  part bins, components. Reads as "an engineer's organized workspace" without
+  any single item competing for attention.
+- WALL SURFACE: the background wall above the bench. Darker than the bench surface
+  (Slate Gunmetal #374350 to HUD Dark #1E2229 range). Some faint panel-line texture
+  but matte and receding. Possibly a faint circuit-trace pattern (Circuit Teal #2B6E68
+  at very low opacity) suggesting this is the Oficina of a field mechanic who lives
+  in the mechanical wilderness.
+
+LIGHTING TREATMENT (art-bible §2.6):
+- WARM KEY: the bench lamp casts warm neutral-to-warm light on the center of the
+  image (the bot-display zone). This is where the bot sprite will appear.
+- HIGH AMBIENT FILL: the entire scene has a raised ambient light level — no deep
+  dark shadows anywhere. The workshop is "fully lit, every corner seen."
+- ZERO VIGNETTE: unlike the overworld or combat screens, the Workshop has NO
+  atmospheric vignette at the edges. Every corner reads at near-equal ambient brightness.
+- NO ATMOSPHERIC MOTION: this is a completely still backdrop. No flicker, no pulse,
+  no ambient particle effects.
+
+CENTER ZONE (the bot-display area):
+The center of the image (roughly 400x400 px centered) should be the most evenly lit,
+least-detailed zone — a clean lit surface where the modular bot will be composited
+on top. Do not place any foreground objects in this zone.
+
+PALETTE (art-bible §2.6 / §4.6 Workshop):
+Slate Gunmetal #374350 dominant (bench, walls, tools); Alloy Ochre #C49A35 on
+worn metal surfaces; Bone White #F2EDDF on structural highlights at bench edges;
+Circuit Teal #2B6E68 as very subtle background circuit traces; Wilderness Amber
+#C4721A on the lamp warm-light area only (matte, NO Flame Chevron).
+
+GREYSCALE TEST: The scene reads as a well-lit interior workshop with a bench,
+lamp, and tool storage. Depth is implied by relative brightness (bench = brighter,
+wall = darker) not by contrast or dramatic shadow.
+
+NEGATIVE: No bot sprites. No slot frames. No UI chrome. No HUD elements.
+No dark atmospheric vignette at edges. No flickering light. No dramatic shadows.
+No Flame Chevron glyphs on ANY surface (the warm amber lamp light is physical light,
+not a Thermal element marker). No outdoor environment elements. No photoreal. No PBR.

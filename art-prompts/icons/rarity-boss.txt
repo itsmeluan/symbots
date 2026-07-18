@@ -1,0 +1,38 @@
+ASSET: Icon — Rarity Frame: BOSS-GRADE
+TARGET FILE: assets/art/icons/rarity_boss.png
+CANVAS: 72x72 px (rarity frame — wraps around 64x64 part icon)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: BOSS-GRADE rarity frame. Canvas 72x72 px. Frame ring, transparent center.
+
+Per art-bible §4.4: Boss-Grade = "Triple border + star + accent band. Steady radiant
+glow (~60%) + shader edge. Greyscale read: 3 borders."
+
+FRAME ANATOMY:
+- OUTER DIMENSIONS: 72x72 px
+- CENTER TRANSPARENT ZONE: 60x60 px (alpha = 0)
+- BORDER STRUCTURE — THREE DISTINCT BORDERS:
+  - OUTERMOST BORDER: 2px, Reward Gold #E8B820 — the gold treatment signals
+    "exceptional item" (Reward Gold semantic, art-bible §4.3 star/trophy association)
+  - MIDDLE BORDER: 1px, C-6 UI White #E8E8E8 at 1px gap from the outer border
+  - INNER BORDER: 1px, C-5 Divider #4B5668 at 1px gap from the middle border
+  - Total border stack depth: ~7px from outer edge to inner edge of the stack
+- CHAMFERED CORNERS: 45-degree cuts at all four corners, ~5px diagonal
+- STAR MARK: a ★ star shape placed at the top-center or lower-right of the frame.
+  Size: approximately 8x8 px. Filled Reward Gold #E8B820. This is the non-color
+  Boss-Grade marker — larger than the Rare diamond pip, the star shape is distinct.
+- ACCENT BAND: a thin 1px line of Reward Gold #E8B820 running along the top inner
+  edge of the frame (just inside the inner border) — "accent band" per §4.4.
+- STEADY RADIANT GLOW: ~60% opacity element-colored glow bleeding outward from the
+  outermost border (the engine applies the element color at runtime; in this generic
+  frame sprite the glow is a warm gold-tinted radiance from the outer gold border).
+  The glow is 4-5px wide outward from the border, falling off from 60% to 0%.
+
+GREYSCALE READ: THREE distinct border lines (triple border) + the star mark.
+The border count (3 vs Rare's 2 vs Common's 1) is the greyscale rarity signal.
+The star is larger and more prominent than the Rare diamond pip.
+
+NEGATIVE: No four borders (Prototype has animated/irregular, not four clean ones).
+No animated elements in this still sprite. NO ROUNDED CORNERS. No organic curves.
+No label text. No photoreal.

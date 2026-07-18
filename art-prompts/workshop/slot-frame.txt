@@ -1,0 +1,48 @@
+ASSET: Workshop — Equip Slot Frame (empty state)
+TARGET FILE: assets/art/workshop/slot_frame.png
+CANVAS: 80x80 px (9-slice slot frame; part icon renders inside; frame is composited on top)
+9-SLICE MARGINS: Left 8px, Right 8px, Top 8px, Bottom 8px
+
+Also deliver a 64x64 px inner-transparent variant (the visible frame area is 80x80;
+the inner transparent zone is 64x64, centered — 8px frame on all sides).
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Workshop: Empty Equip Slot Frame. Canvas 80x80 px. 9-slice frame, transparent center.
+
+The equip slot chrome in the Workshop screen. There are 8 equip slots (one per slot
+type: CORE, CHASSIS, CHIPSET, ENERGY_CELL, HEAD, ARMS, LEGS, WEAPON). This frame
+is the EMPTY state — no part is equipped in this slot. The part icon renders inside
+the 64x64 transparent center when a part is equipped.
+
+Per art-bible §2.6: Workshop interactive elements stay chamfered even if the ambient
+Workshop framing can be slightly softer. The slot frames ARE interactive (the player
+taps to equip/unequip) so they use strict chamfered geometry.
+
+FRAME ANATOMY:
+- OUTER: 80x80 px
+- CENTER TRANSPARENT: 64x64 px (alpha = 0) — the part icon renders here
+- FRAME BORDER: 8px on all sides
+- OUTER EDGE: 2px C-5 Divider #4B5668
+- FRAME BODY (the 8px zone): C-2 Mid Panel #2C3340
+- INNER EDGE: 1px C-5 #4B5668
+- CHAMFERED CORNERS: 45-degree cuts at all four corners, ~8px diagonal (fits
+  within the 8px margin without overlapping the transparent center)
+
+EMPTY-STATE INDICATOR:
+When empty, the 64x64 transparent center zone shows the bench backdrop through it,
+but the game engine typically places a SLOT GLYPH ICON (from the icons/ set) in the
+center at ~50% opacity to indicate which slot type this frame represents. Do NOT
+bake any slot glyph into this sprite — the glyph is overlaid by the UI programmer.
+
+SUBTLE EMPTY INDICATOR: A faint dotted or dashed inner border at the edge of the
+transparent zone (1px, C-5 at ~40% opacity) — a very subtle "empty" visual cue that
+reads as "this slot awaits a part." Optional: a very faint X or + mark at the center
+of the transparent zone at ~20% opacity. Keep this extremely subtle — the slot glyph
+icon placed by the UI programmer carries the primary "empty slot" read.
+
+GREYSCALE TEST: The frame reads as a chamfered-corner square border. The center
+transparent zone is clearly distinct from the border zone by contrast.
+
+NEGATIVE: NO ROUNDED CORNERS. No part icon baked in. No slot glyph baked in.
+No organic curves. No glow in empty state. No photoreal.

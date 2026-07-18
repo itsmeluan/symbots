@@ -1,0 +1,47 @@
+ASSET: Workshop — Equip Slot Frame (filled/occupied state)
+TARGET FILE: assets/art/workshop/slot_frame_filled.png
+CANVAS: 80x80 px (9-slice frame; same geometry as slot-frame.txt)
+9-SLICE MARGINS: Left 8px, Right 8px, Top 8px, Bottom 8px
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Workshop: Filled/Occupied Equip Slot Frame. Canvas 80x80 px. 9-slice, transparent center.
+
+The FILLED state variant of the Workshop slot frame. Used when a part is currently
+equipped in this slot. The part icon renders inside the 64x64 center; this frame
+overlays on top to show the occupied/filled visual treatment.
+
+VISUAL DIFFERENCE FROM EMPTY SLOT FRAME:
+The filled frame communicates "this slot has a part — it is occupied and active."
+
+ANATOMY (same 80x80 geometry as slot-frame.txt):
+- CENTER TRANSPARENT: 64x64 px (alpha = 0) — part icon renders here
+- FRAME BORDER: 8px on all sides
+- OUTER EDGE: 2px C-4 Active/Selected #4090CC (Info Blue) — the slot "lights up"
+  with the interactive/selected semantic when a part is installed
+- FRAME BODY: C-3 Interactive Surface #3A4455 — one step brighter than the empty
+  frame's C-2 body, communicating "active/occupied"
+- INNER EDGE: 1px C-4 #4090CC — the selection color carries through to the inner edge
+- CHAMFERED CORNERS: identical geometry — same 45-degree cuts, same ~8px diagonal
+
+FILLED-STATE ADDITIONAL TREATMENTS:
+- SOFT INNER GLOW: a 3px soft Info Blue #4090CC glow bleeding inward from the inner
+  edge at ~20% opacity — the slot reads as "powered" / "live" when a part is in it
+- TOP EDGE ACCENT: 1px lighter line at the top inner edge (C-4 at 60%) — the
+  bench lamp "catches" the top of the frame differently when a part is present
+- RARITY OVERLAY NOTE: the rarity frame (from icons/rarity-*.png) composites OVER
+  the part icon AND INSIDE this slot frame — the slot frame is the outermost layer.
+  The rarity frame must read inside the slot frame's inner area.
+
+SELECTED/HOVERED VARIANT (optional, same canvas):
+When the player is hovering over a filled slot to swap or inspect:
+- Outer edge brightens to C-6 UI White #E8E8E8
+- Soft glow intensifies to ~35%
+
+GREYSCALE TEST: The filled frame is brighter (C-3 body, C-4 border) vs. the empty
+frame (C-2 body, C-5 border). The luminance difference communicates "something is
+here" in greyscale.
+
+NEGATIVE: NO ROUNDED CORNERS. No part icon baked in. No rarity frame baked in.
+No organic curves. No element color on the frame border (Info Blue only — element
+colors live on the part icon and rarity frame inside). No photoreal.

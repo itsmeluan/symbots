@@ -1,0 +1,45 @@
+ASSET: Icon — Element Glyph: KINETIC (Impact Ring)
+TARGET FILE: assets/art/icons/element_kinetic.png
+CANVAS: 32x32 px (element glyph icon, colored)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: KINETIC element glyph. Canvas 32x32 px. Colored icon on transparent background.
+
+The canonical Kinetic element glyph. Per art-bible §4.2: the Kinetic glyph is the
+Impact Ring — "concentric circles."
+
+GLYPH DESIGN — IMPACT RING:
+Two or three concentric circles, centered, like a ripple or shockwave from an impact.
+The canonical shape:
+- OUTER RING: the largest circle, 2-3px stroke, outermost border
+- MIDDLE RING: a circle approximately 65% the diameter of the outer, same stroke
+- INNER DOT/CIRCLE: a small solid circle or filled center dot at the exact center
+  (the "impact point" — where the concentric rings originate from)
+- The rings are PERFECT CIRCLES (or as close as pixel art allows at 32x32)
+- All rings share the same center point exactly
+- Each ring is the same stroke weight (2px)
+- Gaps between rings are equal (the spacing reads as even ripple intervals)
+- Centered within the 32x32 canvas with ~3px margin from the outer ring to the edge
+
+COLOR: Kinetic Silver #D8DDE6 on transparent background. Solid filled rings
+(not filled discs — the rings are outlines/circles, the spaces between are transparent).
+The center dot is solid silver.
+
+IMPORTANT — KINETIC VS STRUCTURAL WHITE (art-bible §4.2 note):
+The Kinetic glyph renders on a C-1 dark plate (#1E2229) per the art-bible §4.2 rule:
+"The Kinetic UI badge always renders on a fixed dark plate (#1E2229, target ≈7.5:1)
+so it never floats on an ambiguous background." Design the glyph to read clearly on
+that dark plate — silver on near-black is the render context.
+
+DISTINCTION FROM UI ELEMENTS: Circles are FORBIDDEN as UI break pips (art-bible §3.6).
+But the Kinetic Impact Ring is an ELEMENT GLYPH, not a UI pip — it lives on the element
+badge (dark plate), not in the break pip row. It is the exception that proves the rule:
+the glyph is round BECAUSE it communicates physical impact, never because it is a UI control.
+
+GREYSCALE TEST: Concentric circles at 32x32 read as an impact/ripple/shockwave pattern.
+The center dot anchors the "impact point" read.
+
+NEGATIVE: No Lightning Fork shape. No Flame Chevron shape. No filled solid disc (rings only,
+with transparent gaps between them except for the center dot). No square or angular
+geometry on the rings themselves. No photoreal. No soft edges (crisp pixel circles).

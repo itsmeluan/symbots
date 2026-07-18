@@ -1,0 +1,37 @@
+ASSET: Icon — Element Glyph: VOLT (Lightning Fork)
+TARGET FILE: assets/art/icons/element_volt.png
+CANVAS: 32x32 px (element glyph icon, colored)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: VOLT element glyph. Canvas 32x32 px. Colored icon on transparent background.
+
+The canonical Volt element glyph used on the element badge (target-picker PG-06),
+part icons, move cards, and status effect indicators throughout the game.
+Per art-bible §4.2: the Volt glyph is the Lightning Fork — "bifurcated diagonal bolt."
+
+GLYPH DESIGN — LIGHTNING FORK:
+A diagonal lightning bolt that BIFURCATES (splits into two) at its lower end.
+The canonical shape:
+- Main bolt: a thick diagonal stroke running from upper-left to center-right,
+  with a sharp angular zig-zag (the lightning kink — one angular bend in the middle)
+- Fork: at the lower end of the bolt, the line splits into TWO diverging tips
+  (lower-left and lower-right directions) — the "fork" that distinguishes this from
+  a plain lightning bolt
+- The fork split is the most important feature — it makes the Volt glyph unique
+  and distinguishes it from a generic lightning icon
+- Bold, 3px stroke minimum, clean hard edges (no soft brush strokes)
+- Centered within the 32x32 canvas with ~3px margin on all sides
+
+COLOR: Volt Cyan #2FE8E8 on transparent background.
+Render as a solid filled glyph (not outline only — solid cyan shape).
+
+VERIFIED CONTRAST ON C-1 #1E2229 DARK PLATE: Volt cyan ≈ 7.2:1 (per art-bible §4.5).
+The glyph always renders on a C-1 plate in the game — design it to read clearly there.
+
+GREYSCALE TEST: The Lightning Fork shape reads as a bifurcated lightning bolt
+in greyscale. The bifurcation (the fork) is the non-color shape channel.
+
+NEGATIVE: No plain single-tip lightning bolt (must bifurcate). No Thermal Flame
+Chevron shape (different glyph). No circle (that is Kinetic). No soft edges.
+No animated shimmer in this still icon. No photoreal.

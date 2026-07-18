@@ -1,0 +1,42 @@
+ASSET: Icon — Element Glyph: THERMAL (Flame Chevron)
+TARGET FILE: assets/art/icons/element_thermal.png
+CANVAS: 32x32 px (element glyph icon, colored)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: THERMAL element glyph. Canvas 32x32 px. Colored icon on transparent background.
+
+The canonical Thermal element glyph. Per art-bible §4.2: the Thermal glyph is the
+Flame Chevron — "upward-stacked Vs."
+
+GLYPH DESIGN — FLAME CHEVRON:
+Two or three V-shapes stacked vertically, each pointing UPWARD, with the larger
+V at the bottom and smaller Vs above — like a flame rising through upward chevrons.
+The canonical shape:
+- BOTTOM V: the widest chevron, opening at the base, tips pointing up (the largest)
+- MIDDLE V: a narrower chevron above and centered on the bottom V, same upward orientation
+- TOP V (optional): a small narrow chevron or single upward point at the top
+- The stacked-V arrangement reads like a stylized flame or heat-rising pattern
+- The chevrons are angled lines (not curved) — this is a mechanical/engineering glyph,
+  not an organic flame shape. Hard straight edges, angular chevron geometry.
+- Bold, 2-3px stroke weight, clean hard edges
+- Centered within the 32x32 canvas
+
+COLOR: Thermal Amber #F0900A on transparent background. Solid filled glyph.
+Optional: a very subtle emissive bloom suggestion at the tip of the top chevron
+(1-2px soft spread at ~50% opacity in the same amber) — Thermal always gets
+a bloom per art-bible. Captured as a slight glow at the tip in this still icon.
+
+VERIFIED CONTRAST ON C-1 #1E2229: Thermal amber ≈ 5.8:1 (per art-bible §4.5).
+
+DISTINCTION FROM REWARD GOLD: Thermal Amber #F0900A is hue 36°; Reward Gold
+#E8B820 is hue 50° + higher luminance. The Flame Chevron glyph shape ensures
+Thermal reads as Thermal, not as a reward/rarity indicator (art-bible §4.7 risk pair 2).
+
+GREYSCALE TEST: The upward-stacked V shapes read as a directional chevron pattern
+in greyscale — pointing upward, like heat rising.
+
+NEGATIVE: No organic flame shape (no curved fire visual — this is angular chevrons).
+No Lightning Fork shape. No circle. No soft brush strokes. No rounded edges.
+No Flame Chevron on any environment surface without an emissive bloom (the glyph
+only appears on elemental content). No photoreal.

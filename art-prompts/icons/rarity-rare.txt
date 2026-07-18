@@ -1,0 +1,36 @@
+ASSET: Icon — Rarity Frame: RARE
+TARGET FILE: assets/art/icons/rarity_rare.png
+CANVAS: 72x72 px (rarity frame — wraps around 64x64 part icon)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: RARE rarity frame. Canvas 72x72 px. Frame ring, transparent center.
+
+Per art-bible §4.4: Rare = "Double border + diamond pip + element watermark.
+Soft ambient element-color glow (~25%). Greyscale read: 2 borders."
+
+FRAME ANATOMY:
+- OUTER DIMENSIONS: 72x72 px
+- CENTER TRANSPARENT ZONE: 62x62 px (2px inset from the inner border edge; alpha = 0)
+- BORDER STRUCTURE — TWO DISTINCT BORDERS:
+  - OUTER BORDER: 2px, C-6 UI White #E8E8E8 (the brightest, outermost line — Rare
+    parts are elevated above Common so the outer border brightens)
+  - INNER BORDER: 1px, C-5 Divider #4B5668 at 1px inset from the outer border
+  - GAP between the two borders: 1px transparent or C-1 dark gap (the double-line
+    effect relies on a visible separation between the two border lines)
+- CHAMFERED CORNERS: 45-degree cuts at all four corners of the outer border,
+  ~5px diagonal (consistent with Common frame chamfer geometry)
+- DIAMOND PIP: a small ◆ diamond shape placed at one corner of the frame
+  (lower-right corner convention). The diamond is 6x6 px, filled C-6 #E8E8E8.
+  This is the non-color rarity marker — visible in greyscale.
+- AMBIENT GLOW: soft element-colored glow at ~25% opacity bleed inward from the
+  outer border (element color varies per part — in this generic frame, use a
+  placeholder warm silver or leave as a subtle C-6 ambient haze). The game engine
+  applies the actual element color at runtime via shader parameter.
+
+GREYSCALE READ: TWO distinct border lines (the double-border structure) + the
+diamond pip. 3 elements visible in greyscale (outer border / gap / inner border + pip).
+
+NEGATIVE: No triple border (that is Boss-Grade). No star (that is Boss-Grade).
+NO ROUNDED CORNERS. No element glyph on the frame itself. No label text.
+No organic curves. No photoreal.

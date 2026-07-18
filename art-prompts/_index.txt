@@ -1,0 +1,143 @@
+SYMBOTS — ART PROMPT MASTER INDEX
+===================================
+Generated: 2026-07-18
+Total prompt files: 82
+Naming convention: prompt filename stem matches .tres entity id (underscores → hyphens)
+Target PNG paths mirror assets/art/<category>/<stem>.png
+Status column: TODO = not yet generated in Pixel Lab
+
+NOTE: Player CORE is render-invisible in play (Workshop/UI only).
+No CORE sphere appears in battle or overworld assets — see negative prompts.
+The CORE part icon (scrapjaw-scrap-core, boltwell-surge-core) is Workshop/UI only.
+
+===================================
+CATEGORY: characters (3 files)
+===================================
+PROMPT FILE                                   | TARGET PNG                                                  | DESCRIPTION                                     | STATUS
+characters/mechanic-overworld-walk.txt        | assets/art/characters/char_mechanic_walk.png                | Player mechanic 4-dir walk cycle sprite sheet   | TODO
+characters/mechanic-workshop-idle.txt         | assets/art/characters/char_mechanic_workshop_idle.png       | Player mechanic at bench, close-camera idle     | TODO
+characters/mechanic-battle-intro.txt          | assets/art/characters/char_mechanic_battle_intro.png        | Player mechanic battle entrance cameo pose      | TODO
+
+===================================
+CATEGORY: enemies (10 files)
+===================================
+PROMPT FILE                                   | TARGET PNG                                                  | DESCRIPTION                                     | STATUS
+enemies/rustcrawler.txt                       | assets/art/enemies/enemy_rustcrawler_battle.png             | Kinetic/Scrapjaw skittering scavenger; ARM+HEAD breaks   | TODO
+enemies/scrapjaw-skirmisher.txt               | assets/art/enemies/enemy_scrapjaw_skirmisher_battle.png     | Kinetic/Scrapjaw fast hammer raider; WEAPON+LEG breaks   | TODO
+enemies/husk-walker.txt                       | assets/art/enemies/enemy_husk_walker_battle.png             | Neutral/Wild gutted empty chassis; LEG+HEAD breaks       | TODO
+enemies/dune-prowler.txt                      | assets/art/enemies/enemy_dune_prowler_battle.png            | Kinetic/Scrapjaw low crouching raider; ARM+CORE breaks   | TODO
+enemies/volt-sentinel.txt                     | assets/art/enemies/enemy_volt_sentinel_battle.png           | Volt/Boltwell guard unit; HEAD+CORE breaks               | TODO
+enemies/arc-drone.txt                         | assets/art/enemies/enemy_arc_drone_battle.png               | Volt/Boltwell hover interceptor; CORE+WEAPON breaks      | TODO
+enemies/ironclad-sentry.txt                   | assets/art/enemies/enemy_ironclad_sentry_battle.png         | Thermal/Ironclad heavy tank; CHASSIS+ARM breaks          | TODO
+enemies/slag-hauler.txt                       | assets/art/enemies/enemy_slag_hauler_battle.png             | Thermal/Ironclad industrial brawler; CHASSIS+WEAPON      | TODO
+enemies/rust-tyrant.txt                       | assets/art/enemies/enemy_rust_tyrant_battle.png             | BOSS 1 — Kinetic/Scrapjaw apex warlord; ARM+HEAD+CORE   | TODO
+enemies/storm-warden.txt                      | assets/art/enemies/enemy_storm_warden_battle.png            | BOSS 2 — Volt/Boltwell command unit; WEAPON+CORE+HEAD   | TODO
+
+===================================
+CATEGORY: parts (16 files)
+===================================
+PROMPT FILE                                   | TARGET PNG                                                  | DESCRIPTION                                     | STATUS
+parts/scrapjaw-servo-arm.txt                  | assets/art/parts/part_scrapjaw_arms_servo_arm.png           | Common ARMS — Kinetic/Scrapjaw basic arm        | TODO
+parts/scrapjaw-reinforced-servo-arm.txt       | assets/art/parts/part_scrapjaw_arms_servo_arm_reinforced.png| Rare ARMS — Kinetic/Scrapjaw reinforced arm     | TODO
+parts/scrapjaw-rustcrawler-claw.txt           | assets/art/parts/part_scrapjaw_arms_rustcrawler_claw.png    | Boss-Grade ARMS — Kinetic/Scrapjaw boss claw    | TODO
+parts/scrapjaw-bash-hammer.txt                | assets/art/parts/part_scrapjaw_weapon_bash_hammer.png       | Common WEAPON — Kinetic/Scrapjaw impact hammer  | TODO
+parts/scrapjaw-scrap-core.txt                 | assets/art/parts/part_scrapjaw_core_scrap_core.png          | Common CORE — Kinetic/Scrapjaw (Workshop/UI only)| TODO
+parts/ironclad-bulwark-frame.txt              | assets/art/parts/part_ironclad_chassis_bulwark_frame.png    | Common CHASSIS — Thermal/Ironclad defense body  | TODO
+parts/ironclad-aegis-frame.txt                | assets/art/parts/part_ironclad_chassis_aegis_frame.png      | Rare CHASSIS — Thermal/Ironclad ablative shell  | TODO
+parts/boltwell-logic-chip.txt                 | assets/art/parts/part_boltwell_chipset_logic_chip.png       | Common CHIPSET — Volt/Boltwell processing module| TODO
+parts/boltwell-cell-mk1.txt                   | assets/art/parts/part_boltwell_energy_cell_mk1.png          | Common ENERGY_CELL — Volt/Boltwell power brick  | TODO
+parts/boltwell-surge-core.txt                 | assets/art/parts/part_boltwell_core_surge_core.png          | Rare CORE — Volt/Boltwell (Workshop/UI only)    | TODO
+parts/boltwell-targeting-array.txt            | assets/art/parts/part_boltwell_head_targeting_array.png     | Rare HEAD — Volt/Boltwell scan sensor crest     | TODO
+parts/boltwell-arc-blaster.txt                | assets/art/parts/part_boltwell_weapon_arc_blaster.png       | Rare WEAPON — Volt/Boltwell arc discharge cannon| TODO
+parts/boltwell-storm-lance.txt                | assets/art/parts/part_boltwell_weapon_storm_lance.png       | Boss-Grade WEAPON — Volt/Boltwell flagship lance| TODO
+parts/wild-optic-sensor.txt                   | assets/art/parts/part_wild_head_optic_sensor.png            | Common HEAD — Kinetic/Wild asymmetric optic     | TODO
+parts/wild-tread-legs.txt                     | assets/art/parts/part_wild_legs_tread_legs.png              | Common LEGS — Kinetic/Wild salvaged treads      | TODO
+parts/wild-overdrive-cannon.txt               | assets/art/parts/part_wild_weapon_overdrive_cannon.png      | Prototype WEAPON — Thermal/Wild jury-rigged cannon| TODO
+
+===================================
+CATEGORY: consumables (8 files)
+===================================
+PROMPT FILE                                   | TARGET PNG                                                  | DESCRIPTION                                     | STATUS
+consumables/weld-patch.txt                    | assets/art/consumables/icon_consumable_weld_patch.png       | Common — 25 Structure repair, metal patch       | TODO
+consumables/repair-kit.txt                    | assets/art/consumables/icon_consumable_repair_kit.png       | Rare — 50 Structure repair, tool kit box        | TODO
+consumables/field-forge.txt                   | assets/art/consumables/icon_consumable_field_forge.png      | Boss-Grade — 120 Structure, portable forge unit | TODO
+consumables/coolant-flush.txt                 | assets/art/consumables/icon_consumable_coolant_flush.png    | Common — 50 Heat reduction, coolant canister    | TODO
+consumables/power-cell.txt                    | assets/art/consumables/icon_consumable_power_cell.png       | Common — 25 Energy restore, disposable battery  | TODO
+consumables/salvage-beacon.txt                | assets/art/consumables/icon_consumable_salvage_beacon.png   | Rare — 2x drop multiplier, gold-arc emitter     | TODO
+consumables/signal-jammer.txt                 | assets/art/consumables/icon_consumable_signal_jammer.png    | Rare — reduce encounter rate, broken-arc device | TODO
+consumables/scrap-lure.txt                    | assets/art/consumables/icon_consumable_scrap_lure.png       | Common — increase encounter rate, scrap-bait    | TODO
+
+===================================
+CATEGORY: hud (7 files)
+===================================
+PROMPT FILE                                   | TARGET PNG                                                  | DESCRIPTION                                     | STATUS
+hud/hud-player-structure-bar.txt              | assets/art/ui/hud/ui_bar_structure_player.png               | 256x32 9-slice green/red HP bar, chamfered      | TODO
+hud/hud-enemy-structure-bar.txt               | assets/art/ui/hud/ui_bar_structure_enemy.png                | 256x32 9-slice enemy HP bar (same as player)    | TODO
+hud/hud-energy-bar.txt                        | assets/art/ui/hud/ui_bar_energy.png                         | 256x32 9-slice Info Blue #4090CC energy bar     | TODO
+hud/hud-heat-meter.txt                        | assets/art/ui/hud/ui_bar_heat.png                           | 256x32 9-slice 3-zone heat gauge (cool/warn/danger)| TODO
+hud/hud-break-pip-row.txt                     | assets/art/ui/hud/ui_break_pip_row.png                      | 128x16 rectilinear break pips (NEVER circles)   | TODO
+hud/hud-log-panel-frame.txt                   | assets/art/ui/hud/ui_panel_frame_general.png                | 256x128 9-slice transparent-center panel ring   | TODO
+hud/hud-target-reticle.txt                    | assets/art/ui/hud/ui_target_reticle.png                     | 128x128 chamfered rectangular target overlay    | TODO
+
+===================================
+CATEGORY: buttons (6 files)
+===================================
+PROMPT FILE                                   | TARGET PNG                                                  | DESCRIPTION                                     | STATUS
+buttons/button-normal.txt                     | assets/art/ui/buttons/ui_btn_generic_normal.png             | 192x56 9-slice generic button idle state        | TODO
+buttons/button-hover.txt                      | assets/art/ui/buttons/ui_btn_generic_hover.png              | 192x56 generic button hover/focus state         | TODO
+buttons/button-pressed.txt                    | assets/art/ui/buttons/ui_btn_generic_pressed.png            | 192x56 generic button pressed/active state      | TODO
+buttons/button-disabled.txt                   | assets/art/ui/buttons/ui_btn_generic_disabled.png           | 192x56 generic button disabled/unavailable      | TODO
+buttons/button-primary.txt                    | assets/art/ui/buttons/ui_btn_primary_normal.png             | 256x64 Info Blue primary action (ATTACK/EQUIP)  | TODO
+buttons/button-target-selected.txt            | assets/art/ui/buttons/ui_btn_target_normal.png              | 192x56 target-region selector (ARM/HEAD/CORE)   | TODO
+
+===================================
+CATEGORY: ui / panels (5 files)
+===================================
+PROMPT FILE                                   | TARGET PNG                                                  | DESCRIPTION                                     | STATUS
+ui/panel-frame.txt                            | assets/art/ui/panel_frame.png                               | 256x256 9-slice standard panel C-2 fill         | TODO
+ui/panel-frame-dark.txt                       | assets/art/ui/panel_frame_dark.png                          | 256x256 9-slice recessed sub-panel C-1 fill     | TODO
+ui/divider-horizontal.txt                     | assets/art/ui/divider_horizontal.png                        | 256x4 9-slice horizontal section divider rule   | TODO
+ui/scroll-track.txt                           | assets/art/ui/scroll_track.png                              | 16x256 9-slice scrollbar track + 16x48 grabber  | TODO
+ui/overlay-card.txt                           | assets/art/ui/overlay_card.png                              | 512x320 9-slice victory/defeat/loot modal card  | TODO
+
+===================================
+CATEGORY: overworld (4 files)
+===================================
+PROMPT FILE                                   | TARGET PNG                                                  | DESCRIPTION                                     | STATUS
+overworld/terrain-base-tile.txt               | assets/art/overworld/terrain_base_tile.png                  | 64x64 seamless ground tile, Ironmoss Green      | TODO
+overworld/terrain-accent-tile.txt             | assets/art/overworld/terrain_accent_tile.png                | 64x64 transparent scrap scatter overlay tile    | TODO
+overworld/map-background.txt                  | assets/art/overworld/map_background.png                     | 1024x600 full overworld field backdrop          | TODO
+overworld/encounter-marker-frame.txt          | assets/art/overworld/encounter_marker_frame.png             | 96x96 chamfered encounter presence ring         | TODO
+
+===================================
+CATEGORY: icons (15 files)
+===================================
+PROMPT FILE                                   | TARGET PNG                                                  | DESCRIPTION                                     | STATUS
+icons/slot-head.txt                           | assets/art/icons/slot_head.png                              | 32x32 HEAD slot glyph — sensor crest silhouette | TODO
+icons/slot-chassis.txt                        | assets/art/icons/slot_chassis.png                           | 32x32 CHASSIS slot glyph — wide torso with socket| TODO
+icons/slot-arm-l.txt                          | assets/art/icons/slot_arm_l.png                             | 32x32 ARMS-Left slot glyph — arm pointing left  | TODO
+icons/slot-arm-r.txt                          | assets/art/icons/slot_arm_r.png                             | 32x32 ARMS-Right slot glyph — arm pointing right| TODO
+icons/slot-legs.txt                           | assets/art/icons/slot_legs.png                              | 32x32 LEGS slot glyph — bipedal stance, 2 columns| TODO
+icons/slot-weapon.txt                         | assets/art/icons/slot_weapon.png                            | 32x32 WEAPON slot glyph — forward-pointing barrel| TODO
+icons/slot-chipset.txt                        | assets/art/icons/slot_chipset.png                           | 32x32 CHIPSET slot glyph — PCB chip with traces | TODO
+icons/slot-energy-cell.txt                    | assets/art/icons/slot_energy_cell.png                       | 32x32 ENERGY_CELL slot glyph — battery with terminals| TODO
+icons/element-volt.txt                        | assets/art/icons/element_volt.png                           | 32x32 Lightning Fork glyph, Volt cyan #2FE8E8   | TODO
+icons/element-thermal.txt                     | assets/art/icons/element_thermal.png                        | 32x32 Flame Chevron glyph, Thermal amber #F0900A| TODO
+icons/element-kinetic.txt                     | assets/art/icons/element_kinetic.png                        | 32x32 Impact Ring glyph, Kinetic silver #D8DDE6 | TODO
+icons/rarity-common.txt                       | assets/art/icons/rarity_common.png                          | 72x72 Common rarity frame — 1 gunmetal border   | TODO
+icons/rarity-rare.txt                         | assets/art/icons/rarity_rare.png                            | 72x72 Rare rarity frame — 2 borders + diamond pip| TODO
+icons/rarity-boss.txt                         | assets/art/icons/rarity_boss.png                            | 72x72 Boss-Grade frame — 3 borders + star + glow| TODO
+icons/rarity-prototype.txt                    | assets/art/icons/rarity_prototype.png                       | 72x72 Prototype frame — irregular border + warning| TODO
+
+===================================
+CATEGORY: workshop (3 files)
+===================================
+PROMPT FILE                                   | TARGET PNG                                                  | DESCRIPTION                                     | STATUS
+workshop/bench-backdrop.txt                   | assets/art/workshop/bench_backdrop.png                      | 1024x600 Workshop screen background, bench lamp | TODO
+workshop/slot-frame.txt                       | assets/art/workshop/slot_frame.png                          | 80x80 9-slice empty equip slot frame            | TODO
+workshop/slot-frame-filled.txt                | assets/art/workshop/slot_frame_filled.png                   | 80x80 9-slice occupied slot frame, Info Blue    | TODO
+
+===================================
+END OF INDEX
+Total: 82 prompt files covering all MVP art assets
+===================================

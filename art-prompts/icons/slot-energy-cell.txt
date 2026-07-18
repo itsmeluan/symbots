@@ -1,0 +1,30 @@
+ASSET: Icon — Slot Glyph: ENERGY_CELL
+TARGET FILE: assets/art/icons/slot_energy_cell.png
+CANVAS: 32x32 px (monochrome slot glyph icon)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: ENERGY_CELL slot glyph. Canvas 32x32 px. Monochrome, white on transparent.
+
+The ENERGY_CELL slot icon. ENERGY_CELL = the stored-power module that fuels the bot's
+energy resource. Flush-embedded in the CHASSIS like CHIPSET — no silhouette protrusion.
+The icon must communicate: stored power, battery, charge reservoir.
+
+ICON DESIGN: A battery / capacitor cell form:
+- A compact rectangular or slightly rounded-rectangular cell body (taller than wide —
+  the classic battery proportions, oriented vertically to distinguish it from CHIPSET)
+- Terminal contacts at the TOP: one or two small rectangular tabs protruding from the
+  top edge (positive/negative terminal convention — the clearest "battery" read)
+- A horizontal fill-level indicator line roughly 2/3 of the way up the cell body
+  (a charge level stripe — communicates "this holds charge")
+- 2px outline for the body, 1px for the terminal tabs and fill line
+- Simple, bold, immediately readable as "battery" at 16x16 minimum
+
+DISTINCTION FROM CHIPSET (slot-chipset.txt): CHIPSET is a horizontal PCB/chip form
+with circuit traces radiating outward. ENERGY_CELL is a vertical battery form with
+terminal tabs at the top. The orientation and terminal tabs make them unmistakable.
+
+The icon communicates: "stored power. Charge reservoir. Energy capacity."
+
+NEGATIVE: No circuit trace lines (that is CHIPSET). No horizontal orientation as
+primary form. No color. No element glyph. No complex detail. No photoreal.

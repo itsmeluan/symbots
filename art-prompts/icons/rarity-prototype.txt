@@ -1,0 +1,48 @@
+ASSET: Icon — Rarity Frame: PROTOTYPE
+TARGET FILE: assets/art/icons/rarity_prototype.png
+CANVAS: 72x72 px (rarity frame — wraps around 64x64 part icon)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Icon: PROTOTYPE rarity frame. Canvas 72x72 px. Frame ring, transparent center.
+
+Per art-bible §4.4: Prototype = "Stochastic flicker <3 Hz + chromatic-aberration shimmer.
+Irregular animated border + warning mark. Greyscale read: animated border."
+Per §4.4: "Flash-safety: Prototype flicker is capped <3 Hz per accessibility-requirements.md
+(photosensitivity floor). The shimmer is amplitude-modulated, not a hard on/off strobe."
+
+This is a STILL FRAME of what the animated border looks like at mid-flicker.
+The animation is applied in-engine — this sprite captures the visual character.
+
+FRAME ANATOMY (still frame at mid-flicker):
+- OUTER DIMENSIONS: 72x72 px
+- CENTER TRANSPARENT ZONE: 62x62 px (alpha = 0)
+- BORDER CHARACTER — IRREGULAR AND SLIGHTLY UNSTABLE:
+  The Prototype border is NOT a perfectly clean geometric border like Common/Rare/Boss.
+  It is a slightly irregular, glitching border — as if the frame itself is unstable:
+  - BASE BORDER: 2px in C-6 UI White #E8E8E8, but with slight pixel-level
+    irregularity — some segments 1px, some 2px, occasional 1px gap where the border
+    seems to momentarily break (the "glitch" quality of Prototype instability)
+  - CHAMFERED CORNERS: present but slightly imprecise — the corner angles are close
+    to 45 degrees but not perfectly regular (one corner may be 1px off)
+  - CHROMATIC ABERRATION SHIMMER: a 1-2px color-fringe on the outer border edge —
+    a cyan fringe (#2FE8E8 at 40%) offset 1px to the left of the border, and a
+    red-magenta fringe (#CC2060 approximation at 30%) offset 1px to the right.
+    This is the "chromatic shimmer" captured as a still color-aberration fringe.
+  - No inner borders (unlike Boss/Rare — the Prototype's instability makes it
+    visually complex but not structured like the lower-tier triple-border)
+- WARNING MARK: a ⚠ triangle-warning symbol at the lower-right corner of the frame.
+  Size: 8x8 px. Color: C-6 UI White #E8E8E8. Non-color channel for Prototype tier.
+- AMPLITUDE-MODULATED GLOW: in this still frame, a soft element-colored glow of
+  ~40% opacity around the border (mid-flicker amplitude state — not full brightness,
+  not zero). The glow bleeds outward 3px and has a slight chromatic color-split.
+
+GREYSCALE READ: An IRREGULAR/IMPRECISE border (distinguishable from the clean-line
+borders of Common/Rare/Boss purely by its irregular pixel behavior) + a warning triangle.
+In greyscale the animation is not readable, but the warning mark IS — making Prototype
+identifiable even in non-animated still frame.
+
+NEGATIVE: No hard-strobe on/off effect (flicker must be amplitude-modulated per a11y).
+No four clean borders (this is irregular, not structured). NO ROUNDED CORNERS on the
+base geometry (the irregularity is pixel-level imprecision, not rounding). No photoreal.
+No label text.
