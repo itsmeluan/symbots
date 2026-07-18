@@ -14,7 +14,7 @@
 
 | # | Name | Type | Description | Source | Status |
 |---|------|------|-------------|--------|--------|
-| 1 | The Mechanic | Character | Player avatar — human engineer. Overworld walk-sprite (Pokémon-style), shown at the Oficina bench + battle-intro cameo. Customization = Masc/Fem + simple color/palette. **No combat stats** — cosmetic/narrative identity only; world-palette, lower saturation than any Symbot. | art-bible §5.1–5.2 | Needed |
+| 1 | The Mechanic | Character | Player avatar — human engineer. Overworld walk-sprite (Pokémon-style), shown at the Oficina bench + battle-intro cameo. Customization = Masc/Fem + simple color/palette. **No combat stats** — cosmetic/narrative identity only; world-palette, lower saturation than any Symbot. | art-bible §5.1–5.2 | **Specced** (ASSET-001…003 · `specs/mechanic-assets.md`) |
 | 2 | Player Symbot / Build | Character | The combat character, assembled from 6 slots. All progression lives here (CORE levels on battle-XP; parts carry stats). **CORE is render-invisible in play** (Workshop/UI-only sphere). | art-bible §5.1/§5.3, symbot-assembly.md | Needed |
 | 3 | Parts — silhouette slots | Part-family | Render family per slot × rarity × faction for CHASSIS / HEAD / ARMS / LEGS / WEAPON (the four silhouette-extending slots + weapon). Modular part-render pipeline; each must change the outline when broken (Principle 4). | part-database.md, art-bible §3.3/§8.1 | Needed |
 | 4 | Parts — internal slots | Part-family | CHIPSET / ENERGY_CELL = flush-embedded (must not compete for the eye); CORE = render-invisible. | art-bible §3.7/§5.3 | Needed |
