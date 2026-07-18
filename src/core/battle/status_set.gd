@@ -72,7 +72,9 @@ func burn_tick() -> int:
 
 ## Turn-END: decrement every active status by one turn and remove any that reach 0
 ## (AC-TBC-36). Modifiers stop applying the moment a status is removed.
-func decrement_turn() -> void:
+## Returns an Array of [enum StatusInstance.Type] ints that expired this tick — used
+## by [BattleController] to emit the `status_expired` view-signal (Phase 2-A hook).
+func decrement_turn() -> Array:
 	var expired: Array = []
 	for t in _by_type:
 		var s: StatusInstance = _by_type[t]
@@ -81,6 +83,7 @@ func decrement_turn() -> void:
 			expired.append(t)
 	for t in expired:
 		_by_type.erase(t)
+	return expired
 
 
 ## Remove all statuses (EC-TBC-14 — a DOWNED combatant is cleansed; a future revive

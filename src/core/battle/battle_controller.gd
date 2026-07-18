@@ -54,6 +54,96 @@ signal battle_start_refused(invalid_symbot_ids: Array, offending_parts: Array)
 ## Forwarded from [BattleResolver] for Part-Break / view listeners (Story 009/014).
 signal hit_resolved(move: MoveDef, damage: int, target: Combatant, sub_target: StringName)
 
+# ---------------------------------------------------------------------------
+# Phase 2-A — view-signals (ADR-0008 §UI contract; plan §5).
+# Owner-declared here (NOT on EventBus — sole consumer = BattleScreen, ADR-0002
+# bus admission criteria not met). All payloads are value types; no live Combatant
+# refs are passed (keeps the view decoupled from mutable internals). Every emission
+# is AFTER the state mutation it reports and must NOT re-enter the FSM (ADR-0002 rule 5).
+# ---------------------------------------------------------------------------
+
+## Emitted when the FSM parks in ACTION_PENDING awaiting a player choice.
+## [param actor_is_player] distinguishes the parked-player case (always true here,
+## but explicit for HUD clarity). Emitted in [method _run_turns].
+signal action_pending(actor_is_player: bool)
+
+## Emitted when the player's queued action begins resolving (FSM enters RESOLVING).
+## Emitted in [method submit_action].
+signal action_resolving()
+
+## Emitted at the start of every round, after initiative is recomputed.
+## [param turn_order] is an Array of combatant_id [StringName]s (value snapshot — not
+## live refs). Emitted in [method _begin_round].
+signal round_started(round_number: int, turn_order: Array)
+
+## Emitted after a combatant's turn-start bookkeeping completes (but before its action).
+## Emitted in [method _run_turns] after the [method begin_turn] call succeeds.
+signal turn_started(combatant_id: StringName, is_player: bool)
+
+## Emitted when a combatant's action phase is skipped due to the overheat penalty.
+## Emitted in [method _run_turns] on the `ts["skipped_action"]` branch.
+signal turn_skipped(combatant_id: StringName)
+
+## Emitted after any mutation to a combatant's `current_structure`.
+## Covers: Burn tick ([method begin_turn]), overheat self-damage ([method _settle_heat]),
+## item restore ([method _apply_item_effect]), and resolver hit ([method _on_resolver_hit]).
+signal structure_changed(combatant_id: StringName, new_value: int, max_value: int, is_player: bool)
+
+## Emitted after any mutation to a player combatant's `current_energy`.
+## Covers: DAMAGE-move cost spend ([method _resolve_player_move]), turn-start recharge
+## ([method begin_turn]). Enemies have no energy tracking — never emitted for enemies.
+signal energy_changed(combatant_id: StringName, new_value: int, max_value: int)
+
+## Emitted after any mutation to a combatant's `current_heat` or `is_overheated` flag.
+## Covers heat accumulation and the overheat flag set/clear in [method _settle_heat]
+## and the overheat reset in [method begin_turn].
+signal heat_changed(combatant_id: StringName, new_value: int, is_overheated: bool)
+
+## Emitted when a status is applied to a combatant (new apply or newest-wins refresh).
+## [b]Phase 2-A gap[/b]: status application is routed through
+## [PassiveEffectRegistry.dispatch_on_hit] which calls [StatusSet.apply] directly,
+## bypassing the controller. Wiring this cleanly requires a registry-level callback
+## seam that goes beyond a minimal hook — declared here for HUD completeness but
+## NOT emitted yet. See TODO below.
+## TODO: Phase: StatusApplied integration — add a registry callback seam so
+## dispatch_on_hit can notify the controller whenever a status is applied.
+signal status_applied(combatant_id: StringName, status_id: StringName, duration: int)
+
+## Emitted when a status expires at turn-end (duration reaches 0 in [method end_turn]).
+## [param status_id] is the [enum StatusInstance.Type] name as a [StringName]
+## (e.g. [code]&"BURN"[/code], [code]&"SHOCK"[/code], [code]&"STAGGER"[/code]).
+signal status_expired(combatant_id: StringName, status_id: StringName)
+
+## Emitted when a Burn status ticks at turn-start, dealing direct structure loss.
+## Only BURN ticks in the MVP; the controller emits this for the Burn branch in
+## [method begin_turn]. [param damage] is the raw tick magnitude (bypasses DF-1).
+signal status_ticked(combatant_id: StringName, status_id: StringName, damage: int)
+
+## Emitted when a combatant is downed (structure hits 0 and [method _down] is called).
+signal combatant_downed(combatant_id: StringName, is_player: bool)
+
+## Emitted when the FSM parks in FORCED_SWITCH, awaiting the player's free replacement
+## pick. Emitted in [method _resolve_enemy_action] and [method _handle_turn_start_death].
+signal forced_switch_required()
+
+## Emitted when a combatant crosses the overheat threshold (self-damage applied).
+## Emitted in [method _settle_heat] at the point [member Combatant.is_overheated] is set.
+signal overheat_triggered(combatant_id: StringName, self_damage: int)
+
+## STUB — Part-Break integration pending. Emitted when a break region's HP changes.
+## [b]Phase: Part-Break integration[/b] — Part-Break is not yet routed through the
+## resolver; this signal is declared for HUD completeness but will NOT fire in a normal
+## battle until Part-Break lands.
+## TODO: Phase: Part-Break integration — wire emission once BattleResolver routes
+## break-region HP mutations.
+signal break_region_updated(enemy_id: StringName, region_id: StringName, new_hp: int,
+	max_hp: int, is_broken: bool)
+
+## STUB — Part-Break integration pending. Emitted when the enemy's enrage level changes
+## (driven by broken-region count). Same integration gate as [signal break_region_updated].
+## TODO: Phase: Part-Break integration — wire emission once broken-region count is live.
+signal enrage_changed(enemy_id: StringName, broken_count: int, enrage_pct: float)
+
 var _cfg: BalanceConfig
 var _log: LogSink
 var _resolver: BattleResolver
@@ -223,20 +313,26 @@ static func move_panel_state(move_pool: Array, current_energy: int) -> Array:
 ##   (c) Burn tick LAST (bypasses DF-1, may down the combatant → statuses cleared).
 func begin_turn(c: Combatant) -> Dictionary:
 	var result: Dictionary = {"skipped_action": false, "burn_damage": 0, "downed": false}
+	var cid: StringName = _combatant_id(c)
 	if c.is_overheated:
 		c.current_heat = _cfg.overheat_reset_heat  # flat reset, no decay
 		c.is_overheated = false  # consumed — THIS is the penalty turn
 		result["skipped_action"] = true
+		heat_changed.emit(cid, c.current_heat, c.is_overheated)
 	elif not c.is_enemy:
 		c.current_heat = maxi(0, c.current_heat - c.effective_stat(&"cooling"))  # (a) decay
+		heat_changed.emit(cid, c.current_heat, c.is_overheated)
 	if not c.is_enemy:  # (b) recharge — players only
 		c.current_energy = BattleFormulas.recharge_energy(
 			c.current_energy, c.effective_stat(&"recharge"), c.max_energy_capacity, _cfg)
+		energy_changed.emit(cid, c.current_energy, c.max_energy_capacity)
 	# (c) Burn tick LAST — direct structure loss, no DF-1.
 	var burn: int = c.statuses.burn_tick()
 	if burn > 0:
+		status_ticked.emit(cid, &"BURN", burn)
 		c.current_structure = maxi(0, c.current_structure - burn)
 		result["burn_damage"] = burn
+		structure_changed.emit(cid, c.current_structure, c.max_structure, not c.is_enemy)
 		if c.current_structure == 0:
 			_down(c)
 			result["downed"] = true
@@ -245,8 +341,12 @@ func begin_turn(c: Combatant) -> Dictionary:
 
 ## Turn-END: decrement every status duration (expired removed, AC-TBC-36). The overheat
 ## flag is NOT touched here — it is consumed at the NEXT [method begin_turn].
+## Emits [signal status_expired] for each status that reaches duration 0.
 func end_turn(c: Combatant) -> void:
-	c.statuses.decrement_turn()
+	var expired: Array = c.statuses.decrement_turn()
+	var cid: StringName = _combatant_id(c)
+	for t in expired:
+		status_expired.emit(cid, _status_type_name(t))
 
 
 ## Apply a move's heat gain to [param c] (Story 006): `min(threshold, heat + generation +
@@ -264,6 +364,7 @@ func apply_move_heat(c: Combatant, heat_generation: int, is_thermal_move: bool) 
 func _settle_heat(c: Combatant, gain: int) -> Dictionary:
 	c.current_heat = mini(_cfg.overheat_threshold, c.current_heat + gain)
 	var res: Dictionary = {"overheated": false, "self_damage": 0}
+	var cid: StringName = _combatant_id(c)
 	if c.current_heat >= _cfg.overheat_threshold:
 		c.is_overheated = true
 		var self_dmg: int = StatMath.floor_eps(
@@ -271,8 +372,13 @@ func _settle_heat(c: Combatant, gain: int) -> Dictionary:
 		c.current_structure = maxi(0, c.current_structure - self_dmg)
 		res["overheated"] = true
 		res["self_damage"] = self_dmg
+		heat_changed.emit(cid, c.current_heat, c.is_overheated)
+		overheat_triggered.emit(cid, self_dmg)
+		structure_changed.emit(cid, c.current_structure, c.max_structure, not c.is_enemy)
 		if c.current_structure == 0:
 			_down(c)
+	else:
+		heat_changed.emit(cid, c.current_heat, c.is_overheated)
 	return res
 
 
@@ -285,6 +391,11 @@ func _begin_round() -> void:
 	compute_initiative()  # Story 004 — recompute every ROUND_START
 	_ctx.turn_cursor = 0
 	_state = BattleState.ROUND_START
+	# Build a value-type snapshot of the turn order (StringName ids, not live refs).
+	var order_ids: Array = []
+	for c in _ctx.turn_order:
+		order_ids.append(_combatant_id(c))
+	round_started.emit(_ctx.round_number, order_ids)
 	_run_turns()
 
 
@@ -302,12 +413,18 @@ func _run_turns() -> void:
 			_ctx.turn_cursor += 1
 			continue
 		var ts: Dictionary = begin_turn(actor)
+		var actor_cid: StringName = _combatant_id(actor)
+		# turn_started is emitted AFTER begin_turn bookkeeping, but only when the actor
+		# survived (not downed by a Burn tick) and hasn't yet had its action resolved.
+		if not ts["downed"]:
+			turn_started.emit(actor_cid, not actor.is_enemy)
 		if ts["downed"]:  # Burn-kill at turn start (Story 011)
 			if _handle_turn_start_death(actor):
 				return  # parked on a forced switch, or battle ended
 			_ctx.turn_cursor += 1
 			continue
 		if ts["skipped_action"]:  # overheated — no action, straight to turn-end
+			turn_skipped.emit(actor_cid)
 			end_turn(actor)
 			_ctx.turn_cursor += 1
 			continue
@@ -322,6 +439,7 @@ func _run_turns() -> void:
 			continue
 		# Player turn — PARK (Story 001): no await, resume via submit_action.
 		_state = BattleState.ACTION_PENDING
+		action_pending.emit(true)
 		return
 
 
@@ -337,11 +455,13 @@ func submit_action(action: Dictionary) -> void:
 		return  # not this actor's decision point — ignore
 	var actor: Combatant = _ctx.turn_order[_ctx.turn_cursor]
 	_state = BattleState.RESOLVING
+	action_resolving.emit()
 	var consumed: bool = _resolve_player_action(actor, action)
 	if _state == BattleState.BATTLE_END or _state == BattleState.FORCED_SWITCH:
 		return  # ended (victory/flee) or the actor's own move downed the active → forced
 	if not consumed:
 		_state = BattleState.ACTION_PENDING  # rejected (illegal item/flee) — retry
+		action_pending.emit(true)  # re-park notification so the HUD knows a retry is expected
 		return
 	end_turn(actor)
 	_ctx.turn_cursor += 1
@@ -563,10 +683,30 @@ func _end_battle(outcome: int) -> void:
 # ===========================================================================
 
 ## Down a combatant: flag it and cleanse all statuses (EC-TBC-14 — a DOWNED combatant
-## starts clean if ever revived).
+## starts clean if ever revived). Emits [signal combatant_downed] after mutation.
 func _down(c: Combatant) -> void:
 	c.is_downed = true
 	c.statuses.clear()
+	combatant_downed.emit(_combatant_id(c), not c.is_enemy)
+
+
+## Return a stable [StringName] identifier for a combatant suitable for view-signal
+## payloads. Enemies use their content id; player Symbots use their slot index as a
+## StringName (e.g. [code]&"slot_0"[/code]) — avoids passing live refs to the view.
+func _combatant_id(c: Combatant) -> StringName:
+	if c.is_enemy:
+		return c.enemy_id
+	return ("slot_" + str(c.slot_index)) as StringName
+
+
+## Map a [enum StatusInstance.Type] int to a [StringName] label for view-signal payloads
+## (e.g. [code]StatusInstance.Type.BURN[/code] → [code]&"BURN"[/code]).
+static func _status_type_name(status_type: int) -> StringName:
+	match status_type:
+		StatusInstance.Type.SHOCK:   return &"SHOCK"
+		StatusInstance.Type.BURN:    return &"BURN"
+		StatusInstance.Type.STAGGER: return &"STAGGER"
+		_: return &"UNKNOWN"
 
 
 func _passive_pool_for(actor: Combatant) -> Array:
