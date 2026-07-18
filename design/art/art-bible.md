@@ -673,19 +673,73 @@ contract (§1.3), so no player has to find a setting to be able to play.
 
 *(Production guide. Derives from §1 Visual Identity, §3 Shape Language, §4 Color System. Introduces no new visual commitments.)*
 
-### 5.1 There Is No Player Avatar — The Build Is the Character
+### 5.1 Two Identity Layers — The Mechanic and the Build
 
-Symbots has no fixed protagonist figure. **The player is expressed through the
-Symbot they assemble** — the build *is* the character, and it changes every time a
-part is swapped. This is the direct visual consequence of Pillar 2 ("Parts are the
-game") and the One-Line Rule ("every bot looks like a decision"): the character
-artist does not design *a hero*, they design a **system of parts that reads as
-deliberate whoever assembles it**. Character direction is therefore mostly authored
-in §3 (per-slot silhouettes, faction vocabularies) — this section governs the two
-things §3 does not: the **CORE as identity anchor**, and the **read hierarchy that
-tells player-bot, enemy, and boss apart**.
+Symbots has **two distinct character layers**, and the art must not confuse them:
 
-### 5.2 The CORE Is the Character You Bond With
+1. **The Mechanic — the player avatar.** A human engineer the player embodies in the
+   world: a simple sprite that walks the overworld (Pokémon-style navigation), chosen
+   at character creation. This is *who you are* — your presence in the world,
+   overworld, and Oficina. **It carries no combat stats** (no HP, no level, no
+   attributes). Authored in §5.2.
+2. **The Build / the CORE — the combat character.** The Symbot the player assembles is
+   what *fights*, and it changes every time a part is swapped. **All power and
+   progression live here** — the **CORE gains levels from battle-XP** (Pillar: Core
+   Progression) and **parts carry the stats**; the human mechanic never levels. This
+   is the visual consequence of Pillar 2 ("Parts are the game") and the One-Line Rule
+   ("every bot looks like a decision"): the character artist designs **a system of
+   parts that reads as deliberate whoever assembles it**, not a fixed hero-bot.
+
+This is the Pokémon split exactly: the trainer walks the map and picks an appearance;
+the *creature* is what battles and grows. Combat-character direction is therefore
+mostly authored in §3 (per-slot silhouettes, faction vocabularies); §5.3–§5.6 govern
+what §3 does not — the **CORE as the persistent bond anchor** and the **read hierarchy
+that separates player-bot / enemy / boss**.
+
+### 5.2 The Mechanic — The Player Avatar
+
+The mechanic is the human the player *is* in the world. Direction targets are
+deliberately **simple** — this is a small, readable identity sprite, not a detailed
+hero portrait. Scope: **Masc/Fem appearance + a simple color/palette choice** at
+creation, and nothing deeper for MVP.
+
+- **Archetype**: an **engineer / field-mechanic**, not a soldier or a mage. Read as a
+  *person who builds and repairs machines* — practical clothing, tool-forward, at home
+  among the mechanical wilderness (§6). They belong to the world the Symbots grew in.
+- **Two variants + palette**: two base appearances (**masculine / feminine**) plus a
+  **simple clothing color/palette choice** at creation. That is the whole customization
+  surface — no body sliders, no accessory system. Keep the two variants tightly
+  matched in silhouette footprint so overworld/Oficina/battle framing works identically
+  for both.
+- **Where the mechanic appears** (confirmed scope — drives the sprite/pose count):
+  - **Overworld**: walking sprite, **4-directional** (up/down/left/right) walk cycles,
+    per variant × palette. Small, readable at map zoom — the primary asset.
+  - **Oficina (Workshop)**: the mechanic shown **at the bench**, assembling the Symbot
+    — a static/idle pose that reinforces the "engineer" fantasy on a core screen. Warm,
+    even Workshop lighting (§4.6).
+  - **Battle intro**: a brief **cameo** at the start of a fight (trainer-style entrance),
+    then the mechanic yields the frame to the Symbot (which is what actually fights).
+- **No combat presence beyond the intro**: the mechanic is never a combat entity —
+  no health bar, no targetable body, no stats. During the fight itself the **Symbot is
+  the character on stage** (§5.4). The mechanic's job is *identity*, not *combat*.
+- **Palette**: draws from the warm **world palette (§4.1)** so the mechanic reads as a
+  person *in* the wilderness, not a UI element or a bot. The mechanic must never read
+  as high-frequency/saturated the way a Symbot does (§3.5 figure/ground) — a human
+  among machines is quieter than the machines.
+- **LOD**: the overworld sprite is small; spend detail on the **walk-cycle silhouette
+  read** (which direction they face, that they're a person) over facial detail. Facial
+  and clothing-color detail matter most in the Oficina and battle-intro framings, where
+  the camera is closer.
+
+**Mechanic checklist (per variant × palette):**
+- [ ] 4-directional overworld walk cycle, readable at map zoom.
+- [ ] Oficina bench idle pose.
+- [ ] Battle-intro cameo pose.
+- [ ] Engineer/mechanic archetype (not soldier); reads as a person among machines.
+- [ ] World-palette clothing; lower saturation than any Symbot (§3.5).
+- [ ] No HP bar / stat display anywhere — the mechanic is never a combat entity.
+
+### 5.3 The CORE Is the Character You Bond With
 
 The CORE is **render-invisible in play** (§3.3 — embedded in the CHASSIS, no on-model
 glow, element read only off the UI badge §4.5). Yet it is the one persistent object
@@ -708,7 +762,7 @@ sphere.
 - **Never in battle**: the sphere is never drawn on the in-combat model. An artist
   who renders a visible glowing core on a battling bot has violated §3.3.
 
-### 5.3 Distinguishing Player-Bot / Enemy / Boss — Only Locked Channels
+### 5.4 Distinguishing Player-Bot / Enemy / Boss — Only Locked Channels
 
 All three reads use channels already ratified in §3–§4. **No new color, glyph, or
 shape is introduced for "enemy-ness" or "boss-ness."**
@@ -724,7 +778,7 @@ The design test: **strip all color** and player/enemy/boss must still be separab
 silhouette scale, stage position, and border-count. If a read needs color, it has
 failed the §3.1 greyscale contract.
 
-### 5.4 Expression & Pose — Silhouette, Not Faces
+### 5.5 Expression & Pose — Silhouette, Not Faces
 
 Symbots are "personalities, not appliances" (the Medabots anchor), but **they have no
 faces** — a HEAD is a sensor array (§3.9), not an emotive face. Character personality
@@ -743,7 +797,7 @@ is therefore carried entirely by **silhouette and stance**:
   (Medabots charisma) but must stay mechanically plausible — a joint never bends
   where the §3.8 attachment grammar says it cannot.
 
-### 5.5 LOD Philosophy — Silhouette Survives, Interior Drops
+### 5.6 LOD Philosophy — Silhouette Survives, Interior Drops
 
 The combat camera renders bots near the recurring **64×64px greyscale test scale**.
 Detail budget is spent accordingly:
@@ -989,7 +1043,7 @@ ceiling. Modular compositing multiplies sprite count, so batching is mandatory:
 - **Author at Workshop resolution** (target **256×256px** per part), where the camera
   is close and parts read at true color (§4.6). This is the source-of-truth asset.
 - **Combat LOD ≈ 64×64px** (the recurring greyscale-test scale) resolves from the
-  authored asset via the atlas **mip chain** — not a separately-drawn asset. §5.5's
+  authored asset via the atlas **mip chain** — not a separately-drawn asset. §5.6's
   LOD philosophy governs *what* survives; the mip chain is *how*.
 - **The 512 MB ceiling governs authoring resolution, not the reverse**: if the full
   part catalog at 256px + atlases exceeds the memory budget on device, resolution
@@ -1047,7 +1101,7 @@ per source. References are **additive** — no two point in the same direction. 
 | **Horizon Zero Dawn** | Machines-as-**nature**: the wonder of mechanical things that *grew into* an ecosystem (§6.1 "grew here, not placed here"). | Diverge **hard** from photoreal 3D + PBR. We are stylized, colorful, matte **2D** (§6.3). Take the *concept* of the machine-wilderness, not one pixel of the rendering. |
 | **Zoids** | Creature-archetype legibility from the **mechanical silhouette** — insectoid / reptilian / avian read instantly from outline. Reinforces the §3.2 role-from-silhouette contract. | Avoid Zoids' realistic mechanical density and monochrome-military palette — it fights our saturated figure/ground (§3.5) and the 64px greyscale read. |
 | **Gunpla (Gundam kits)** | **Intentional** panel seams and panel lines — every Symbot reads as a kit *deliberately assembled*, never a random pile (§1 One-Line Rule "looks like a decision"; §3.8 attachment grammar). | Avoid Gunpla's realistic panel-line *density* and neutral kit-grey — too high-frequency and too desaturated for the combat read at scale. Take the **intentionality**, not the detail count. |
-| **Digimon** | Companions that feel **engineered, not magical**; a bright saturated palette used as a character-forward signal (supports Pillar 4 "colorful mechanical wilderness"). | Avoid Digimon's organic-creature body plans and any "monster" reading — our companions are unambiguously *machines* (engineered seam §3.4), and the CORE bond (§5.2) replaces the monster-partner trope. |
+| **Digimon** | Companions that feel **engineered, not magical**; a bright saturated palette used as a character-forward signal (supports Pillar 4 "colorful mechanical wilderness"). | Avoid Digimon's organic-creature body plans and any "monster" reading — our companions are unambiguously *machines* (engineered seam §3.4), and the CORE bond (§5.3) replaces the monster-partner trope. |
 
 **Additivity check** — each reference owns a distinct axis, so none collides:
 Medabots = *function-signaling modularity & charisma*; Horizon = *machine-in-nature
