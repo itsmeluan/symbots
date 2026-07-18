@@ -1,0 +1,42 @@
+ASSET: Part Icon — Servo Arm
+PART ID: scrapjaw_servo_arm
+SLOT: ARMS (slot_type 6)
+RARITY: Common (rarity 1) — single gunmetal border, no glow
+ELEMENT: Kinetic (silver-shift #D8DDE6, Impact Ring glyph, chrome details)
+MANUFACTURER: Scrapjaw (asymmetric, directional; diagonal slash panel-lines; salvaged)
+CANVAS: 256x256 px (Workshop/catalog source-of-truth)
+TARGET PATH: assets/art/parts/part_scrapjaw_arms_servo_arm.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Part icon: Servo Arm (Scrapjaw, Common, ARMS slot, Kinetic).
+Canvas 256x256 px. 3/4 view, part isolated on transparent background.
+
+DESCRIPTION: "The arm every Symbot starts with. Reliable, replaceable."
+A basic mechanical arm — simple, functional, no frills. This is the entry-level ARMS part.
+It should look like the mechanical arm of a bot: a forearm-and-hand unit with a simple
+gripper or flat-ended hand. Proportioned to fit the mid-zone lateral slot of a bot.
+Not a weapon — it is the ARMS slot itself, the carrier for WEAPON attachments.
+
+ARMS SLOT SHAPE LANGUAGE (art-bible §3.3): Extends laterally; sits in the mid-zone
+(never above the CHASSIS top line); may have a flat attachment point at the "hand" end
+where a WEAPON would clip on. The seam at the CHASSIS-end shows a continuation panel
+line (attachment grammar). Wide enough to read as "the shoulder-to-hand extent" of a bot.
+
+SCRAPJAW FINISH: Diagonal ~45-degree slash panel-lines across the forearm surface.
+Quick-release clasp visible at the mount end (CHASSIS-side). Asymmetric detail — the
+arm looks like it was adapted from something else, not precision-machined. Weld marks
+at the seam areas. Simple but functional.
+
+KINETIC ELEMENT: Silver-shift #D8DDE6 on the forearm surface and contact nodes.
+Impact Ring glyph (concentric circles) subtly present on the forearm face.
+Matte structural highlights in Bone White #F2EDDF on the arm frame.
+
+RARITY FRAME (Common): Single #374350 Slate Gunmetal border. No glow. Clean and plain.
+The most unremarkable frame treatment — deliberately so.
+
+GREYSCALE TEST: Reads as an arm/limb shape at 64x64px. The CHASSIS-mount end and
+WEAPON-mount end are distinguishable by their geometry.
+
+NEGATIVE: No legs shape. No head shape. No weapon integrated (this is an arm carrier,
+not a weapon). No photoreal. No painterly gradients. No rounded UI frame.

@@ -1,0 +1,53 @@
+ASSET: Part Icon — Targeting Array
+PART ID: boltwell_targeting_array
+SLOT: HEAD (slot_type 5)
+RARITY: Rare (rarity 2) — double border + diamond pip; soft ambient Volt-cyan glow ~25%
+ELEMENT: Volt (cyan #2FE8E8, Lightning Fork glyph)
+MANUFACTURER: Boltwell (exposed structural; instrument/sensor array finish)
+CANVAS: 256x256 px
+TARGET PATH: assets/art/parts/part_boltwell_head_targeting_array.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Part icon: Targeting Array (Boltwell, Rare, HEAD slot, Volt).
+Canvas 256x256 px. Front-facing or slight 3/4 view, part isolated on transparent background.
+
+DESCRIPTION: "Reads a target's weak points before it knows it has them."
+A sophisticated sensor HEAD unit. The HEAD slot is the sensor crest of the bot — always
+the topmost element. For a Boltwell Targeting Array, this is a multi-sensor scanning
+unit: precise, analytical, purpose-built for finding weak points.
+
+HEAD SLOT SHAPE LANGUAGE (art-bible §3.3):
+- Always narrower than the CHASSIS shoulder width (compact at the top)
+- Must have a DOMINANT HORIZONTAL sensor feature (visor / lens cluster / forward crest)
+  — a HEAD without one fails the slot read
+- The horizontal feature is MANDATORY and must read at 64x64px greyscale
+- For this unit: a wide horizontal scan bar / sensor array sweep (multiple sensor nodes
+  across a horizontal band) — "deep scan" character
+- Compact form: narrower than CHASSIS, taller relative to width than a melee unit's head
+
+BOLTWELL TARGETING ARRAY CHARACTER:
+A multi-node horizontal sensor sweep — a bank of sensor apertures arranged in a
+precise horizontal line (Boltwell exposed-structure philosophy: the sensor nodes are
+visible on the surface rather than embedded). The structural housing is a frame with
+the sensor nodes mounted on exposed rails or beams. A Boltwell structural connector
+at the neck/mount point below. Cable routing between sensor nodes visible.
+The scan bar (horizontal sensor sweep) is the most prominent visual feature.
+
+BOLTWELL FINISH: Exposed structural mounting rails holding sensor nodes. Locking
+ring connectors on the neck mount. Cable ties at cable routing points. Instrument-grade
+precision — every node is in a specific calculated position.
+
+VOLT ELEMENT: Cyan #2FE8E8 on the sensor aperture windows (each sensor node has a
+cyan "eye" aperture). Lightning Fork glyph on the primary sensor node or the housing
+face. Soft ambient cyan inner glow from sensor windows (active scanning state).
+Rare glow: soft ambient cyan at ~25% around the entire part.
+
+RARITY FRAME (Rare): Double border + diamond pip. Soft ambient cyan glow ~25%.
+
+GREYSCALE TEST: At 64x64px the HORIZONTAL SENSOR SWEEP (the dominant scan bar with
+multiple nodes) must be unambiguous. Reads as a HEAD unit by the horizontal feature.
+
+NEGATIVE: No vertical sensor stacks as the PRIMARY feature (horizontal is mandatory).
+No weapon protrusion. No leg geometry. No CORE sphere. No Scrapjaw diagonal lines.
+No photoreal. No painterly gradients. No rounded UI frame.

@@ -1,0 +1,54 @@
+ASSET: Part Icon — Scrap Core
+PART ID: scrapjaw_scrap_core
+SLOT: CORE (slot_type 1)
+RARITY: Common (rarity 1) — single gunmetal border, no glow
+ELEMENT: Kinetic (silver-shift #D8DDE6, Impact Ring glyph)
+MANUFACTURER: Scrapjaw (salvaged reactor character)
+CANVAS: 256x256 px (Workshop/UI display — CORE is visible ONLY in Workshop and UI, not in battle)
+TARGET PATH: assets/art/parts/part_scrapjaw_core_scrap_core.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Part icon: Scrap Core (Scrapjaw, Common, CORE slot, Kinetic).
+Canvas 256x256 px. 3/4 view or front-facing view, part on transparent background.
+
+IMPORTANT — CORE SLOT RULES (art-bible §3.3 / §5.3):
+- CORE is the ONLY fully-organic-contour object in the game — a SPHERE with an internal
+  design. No engineered seams. Deliberately unlike every other part.
+- CORE is RENDER-INVISIBLE in battle and overworld — only shown in Workshop and UI contexts.
+- This icon is for the Workshop inventory/equip screen and the UI catalog ONLY.
+- The CORE sphere carries a slow luminous pulse (Workshop animation) but in this icon
+  the pulse is captured mid-cycle as a soft ambient inner glow.
+- Do NOT apply the usual bio-mechanical organic-contour-plus-engineered-seam formula here —
+  the CORE is a smooth sphere, the exception to all part rules.
+
+DESCRIPTION: "A salvaged reactor core. It hums like it's annoyed."
+A rough, scavenged sphere — the power core of a Scrapjaw machine. Smooth sphere
+exterior (the CORE form is always spherical) with an internal design visible through
+translucent sections or surface-mounted indicator elements. The "salvaged" quality shows
+in the surface treatment: weathered, repaired, some Scrapjaw weld patches on the sphere
+exterior. The internal design through translucent panels shows the Kinetic elemental
+identity (silver-shift energy patterns inside).
+
+SPHERE WITH INTERNAL DESIGN:
+- Outer form: smooth sphere, slightly weathered (Scrapjaw origin — weld patches, dents)
+- Internal design visible through: translucent panel windows or crystal apertures in
+  the sphere surface showing inner energy pattern
+- Inner pattern (Kinetic): silver-shift radial lines or concentric geometric pattern,
+  the Impact Ring motif echoed at sphere scale
+- Slow ambient inner glow (Kinetic silver — captured as a still mid-pulse)
+
+SCRAPJAW CHARACTER ON A SPHERE: Minimal surface markings (the sphere form is sacrosanct)
+but some Scrapjaw quick-release latch nodes at cardinal points (the attachment grammar
+must be present even on the CORE). Small diagonal slash marks in weld-patch areas.
+
+RARITY FRAME (Common): Single #374350 border. No ambient glow (the inner glow is the
+CORE's own life — separate from rarity glow). Plain frame.
+
+GREYSCALE TEST: At 64x64px reads unmistakably as a sphere (the game's ONLY sphere form).
+Distinguishable from all other part shapes by its rounded, globe-like silhouette.
+
+NEGATIVE: Do NOT make this look like a battle model component (it is Workshop/UI only).
+Do NOT apply engineered panel-line seams across the sphere exterior (the sphere is smooth).
+No forward-pointing weapon shape. No limb shape. No photoreal. No painterly gradients.
+Do NOT show this in a battle or overworld context.

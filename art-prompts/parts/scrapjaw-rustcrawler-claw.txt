@@ -1,0 +1,47 @@
+ASSET: Part Icon — Rustcrawler Claw
+PART ID: scrapjaw_rustcrawler_claw
+SLOT: ARMS (slot_type 6)
+RARITY: Boss-Grade (rarity 3) — triple border + star; steady radiant Kinetic-silver glow ~60%; edge highlight
+ELEMENT: Kinetic (silver-shift #D8DDE6, Impact Ring glyph, chrome/polished finish)
+MANUFACTURER: Scrapjaw (asymmetric, directional, salvaged — this is torn from the boss itself)
+CANVAS: 256x256 px
+TARGET PATH: assets/art/parts/part_scrapjaw_arms_rustcrawler_claw.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Part icon: Rustcrawler Claw (Scrapjaw, Boss-Grade, ARMS slot, Kinetic).
+Canvas 256x256 px. 3/4 view, part isolated on transparent background.
+
+DESCRIPTION: "Torn from the Rustcrawler boss. Still twitches for a grip."
+This is the Rust Tyrant boss's crusher claw, harvested as a part. It is a raw,
+powerful, unsettling arm — it looks like it was recently detached from the boss's
+body (some Scrapjaw-style breakage at the mount end, not a clean cut). The claw
+itself is large, aggressive, multi-tined. It should look like it wants to grab things.
+"Still twitches" implies mechanical residual tension in the claw joints.
+
+VISUAL CHARACTER:
+The dominant shape is the CLAW — a large multi-fingered or multi-tined grasping
+mechanism, chrome-plished on the grip surfaces (the most dangerous parts shine),
+with Scrapjaw salvage character at the mount end (where it was torn, not cleanly
+detached). The arm/forearm section between mount and claw is thick and powerful.
+Unlike the Servo Arm this is not a precision tool — it is a weapon-arm that crushes.
+
+SCRAPJAW FINISH: Asymmetric claw tines (not perfectly symmetric — one tine slightly
+larger, one slightly bent from prior impacts). Diagonal slash panel-lines on the forearm.
+The mount end shows stress fractures and torn edges (boss-torn origin). Quick-release
+clasps present but look like they barely hold the power inside.
+
+KINETIC ELEMENT: Polished chrome #D8DDE6 on the claw tine faces (the impact surfaces
+— shiniest elements in the design, Kinetic chrome finish per art-bible). Impact Ring
+glyph (concentric circles) on the palm/claw center. Silver-shift metallic finish on
+the forearm. Boss-Grade steady radiant silver glow around the entire part edge.
+
+RARITY FRAME (Boss-Grade): Triple border (three concentric border lines) + star mark
+in corner. Steady radiant silver-toned glow (~60% opacity) around the part silhouette.
+Hard edge highlight where the glow meets the part outline.
+
+GREYSCALE TEST: At 64x64px — reads as an arm with a large claw at one end. The claw
+tines must be distinguishable as the forward/active end.
+
+NEGATIVE: No clean detachment point (this was torn off). No symmetric tines. No factory
+polish on the mount end. No photoreal. No painterly gradients. No rounded UI frame.

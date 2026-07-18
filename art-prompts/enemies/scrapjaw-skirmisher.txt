@@ -1,0 +1,53 @@
+ASSET: Scrapjaw Skirmisher (Enemy)
+ENEMY ID: scrapjaw_skirmisher
+CANVAS: 256x256 px (detail) — mipmapped to 128x128 for battle
+PERSPECTIVE: 3/4 side view, slight upward angle
+ELEMENT: Kinetic (silver-shift #D8DDE6, Impact Ring glyph, chrome details)
+MANUFACTURER: Scrapjaw (asymmetric, directional; diagonal slash panel-lines; aggressive scavenged)
+ROLE: Fast melee raider — high mobility, aggressive forward-lean
+TARGET PATH: assets/art/enemies/enemy_scrapjaw_skirmisher_battle.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Enemy Symbot: Scrapjaw Skirmisher. Canvas 256x256 px. 3/4 side-view combat perspective.
+
+SILHOUETTE DESCRIPTION:
+A Scrapjaw-faction raider built for speed and close-quarters bashing. Bipedal, forward-
+leaning aggressive stance. Fast-looking body plan: narrow swept CHASSIS torso angled
+forward; LEGS are wide-spaced and slightly digitigrade (raised heel, coiled-for-sprint
+look); a dominant WEAPON arm — a large improvised hammer (the breakable WEAPON region)
+that is the widest element at the end of the ARM extension, reaching forward toward the
+target; a compact HEAD sensor crest on top with horizontal visor band.
+
+The bot reads "leads with its hammer and never stops moving" — the WEAPON is the most
+visually prominent element (it takes 30% of break region) and extends forward toward
+the enemy. LEGS are the second most visible element (wide stance for speed, 20% break).
+
+SCRAPJAW MANUFACTURER FINISH: Diagonal ~45-degree slash panel-lines across CHASSIS and
+WEAPON. Quick-release clasps on WEAPON attachment. Asymmetric wear marks. Mixed metal
+gauges — some parts thick-plate, some thin-strip. Looks like the hammer was bolted on
+from salvage, not designed as a unit. Aggressive, mid-motion-at-rest quality.
+
+KINETIC ELEMENT ACCENT: Silver-shift on the hammer head (polished, chrome impact surface).
+Impact Ring glyph (concentric circles) on the hammer face or CHASSIS. Bone White
+structural highlights on exposed frame.
+
+BREAK REGIONS (distinct targetable silhouette zones):
+- WEAPON (region_fraction 30%): the hammer arm must extend clearly outward/forward
+  from the bot body. It is the forward-most element. Breaking it removes the large
+  hammer shape from the outline — immediately readable.
+- LEG (region_fraction 20%): the LEGS are wide-spread; breaking them should visually
+  collapse or remove the wide-stance foundation.
+
+IDLE STANCE: Weight forward, hammer arm raised and slightly back (coiled to swing),
+LEGS in a ready sprint position. HEAD sensor tilted toward target. Aggressive energy.
+
+WORLD PALETTE BASE: Slate Gunmetal #374350 chassis; Harvest Crimson #B33020 faction
+accent marks; Alloy Ochre #C49A35 weathered metal areas; Bone White on impact surfaces.
+
+GREYSCALE TEST: At 64x64 greyscale — the hammer WEAPON, LEGS (wide stance), and HEAD
+(sensor crest elevated) must read as three separate zones by position and shape.
+
+NEGATIVE: No clean factory finish. No symmetrical arms (one dominant hammer arm).
+No visible CORE sphere. No facial expressions. No human features. No photoreal.
+No painterly gradients. No rounded UI elements.

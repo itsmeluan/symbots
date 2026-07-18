@@ -1,0 +1,49 @@
+ASSET: Part Icon — Cell Mk1
+PART ID: boltwell_cell_mk1
+SLOT: ENERGY_CELL (slot_type 4)
+RARITY: Common (rarity 1) — single gunmetal border, no glow
+ELEMENT: Volt (cyan #2FE8E8, Lightning Fork glyph)
+MANUFACTURER: Boltwell (exposed structural; instrument finish; cable/connector character)
+CANVAS: 256x256 px (Workshop/catalog — ENERGY_CELL is flush-embedded, below battle resolution)
+TARGET PATH: assets/art/parts/part_boltwell_energy_cell_mk1.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Part icon: Cell Mk1 (Boltwell, Common, ENERGY_CELL slot, Volt).
+Canvas 256x256 px. 3/4 or front view, part isolated on transparent background.
+
+DESCRIPTION: "Standard-issue energy cell. Does the one job."
+A power cell module — compact, rectangular, functional. This is what powers the energy
+systems of a Boltwell bot. Should look like an industrial battery or capacitor bank:
+a rectangular housing with connector terminals and charge indicator surfaces.
+
+ENERGY_CELL SLOT SHAPE LANGUAGE (art-bible §3.3):
+- Does NOT produce distinct silhouette protrusions in battle — flush-embedded
+- Compact rectangular form — a "brick" of stored energy
+- Visible as a small flush indicator panel within the CHASSIS zone at battle scale
+- At Workshop scale this icon reads clearly as an energy storage unit
+
+VISUAL CHARACTER:
+Rectangular power cell housing. Prominent connector terminals at one end (where it
+connects to the bot's power bus — Boltwell locking ring connectors). Charge level
+indicator surface (a row of segmented indicator cells or a gauge window showing
+stored energy state). Structural housing has Boltwell cable-tie retention details
+on the exterior for chassis mounting. The form is somewhere between an industrial
+battery and a high-tech capacitor module.
+
+BOLTWELL FINISH: Exposed structural detail at module scale — visible internal-facing
+conduit ports, locking connector ring terminals, retention clip geometry on housing
+edges. High-tech instrument precision. No organic curves anywhere.
+
+VOLT ELEMENT: Cyan #2FE8E8 on the charge indicator surface and connector terminals.
+Lightning Fork glyph on the cell face or indicator panel. Inner stored-energy glow
+visible through the gauge window in cyan.
+
+RARITY FRAME (Common): Single #374350 border. No glow. Standard-issue feel.
+
+GREYSCALE TEST: At 64x64px reads as a compact rectangular power module with visible
+terminals and a charge indicator. Distinct from the Logic Chip (CHIPSET) by the
+rectangular "brick" form and terminal geometry.
+
+NEGATIVE: No limb shape. No weapon shape. No sphere (that is CORE). No Scrapjaw
+diagonal lines. No photoreal. No painterly gradients. No rounded UI frame.

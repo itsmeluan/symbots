@@ -1,0 +1,51 @@
+ASSET: Part Icon — Arc Blaster
+PART ID: boltwell_arc_blaster
+SLOT: WEAPON (slot_type 8)
+RARITY: Rare (rarity 2) — double border + diamond pip; soft ambient Volt-cyan glow ~25%
+ELEMENT: Volt (cyan #2FE8E8, Lightning Fork glyph)
+MANUFACTURER: Boltwell (exposed structural; instrument/experimental finish)
+CANVAS: 256x256 px
+TARGET PATH: assets/art/parts/part_boltwell_weapon_arc_blaster.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Part icon: Arc Blaster (Boltwell, Rare, WEAPON slot, Volt).
+Canvas 256x256 px. 3/4 or side view, part isolated on transparent background.
+
+DESCRIPTION: "Lobs a fat blue arc. Smells like a storm afterward."
+A ranged energy weapon that fires crackling arc charges. The WEAPON slot extends forward —
+ranged weapons angle forward-horizontal per art-bible. This one lobs arcs (not a laser
+beam — a fat arcing projectile launcher).
+
+WEAPON SLOT SHAPE LANGUAGE (art-bible §3.3):
+- WEAPON is the ONLY slot that extends FORWARD
+- Ranged WEAPON: angled forward-horizontal (pointing at target)
+- The direction of threat must read at 64x64px
+- The weapon must "point" — the business end (emitter/barrel) is forward-facing
+- Mount end attaches to ARM slot
+
+VISUAL CHARACTER:
+A chunky but precision arc discharge weapon. Not a laser — more like an arc-capacitor
+projector: a barrel/emitter with a wide discharge opening at the front, capacitor
+coils or charge rings along the body, and a sturdy mounting bracket at the rear.
+The emitter mouth is wide (it "lobs" arc charges — wide projectile, not narrow beam).
+Capacitor coils along the body: visible rings or fins with Boltwell cable routing
+between them (each coil charges the arc). Energy crackle visible at the emitter mouth.
+
+BOLTWELL FINISH: Exposed structural capacitor coil mounts (the coils are mounted on
+visible structural beams, not enclosed in smooth housing). Cable bundles between coils.
+Locking ring connector at the ARM mount. Instrument-grade precision assembly.
+Some scorch marks around the emitter mouth (arc discharge residue).
+
+VOLT ELEMENT: Cyan #2FE8E8 dominant at the emitter mouth (active arc energy) and
+along the capacitor coil gaps. Lightning Fork glyph at the emitter face. Soft ambient
+cyan glow at emitter and coil gaps. Rare glow: soft ambient cyan at ~25% around the part.
+
+RARITY FRAME (Rare): Double border + diamond pip. Soft ambient cyan glow ~25%.
+
+GREYSCALE TEST: At 64x64px — the wide emitter mouth (forward end) and the capacitor
+coil body must distinguish this from a melee weapon. Forward-pointing direction reads.
+
+NEGATIVE: No melee/hammer shape. No downward-inward angle (ranged = forward-horizontal).
+No smooth closed housing (Boltwell exposes structure). No Scrapjaw diagonal marks.
+No photoreal. No painterly gradients. No rounded UI frame.

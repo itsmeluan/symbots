@@ -1,0 +1,53 @@
+ASSET: Consumable Icon — Signal Jammer
+CONSUMABLE ID: signal_jammer
+RARITY: Rare (rarity 2) — double border + diamond pip; soft glow at ~25%
+EFFECT: Reduces enemy encounter rate to 10% for 20 overworld steps (overworld avoidance)
+CANVAS: 64x64 px
+TARGET PATH: assets/art/consumables/icon_consumable_signal_jammer.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Consumable icon: Signal Jammer. Canvas 64x64 px. Front-facing centered icon.
+
+A device that disrupts enemy detection and encounter triggering for a period of
+overworld movement. The "jammer" concept reads as: broadcast interference,
+signal disruption, electronic countermeasure.
+
+VISUAL CONCEPT: A compact electronic jamming device — a rectangular device with
+a small antenna array and visible interference waves broadcasting outward. The
+jamming signal reads as disruption: broken/fragmented signal lines rather than
+clean arcs (contrast with the Salvage Beacon's clean arcs). The interference effect
+makes it visually distinct from the Salvage Beacon.
+
+ICON COMPOSITION (centered, 64x64):
+- Primary: a compact rectangular device body (Boltwell instrument quality — this
+  is a sophisticated countermeasure). Slightly wider/flatter than the Salvage Beacon.
+- Antenna: one or two short antennas on top — rigid, straight, machined (not organic)
+- Interference waves: broken/fragmented arc lines radiating from the device on both
+  sides — these are NOT clean concentric arcs (like Salvage Beacon) but INTERRUPTED
+  arcs with visible signal-break gaps. The visual vocabulary of "jamming" is that the
+  signal is disrupted and incomplete.
+- Optional: a small X-mark or disruption indicator on the device face (reading:
+  "signals blocked")
+
+COLOR: Circuit Teal #2B6E68 or a muted blue-grey for the interference waves
+(signal/electronic feeling, but NOT Volt cyan which is elemental). The device body
+is Slate Gunmetal #374350. The interrupted arcs carry the muted electronic teal
+to read as "disrupted signal."
+
+UI CHROME RULES: Chamfered 45-degree frame corners. Double border + diamond pip (Rare).
+
+PALETTE: Slate Gunmetal #374350 device body; Circuit Teal #2B6E68 on interrupted
+signal arcs; Bone White #F2EDDF on antenna and structural highlights.
+
+VISUAL DISTINCTION FROM SALVAGE BEACON: The Salvage Beacon has a horn emitter
+pointing UP with clean gold arcs = broadcasting outward. The Signal Jammer has
+antennas pointing UP with BROKEN teal arcs = disrupting reception. Same category
+(beacon/emitter device) but visually opposite in arc quality and color.
+
+GREYSCALE TEST: At 32x32px — the broken/interrupted arc pattern distinguishes this
+from the Salvage Beacon's clean arcs even without color.
+
+NEGATIVE: No clean unbroken signal arcs (jammer = disrupted arcs). No Lightning Fork.
+No Volt cyan (use Circuit Teal). No weapon silhouette. No photoreal. No painterly
+gradients. No rounded frame corners.

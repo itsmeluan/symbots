@@ -1,0 +1,50 @@
+ASSET: Part Icon — Bash Hammer
+PART ID: scrapjaw_bash_hammer
+SLOT: WEAPON (slot_type 8)
+RARITY: Common (rarity 1) — single gunmetal border, no glow
+ELEMENT: Kinetic (silver-shift #D8DDE6, Impact Ring glyph)
+MANUFACTURER: Scrapjaw (asymmetric; salvaged character; diagonal slash detail)
+CANVAS: 256x256 px
+TARGET PATH: assets/art/parts/part_scrapjaw_weapon_bash_hammer.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Part icon: Bash Hammer (Scrapjaw, Common, WEAPON slot, Kinetic).
+Canvas 256x256 px. 3/4 view, part isolated on transparent background.
+
+DESCRIPTION: "A pipe with ambition. Hits things until they stop."
+The simplest melee weapon in the game. This should look like exactly what it is:
+an oversized mechanical impact tool — a heavy hammer or wrecking-maul made from
+repurposed industrial parts. It does not need to be elegant. It needs to look like
+it hurts.
+
+WEAPON SLOT SHAPE LANGUAGE (art-bible §3.3):
+- WEAPON is the only slot that extends FORWARD
+- Melee WEAPON: angled down-and-inward (the angle of a strike)
+- Must have a clear "pointing" direction — the business end (hammer head) is the forward/
+  active end; the mount end (grip/handle) attaches to the ARM slot
+- At 64x64px the weapon must be the part that "points" — direction of threat reads
+
+VISUAL CHARACTER:
+Heavy hammer head at the forward end — a blocky, thick rectangular or cylindrical head
+made from a repurposed industrial part (a chunk of machinery welded to a handle).
+Handle/shaft connecting to mount end — straight, thick enough to be credible as the
+arm that swings this. The hammer head has dents and impact marks (it has hit things
+before). Simple silhouette: shaft + head. The head is wider than the shaft.
+
+SCRAPJAW FINISH: Diagonal slash panel-lines across the hammer head. Weld mark where
+the head was attached to the handle (salvaged assembly — the head and handle were
+separate pieces). Quick-release mount at the handle end.
+
+KINETIC ELEMENT: Silver-shift #D8DDE6 on the hammer head impact face (polished from
+use — chrome Impact Ring finish on the striking surface). Impact Ring glyph on the
+hammer face. Bone White structural highlights on the handle edges.
+
+RARITY FRAME (Common): Single #374350 gunmetal border. No glow. Plain and functional.
+
+GREYSCALE TEST: At 64x64px — wide hammer head at one end, narrower shaft at the other.
+The "heavy end" direction is unambiguous.
+
+NEGATIVE: No energy glow unrelated to Kinetic element. No complex mechanical details
+(this is a pipe with ambition — keep it simple). No Boltwell or Ironclad finish.
+No photoreal. No painterly gradients. No rounded UI frame.

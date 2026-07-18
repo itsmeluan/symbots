@@ -1,0 +1,47 @@
+ASSET: Part Icon — Bulwark Frame
+PART ID: ironclad_bulwark_frame
+SLOT: CHASSIS (slot_type 2)
+RARITY: Common (rarity 1) — single gunmetal border, no glow
+ELEMENT: Thermal (amber #F0900A, Flame Chevron glyph, emissive bloom)
+MANUFACTURER: Ironclad (geometric, faceted, planar panels; dense perpendicular grid; hex bolts)
+CHASSIS ARCHETYPE: 2 = Defense (wide, convex, blocklike with chamfered corners)
+CANVAS: 256x256 px
+TARGET PATH: assets/art/parts/part_ironclad_chassis_bulwark_frame.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Part icon: Bulwark Frame (Ironclad, Common, CHASSIS slot, Thermal, Defense archetype).
+Canvas 256x256 px. 3/4 front view, part isolated on transparent background.
+
+DESCRIPTION: "Ironclad's entry-tier plating. Overbuilt on purpose."
+The defense CHASSIS. This is the torso/body plate of a bot — the widest, most central
+component that everything else attaches to. For the defense archetype, this reads as:
+wide, convex, blocklike, armored wall.
+
+CHASSIS SLOT SHAPE LANGUAGE (art-bible §3.3):
+- Always the single widest element in the mid-zone
+- Outer edge defines "shoulder width" — the reference boundary for all other parts
+- Defense archetype: wide, convex, blocklike with chamfered (45-degree cut) corners
+- Panel-line anchor: all other mid-zone parts' panel lines would continue from this
+- CORE socket is implied at center (for CORE slot insertion — an internal cavity or
+  locking ring visible at center front)
+- ARMS attachment points visible on the lateral edges (the shoulder seam nodes)
+
+IRONCLAD FINISH: Dense perpendicular grid panel-lines across the entire front face.
+Prominent hex bolts at every panel corner (4+ visible bolts on the face). Planar,
+faceted surfaces — the convex curve of defense armor expressed through flat planes
+chamfered together (not a smooth organic curve — geometric facets that approximate a
+convex shell). Thick-plate visual weight. Heavy-industrial register.
+
+THERMAL ELEMENT: Amber #F0900A as subtle accent on panel borders and the central
+CORE socket ring. Flame Chevron glyph (upward-stacked V shapes) on the central chest
+panel. Entry-level Thermal presence — muted because this is Common rarity.
+
+RARITY FRAME (Common): Single #374350 border. No glow. Entry-tier look.
+
+GREYSCALE TEST: At 64x64px reads as a wide torso/chest plate with a clear central
+socket and visible lateral attachment points for ARMS. Widest part in any assembled bot.
+
+NEGATIVE: No legs shape. No head shape. No arm extension. No CORE sphere (the socket
+is an empty ring — CORE is a separate part). No Scrapjaw diagonal lines. No Boltwell
+struts. No photoreal. No painterly gradients. No rounded UI frame.

@@ -1,0 +1,71 @@
+ASSET: Slag Hauler (Enemy)
+ENEMY ID: slag_hauler
+CANVAS: 256x256 px (detail) — mipmapped to 128x128 for battle
+PERSPECTIVE: 3/4 side view, slight upward angle
+ELEMENT: Thermal (amber #F0900A, Flame Chevron glyph, emissive bloom — molten metal theme)
+MANUFACTURER: Ironclad (geometric, faceted, planar panels; dense perpendicular grid
+              panel-lines; prominent hex bolts/rivets; heavy-industrial finish)
+ROLE: Hulking brawler/hurler — highest structure in the common roster, hurls molten slag,
+      shrugs off return fire; slow and massive
+TARGET PATH: assets/art/enemies/enemy_slag_hauler_battle.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Enemy Symbot: Slag Hauler. Canvas 256x256 px. 3/4 side-view combat perspective.
+
+CONCEPT: "A hulking Ironclad transport turned brawler. It hurls molten slag and shrugs
+off the return fire." Originally a heavy industrial transport, repurposed as a combat
+unit. Bigger and more brutish than the Ironclad Sentry — less refined, more
+workhorse-made-weapon. The visual communicates: industrial mass, incidental menace,
+molten payload.
+
+SILHOUETTE DESCRIPTION:
+The largest non-boss enemy silhouette. Heavier mass than the Ironclad Sentry but with
+more industrial/cargo-hauler origins (wider CHASSIS, lower center of gravity, transport
+proportions). CHASSIS dominates — wider even than the Sentry, lower-slung, like a heavy
+vehicle's cargo bay converted to armor. The WEAPON is a dominant ranged hurling element:
+a large scoop or catapult-arm design at the front (ranged WEAPON = forward-horizontal angle
+per art-bible — but this one has industrial/catapult character, not a precision barrel).
+A visible slag containment feature on the CHASSIS or WEAPON (a molten-metal hopper or
+heated chamber that glows amber). LEGS are massive tread-style or multi-pad stance — not
+legs so much as heavy-duty ground anchors (think: industrial crane base adapted for combat).
+HEAD is small and functional compared to the massive body — a thick-shielded sensor housing.
+
+IRONCLAD MANUFACTURER FINISH: Dense perpendicular grid panel-lines, hex bolts and rivets
+even more prominent than the Sentry (this was a work machine first). Thick armor plates
+with visible wear from industrial use — not battle damage, but hauling-and-loading wear.
+Heat-stained panel surfaces from constant slag exposure. Seams around the slag chamber
+are visibly heat-warped.
+
+THERMAL ELEMENT ACCENT: Heavy amber #F0900A molten glow from the slag chamber/WEAPON
+hopper — this is the strongest Thermal glow in the common enemy roster (it literally
+carries slag). Flame Chevron glyph on the WEAPON or CHASSIS-front. Orange-amber molten
+material visible inside the hopper/chamber. Heat shimmer around the WEAPON. The CHASSIS
+surface around the slag containment is heat-stained orange-amber at the seams.
+
+BREAK REGIONS (distinct targetable silhouette zones):
+- CHASSIS (region_fraction 45%): the massive cargo-converted torso. The largest break
+  target in the game. Must look like it houses something heavy — when cracked, the
+  internal cargo shows. Panel seams on the CHASSIS must imply "this opens" even unbroken.
+- WEAPON (region_fraction 30%): the slag hurling element — a catapult arm, scoop, or
+  industrial ejector. Must extend forward-and-slightly-up (ranged with area quality per
+  art-bible WEAPON angle). Breaking it removes the primary threat and changes the top-
+  forward silhouette dramatically.
+
+IDLE STANCE: Heavy, low, feet (treads/pads) planted wide. WEAPON charged and raised
+slightly (ready to hurl). HEAD sensor tracking forward. The stance is industrial labor
+made threatening — it's not posturing, it's just loaded and ready. Enormous bottom-heavy
+mass distribution.
+
+WORLD PALETTE BASE: Slate Gunmetal #374350 heavy armor chassis; Alloy Ochre #C49A35
+on heat-stained and oxidized metal areas; heat-warped amber #F0900A near the slag
+containment; Bone White on structural frame nodes at panel edges.
+
+GREYSCALE TEST: At 64x64 greyscale — WEAPON (forward-raised hurling element), massive
+CHASSIS (widest body element with implied internal cavity), and broad-stance LEGS/tread
+must read as three distinct mass zones. This must be visibly larger than the Ironclad Sentry.
+
+NEGATIVE: No sleek or precision look (this was a hauler, not a combat machine). No fast
+silhouette. No exposed CORE sphere. No facial expressions. No photoreal. No painterly
+gradients. Do NOT make it look the same as the Ironclad Sentry — it is bigger, lower,
+and more industrial/workhorse. No rounded UI.

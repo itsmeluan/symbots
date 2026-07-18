@@ -1,0 +1,83 @@
+ASSET: Storm Warden (BOSS — Enemy Class 2)
+ENEMY ID: storm_warden
+CANVAS: 256x256 px — Boss fills most of canvas; larger than any common enemy
+PERSPECTIVE: 3/4 side view, low camera angle (player looks up — boss stature)
+ELEMENT: Volt (cyan #2FE8E8, Lightning Fork glyph, crackling arc energy)
+MANUFACTURER: Boltwell (exposed structural beams/struts/cabling; instrument finish — but
+              at boss scale, more imposing and architecturally complex)
+ROLE: BOSS 2 (enemy_class 2, WIN_COUNT gate 10) — Boltwell command unit; pure energy
+      attacker; three break regions; Boss-Grade rarity visual treatment
+TARGET PATH: assets/art/enemies/enemy_storm_warden_battle.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Enemy Symbot: Storm Warden. BOSS. Canvas 256x256 px. 3/4 side-view, low-camera angle.
+
+CONCEPT: "A Boltwell command unit crackling with stormlight. Its lance was never meant
+to leave the cradle." A flagship machine — built to command and never deployed as a
+frontline unit until now. It carries the Storm Lance, a weapon of extraordinary power
+that the game itself notes "was never meant to leave the cradle." This boss feels like
+a revelation: a machine built for a purpose beyond normal combat, now fully engaged.
+
+BOSS-GRADE VISUAL TREATMENT (art-bible §4.4 / §5.4):
+- Significantly larger mass than any common enemy
+- Steady radiant Volt cyan glow along the model edge (Boss-Grade ~60% opacity glow)
+- The Storm Lance WEAPON is visually the most dramatic element on the screen
+- All three break regions must be distinct targetable silhouette zones
+- The "crackling with stormlight" concept means ambient electrical arc effects between
+  structural members (part of the silhouette — energized structural beams)
+
+SILHOUETTE DESCRIPTION:
+Tall, commanding, architecturally complex body plan. Boltwell structure philosophy
+taken to boss scale — the exposed beams, struts, and cabling are now monumental. The
+overall silhouette is tall and vertical (command unit reads as upright and authoritative)
+with complex internal structural geometry visible through deliberate voids.
+
+Key elements:
+- WEAPON (region_fraction 40%): The Storm Lance — the most prominent visual element
+  and the primary break target. A massive forward-pointing lance/spear weapon extending
+  from one ARM at a forward-horizontal angle (ranged attack = forward-horizontal per
+  art-bible). The lance head should be architecturally complex: a Boltwell-style
+  exposed-structure energy accumulator/emitter that ends in a focused point. Active
+  electrical arcing visible along the lance body. This is the thing the player WANTS
+  to break and harvest.
+- CORE (region_fraction 30%): The CORE housing in the CHASSIS is a prominent reinforced
+  chamber — Boltwell exposes structure, so the CORE housing reads as an ornate structural
+  cathedral node at the center of the chest, visible through the surrounding structural
+  voids. Accessing it means breaking through the chest structure.
+- HEAD (region_fraction 22%): Elevated command sensor array — the tallest point of
+  the model (elevated above even a tall CHASSIS). A wide horizontal scan array with
+  multiple sensor nodes, elevated like an antenna tower. More elaborate than the
+  Volt Sentinel's HEAD — this is a command unit with full-spectrum scanning.
+
+BOLTWELL MANUFACTURER FINISH AT BOSS SCALE: The Boltwell structural vocabulary
+amplified — architectural in scale, not just decorative. Beams that are structural
+members (not just surface detail). Deliberate voids between them showing internal
+machinery. Electrical conduit bundles thick as cables, locking rings the size of
+industrial joints. The whole machine looks like a precision instrument the size
+of a building. Crackling arc energy bridges between structural members.
+
+VOLT ELEMENT ACCENT: Cyan #2FE8E8 DOMINANT throughout — this is the most Volt-heavy
+design in the game. Steady radiant boss-grade glow along the entire model edge.
+Lightning Fork glyph on the Storm Lance head. Electrical arcing between structural
+beam ends (bright cyan energy bridges). All energy conduits glow cyan. HEAD scan
+array has cyan sensor glow. The Storm Lance emits a sustained cyan charge.
+
+IDLE STANCE: Upright, commanding. Storm Lance extended forward and raised slightly
+(active charge position — the weapon is always ready). HEAD scan array elevated.
+CORE housing visible and glowing through the structural voids. The stance reads:
+"I was built to end this." Not aggressive — authoritative.
+
+WORLD PALETTE BASE: Slate Gunmetal #374350 structural frame; Circuit Teal #2B6E68
+on secondary cabling and coolant conduits; Bone White on primary structural load-bearing
+nodes. Cyan #2FE8E8 on all energy systems — the dominant color accent.
+
+GREYSCALE TEST: At 64x64 greyscale — STORM LANCE (forward-pointing dominant weapon),
+HEAD (elevated antenna-tower scan array), and CHASSIS with visible CORE HOUSING
+(structural cathedral node) must each read as distinct zones. Boss must be unmistakably
+larger and more architecturally complex than the Volt Sentinel.
+
+NEGATIVE: No salvage/scrapjaw quality. No organic weathering. No exposed glow sphere
+(CORE is visible as a structural node, not a floating orb). No facial expressions.
+No photoreal. No painterly gradients. Must be visually MUCH larger and more imposing
+than the Volt Sentinel. No rounded UI.

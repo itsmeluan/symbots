@@ -1,0 +1,51 @@
+ASSET: Rustcrawler (Enemy)
+ENEMY ID: rustcrawler
+CANVAS: 256x256 px (Workshop/inspect detail) — mipmapped to 128x128 for battle use
+PERSPECTIVE: 3/4 side view, slight upward angle (player looks slightly up at the enemy)
+ELEMENT: Kinetic (silver-shift #D8DDE6, Impact Ring glyph, chrome/polished finish)
+MANUFACTURER: Scrapjaw (asymmetric, directional edges; diagonal slash panel-lines; scavenged-aggressive)
+ROLE: Skittering scavenger — low, fast, multi-legged or crab-like stance
+TARGET PATH: assets/art/enemies/enemy_rustcrawler_battle.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Enemy Symbot: Rustcrawler. Canvas 256x256 px. 3/4 side-view combat perspective.
+
+SILHOUETTE DESCRIPTION:
+A junkyard scavenger bot assembled from welded scrap — the first enemy most players face.
+Small, low-to-the-ground, skittering body plan. Think: crab or spider-like LEGS spread
+wide and low (the LEGS dominate the stance zone, wide and multi-contact); compact CHASSIS
+torso above (narrow-ish, hunched forward, aggressive forward-cant); a recognizable ARM
+region extending to one side with a claw-or-hook shape (the breakable ARM region must
+read as a distinct silhouette element the player can aim at); a small HEAD sensor on top
+with a horizontal visor-band or single forward-optic lens cluster. The bot looks SMALL
+and FAST — low center of mass, many contact points.
+
+SCRAPJAW MANUFACTURER FINISH: Asymmetric panel edges, diagonal ~45-degree slash panel
+lines across the CHASSIS and ARM. Quick-release clasps and visible welded-over repairs.
+Looks like it was bolted together from salvage, not manufactured cleanly. One ARM may be
+larger than the other (personality signal — it grew by scavenging).
+
+KINETIC ELEMENT ACCENT: Silver-shift metallic surfaces on moving parts and the claw edges.
+Impact Ring glyph (concentric circles) subtly present on the ARM/claw region. Polished
+chrome finish on the claw surface (the one allowed specular in Kinetic element).
+
+BREAK REGIONS (must read as distinct targetable zones from silhouette):
+- ARM (region_fraction 35%): the claw-arm must extend clearly from CHASSIS, visually
+  separable at the joint seam. Breaking it changes the bot's outline meaningfully.
+- HEAD (region_fraction 22%): the sensor crest is compact but elevated, with its
+  horizontal visor feature. Breaking it removes the top element from the silhouette.
+
+IDLE STANCE: Legs splayed, ARM raised in a ready-to-grab position, HEAD angled toward
+target (sensor forward). Aggressive-but-small energy. Reads like a thing that lurks.
+
+WORLD PALETTE BASE: Slate Gunmetal #374350 base chassis, rust-brown aged metal accents
+(draw from Alloy Ochre #C49A35 and Harvest Crimson #B33020 as weathering), Bone White
+#F2EDDF on exposed frame/structural highlights.
+
+GREYSCALE TEST: At 64x64 greyscale — ARM region (claw), HEAD region (sensor crest), and
+LEGS (spread stance foundation) must each be identifiable as separate zones by position.
+
+NEGATIVE: No rounded UI corners. No clean factory finish (this is scrap/salvage). No
+symmetrical arms (scrapjaw personality allows asymmetry). No visible CORE sphere.
+No facial expressions. No human features. No photoreal. No painterly gradients.

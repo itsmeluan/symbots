@@ -1,8 +1,13 @@
 ## OverworldScreen — the walkable map where the player finds and engages enemies.
 ##
-## Prototype-fidelity (all-code UI, placeholder art). The player token moves by keyboard
-## (arrows / WASD) or tap-to-move (touch-first). Walking onto an enemy marker triggers a
-## battle via ScreenManager.enter_battle(). On VICTORY the marker is cleared.
+## STRUCTURE vs STYLE (ADR-0008): the static shell (Bg / Title / WorkshopBtn / Token)
+## and its styling live in overworld_screen.tscn + the central Theme. This script owns
+## behaviour + the enemy markers, which are generated from live EnemyDB data (not
+## editor-authorable). Placeholder colour token → swap Token for a player sprite later.
+##
+## The player token moves by keyboard (arrows / WASD) or tap-to-move (touch-first).
+## Walking onto an enemy marker triggers a battle via ScreenManager.enter_battle().
+## On VICTORY the marker is cleared.
 ##
 ## KEEP-ALIVE (ADR-0004 §3): ScreenManager hides + PROCESS_MODE_DISABLED's this screen on
 ## battle entry and restores it on encounter_resolved. Movement lives in _physics_process
@@ -21,14 +26,13 @@ const RESULT_WIN := 1
 # encounter_type codes: WILD=1, BOSS=2.
 const ENCOUNTER_WILD := 1
 
-const COL_BG := Color(0.10, 0.12, 0.16)
-const COL_TOKEN := Color(0.32, 0.72, 0.40)   # green — the player
-const COL_ENEMY := Color(0.85, 0.30, 0.28)   # red — an enemy marker
+const COL_ENEMY := Color(0.85, 0.30, 0.28)   # red — an enemy marker (data-generated)
 
 var _ctx: ServiceContext
 var _log: LogSink
 
-var _token: ColorRect
+# Static shell authored in overworld_screen.tscn; resolved via % unique names.
+@onready var _token: ColorRect = %Token
 var _target_pos: Vector2 = Vector2.INF       # INF = no active tap-move target
 var _markers: Array = []                      # [{node: ColorRect, enemy: EnemyDef}]
 var _in_encounter: bool = false
@@ -36,8 +40,9 @@ var _pending_marker = null
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
-	_build_static_ui()
+	%WorkshopBtn.pressed.connect(_on_workshop_pressed)
+	# Centre the player token on the field (position is behaviour, not editor layout).
+	_token.position = WORLD * 0.5 - Vector2(TOKEN_SIZE, TOKEN_SIZE) * 0.5
 
 
 ## Screen contract: cache deps, spawn markers from real enemy data, subscribe to the
@@ -106,7 +111,7 @@ func _keyboard_dir() -> Vector2:
 
 func _check_encounters(player_center: Vector2) -> void:
 	for m in _markers:
-		var node: ColorRect = m["node"]
+		var node: Control = m["node"]
 		if not is_instance_valid(node):
 			continue
 		var mc := node.position + Vector2(TOKEN_SIZE, TOKEN_SIZE) * 0.5
@@ -130,7 +135,7 @@ func _trigger_encounter(marker: Dictionary) -> void:
 func _on_encounter_resolved(result: int, _encounter_type: int) -> void:
 	_in_encounter = false
 	if result == RESULT_WIN and _pending_marker != null:
-		var node: ColorRect = _pending_marker["node"]
+		var node: Control = _pending_marker["node"]
 		if is_instance_valid(node):
 			node.queue_free()
 		_markers.erase(_pending_marker)
@@ -138,36 +143,8 @@ func _on_encounter_resolved(result: int, _encounter_type: int) -> void:
 
 
 # ---------------------------------------------------------------------------
-# UI construction (all-code, prototype fidelity)
+# Enemy markers (data-generated from EnemyDB — not editor-authorable)
 # ---------------------------------------------------------------------------
-
-func _build_static_ui() -> void:
-	var bg := ColorRect.new()
-	bg.color = COL_BG
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(bg)
-
-	var title := Label.new()
-	title.text = "OVERWORLD — walk into an enemy to fight  (arrows/WASD or tap)"
-	title.position = Vector2(16, 12)
-	title.add_theme_color_override("font_color", Color(0.8, 0.85, 0.9))
-	add_child(title)
-
-	var workshop_btn := Button.new()
-	workshop_btn.text = "WORKSHOP"
-	workshop_btn.custom_minimum_size = Vector2(140, 48)
-	workshop_btn.position = Vector2(WORLD.x - 156, 8)
-	workshop_btn.pressed.connect(_on_workshop_pressed)
-	add_child(workshop_btn)
-
-	_token = ColorRect.new()
-	_token.color = COL_TOKEN
-	_token.size = Vector2(TOKEN_SIZE, TOKEN_SIZE)
-	_token.position = WORLD * 0.5 - Vector2(TOKEN_SIZE, TOKEN_SIZE) * 0.5
-	_token.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_token)
-
 
 ## Place up to MAX_MARKERS enemy markers from real EnemyDB data at scattered positions.
 func _spawn_enemy_markers() -> void:
@@ -180,8 +157,9 @@ func _spawn_enemy_markers() -> void:
 	var n: int = mini(MAX_MARKERS, mini(enemies.size(), spots.size()))
 	for i in n:
 		var e: EnemyDef = enemies[i]
-		var node := ColorRect.new()
-		node.color = COL_ENEMY
+		# Asset pipeline hook: use enemies/<id>.png when authored, else the placeholder
+		# ColorRect. Drop the sprite in → the marker upgrades with no code change.
+		var node := _make_marker_node(e.id)
 		node.size = Vector2(TOKEN_SIZE, TOKEN_SIZE)
 		node.position = spots[i] - Vector2(TOKEN_SIZE, TOKEN_SIZE) * 0.5
 		node.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -194,6 +172,21 @@ func _spawn_enemy_markers() -> void:
 		node.add_child(lbl)
 
 		_markers.append({"node": node, "enemy": e})
+
+
+## Placeholder-or-sprite marker: a TextureRect when enemies/<id>.png exists, else the
+## flat-colour ColorRect. Both are Controls, so the caller treats them uniformly.
+func _make_marker_node(enemy_id) -> Control:
+	var tex := Art.texture("enemies", enemy_id)
+	if tex != null:
+		var tr := TextureRect.new()
+		tr.texture = tex
+		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		return tr
+	var rect := ColorRect.new()
+	rect.color = COL_ENEMY
+	return rect
 
 
 ## Six fixed scatter points around the field perimeter/quadrants (deterministic — no RNG,

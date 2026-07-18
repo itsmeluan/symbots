@@ -1,0 +1,39 @@
+ASSET: Mechanic — Battle Intro Cameo
+ASSET ID: ASSET-003
+CANVAS: 256x256 px | Single cameo pose (optional: 2-3 frame entrance animation)
+PERSPECTIVE: 3/4 view, slightly dynamic angle — same register as a Pokémon trainer battle entrance
+VARIANTS: 2 — masculine and feminine
+TARGET PATH: assets/art/characters/char_mechanic_[masc|fem]_battle_intro.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Human mechanic in a confident battle-intro cameo pose. Canvas 256x256 px. 3/4 view,
+trainer-style battle entrance framing.
+
+CHARACTER DESCRIPTION:
+The same engineer, but in a "here we go" entrance moment — the trainer-style beat at
+the start of a battle before the mechanic yields the frame to the Symbot that actually
+fights. Slightly more dynamic energy than the Workshop idle, but this is still a
+person-not-a-fighter: confident engineer stance, not a combat stance. Like a Pokémon
+trainer throwing their arm forward to send out their creature.
+
+POSE: One arm extended or pointing forward (sending the Symbot out), other arm at side
+or slightly behind for balance. Weight forward, chin up, calm confident expression.
+Not aggressive — purposeful and decisive. The pose says "I built this thing, let's go."
+
+LIGHTING: Slightly more dramatic than Workshop — this is the moment before combat so
+the lighting transitions toward the combat mood. Warm light on the character, clean
+background (no scene behind them — they appear against the battle screen or a neutral
+gradient area). The lighting makes them read clearly without competing with the Symbot
+they are about to yield the frame to.
+
+PALETTE: Same world-palette clothing. Slightly higher contrast than Workshop idle
+(to read at the battle screen scale against a desaturated combat backdrop). Still
+matte, still flat indexed colors, still lower saturation than any Symbot in frame.
+
+GREYSCALE TEST: In greyscale at 128px the pose reads as a human in a forward-reaching
+confident stance.
+
+NEGATIVE: No Symbot in frame (they are absent from this sprite; rendered separately).
+No health bar, no stats display, no targeting reticle. No weapons drawn. No combat armor.
+No high-saturation neon. No photoreal. No painterly gradients. No dramatic explosions.

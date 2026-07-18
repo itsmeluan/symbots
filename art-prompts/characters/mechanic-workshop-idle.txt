@@ -1,0 +1,37 @@
+ASSET: Mechanic — Workshop (Oficina) Bench Idle
+ASSET ID: ASSET-002
+CANVAS: 256x256 px | Single static pose (optional: 2-frame gentle breathing idle)
+PERSPECTIVE: 3/4 view (slightly angled, close-camera framing — like a character portrait)
+VARIANTS: 2 — masculine and feminine (same pose, same clothing, different body/hair silhouette)
+TARGET PATH: assets/art/characters/char_mechanic_[masc|fem]_workshop_idle.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Human mechanic/engineer at a workbench in idle pose, close-camera portrait-scale framing.
+Canvas 256x256 px. 3/4 view character portrait perspective.
+
+CHARACTER DESCRIPTION:
+The same engineer as the overworld sprite, but now the camera is close enough to read
+clothing and face detail. Seated or standing at the edge of a workbench, mid-assembly
+posture — arms positioned as if adjusting a part, relaxed but focused body language.
+Calm, unhurried expression. The workbench surface is implied (lower edge of frame) but
+the Symbot itself is NOT in this asset (it is composited separately in the game).
+
+POSE: Focused idle — one hand resting on bench, other positioned as if reaching for a
+tool or part. Weight distributed evenly, no urgency in the stance. Think: "a craftsperson
+pausing to examine their work." Body language conveys "this is my lab."
+
+LIGHTING: Warm, even indoor bench-lamp light from above and slightly front. High ambient,
+low directional shadow. No dramatic rim light, no mysterious shadows. The scene feels
+like a well-lit garage workshop — every detail visible, warm but not yellow-orange.
+Workshop palette: warm-neutral indoor tones, parts and clothing read at true color.
+
+PALETTE: Same world-palette clothing as overworld sprite (earth tones, muted, lower
+saturation than any robot). Flat indexed color regions for palette-swap compatibility.
+At this scale, face reads — keep expression calm and professional, not heroic or flashy.
+
+GREYSCALE TEST: In greyscale at 128px the pose reads as a focused human at work.
+
+NEGATIVE: No Symbot in frame. No visible robot parts being held (hands empty or implied
+reach). No dramatic shadow. No high-saturation neon. No weapons. No combat armor. No
+photoreal. No painterly gradients. No baked gradients. No HUD elements.

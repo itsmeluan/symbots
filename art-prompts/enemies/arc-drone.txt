@@ -1,0 +1,67 @@
+ASSET: Arc Drone (Enemy)
+ENEMY ID: arc_drone
+CANVAS: 256x256 px (detail) — mipmapped to 128x128 for battle
+PERSPECTIVE: 3/4 side view, slight upward angle (drone may hover slightly above ground line)
+ELEMENT: Volt (cyan #2FE8E8, Lightning Fork glyph — bifurcated diagonal bolt)
+MANUFACTURER: Boltwell (exposed structural beams/struts/cabling; instrument/experimental finish)
+ROLE: Fast interceptor — dives in, discharges, peels away; high energy power and mobility
+TARGET PATH: assets/art/enemies/enemy_arc_drone_battle.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Enemy Symbot: Arc Drone. Canvas 256x256 px. 3/4 side-view combat perspective.
+
+CONCEPT: "A fast Boltwell interceptor. Dives in, discharges, and peels away before you
+can answer." Aggressive airborne/hover unit — all speed and discharge, no staying power.
+The visual must communicate: agile, dangerous in close, gone before you react.
+
+SILHOUETTE DESCRIPTION:
+Lightweight hover body plan — the LEGS are replaced by or transformed into hover/thruster
+geometry (not ground-contact legs in the traditional sense — thruster pods or vectored
+nozzles at the bottom instead of planted stance legs). CHASSIS is narrow and swept-back,
+aerodynamic taper — minimal mass for speed. The dominant WEAPON element is the arc
+emitter: a prominent forward-facing discharge array that points directly at the target
+(per art-bible: ranged WEAPON angles forward-horizontal — this is the "pointing" element
+that communicates threat direction). ARMS are narrow or folded, flush with CHASSIS for
+aerodynamics. HEAD sensor is a forward-angled narrow visor — no wide scan array (it's
+looking at one thing: the target).
+
+BOLTWELL MANUFACTURER FINISH: Structural beams and struts visible on the narrow CHASSIS,
+but lighter and more delicate than the Volt Sentinel's — this is a fast instrument, not
+a fortified post. Cable bundles run from CHASSIS to the arc emitter. Exposed connector
+rings where wings or thrust pods attach. Locking rings on emitter mount. The Boltwell
+"high-tech instrument" finish reads here as cutting-edge prototype interceptor.
+
+VOLT ELEMENT ACCENT: Cyan #2FE8E8 dominant on the arc emitter/WEAPON (the brightest
+element on the drone). Lightning Fork glyph on the emitter face. Cyan energy trails on
+thruster pods (suggesting speed). Structural cable conduits in cyan-tinted accent.
+Slightly stronger glow than the Volt Sentinel (same element but more aggressive energy
+— this thing is discharging constantly).
+
+BREAK REGIONS (distinct targetable silhouette zones):
+- CORE (region_fraction 28%): The CORE housing in the center of the narrow CHASSIS body
+  — a reinforced structural node. Destroying it powers down the drone (reads as the
+  "kill shot" on a lean body that has little else to hit).
+- WEAPON (region_fraction 35%): The arc emitter — the prominent forward-pointing
+  discharge array. It is the most visually distinctive element (it's why the drone
+  is dangerous). Breaking it removes the forward-pointing shape, changing the silhouette
+  significantly.
+
+HOVER/FLIGHT VISUAL: Show the drone slightly above the ground baseline with thruster
+pods angled downward or vectored. A faint energy wash or dust disturbance below the
+thrusters (environment disturbance, not a glowing floor effect). The pose conveys
+mid-dive — slightly pitched forward, emitter leading.
+
+IDLE STANCE: Pitched forward in attack angle, emitter aimed at target, thrusters
+compensating. Reads: "mid-approach." Dynamic, not hovering neutrally.
+
+WORLD PALETTE BASE: Slate Gunmetal #374350 structural frame; Circuit Teal #2B6E68
+on cabling; Bone White on structural nodes. Cyan #2FE8E8 dominant on emitter and thrust glow.
+
+GREYSCALE TEST: At 64x64 greyscale — WEAPON emitter (forward-pointing), CHASSIS body
+(narrow swept silhouette), and thruster LEGS (bottom pods) must read as three distinct
+zones. The drone must not look like a ground unit.
+
+NEGATIVE: No ground-planted stance (this is a hover/flying unit). No heavy armored
+look (it's fast and light). No glow sphere for CORE. No facial expressions. No photoreal.
+No painterly gradients.

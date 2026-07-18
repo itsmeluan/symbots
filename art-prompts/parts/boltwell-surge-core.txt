@@ -1,0 +1,50 @@
+ASSET: Part Icon — Surge Core
+PART ID: boltwell_surge_core
+SLOT: CORE (slot_type 1)
+RARITY: Rare (rarity 2) — double border + diamond pip; soft ambient Volt-cyan glow ~25%
+ELEMENT: Volt (cyan #2FE8E8, Lightning Fork glyph)
+MANUFACTURER: Boltwell (instrument finish on a sphere — attachment nodes stay engineered)
+CANVAS: 256x256 px (Workshop/UI only — CORE never shown in battle or overworld)
+TARGET PATH: assets/art/parts/part_boltwell_core_surge_core.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Part icon: Surge Core (Boltwell, Rare, CORE slot, Volt).
+Canvas 256x256 px. 3/4 or front-facing view, part on transparent background.
+
+DESCRIPTION: "Boltwell's tuned reactor. Feeds the greedy builds."
+A high-performance CORE sphere. Same sphere form as all CORE parts (the ONLY fully-organic-
+contour form in the game — no engineered panel-line seams across the sphere body) but with
+Boltwell's tuning character visible in the internal design and attachment nodes.
+
+CORE SLOT RULES (art-bible §3.3 / §5.3):
+- CORE is ALWAYS a SMOOTH SPHERE with an INTERNAL DESIGN
+- The sphere exterior is organic-contour (no engineered seams on the sphere body)
+- Internal design is visible through translucent panels or crystal apertures in the sphere
+- Attachment nodes (cardinal points) are engineered geometry (universal grammar holds)
+- CORE is Workshop/UI ONLY — never in battle or overworld
+- Slow luminous pulse captured as still mid-cycle ambient inner glow
+
+BOLTWELL INTERNAL DESIGN ON THE SPHERE:
+Where the Scrap Core has an organic/salvaged feel, the Surge Core has Boltwell precision:
+- The internal design visible through translucent windows shows a structured capacitor/
+  reactor geometry — concentric rings, radial structural support beams inside the sphere,
+  Boltwell cable-routing visible as fine internal filament lines
+- Attachment nodes at cardinal points: Boltwell locking rings and connector points, small
+  and precise (not the Scrapjaw weld-patches — clean machined fittings)
+- The sphere surface itself is smooth/clean (Boltwell quality — no weld marks on the sphere)
+- One or two indicator apertures on the sphere surface showing the inner Volt charge state
+
+VOLT ELEMENT (Rare): Cyan #2FE8E8 inner glow through the translucent windows (brighter
+and more active than the Scrap Core's Kinetic inner glow — this is a tuned high-output
+reactor). Lightning Fork glyph visible through the main aperture window. Soft ambient
+cyan glow at ~25% around the sphere (Rare rarity glow, Volt element color).
+
+RARITY FRAME (Rare): Double border + diamond pip. Soft ambient cyan Volt glow ~25%.
+
+GREYSCALE TEST: At 64x64px reads unmistakably as a sphere. The internal structure
+visible through windows distinguishes it from the Scrap Core (more structured, less raw).
+
+NEGATIVE: Do NOT apply engineered panel-line seams to the sphere exterior. This is a
+sphere, not a geometric body. No limb, weapon, or chassis shape. No photoreal.
+No painterly gradients. Do NOT show in a battle or overworld context. No rounded UI.

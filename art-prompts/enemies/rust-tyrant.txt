@@ -1,0 +1,76 @@
+ASSET: Rust Tyrant (BOSS — Enemy Class 2)
+ENEMY ID: rust_tyrant
+CANVAS: 256x256 px — Boss silhouette fills most of the canvas (larger mass than any common enemy)
+PERSPECTIVE: 3/4 side view, slight upward angle (player looks up more than usual — boss intimidation)
+ELEMENT: Kinetic (silver-shift #D8DDE6, Impact Ring glyph, chrome details)
+MANUFACTURER: Scrapjaw (asymmetric, directional; diagonal slash panel-lines; scavenged-aggressive)
+ROLE: BOSS 1 (enemy_class 2, WIN_COUNT gate 6) — apex scavenger warlord; massive physical attacker;
+      three break regions; Boss-Grade rarity visual treatment
+TARGET PATH: assets/art/enemies/enemy_rust_tyrant_battle.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Enemy Symbot: Rust Tyrant. BOSS. Canvas 256x256 px. 3/4 side-view, low-camera angle.
+
+CONCEPT: "The Rustcrawlers' apex — a scrap-forged warlord that grew by devouring its own
+kind." This is the Rustcrawler lineage taken to its extreme — a boss that grew by
+consuming and absorbing other Scrapjaw machines. It should visually read as if it is
+MADE OF other machines: parts of smaller bots incorporated into its body, welded over
+with new mass, layers upon layers of scavenged additions. The visual history of its
+growth is readable on its body.
+
+BOSS-GRADE VISUAL TREATMENT (art-bible §4.4 / §5.4):
+- Significantly larger mass than any common enemy — fills the canvas more fully
+- Steady radiant element-color glow (silver-shift Kinetic) along the model edge
+- Boss-Grade implies triple-border + star in any UI framing, but the model itself
+  reads as boss through SCALE and mass, not just glow
+- All three break regions must be distinct targetable silhouette zones
+
+SILHOUETTE DESCRIPTION:
+Massive, asymmetric, layered body plan. The Rust Tyrant is a Scrapjaw build taken to
+extremes — every surface shows layers of absorbed/welded-on parts from consumed enemies.
+Core silhouette elements:
+- ARMS (region_fraction 35%): the most prominent feature — one arm is much larger than
+  the other (dominant "crusher claw" — the largest single appendage, extending wide
+  and forward; this is what the player needs to break first). The crusher claw is the
+  widest element at the ARM zone, made from welded-together salvaged claws and hooks.
+  The smaller ARM still exists but is secondary.
+- HEAD (region_fraction 25%): elevated sensor crest with multiple stacked optical
+  elements (absorbed sensor units from other bots, creating an asymmetric multi-eye
+  cluster). Still reads as HEAD by position (topmost elevated element) but feels
+  accumulated rather than designed. A horizontal composite sensor sweep.
+- CORE (region_fraction 40%): the CORE housing in the CHASSIS center is the biggest
+  break pool. The CHASSIS around it looks layered — outer armor shells stacked on an
+  inner chassis, with the core housing at the center implying "the original machine
+  inside all this growth."
+
+SCRAPJAW MANUFACTURER FINISH AMPLIFIED: All of the Scrapjaw vocabulary, but accumulated
+over time. Multiple overlapping diagonal slash panel-line generations (new welds over old).
+Quick-release clasps that have been welded permanently shut. Asymmetry in every dimension.
+Harvest Crimson #B33020 faction paint in patches, partially obscured by new welds.
+Surface tells the story of construction-by-consumption.
+
+KINETIC ELEMENT ACCENT: Silver-shift #D8DDE6 on the crusher claw impact surfaces
+(heavy chrome polished facing — the most dangerous part shines). Impact Ring glyph on
+the crusher claw face. Boss-Grade steady radiant silver glow along the outer model edge.
+Chrome finish on the claw is the shiniest surface in the scene (Kinetic boss reads
+power through polished impact metal).
+
+IDLE STANCE: Wide stance, weight low and forward, crusher claw raised and angled inward
+(ready to crush — melee WEAPON angle = down-and-inward). HEAD sensor array scanning
+menacingly. The smaller ARM is at side. Reads: "I have been here before. You have not."
+Massive bottom-heaviness. Intimidating, not agile.
+
+WORLD PALETTE BASE: Slate Gunmetal #374350 dominant chassis mass; Harvest Crimson
+#B33020 on faction paint patches; Alloy Ochre #C49A35 on rust and weathering; Bone White
+on structural frame and crusher claw chrome.
+
+GREYSCALE TEST: At 64x64 greyscale — CRUSHER CLAW ARM (dominant wide lateral element),
+elevated HEAD (multi-sensor elevated crest), and massive CHASSIS BODY (with implied
+CORE housing at center) must each read as distinct targetable zones by shape and position.
+The boss must be unmistakably larger and more complex than any common enemy.
+
+NEGATIVE: No clean symmetric build (this is deliberately asymmetric and accumulated).
+No Boltwell or Ironclad finish (pure Scrapjaw — scavenged). No exposed glowing CORE
+sphere. No facial expressions. No photoreal. No painterly gradients. Must be visually
+larger than all common enemies. No rounded UI.

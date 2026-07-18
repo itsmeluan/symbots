@@ -1,0 +1,56 @@
+ASSET: Part Icon — Optic Sensor
+PART ID: wild_optic_sensor
+SLOT: HEAD (slot_type 5)
+RARITY: Common (rarity 1) — single gunmetal border, no glow
+ELEMENT: Kinetic (silver-shift #D8DDE6, Impact Ring glyph)
+MANUFACTURER: wild (evolved-organic, biome-adaptive, no manufacturer tag — machine that grew)
+CANVAS: 256x256 px
+TARGET PATH: assets/art/parts/part_wild_head_optic_sensor.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Part icon: Optic Sensor (Wild, Common, HEAD slot, Kinetic).
+Canvas 256x256 px. Front-facing or slight 3/4 view, part isolated on transparent background.
+
+DESCRIPTION: "Scavenged lens array. One eye sees a little crooked."
+A wild-origin HEAD unit — a sensor array that grew or was assembled from whatever
+lens components were available in the field. One eye is slightly misaligned (personality:
+"one eye sees a little crooked"), giving this HEAD an asymmetric, cobbled-together quality.
+Still functions as a sensor crest — still has the mandatory horizontal sensor feature —
+but the wild finish makes it feel like the bot grew this sensor cluster, not manufactured it.
+
+HEAD SLOT SHAPE LANGUAGE (art-bible §3.3):
+- MANDATORY: dominant horizontal sensor feature (visor / lens cluster / forward crest)
+- Always narrower than CHASSIS shoulder width
+- Must have a visual mass break from CHASSIS (neck-gap or narrowing below it)
+- Must read as HEAD at 64x64px greyscale
+
+WILD MANUFACTURER FINISH (art-bible §3.8):
+- Organic/weathered contour on the primary sensor housing — curves that grew to their
+  function, not machined geometry. The overall shape follows sensor function (smooth
+  wide visor band) but the surface has weathered organic texture.
+- Seams and attachment nodes are STILL ENGINEERED — the neck mount and chassis
+  attachment point have standard mechanical geometry (universal attachment grammar holds)
+- Biome-adaptive surface: for this common wild part, a neutral wild finish —
+  slight mineral deposit veining or organic patina on the lens housing
+- No manufactured branding: no diagonal slash lines (Scrapjaw), no hex bolts (Ironclad),
+  no cable routing decoration (Boltwell)
+
+HORIZONTAL SENSOR FEATURE (mandatory): A horizontal lens cluster — one primary large
+lens (the "good eye") and one smaller slightly-offset secondary lens (the "crooked eye").
+The cluster reads as a horizontal band because both lenses sit on the same horizontal
+plane, but the slight offset gives it personality. The lenses are organic-feeling
+(rounded apertures with weathered iris rings, not precision-machined optics).
+
+KINETIC ELEMENT: Silver-shift #D8DDE6 on lens aperture rings and neck mount. Impact
+Ring glyph (concentric circles) on the primary lens face (a natural read — concentric
+lens rings echo the Impact Ring glyph).
+
+RARITY FRAME (Common): Single #374350 border. No glow.
+
+GREYSCALE TEST: At 64x64px — horizontal dual-lens sensor feature reads as a HEAD unit.
+The slight asymmetry is readable at this scale (one lens visibly off-center).
+
+NEGATIVE: No Ironclad hex bolts. No Scrapjaw diagonal lines. No Boltwell cable routing.
+No symmetrical perfect lens arrangement (one eye is slightly crooked). No photoreal.
+No painterly gradients. No rounded UI frame.

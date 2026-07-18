@@ -1,0 +1,70 @@
+ASSET: Ironclad Sentry (Enemy)
+ENEMY ID: ironclad_sentry
+CANVAS: 256x256 px (detail) — mipmapped to 128x128 for battle
+PERSPECTIVE: 3/4 side view, slight upward angle
+ELEMENT: Thermal (amber #F0900A, Flame Chevron glyph — upward-stacked V shapes, emissive bloom)
+MANUFACTURER: Ironclad (geometric, faceted, planar panel edges; dense perpendicular grid
+              panel-lines; prominent hex bolts/rivets; heavy-industrial finish)
+ROLE: Heavy line-holder — slow, overbuilt tank, radiates heat, must be cracked through
+TARGET PATH: assets/art/enemies/enemy_ironclad_sentry_battle.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Enemy Symbot: Ironclad Sentry. Canvas 256x256 px. 3/4 side-view combat perspective.
+
+CONCEPT: "An Ironclad line-holder. Slow, overbuilt, and radiating heat you have to crack
+through." The tank archetype. This machine was made to stand its ground and absorb damage.
+The visual must communicate: immovable, heavily armored, hot.
+
+SILHOUETTE DESCRIPTION:
+Maximum defense mass distribution. The CHASSIS is the widest, most dominant element —
+thick convex slab-armored torso with chamfered corners, the defining "wall" shape of a
+tank build (per art-bible §3.3: defense CHASSIS = wide, convex, blocklike). LEGS are
+wide and squat — many ground contacts, planted firmly, heavy-duty stance (art-bible:
+defense LEGS = wide, planted, squat, multiple ground contacts). ARMS are broad and blocky,
+not extended aggressively — they sit flush with the massive CHASSIS, reinforcing the "wall"
+silhouette rather than extending it. HEAD is compact but still distinctly elevated — a
+hardened sensor housing with a narrow visor slit (armored HEAD reads narrower than
+normal because the priority is CHASSIS mass). The overall silhouette reads: widest at
+CHASSIS, LEGS spread wide below, HEAD small and hardened above. Unmistakably a tank.
+
+IRONCLAD MANUFACTURER FINISH: Dense perpendicular grid panel-lines across every surface —
+the heavy-industrial, armored-plate aesthetic. Prominent hex bolts and rivets on every
+panel junction (readable even at icon scale). Planar, faceted surfaces — no organic
+curves, just flat plane faces joined at hard angles. Thick-plate register: each armor
+panel looks like it could stop a vehicle. The surface reads: "overbuilt on purpose."
+Heat vents are visible on the CHASSIS sides — slotted geometric vents with amber glow
+inside (the enemy uses heat_vent skill, so visual heat-venting geometry is accurate).
+
+THERMAL ELEMENT ACCENT: Amber #F0900A glow emanating from heat vents in the CHASSIS
+sides and from panel seams where heat bleeds through. Flame Chevron glyph (upward-stacked
+V shapes) on the CHASSIS chest plate or heat vent surround. Subtle amber emissive bloom
+around the vent areas (Thermal always gets emissive bloom). The bot radiates heat —
+conveys danger through temperature, not aggressive posture.
+
+BREAK REGIONS (distinct targetable silhouette zones):
+- CHASSIS (region_fraction 40%): The massive armored torso IS the primary break target.
+  The CHASSIS must look like it CAN be cracked — despite being the biggest element, it
+  needs visible panel seams, vent gaps, and a structural hierarchy that suggests "this
+  thick armor has a weak point." When broken, the CHASSIS panel splits open, revealing
+  the interior.
+- ARM (region_fraction 30%): The broad blocky arms are secondary targets. Each ARM
+  must read as a distinct element against the CHASSIS despite both being wide/blocky —
+  differentiate with arm joint seam and different panel-line direction.
+
+IDLE STANCE: Upright, immovable. Arms at sides, slightly raised in a blocking position.
+Legs planted. HEAD visor scanning forward. Reads: "this is where I stand. Come and try."
+Zero forward lean — it is the obstacle, the player must come to it.
+
+WORLD PALETTE BASE: Slate Gunmetal #374350 dominant armor surface; Alloy Ochre #C49A35
+on oxidized/heated metal areas; Bone White on structural frame highlights where visible
+at seams. Amber #F0900A on heat vents and Thermal glyphs.
+
+GREYSCALE TEST: At 64x64 greyscale — wide planted LEGS (foundation), massive CHASSIS
+(the body — widest element), and compact HEAD (elevated, narrow) must read as three
+distinct mass zones. ARM must be identifiable at the CHASSIS edge.
+
+NEGATIVE: No Scrapjaw asymmetry or salvage quality (Ironclad is deliberately built).
+No aggressive forward lean (tank stance = immovable upright). No exposed CORE sphere.
+No facial expressions. No fast/agile posture. No photoreal. No painterly gradients.
+No rounded UI.

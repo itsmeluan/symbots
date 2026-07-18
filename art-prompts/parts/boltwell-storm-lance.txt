@@ -1,0 +1,60 @@
+ASSET: Part Icon — Storm Lance
+PART ID: boltwell_storm_lance
+SLOT: WEAPON (slot_type 8)
+RARITY: Boss-Grade (rarity 3) — triple border + star; steady radiant Volt-cyan glow ~60%; edge highlight
+ELEMENT: Volt (cyan #2FE8E8, Lightning Fork glyph, active arc energy)
+MANUFACTURER: Boltwell (exposed structural; flagship precision weapon; never meant to leave the cradle)
+CANVAS: 256x256 px
+TARGET PATH: assets/art/parts/part_boltwell_weapon_storm_lance.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Part icon: Storm Lance (Boltwell, Boss-Grade, WEAPON slot, Volt).
+Canvas 256x256 px. 3/4 or side view, part isolated on transparent background.
+
+DESCRIPTION: "Boltwell's flagship arc-driver, torn from the Warden's cradle. It answers only to a storm."
+This is the Storm Warden boss's weapon, harvested. The most powerful ranged WEAPON in
+the current roster (Boss-Grade). It should look exactly like what it is: a weapon
+of extraordinary precision and power that came from a command unit. Not oversized brute
+force — extreme technical sophistication. The Storm Lance is the "flagship" weapon.
+
+WEAPON SLOT SHAPE LANGUAGE: Ranged WEAPON — forward-horizontal angle. The business
+end (emitter/lance tip) is forward. This is named a "lance" — it has the elongated
+forward-projecting form of a lance, but electrically charged. Not a blunt projector
+(that is the Arc Blaster) — the Storm Lance is long, precise, and focused.
+
+VISUAL CHARACTER:
+An elongated, architecturally complex ranged weapon. The form is lance-like:
+- SHAFT: long, slender structural beam with Boltwell cable routing and connector
+  rings along its length (structural members visible, not enclosed)
+- EMITTER TIP: the forward end narrows to a precision emitter point surrounded by
+  arc-focusing rings (like a particle accelerator convergence point — the energy
+  concentrates to a point before discharge). Multiple focusing rings arrayed along
+  the forward 1/3 of the weapon, tightening toward the tip.
+- MOUNT END: rear-mounted connection bracket with Boltwell locking rings for
+  ARM attachment. The connection is substantial — this weapon has mass and recoil.
+- ACTIVE ARC: electrical arcing visible between the focusing rings (the weapon is
+  always slightly charged — it is never truly off)
+
+BOLTWELL FINISH AMPLIFIED TO BOSS QUALITY: All Boltwell structural vocabulary, but
+executed with the precision of a flagship product. Cable routing is immaculate —
+no cable ties that look improvised, every connection is deliberate. Structural
+members in precisely machined cross-sections. The scorch marks from discharge are
+minimal (this weapon is too refined to leave much residue).
+
+VOLT ELEMENT (Boss-Grade): Cyan #2FE8E8 DOMINANT — the brightest Volt expression.
+Steady radiant boss-grade glow (~60%) along the entire weapon edge. Lightning Fork
+glyph at the emitter tip (large, prominent). Active arcing between focusing rings
+in cyan. The weapon reads: "sustained stormlight."
+
+RARITY FRAME (Boss-Grade): Triple border + star mark. Steady radiant cyan glow ~60%.
+Hard edge highlight at the outer border.
+
+GREYSCALE TEST: At 64x64px — the elongated forward-pointing lance form with focusing
+rings along its length reads as a precision ranged weapon. Distinct from the Arc Blaster
+(which is wider/chunkier) — this is long, precise, focused.
+
+NEGATIVE: No blunt/hammer form (this is a lance, not a club). No Scrapjaw salvage
+quality. No closed housing (Boltwell structural design is always partially open).
+No photoreal. No painterly gradients. Must look more refined than the Arc Blaster.
+No rounded UI frame.

@@ -1,0 +1,47 @@
+ASSET: Part Icon — Aegis Frame
+PART ID: ironclad_aegis_frame
+SLOT: CHASSIS (slot_type 2)
+RARITY: Rare (rarity 2) — double border + diamond pip; soft ambient Thermal-amber glow ~25%
+ELEMENT: Thermal (amber #F0900A, Flame Chevron glyph, emissive bloom)
+MANUFACTURER: Ironclad (geometric, faceted, planar panels; dense perpendicular grid; hex bolts)
+CHASSIS ARCHETYPE: 2 = Defense (wide, convex, blocklike — tournament-grade version)
+CANVAS: 256x256 px
+TARGET PATH: assets/art/parts/part_ironclad_chassis_aegis_frame.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Part icon: Aegis Frame (Ironclad, Rare, CHASSIS slot, Thermal, Defense archetype).
+Canvas 256x256 px. 3/4 front view, part isolated on transparent background.
+
+DESCRIPTION: "Ironclad's tournament-grade shell. Sheds a plasma lance like rain."
+The upgraded defense CHASSIS. Same Ironclad-defense archetype as the Bulwark Frame
+but with significantly higher quality: tournament-grade surface treatment, ablative
+plating panels visible on the outer face, more elaborate panel-line geometry.
+
+VISUAL DIFFERENTIATION FROM BULWARK FRAME:
+- Ablative plating panels: visible layered angled surface tiles on the outer armor face
+  (like ablative armor — plates angled to deflect, not just absorb). These look like
+  deliberate tournament engineering, not just "thicker."
+- More elaborate perpendicular grid panel-lines — finer subdivisions, more precise.
+- Larger, more prominent hex bolts (tournament-grade fasteners look more machined)
+- A more pronounced convex curve to the central chest panel
+- The CORE socket is more elaborately framed (reinforced mounting ring, not just an opening)
+- The ARMS attachment shoulder seam nodes are more prominent (stronger connection points)
+
+IRONCLAD FINISH: All the Ironclad vocabulary (perpendicular grid, hex bolts, planar faces)
+but at a higher precision and density. "Tournament-grade" = the same language, more refined.
+Ablative plate geometry adds a secondary angular surface layer over the primary armor.
+
+THERMAL ELEMENT: Amber #F0900A on the ablative plate edges (heat-resistant tile borders)
+and on the CORE socket ring. Flame Chevron glyph on the central chest panel, slightly more
+elaborate than the Bulwark Frame glyph (Rare tier = more surface detail budget). Soft
+ambient amber glow at ~25% (Rare rarity glow — elemental color ambient).
+
+RARITY FRAME (Rare): Double border + diamond pip in corner. Soft ambient amber Thermal
+glow around the part shape at ~25% opacity.
+
+GREYSCALE TEST: At 64x64px distinguishable from the Bulwark Frame by the visible ablative
+plate layering on the outer surface. Reads as "the more complex version of the same form."
+
+NEGATIVE: No Scrapjaw diagonal lines. No Boltwell struts. No organic curves on the
+engineering surface. No photoreal. No painterly gradients. No rounded UI frame.

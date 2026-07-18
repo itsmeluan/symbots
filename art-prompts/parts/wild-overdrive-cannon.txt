@@ -1,0 +1,64 @@
+ASSET: Part Icon — Overdrive Cannon
+PART ID: wild_overdrive_cannon
+SLOT: WEAPON (slot_type 8)
+RARITY: Prototype (rarity 4) — animated/irregular border + warning mark; chromatic shimmer <3 Hz
+ELEMENT: Thermal (amber #F0900A, Flame Chevron glyph, emissive bloom)
+MANUFACTURER: wild (evolved-organic, jury-rigged to overload — machine grown AND modified)
+CANVAS: 256x256 px
+TARGET PATH: assets/art/parts/part_wild_weapon_overdrive_cannon.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Part icon: Overdrive Cannon (Wild, Prototype, WEAPON slot, Thermal).
+Canvas 256x256 px. 3/4 or side view angled forward-horizontal, part isolated on
+transparent background.
+
+DESCRIPTION: "Jury-rigged to overload. Melts targets and itself."
+A wild-origin Prototype ranged weapon of enormous destructive output. This cannon was
+never meant to sustain the output it delivers — it is perpetually on the edge of
+catastrophic self-destruction. The "jury-rigged to overload" concept must be readable
+on the form: a cannon that looks like it has been pushed past its design limits and held
+together with whatever was at hand, while producing devastating Thermal output.
+
+Prototype rarity = the rarest item tier in the game. This weapon must look dangerous
+and unstable — the power inside is barely contained.
+
+WEAPON SLOT SHAPE LANGUAGE (art-bible §3.3):
+- Ranged WEAPON: forward-horizontal angle (the cannon barrel points at the target)
+- Must "point" — the business end (cannon mouth) is the forward element
+- The direction of threat reads at 64x64px
+
+WILD MANUFACTURER FINISH ON A PROTOTYPE WEAPON:
+The base form is organic-wild: the cannon body has grown-or-adapted contour, not a
+machined barrel. Think of a heavy cannon barrel that has organic mineral or shell-like
+accretions on its exterior — the weapon grew around an impossibly powerful core.
+The wild seams and attachment nodes are still engineered (mount bracket is mechanical),
+but the cannon body itself has an evolved-organic quality: irregular thickening along
+the barrel, crystalline or organic extrusions at the high-heat zones where it's been
+pushed past limits.
+
+JURY-RIGGED OVERLOAD CHARACTER:
+Visible emergency reinforcement: clamps and hasps added to the barrel to keep it from
+splitting (Scrapjaw-adjacent salvage additions to a wild base — cross-manufacturer
+field repair). Scorch marks and heat warping around the barrel exit. Cracks in the
+organic barrel surface sealed with emergency welds. The weapon has been repaired
+multiple times. Something is leaking amber/orange thermal energy from the hairline cracks.
+
+THERMAL ELEMENT (Prototype): Amber #F0900A dominant on all heat-discharge and crack-glow
+areas. Flame Chevron glyph (upward-stacked V shapes) on the barrel face or side.
+Heavy emissive amber bloom from every crack and vent — the thermal output is barely
+contained. The Prototype shimmer (chromatic aberration/shimmer at <3 Hz) is captured
+in this still as a slight color-aberration halo around the barrel at maximum-heat areas
+(warm amber bleeding to red-orange at edges — captured mid-flicker).
+
+PROTOTYPE RARITY FRAME: Irregular/animated border treatment (in still: a slightly
+uneven glowing border rather than a clean geometric one) + warning glyph mark.
+Chromatic shimmer captured as slight color fringe. The frame itself looks unstable.
+
+GREYSCALE TEST: At 64x64px — the forward-pointing cannon barrel with the widened/
+dangerous cannon mouth reads as a ranged weapon. The irregular surface texture
+distinguishes it from the precision Boltwell weapons.
+
+NEGATIVE: No clean precision barrel (this is wild and jury-rigged). No Ironclad or
+Boltwell manufacturer finish. No melee angle. No stable-looking weapon (it should look
+dangerous to operate). No photoreal. No painterly gradients. No rounded UI frame.

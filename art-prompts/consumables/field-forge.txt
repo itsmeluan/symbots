@@ -1,0 +1,50 @@
+ASSET: Consumable Icon — Field Forge
+CONSUMABLE ID: field_forge
+RARITY: Boss-Grade (rarity 3) — triple border + star; steady radiant glow ~60%
+EFFECT: Restores 120 Structure (large heal — the most powerful repair consumable)
+CANVAS: 64x64 px
+TARGET PATH: assets/art/consumables/icon_consumable_field_forge.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Consumable icon: Field Forge. Canvas 64x64 px. Front-facing centered icon.
+
+The most powerful repair consumable in the game. A portable forge unit — not just
+patches and tools, but a device capable of rebuilding structural components in the
+field. Boss-Grade rarity means this item is rare and powerful. Should read as
+significantly more impressive than the Repair Kit.
+
+VISUAL CONCEPT: A compact portable forge unit — a self-contained thermal fabrication
+device. Think: a dense, heavy-looking portable industrial furnace/forge in a box.
+The forge element (heat, fabrication) should be visually dominant. A smelting chamber
+or forge anvil shape with active heat indication at the top or face — glowing hot
+metal visible through a viewing aperture. It should feel like: "this rebuilds,
+not just patches."
+
+ICON COMPOSITION (centered, 64x64):
+- Primary: a compact rectangular forge unit (Ironclad-heavy-industrial construction —
+  this is a quality built device, not salvage). Dense, heavy-looking form.
+- Heat aperture: a horizontal slot or circular viewport on the front face showing
+  intense orange-amber heat inside (NOT a Thermal element glyph — this is
+  blacksmith heat, a mechanical process)
+- A small anvil or forming plate impression on the top face (the forge surface)
+- Thick-plate visual weight (this is heavy industrial equipment miniaturized)
+
+UI CHROME RULES: Chamfered 45-degree frame corners. Triple border + star mark
+(Boss-Grade). Steady warm glow ~60% from the heat aperture (internal forge heat,
+not an element glow — but warm amber tone reinforces the "powerful heat" concept
+without being a Thermal element signal; no Flame Chevron glyph).
+
+PALETTE: Slate Gunmetal #374350 forge body; Alloy Ochre #C49A35 on heat-stained
+exterior surfaces; intense orange-amber visible through heat aperture (hot metal color,
+interior glow only, matte exterior); Bone White on structural frame edges and anvil surface.
+
+RARITY FRAME: Triple border + star. The star indicates Boss-Grade value. Steady
+radial glow from the forge device heat (~60% — powerful item visual weight).
+
+GREYSCALE TEST: At 32x32px reads as a compact dense box with a light aperture.
+The heaviness and structural mass distinguish it from the lighter Repair Kit.
+
+NEGATIVE: No Thermal Flame Chevron glyph (this is not an elemental item — it is
+a physical forge). No organic shapes. No weapon silhouette. No photoreal.
+No painterly gradients. No rounded frame corners.

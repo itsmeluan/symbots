@@ -1,0 +1,57 @@
+ASSET: Husk Walker (Enemy)
+ENEMY ID: husk_walker
+CANVAS: 256x256 px (detail) — mipmapped to 128x128 for battle
+PERSPECTIVE: 3/4 side view, slight upward angle
+ELEMENT: Kinetic (element 0 in data = raw/neutral — treat as Kinetic silver-shift #D8DDE6 for
+          visual purposes; no strong element accent color, desaturated structural palette)
+MANUFACTURER: Wild (evolved-organic, no manufacturer tag — gutted/empty chassis, biome-weathered)
+ROLE: Hulking gutted chassis — slow, lurching, high structure, no purpose
+TARGET PATH: assets/art/enemies/enemy_husk_walker_battle.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Enemy Symbot: Husk Walker. Canvas 256x256 px. 3/4 side-view combat perspective.
+
+CONCEPT: "A gutted chassis lurching on borrowed power. No core spark, no allegiance —
+it just walks." This is a derelict bot still moving on residual power — no active CORE,
+no faction, just an empty shell that hasn't stopped yet. The visual must communicate
+"empty, purposeless movement."
+
+SILHOUETTE DESCRIPTION:
+Large, slow-moving bipedal body plan. Heavy mass center — wide CHASSIS with visible
+internal damage (empty CORE cavity visible as a hole or darkened interior, implying the
+CORE is gone or dormant). LEGS are the dominant lower element: wide, planted, slow-walker
+stance (NOT digitigrade — flat-footed heavy tread stance). HEAD sensor crest is
+damaged/partial — the horizontal sensor feature should look cracked, dim, or half-missing,
+but still structurally elevated (it defines the upper zone even when broken-looking).
+The overall silhouette reads: "bigger than it should be, moving slower than it should,
+nothing is home inside."
+
+WILD/DERELICT FINISH: No manufacturer surface vocabulary — this is a husk. Surfaces are
+weathered, dented, with stress fractures across panel lines. Some panels missing or bent
+outward. No clean seams — the attachment grammar holds (it still equips parts) but looks
+strained. Organic weathering: rust-patina, mineral deposits, vegetation threading through
+panel gaps. No faction color, no deliberate paint scheme. Just aging metal.
+
+ELEMENT TREATMENT: No strong element accent (core_element = 0/neutral). Use desaturated
+Slate Gunmetal #374350 base with Alloy Ochre #C49A35 rust staining. Bone White on exposed
+structural frame. No bright elemental glow. The visual palette should be the most muted
+of the enemy roster — this thing is barely alive.
+
+BREAK REGIONS (distinct targetable silhouette zones):
+- LEG (region_fraction 25%): the wide-planted legs must each read as a distinct lower
+  element. Breaking them collapses the bot's stance.
+- HEAD (region_fraction 18%): even damaged, the elevated sensor region must be a
+  readable upper zone. Breaking it removes the topmost element.
+
+IDLE STANCE: Slow, slightly hunched, legs planted wide, arms hanging loosely at sides
+(not raised for combat — this thing isn't planning, it's just walking). HEAD tilted
+vaguely forward but without clear directional attention. The stance communicates "on
+autopilot."
+
+GREYSCALE TEST: At 64x64 greyscale — HEAD (elevated damaged sensor), wide planted LEGS,
+and large CHASSIS cavity must read as three distinct zones.
+
+NEGATIVE: No active glowing CORE visible (it's empty). No faction markings. No clean
+surface finish. No photoreal. No painterly gradients. No facial expressions. Must NOT
+look like a skeleton — it's a machine, not organic. Must NOT look purposeful or heroic.

@@ -19,8 +19,7 @@ const SLOT_ORDER: Array[int] = [
 	PartDef.SlotType.LEGS, PartDef.SlotType.WEAPON,
 ]
 
-const COL_BG := Color(0.10, 0.11, 0.13)
-const COL_POS := Color(0.42, 0.85, 0.50)   # stat gain
+const COL_POS := Color(0.42, 0.85, 0.50)   # stat gain (dynamic preview tint)
 const COL_NEG := Color(0.90, 0.45, 0.45)   # stat loss
 const COL_DIM := Color(0.62, 0.64, 0.68)
 
@@ -30,16 +29,23 @@ var _log: LogSink = null
 var _selected_slot: int = PartDef.SlotType.CORE
 var _candidate: PartInstance = null
 
-# UI refs (built once in _ready, populated in _refresh).
+# Static shell authored in workshop_screen.tscn (structure + styling via the central
+# Theme); resolved via % unique names. The three lists below are filled at runtime with
+# data-driven rows the editor can't author (slots, inventory candidates, stat readout).
+@onready var _slot_list: VBoxContainer = %SlotList
+@onready var _candidate_list: VBoxContainer = %CandidateList
+@onready var _stat_rows_box: VBoxContainer = %StatRows
+@onready var _detail_label: Label = %DetailLabel
+@onready var _equip_btn: Button = %EquipBtn
 var _slot_buttons: Dictionary = {}   # slot_type:int -> Button
-var _candidate_list: VBoxContainer = null
 var _stat_rows: Dictionary = {}      # stat_key:StringName -> Label
-var _detail_label: Label = null
-var _equip_btn: Button = null
 
 
 func _ready() -> void:
-	_build_ui()
+	%CloseBtn.pressed.connect(_on_close_pressed)
+	_equip_btn.pressed.connect(_on_equip_pressed)
+	_build_slot_buttons()
+	_build_stat_rows()
 
 
 ## Screen contract: cache deps, subscribe to build signals, render the initial view.
@@ -58,45 +64,12 @@ func _on_exit_tree() -> void:
 
 
 # ---------------------------------------------------------------------------
-# UI construction (static skeleton — data filled by _refresh)
+# Data-driven content builders (rows the editor can't author — injected into the
+# named containers of workshop_screen.tscn)
 # ---------------------------------------------------------------------------
 
-func _build_ui() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
-	var bg := ColorRect.new()
-	bg.color = COL_BG
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.mouse_filter = Control.MOUSE_FILTER_STOP  # eat taps so the overworld under it is inert
-	add_child(bg)
-
-	var root := VBoxContainer.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.add_theme_constant_override("separation", 10)
-	root.offset_left = 16
-	root.offset_top = 12
-	root.offset_right = -16
-	root.offset_bottom = -12
-	add_child(root)
-
-	# Header row: title + CLOSE.
-	var header := HBoxContainer.new()
-	root.add_child(header)
-	var title := _label(header, "WORKSHOP — equip harvested parts", 20, true)
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var close_btn := Button.new()
-	close_btn.text = "CLOSE ✕"
-	close_btn.custom_minimum_size = Vector2(120, 44)
-	close_btn.pressed.connect(_on_close_pressed)
-	header.add_child(close_btn)
-
-	# Three columns: slots | candidates | stat readout.
-	var cols := HBoxContainer.new()
-	cols.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	cols.add_theme_constant_override("separation", 12)
-	root.add_child(cols)
-
-	# --- Column 1: slot list ---
-	var slot_col := _column(cols, "SLOTS", 260)
+## One toggle button per equip slot, in canonical order, into %SlotList.
+func _build_slot_buttons() -> void:
 	for slot_type: int in SLOT_ORDER:
 		var b := Button.new()
 		b.custom_minimum_size = Vector2(0, 46)
@@ -104,25 +77,15 @@ func _build_ui() -> void:
 		b.toggle_mode = true
 		b.set_meta("slot_type", slot_type)
 		b.pressed.connect(_on_slot_pressed.bind(slot_type))
-		slot_col.add_child(b)
+		_slot_list.add_child(b)
 		_slot_buttons[slot_type] = b
 
-	# --- Column 2: candidate parts for the selected slot ---
-	var cand_col := _column(cols, "AVAILABLE PARTS", 320)
-	var cand_scroll := ScrollContainer.new()
-	cand_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	cand_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	cand_col.add_child(cand_scroll)
-	_candidate_list = VBoxContainer.new()
-	_candidate_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_candidate_list.add_theme_constant_override("separation", 6)
-	cand_scroll.add_child(_candidate_list)
 
-	# --- Column 3: stat readout + equip action ---
-	var stat_col := _column(cols, "STATS", 300)
+## One name/value row per canonical stat into %StatRows (count is balance-driven).
+func _build_stat_rows() -> void:
 	for key: StringName in _stat_keys():
 		var row := HBoxContainer.new()
-		stat_col.add_child(row)
+		_stat_rows_box.add_child(row)
 		var name_l := _label(row, String(key).capitalize(), 14)
 		name_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		name_l.add_theme_color_override("font_color", COL_DIM)
@@ -130,17 +93,6 @@ func _build_ui() -> void:
 		val_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		val_l.custom_minimum_size = Vector2(120, 0)
 		_stat_rows[key] = val_l
-
-	_detail_label = _label(stat_col, "Select a slot, then a part to preview.", 13)
-	_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_detail_label.add_theme_color_override("font_color", COL_DIM)
-
-	_equip_btn = Button.new()
-	_equip_btn.text = "EQUIP"
-	_equip_btn.custom_minimum_size = Vector2(0, 48)
-	_equip_btn.disabled = true
-	_equip_btn.pressed.connect(_on_equip_pressed)
-	stat_col.add_child(_equip_btn)
 
 
 # ---------------------------------------------------------------------------
@@ -305,24 +257,6 @@ func _rarity_name(rarity: int) -> String:
 		PartDef.Rarity.BOSS_GRADE: return "Boss"
 		PartDef.Rarity.PROTOTYPE: return "Prototype"
 	return "—"
-
-
-func _column(parent: Node, heading: String, min_w: float) -> VBoxContainer:
-	var pc := PanelContainer.new()
-	pc.custom_minimum_size = Vector2(min_w, 0)
-	pc.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.16, 0.17, 0.20)
-	sb.set_corner_radius_all(8)
-	sb.set_content_margin_all(12)
-	pc.add_theme_stylebox_override("panel", sb)
-	parent.add_child(pc)
-	var vb := VBoxContainer.new()
-	vb.add_theme_constant_override("separation", 6)
-	pc.add_child(vb)
-	var h := _label(vb, heading, 15, true)
-	h.add_theme_color_override("font_color", Color(0.55, 0.75, 0.95))
-	return vb
 
 
 func _label(parent: Node, text: String, size: int, bold: bool = false) -> Label:

@@ -1,0 +1,48 @@
+ASSET: Part Icon — Reinforced Servo Arm
+PART ID: scrapjaw_reinforced_servo_arm
+SLOT: ARMS (slot_type 6)
+RARITY: Rare (rarity 2) — double border + diamond pip; soft ambient Kinetic-silver glow ~25%
+ELEMENT: Kinetic (silver-shift #D8DDE6, Impact Ring glyph)
+MANUFACTURER: Scrapjaw (asymmetric; diagonal slash panel-lines; salvaged-reinforced)
+CANVAS: 256x256 px
+TARGET PATH: assets/art/parts/part_scrapjaw_arms_servo_arm_reinforced.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Part icon: Reinforced Servo Arm (Scrapjaw, Rare, ARMS slot, Kinetic).
+Canvas 256x256 px. 3/4 view, part isolated on transparent background.
+
+DESCRIPTION: "The Servo Arm, welded over until it stopped breaking."
+This is the Servo Arm (scrapjaw_servo_arm) evolved — the same arm, but with visible
+reinforcement welds, additional plating layered over the original, and reinforced
+structural nodes at the stress points. It reads as the same arm, improved by iteration
+rather than redesign. Should share general proportions with the Servo Arm but with
+clearly added mass and detail.
+
+VISUAL DIFFERENTIATION FROM SERVO ARM:
+- Additional armor plates welded over the original surface (visible layering)
+- Reinforcement welds at the elbow joint and mount end (thick bead welds)
+- Slightly more mass — the arm looks heavier and more durable
+- More prominent diagonal slash panel-lines (the reinforcement added new panel geometry)
+- A visible reinforced attachment clasp (stronger than the basic quick-release)
+
+ARMS SLOT SHAPE LANGUAGE: Same as servo arm — extends laterally, mid-zone. WEAPON
+attachment point at hand end (flat or slotted mounting face). CHASSIS mount end with
+panel-line continuation seam.
+
+SCRAPJAW FINISH: Heavy diagonal slash panel-lines across ALL surfaces including
+the added reinforcement panels. Multiple layers of weld marks. The "welded over until
+it stopped breaking" concept is readable on the surface — you can almost count the
+repair generations.
+
+KINETIC ELEMENT: Silver-shift #D8DDE6 on forearm and impact nodes, polished chrome
+on reinforced stress areas. Impact Ring glyph on forearm face.
+
+RARITY FRAME (Rare): Double border (#4B5668 outer + #374350 inner) + diamond pip
+in corner. Soft ambient silver Kinetic glow at ~25% opacity around the part shape.
+
+GREYSCALE TEST: Distinguishable from the basic Servo Arm by visible added mass/layering
+at 64x64px.
+
+NEGATIVE: No clean factory surface (this is layered scrap repairs). No photoreal.
+No painterly gradients. No rounded UI frame.

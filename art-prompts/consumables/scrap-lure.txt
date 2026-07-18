@@ -1,0 +1,52 @@
+ASSET: Consumable Icon — Scrap Lure
+CONSUMABLE ID: scrap_lure
+RARITY: Common (rarity 1) — single gunmetal border, no glow
+EFFECT: Increases enemy encounter rate to 250% for 15 overworld steps (encounter farming)
+CANVAS: 64x64 px
+TARGET PATH: assets/art/consumables/icon_consumable_scrap_lure.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Consumable icon: Scrap Lure. Canvas 64x64 px. Front-facing centered icon.
+
+A device or lure that actively attracts wild Symbots to the player's location —
+used to farm encounters deliberately. The "scrap" suggests it emits a signal that
+reads as salvageable materials to wild machines. The "lure" is active attraction.
+
+VISUAL CONCEPT: A small emitter/bait device that broadcasts a scrap-signal — a
+compact box or stake with loose scrap metal pieces attached as physical bait, plus
+a small signal emitter that broadcasts on frequencies wild Symbots respond to.
+Should read as: deliberately shabby (it is Common rarity), effective-but-simple.
+Something a field mechanic would cobble together from scrap to attract more scrap.
+
+ICON COMPOSITION (centered, 64x64):
+- Primary: a compact stake or box device with scrap metal pieces attached or piled
+  on/around it — the "bait." The scrap pieces are small irregular metal fragments.
+- Emitter element: a simple antenna or transmitter on the device pointing upward,
+  with small simple signal arcs (clean, short — simpler than the Salvage Beacon's
+  arcs because this is Common quality)
+- The combination of "scrap pile" and "emitter" is the key visual read
+
+COLOR: Alloy Ochre #C49A35 and Harvest Crimson #B33020 on the scrap metal bait pieces
+(rusty, worn, genuine-scrap feel). Slate Gunmetal #374350 on the device body.
+Small Wilderness Amber #C4721A emitter glow hint (active signal) — matte and subtle.
+This is Common tier — nothing fancy.
+
+UI CHROME RULES: Chamfered 45-degree frame corners. Single #374350 border (Common).
+No glow. Plain and simple.
+
+VISUAL DISTINCTION FROM SIGNAL JAMMER AND SALVAGE BEACON: Scrap Lure has SCRAP
+PIECES as physical bait (tangible metal fragments visible). The other beacon/jammer
+devices are pure electronics. The physical bait element makes the Scrap Lure instantly
+distinguishable.
+
+PALETTE: Slate Gunmetal #374350 device body; Alloy Ochre #C49A35 + Harvest Crimson
+#B33020 on scrap bait pieces (rusty/old metal); Wilderness Amber #C4721A on emitter
+tip (subtle active signal).
+
+GREYSCALE TEST: At 32x32px — the scrap pile element beside/on the device reads as
+"bait." The antenna/emitter is secondary.
+
+NEGATIVE: No precision device look (this is cheap, cobbled together). No Boltwell
+instrument finish. No clean gold reward color (this is Common, not Rare). No Lightning
+Fork or element glyphs. No photoreal. No painterly gradients. No rounded frame corners.

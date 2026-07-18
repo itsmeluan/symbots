@@ -10,6 +10,13 @@
 ##   - DropSystem is constructed with ctx.inventory, so harvested parts persist into the
 ##     session inventory automatically and carry into the Workshop + the next fight.
 ##
+## STRUCTURE vs STYLE (ADR-0008 presentation tier):
+##   The static node tree + all styling live in battle_screen.tscn + the central Theme
+##   (assets/ui/theme/symbots_theme.tres). This script owns only BEHAVIOUR and the
+##   data-driven content that cannot be authored in the editor: the 3 target buttons
+##   (built into %TargetRow), the reveal/defeat overlay lines, and per-hit bar refresh.
+##   Sprite swap = edit the Theme, not this file.
+##
 ## TWO PROMOTED SLICE HACKS (were unbuilt in src/, BUILD-PLAN Findings 1 & 2):
 ##   1. _make_basic_attack() — the always-available cost-0 MoveDef every Symbot swings.
 ##   2. the Part-Break subscriber — tallies per-region damage from hit_resolved and
@@ -23,10 +30,10 @@ extends Screen
 const OUTCOME_VICTORY := 1
 const OUTCOME_DEFEAT := 2
 
-const COL_ENEMY := Color(0.85, 0.30, 0.28)     # red — enemy structure
-const COL_PLAYER := Color(0.32, 0.72, 0.40)    # green — player structure
-const COL_ENERGY := Color(0.30, 0.55, 0.85)    # blue — energy
-const COL_BREAK := Color(0.92, 0.70, 0.24)     # amber — break meter (harvest gate)
+# Dynamic accent colours (overlay title tint + rarity marks — set at runtime, so they
+# stay in code; everything static-styled is in the Theme).
+const COL_ENEMY := Color(0.85, 0.30, 0.28)     # red — defeat title
+const COL_BREAK := Color(0.92, 0.70, 0.24)     # amber — salvage title / break flavor
 
 # --- injected context ---
 var _ctx: ServiceContext
@@ -55,33 +62,39 @@ var _current_target: StringName = &"arm"       # default nudges toward the harve
 var _round_lines: Array[String] = []
 var _battle_over: bool = false
 
-# --- widget refs ---
-var _enemy_name_label: Label
-var _enemy_struct_bar: ProgressBar
-var _enemy_struct_label: Label
-var _arm_bar: ProgressBar
-var _arm_label: Label
-var _head_bar: ProgressBar
-var _head_label: Label
-var _log_label: Label
-var _player_struct_bar: ProgressBar
-var _player_struct_label: Label
-var _player_energy_bar: ProgressBar
-var _player_energy_label: Label
-var _player_heat_label: Label
-var _attack_btn: Button
+# --- widget refs (structure authored in battle_screen.tscn; resolved via % unique names) ---
+@onready var _enemy_name_label: Label = %EnemyName
+@onready var _enemy_struct_label: Label = %EnemyStruct
+@onready var _enemy_struct_bar: ProgressBar = %EnemyStructBar
+@onready var _arm_label: Label = %ArmLabel
+@onready var _arm_bar: ProgressBar = %ArmBar
+@onready var _head_label: Label = %HeadLabel
+@onready var _head_bar: ProgressBar = %HeadBar
+@onready var _target_row: HBoxContainer = %TargetRow
+@onready var _log_label: Label = %LogLabel
+@onready var _player_struct_label: Label = %PlayerStruct
+@onready var _player_struct_bar: ProgressBar = %PlayerStructBar
+@onready var _player_energy_label: Label = %PlayerEnergy
+@onready var _player_energy_bar: ProgressBar = %PlayerEnergyBar
+@onready var _player_heat_label: Label = %PlayerHeat
+@onready var _attack_btn: Button = %AttackBtn
 var _target_btns: Dictionary = {}              # StringName sub_target -> Button
 
 # --- reveal overlay ---
-var _overlay: Control
-var _overlay_title: Label
-var _overlay_body: VBoxContainer
-var _overlay_buttons: VBoxContainer
+@onready var _overlay: Control = %Overlay
+@onready var _overlay_title: Label = %OverlayTitle
+@onready var _overlay_body: VBoxContainer = %OverlayBody
+@onready var _overlay_buttons: VBoxContainer = %OverlayButtons
 
 
+## Wire up the interactive bits the editor can't author: the ATTACK button signal and
+## the 3 target buttons. Runs during add_child(), before setup() (Screen contract §1).
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
-	_build_ui()
+	_attack_btn.pressed.connect(_on_attack_pressed)
+	var group := ButtonGroup.new()
+	_add_target_btn(group, "ARM", &"arm", true)
+	_add_target_btn(group, "HEAD", &"head", false)
+	_add_target_btn(group, "CORE", BattleResolver.STRUCTURE, false)
 
 
 ## Screen contract: cache deps + subscribe. The actual fight is kicked off by
@@ -284,122 +297,44 @@ func _refresh() -> void:
 
 
 # ---------------------------------------------------------------------------
-# UI construction (all in code — prototype-tier fidelity, shared sizing for touch)
+# Data-driven content the editor can't author
 # ---------------------------------------------------------------------------
-func _build_ui() -> void:
-	var bg := ColorRect.new()
-	bg.color = Color(0.10, 0.11, 0.13)
-	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(bg)
 
-	var margin := MarginContainer.new()
-	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	for side in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, 12)
-	add_child(margin)
-
-	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 10)
-	margin.add_child(root)
-
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	root.add_child(scroll)
-	var info := VBoxContainer.new()
-	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	info.add_theme_constant_override("separation", 10)
-	scroll.add_child(info)
-
-	# --- Enemy panel (target picker lives directly under the enemy readouts) ---
-	var enemy_panel := _panel(info)
-	_enemy_name_label = _label(enemy_panel, "Enemy", 22, true)
-	_enemy_struct_label = _label(enemy_panel, "STRUCTURE  --/--", 15)
-	_enemy_struct_bar = _bar(enemy_panel, COL_ENEMY)
-	_arm_label = _label(enemy_panel, "ARM  0/0", 14)
-	_arm_bar = _bar(enemy_panel, COL_BREAK)
-	_head_label = _label(enemy_panel, "HEAD  0/0", 14)
-	_head_bar = _bar(enemy_panel, COL_BREAK)
-
-	_label(enemy_panel, "AIM AT →", 13)
-	var target_row := HBoxContainer.new()
-	target_row.add_theme_constant_override("separation", 10)
-	enemy_panel.add_child(target_row)
-	var group := ButtonGroup.new()
-	_add_target_btn(target_row, group, "ARM", &"arm", true)
-	_add_target_btn(target_row, group, "HEAD", &"head", false)
-	_add_target_btn(target_row, group, "CORE", BattleResolver.STRUCTURE, false)
-
-	# --- Log panel ---
-	var log_panel := _panel(info)
-	_log_label = _label(log_panel, "", 17)
-	_log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_log_label.custom_minimum_size = Vector2(0, 72)
-
-	# --- Player panel ---
-	var player_panel := _panel(info)
-	_label(player_panel, "YOUR SYMBOT", 18, true)
-	_player_struct_label = _label(player_panel, "STRUCTURE  --/--", 15)
-	_player_struct_bar = _bar(player_panel, COL_PLAYER)
-	_player_energy_label = _label(player_panel, "ENERGY  --/--", 15)
-	_player_energy_bar = _bar(player_panel, COL_ENERGY)
-	_player_heat_label = _label(player_panel, "HEAT  0", 14)
-
-	# --- Action bar (pinned below the scroll) ---
-	var action_panel := _panel(root)
-	_attack_btn = Button.new()
-	_attack_btn.text = "ATTACK"
-	_attack_btn.custom_minimum_size = Vector2(0, 64)
-	_attack_btn.add_theme_font_size_override("font_size", 22)
-	_attack_btn.pressed.connect(_on_attack_pressed)
-	action_panel.add_child(_attack_btn)
-
-	_build_overlay()
+## Build one target-picker button into %TargetRow. Styled via the TargetButton theme
+## variation (amber pressed state = selection); ≥56px tall for touch.
+func _add_target_btn(group: ButtonGroup, text: String, sub_target: StringName,
+		pressed: bool) -> void:
+	var btn := Button.new()
+	btn.text = text
+	btn.theme_type_variation = &"TargetButton"
+	btn.toggle_mode = true
+	btn.button_group = group
+	btn.button_pressed = pressed
+	btn.custom_minimum_size = Vector2(96, 56)   # ≥44×44 touch target
+	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn.set_meta("sub_target", sub_target)
+	btn.toggled.connect(_on_target_btn_toggled.bind(btn))
+	_target_row.add_child(btn)
+	_target_btns[sub_target] = btn
 
 
-func _build_overlay() -> void:
-	_overlay = Control.new()
-	_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
-	_overlay.visible = false
-	add_child(_overlay)
+func _on_target_btn_toggled(on: bool, btn: Button) -> void:
+	if on:
+		_on_target_selected(StringName(btn.get_meta("sub_target")))
 
-	var dim := ColorRect.new()
-	dim.color = Color(0, 0, 0, 0.74)
-	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_overlay.add_child(dim)
 
-	var center := CenterContainer.new()
-	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_overlay.add_child(center)
+## Dynamic selection highlight — the ▶ marker + white/dim font colour is per-frame
+## interaction state, so it stays a runtime override (not static Theme styling).
+func _set_enemy_readout(label: Label, sub: StringName, body: String) -> void:
+	var selected := _current_target == sub
+	label.text = ("▶ " if selected else "   ") + body
+	label.add_theme_color_override("font_color",
+		Color(1, 1, 1) if selected else Color(0.62, 0.64, 0.68))
 
-	var pc := PanelContainer.new()
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.14, 0.15, 0.18)
-	sb.set_corner_radius_all(12)
-	sb.set_content_margin_all(20)
-	sb.set_border_width_all(2)
-	sb.border_color = COL_BREAK
-	pc.add_theme_stylebox_override("panel", sb)
-	pc.custom_minimum_size = Vector2(360, 0)
-	center.add_child(pc)
 
-	var vb := VBoxContainer.new()
-	vb.add_theme_constant_override("separation", 14)
-	pc.add_child(vb)
-
-	_overlay_title = Label.new()
-	_overlay_title.add_theme_font_size_override("font_size", 26)
-	_overlay_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vb.add_child(_overlay_title)
-
-	_overlay_body = VBoxContainer.new()
-	_overlay_body.add_theme_constant_override("separation", 8)
-	vb.add_child(_overlay_body)
-
-	_overlay_buttons = VBoxContainer.new()
-	_overlay_buttons.add_theme_constant_override("separation", 8)
-	vb.add_child(_overlay_buttons)
+func _set_bar(bar: ProgressBar, value: int, maximum: int) -> void:
+	bar.max_value = maxi(1, maximum)
+	bar.value = clampi(value, 0, maxi(1, maximum))
 
 
 # ---------------------------------------------------------------------------
@@ -480,89 +415,13 @@ func _resolve_loot_pool(enemy_def: EnemyDef) -> Array[PartDef]:
 
 
 # ---------------------------------------------------------------------------
-# Widget factories (touch-first sizing)
+# Overlay content builders (dynamic per-reveal — content, not chrome)
 # ---------------------------------------------------------------------------
-func _add_target_btn(row: HBoxContainer, group: ButtonGroup, text: String,
-		sub_target: StringName, pressed: bool) -> void:
-	var btn := Button.new()
-	btn.text = text
-	btn.toggle_mode = true
-	btn.button_group = group
-	btn.button_pressed = pressed
-	btn.custom_minimum_size = Vector2(96, 56)   # ≥44×44 touch target
-	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	btn.add_theme_font_size_override("font_size", 18)
-	btn.set_meta("sub_target", sub_target)
-	btn.toggled.connect(_on_target_btn_toggled.bind(btn))
-	row.add_child(btn)
-	_target_btns[sub_target] = btn
-
-
-func _on_target_btn_toggled(on: bool, btn: Button) -> void:
-	if on:
-		_on_target_selected(StringName(btn.get_meta("sub_target")))
-
-
-func _panel(parent: Node) -> VBoxContainer:
-	var pc := PanelContainer.new()
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.16, 0.17, 0.20)
-	sb.set_corner_radius_all(8)
-	sb.set_content_margin_all(12)
-	pc.add_theme_stylebox_override("panel", sb)
-	parent.add_child(pc)
-	var vb := VBoxContainer.new()
-	vb.add_theme_constant_override("separation", 6)
-	pc.add_child(vb)
-	return vb
-
-
-func _label(parent: Node, text: String, size: int, bold: bool = false) -> Label:
-	var l := Label.new()
-	l.text = text
-	l.add_theme_font_size_override("font_size", size)
-	if bold:
-		l.add_theme_color_override("font_color", Color(1, 1, 1))
-	parent.add_child(l)
-	return l
-
-
-func _set_enemy_readout(label: Label, sub: StringName, body: String) -> void:
-	var selected := _current_target == sub
-	label.text = ("▶ " if selected else "   ") + body
-	label.add_theme_color_override("font_color",
-		Color(1, 1, 1) if selected else Color(0.62, 0.64, 0.68))
-
-
-func _bar(parent: Node, fill_color: Color) -> ProgressBar:
-	var bar := ProgressBar.new()
-	bar.show_percentage = false
-	bar.custom_minimum_size = Vector2(0, 18)
-	bar.min_value = 0
-	bar.max_value = 1
-	bar.value = 0
-	var fill := StyleBoxFlat.new()
-	fill.bg_color = fill_color
-	fill.set_corner_radius_all(4)
-	bar.add_theme_stylebox_override("fill", fill)
-	var bg := StyleBoxFlat.new()
-	bg.bg_color = Color(0.08, 0.08, 0.10)
-	bg.set_corner_radius_all(4)
-	bar.add_theme_stylebox_override("background", bg)
-	parent.add_child(bar)
-	return bar
-
-
-func _set_bar(bar: ProgressBar, value: int, maximum: int) -> void:
-	bar.max_value = maxi(1, maximum)
-	bar.value = clampi(value, 0, maxi(1, maximum))
-
-
 func _overlay_button(text: String, on_press: Callable) -> void:
 	var btn := Button.new()
 	btn.text = text
+	btn.theme_type_variation = &"PrimaryButton"
 	btn.custom_minimum_size = Vector2(0, 56)
-	btn.add_theme_font_size_override("font_size", 20)
 	btn.pressed.connect(on_press)
 	_overlay_buttons.add_child(btn)
 

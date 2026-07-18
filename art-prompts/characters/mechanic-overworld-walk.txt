@@ -1,0 +1,39 @@
+ASSET: Mechanic — Overworld Walk Cycle
+ASSET ID: ASSET-001
+CANVAS: 64x96 px per frame | Sprite sheet: 4 directions x 4 frames = 16 frames per variant
+PERSPECTIVE: Top-down 2.5D (Pokémon-style overworld view)
+VARIANTS: Generate twice — once for masculine read, once for feminine read (same silhouette footprint)
+TARGET PATH: assets/art/characters/char_mechanic_[masc|fem]_overworld_walk.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Human field engineer/mechanic walking sprite for a top-down 2.5D overworld map.
+Canvas 64x96 px per frame. Top-down 2.5D Pokémon-style perspective.
+
+CHARACTER DESCRIPTION:
+A practical, tool-forward field mechanic — the engineer archetype, not a soldier or mage.
+Wears layered work clothing: a durable jacket or coverall in muted earth tones, tool pouch
+or satchel visible at the hip, practical boots. No weapons, no armor, no heroic cape.
+Two variants sharing the same silhouette footprint:
+- Masculine: slightly broader shoulders, close-cropped or short hair
+- Feminine: same jacket/coverall silhouette, slightly narrower shoulder, medium or pulled-back hair
+Both read as "engineer who works in the field among machines."
+
+PALETTE: World palette clothing — warm earthy muted tones from Ironmoss Green (#3D7A4A),
+Alloy Ochre (#C49A35), Slate Gunmetal (#374350), Bone White (#F2EDDF). Lower saturation
+than any robot on screen. Matte surfaces, flat indexed color regions (no gradient — must
+support palette-swap shader).
+
+POSE: 4-directional walk cycle, 4 frames each:
+- Down (facing camera): arms swing slightly, legs alternate, facing slightly toward viewer
+- Up (walking away): back visible, same gait
+- Left / Right: side profile walk, clean silhouette
+Priority is readable facing direction and clear "human, not robot" read at small scale.
+Spend detail on walk-cycle silhouette, NOT facial detail (too small to read at map zoom).
+
+GREYSCALE TEST: In greyscale at 64x96px the sprite reads as a human figure moving with
+direction — not a bot, not a UI element.
+
+NEGATIVE: No weapons. No armor. No glowing robot parts. No visible CORE sphere. No robots
+in frame. No HUD elements. No high saturation neon. No rounded-corner UI. No photoreal.
+No baked gradients. No high-detail face (too small to matter).

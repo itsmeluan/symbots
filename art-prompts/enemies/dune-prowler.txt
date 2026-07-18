@@ -1,0 +1,58 @@
+ASSET: Dune Prowler (Enemy)
+ENEMY ID: dune_prowler
+CANVAS: 256x256 px (detail) — mipmapped to 128x128 for battle
+PERSPECTIVE: 3/4 side view, slight upward angle
+ELEMENT: Kinetic (silver-shift #D8DDE6, Impact Ring glyph, chrome details)
+MANUFACTURER: Scrapjaw (asymmetric, directional; diagonal slash panel-lines; scavenged-aggressive)
+ROLE: Low-slung fast raider — circles then lunges, high mobility, arm-and-core targeting
+TARGET PATH: assets/art/enemies/enemy_dune_prowler_battle.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Enemy Symbot: Dune Prowler. Canvas 256x256 px. 3/4 side-view combat perspective.
+
+CONCEPT: "A low-slung raider built for the open flats. It circles, then lunges for
+the core." Fast, predatory, low body plan. Like a hunting animal translated into a
+Scrapjaw machine — wide, low, and built to close distance and rip into the enemy's
+core housing.
+
+SILHOUETTE DESCRIPTION:
+Low center of mass body plan — the CHASSIS torso sits close to the ground. LEGS spread
+wide and low in a predatory crouch (think: spider or crouched predator — NOT upright
+biped). ARM region extends forward and outward with raking-claw geometry — built for
+core-exposure attacks. HEAD is a narrow forward-angled sensor cluster, low and predatory
+in position (still distinct and elevated above the crouch body, but pressed low and
+angled forward — like a hunting posture head). The WEAPON extension from the ARM reaches
+forward at a raking angle (claws/hooks, angled down-and-inward per art-bible WEAPON
+angle = melee = down-and-inward). The bot reads: "fast, low, and lunging."
+
+SCRAPJAW MANUFACTURER FINISH: Asymmetric panel edges, diagonal slash panel-lines.
+Directional surface lines that look mid-motion even at rest (as if the bot is always
+in mid-prowl). Quick-release clasps on ARM attachment. Surfaces show desert/sand weathering
+— Alloy Ochre #C49A35 abrasion on lower surfaces, scavenged parts with mismatched
+surface textures. Sand caught in panel seams implies outdoor terrain.
+
+KINETIC ELEMENT ACCENT: Silver-shift #D8DDE6 on claw tips and ARM joint. Impact Ring
+glyph (concentric circles) on the ARM or CHASSIS. Polished chrome on claw impact surfaces.
+
+BREAK REGIONS (distinct targetable silhouette zones):
+- ARM (region_fraction 32%): the raking claw/arm extends clearly outward-forward from
+  the body. It is the most prominent frontal feature. Breaking it removes the forward
+  claw reach from the silhouette.
+- CORE (region_fraction 22%): "core_exposed" break event — a visible internal housing
+  or panel gap in the CHASSIS center that implies where the CORE would be. Breaking
+  this region should look like the CHASSIS chest panel has been cracked open. It is a
+  mid-zone feature, not as prominent as the ARM.
+
+IDLE STANCE: Low predatory crouch, claw-arm raised and angled forward (ready to rake),
+legs in a wide spread, HEAD sensor angled forward and low. Communicates: "about to lunge."
+
+WORLD PALETTE BASE: Slate Gunmetal #374350 chassis; Alloy Ochre #C49A35 heavy sand
+weathering; Harvest Crimson #B33020 Scrapjaw faction detail; Bone White on claw edges.
+
+GREYSCALE TEST: At 64x64 greyscale — ARM (forward claw), CHASSIS with CORE region
+(chest panel gap), and LOW LEGS (wide crouch spread) must read as three distinct zones.
+
+NEGATIVE: No upright stance (this bot is always low). No clean factory surfaces. No
+visible CORE sphere glowing (the CORE is exposed by damage — implied cavity, not a
+glowing orb). No facial expressions. No photoreal. No painterly gradients.

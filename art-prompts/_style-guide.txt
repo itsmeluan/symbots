@@ -1,0 +1,93 @@
+SYMBOTS — SHARED STYLE PREAMBLE
+================================
+Prepend this block to every individual prompt in this library.
+"[UNIQUE DESCRIPTION]" marks where the individual file's description begins.
+
+----- SHARED STYLE PREAMBLE (copy from here) -----
+
+Pixel art, stylized flat 2D, matte finish, mobile game art, crisp clean outlines,
+high-saturation saturated color palette, Medabots-inspired modular robot aesthetic.
+Canvas: [SEE INDIVIDUAL FILE]. Perspective: [SEE INDIVIDUAL FILE].
+
+CORE STYLE RULES (all assets):
+- Organic primary silhouette contour (functional biomechanical curves), engineered
+  interior panel-line detail (hard-edged, precise, geometric straight lines and seams).
+- Every bot/part: HEAD on top (compact, horizontal visor/sensor band), LEGS at bottom
+  (widest ground element), torso/CHASSIS in the middle (widest zone overall).
+- Clean pixel outline, 1-2px consistent outline weight.
+- No baked drop shadows, no painterly gradients, no PBR speculars (exception: Kinetic
+  chrome finish only).
+- Matte palette surfaces; Kinetic silver-shift element parts get polished/chrome finish.
+
+WORLD PALETTE (environment, character clothing, backgrounds):
+  Ironmoss Green   #3D7A4A  (ground/vegetation dominant)
+  Alloy Ochre      #C49A35  (earth/stone — matte only, never glyphed)
+  Slate Gunmetal   #374350  (chassis base metal, structural rock)
+  Wilderness Amber #C4721A  (live energy accent in environment — matte)
+  Circuit Teal     #2B6E68  (cool flora, circuits, water)
+  Harvest Crimson  #B33020  (environmental danger/enemy presence)
+  Bone White       #F2EDDF  (structural highlights, exposed frame — matte)
+
+ELEMENT ACCENT COLORS (on parts, glyphs, ability FX):
+  Volt    = Cyan       #2FE8E8  + Lightning Fork glyph (bifurcated diagonal bolt)
+  Thermal = Amber      #F0900A  + Flame Chevron glyph (upward-stacked V shapes) + emissive bloom
+  Kinetic = Silver     #D8DDE6  + Impact Ring glyph (concentric circles) + chrome/polished finish
+
+MANUFACTURER SURFACE FINISH (apply to part/enemy surfaces):
+  ironclad = geometric, faceted, planar panel edges; dense perpendicular grid panel-lines;
+             prominent hex bolts/rivets; thick-plate heavy-industrial look
+  scrapjaw = asymmetric edges, directional lines that look mid-motion; diagonal ~45-degree
+             slash panel-lines; quick-release clasps and slide-locks; scavenged-aggressive look
+  boltwell = exposed structural beams, struts, cabling as surface decoration; cable ties,
+             locking rings, exposed wire connectors; high-tech instrument/experimental look
+  wild     = evolved-organic, biome-adaptive; organic/weathered contour; no manufactured
+             finish; seams still have engineered attachment nodes; machine-that-grew aesthetic
+
+RARITY TREATMENT (icon frames and part glow):
+  Common    = single #374350 gunmetal border; no glow; "COMMON" implies 1-border
+  Rare      = double border + diamond pip; soft ambient element-color glow ~25% opacity
+  Boss-Grade = triple border + star mark; steady radiant element-color glow ~60%; hard edge highlight
+  Prototype  = animated/irregular border + warning mark; chromatic shimmer; flicker <3 Hz
+
+UI CHROME (HUD, buttons, panels):
+  Base plate   #1E2229  (HUD Dark — the darkest UI surface)
+  Mid panel    #2C3340
+  Interactive  #3A4455
+  Active/sel   #4090CC  (Info Blue — selection, never Volt cyan)
+  Divider      #4B5668
+  Text primary #E8E8E8
+  Text second  #98A4B4
+  Chamfered 45-degree corners on all UI panels, NEVER rounded corners.
+  Break pips = small rectilinear rectangles, NEVER circles.
+
+NEGATIVE PROMPT (apply to ALL assets):
+  No rounded UI corners. No photoreal 3D render. No PBR materials (except Kinetic
+  chrome). No painterly gradients. No baked drop shadows. No loose brush strokes.
+  No neon glow unrelated to element. No visible CORE sphere in battle or overworld
+  scenes. No facial expressions on robots (they have sensor arrays, not faces).
+  No anime screentone. No motion blur. No depth-of-field blur.
+
+----- END SHARED STYLE PREAMBLE -----
+
+PER-ELEMENT PALETTE ACCENTS (quick-ref for building individual prompts):
+------------------------------------------------------------------------
+When an asset belongs to Volt element: dominant accent #2FE8E8 cyan, Lightning Fork
+glyph on the relevant surface or badge. Cool blue-white energy feel.
+
+When Thermal element: dominant accent #F0900A amber, Flame Chevron glyph, subtle
+orange-amber bloom/heat-shimmer on the emissive detail. Warm molten feel.
+
+When Kinetic element: dominant accent #D8DDE6 silver, Impact Ring glyph, polished
+chrome/metallic surface finish (the ONLY asset category allowed a specular sheen).
+Clean industrial feel.
+
+When wild (no element lock shown on body): organic palette drawn from biome
+(Crystalline = cool teal-violet; Vegetation = Ironmoss green with overgrowth;
+Industrial-Debris = Slate Gunmetal with Harvest Crimson hazard).
+
+BOSS-GRADE VISUAL ESCALATION:
+- Larger silhouette mass than common enemies
+- Steady radiant element-color glow around the entire model edge
+- Triple border + star in any UI frame treatment
+- All three break regions (arm/head/core or weapon/core/head) must read as
+  distinct targetable zones from the silhouette alone

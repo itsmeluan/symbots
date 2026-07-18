@@ -1,0 +1,64 @@
+ASSET: Part Icon — Tread Legs
+PART ID: wild_tread_legs
+SLOT: LEGS (slot_type 7)
+RARITY: Common (rarity 1) — single gunmetal border, no glow
+ELEMENT: Kinetic (silver-shift #D8DDE6, Impact Ring glyph)
+MANUFACTURER: wild (evolved-organic, biome-adaptive — salvaged treads grown into the bot)
+CANVAS: 256x256 px
+TARGET PATH: assets/art/parts/part_wild_legs_tread_legs.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Part icon: Tread Legs (Wild, Common, LEGS slot, Kinetic).
+Canvas 256x256 px. Front-facing or slight 3/4 low view, part isolated on transparent background.
+
+DESCRIPTION: "Salvaged treads. Slow to turn, hard to tip."
+Wild-origin LEGS that use tank-tread locomotion instead of bipedal legs. Salvaged
+tread units — wide, stable, low-to-ground. Heavy and planted. The tread housings show
+organic weathering and wild surface adaptation but still carry the engineered attachment
+nodes at the top (where they mount to the CHASSIS).
+
+LEGS SLOT SHAPE LANGUAGE (art-bible §3.3):
+- Ground-contact element — the bot's foundation
+- Widest or most complex LOWER element of the bot
+- Must NEVER extend above the CHASSIS base line — owns the lower zone entirely
+- Defense/heavy archetype: wide, planted, squat, multiple ground contacts
+- "Mass-drop rule": LEGS carry more visual weight at the bottom — gives the bot gravity
+
+TREAD LEGS SPECIFIC FORM:
+Two wide tread units (one left, one right) viewed from front-and-slightly-below. Each
+tread unit is a rectangular housing containing a tank-track circuit — the upper housing
+body and the track wrapping around it visible at the bottom. The tread housings are
+wide and squat (low, hard-to-tip quality). CHASSIS mount at the top of each housing:
+a shared connection crossbar or individual mount brackets showing the engineered
+attachment geometry.
+
+The "slow to turn" quality reads in the silhouette: the treads are optimized for
+forward traction, not rotation — wide and straight-tracked, not articulated for agile
+turns. Heavy visual weight at the bottom of each housing (the track ground-contact area).
+
+WILD MANUFACTURER FINISH:
+- Tread housings have organic weathered surfaces — mineral deposits, dirt/debris
+  caught in tread gap areas, rust-and-growth patina on the housing tops
+- The tread material itself has a slightly organic texture (rubber or composite that
+  looks partially grown, not factory-stamped)
+- Vegetation threading: faint suggestion of root or vine material in the tread gap
+  (biome-adaptive wild character, Vegetation zone lean)
+- TOP MOUNT BRACKETS: still clean engineered geometry — this is where wild follows
+  the universal attachment grammar (organic finish stops at the mount nodes)
+- No manufactured brand marks
+
+KINETIC ELEMENT: Silver-shift #D8DDE6 on the tread contact surfaces and metal
+structural housing frame. Impact Ring glyph on the outer face of one housing.
+The tread track itself has a worn chrome-metal quality (use = polish).
+
+RARITY FRAME (Common): Single #374350 border. No glow.
+
+GREYSCALE TEST: At 64x64px reads as two wide tread units — the ground-contacting
+lower elements. The width-at-bottom (mass-drop rule) is the defining characteristic.
+The mount brackets at top are visible as the CHASSIS connection.
+
+NEGATIVE: No bipedal leg form (these are treads, not limbs). No tall/narrow leg
+silhouette. No upright stance elements (treads are low and wide). No Ironclad hex
+bolts or Scrapjaw diagonal lines on the housing surfaces. No photoreal.
+No painterly gradients. No rounded UI frame.

@@ -1,0 +1,46 @@
+ASSET: Consumable Icon — Coolant Flush
+CONSUMABLE ID: coolant_flush
+RARITY: Common (rarity 1) — single gunmetal border, no glow
+EFFECT: Reduces Heat by 50 (combat heat management)
+CANVAS: 64x64 px
+TARGET PATH: assets/art/consumables/icon_consumable_coolant_flush.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Consumable icon: Coolant Flush. Canvas 64x64 px. Front-facing centered icon.
+
+A field coolant canister — deployed to flush and reduce the bot's internal heat
+buildup. Combats the Heat system that threatens overheat. Should read as:
+cooling fluid / temperature reduction / pressurized release.
+
+VISUAL CONCEPT: A pressurized canister or spray bottle containing coolant fluid.
+The "flush" action implies pressurized release — the canister is a portable pressurized
+vessel with a nozzle or trigger, designed for rapid deployment.
+
+ICON COMPOSITION (centered, 64x64):
+- Primary: a compact cylindrical canister with a trigger nozzle at the top — reads
+  like a pressurized spray can or portable extinguisher, but smaller and more precise
+- The canister body is the dominant shape: slightly elongated vertical cylinder with
+  a visible pressure indicator or see-through strip showing fluid level (blue-tinted
+  fluid visible inside)
+- Nozzle at top: a small forward-pointing nozzle with a mist/spray hint at the tip
+- Optional: a frost/condensation visual effect on the canister exterior (cold fluid inside)
+
+COLOR: The coolant fluid is a cool blue-teal (Circuit Teal #2B6E68 base, with hints
+of cyan — NOT the full Volt cyan #2FE8E8 which is reserved for element identity, but
+a desaturated blue-teal that reads "cooling fluid" rather than "Volt element"). The
+canister exterior is Slate Gunmetal #374350. No Lightning Fork glyph — this is not
+a Volt element item.
+
+UI CHROME RULES: Chamfered 45-degree frame corners. Single #374350 border (Common).
+No element glow.
+
+PALETTE: Slate Gunmetal #374350 canister body; Circuit Teal #2B6E68 for fluid color
+(muted, not Volt-cyan); Bone White #F2EDDF on pressure indicator and structural details.
+
+GREYSCALE TEST: At 32x32px reads as a canister-with-nozzle shape. The vertical
+cylinder form with top nozzle is the essential read.
+
+NEGATIVE: No Lightning Fork glyph (this is not a Volt elemental item). No Volt cyan
+#2FE8E8 (use the desaturated Circuit Teal instead). No fire or heat imagery (this
+is the opposite). No photoreal. No painterly gradients. No rounded frame corners.

@@ -1,0 +1,41 @@
+ASSET: Consumable Icon — Repair Kit
+CONSUMABLE ID: repair_kit
+RARITY: Rare (rarity 2) — double border + diamond pip; no element glow (no element affinity)
+EFFECT: Restores 50 Structure (medium heal, the Rare-tier repair)
+CANVAS: 64x64 px
+TARGET PATH: assets/art/consumables/icon_consumable_repair_kit.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Consumable icon: Repair Kit. Canvas 64x64 px. Front-facing centered icon.
+
+A mid-tier consumable. A full repair kit — more comprehensive than a Weld Patch.
+Should read as a complete field repair toolkit, not a single component.
+
+VISUAL CONCEPT: A compact mechanical repair kit case or kit assembly. The dominant
+shape is a small toolbox, hard-case, or kit pouch with clearly visible repair tools:
+a wrench or spanner visible at the top, patch plates stacked inside or beside it,
+possibly a structural rivet driver. The "kit" read is important — this is multiple
+tools in one container.
+
+ICON COMPOSITION (centered, 64x64):
+- Primary: a compact rectangular hard-case or kit container (Ironclad-like construction
+  — geometric, solid, purposeful; slight chamfered corners on the container itself to
+  match the game's machined aesthetic)
+- Secondary: a wrench or multi-tool visible either protruding from the open case or
+  silhouetted on the face of the case. The wrench/tool read immediately signals "repair."
+- Optional: patch plates or a small structural segment beside or behind the case
+
+UI CHROME RULES: Chamfered 45-degree frame corners. Double border + diamond pip
+(Rare rarity). No element glow (this consumable has no element affinity).
+
+PALETTE: Slate Gunmetal #374350 case body; Alloy Ochre #C49A35 on worn metal/tool
+surfaces; Bone White #F2EDDF on structural highlights and tool highlights. Warm
+neutral — no element colors. This is a utility tool, not an elemental item.
+
+GREYSCALE TEST: At 32x32px reads as a box-with-tool shape — immediately "kit" rather
+than a weapon or electronic component.
+
+NEGATIVE: No element glyphs. No neon colors. No weapon silhouette. No photoreal.
+No painterly gradients. No rounded frame corners. No overly complex scene — centered
+icon composition only.

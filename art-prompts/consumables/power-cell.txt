@@ -1,0 +1,48 @@
+ASSET: Consumable Icon — Power Cell
+CONSUMABLE ID: power_cell
+RARITY: Common (rarity 1) — single gunmetal border, no glow
+EFFECT: Restores 25 Energy (battle energy management)
+CANVAS: 64x64 px
+TARGET PATH: assets/art/consumables/icon_consumable_power_cell.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Consumable icon: Power Cell. Canvas 64x64 px. Front-facing centered icon.
+
+A disposable energy cell for field refueling. Restores bot Energy in combat.
+Should read as: portable battery / single-use charge pack / energy refill.
+
+VISUAL CONCEPT: A compact single-use battery or energy cell — cylindrical or
+rectangular, clearly a "throw-away charge pack." This is different from the
+boltwell_cell_mk1 PART (which is a permanent equipment slot) — this is a
+disposable field item, smaller and cruder.
+
+ICON COMPOSITION (centered, 64x64):
+- Primary: a compact rectangular or slightly cylindrical battery pack — thicker
+  and shorter than a canister, more "block" than "tube." Visible positive/negative
+  terminal contacts at one end.
+- Charge indicator: a horizontal charge level stripe or indicator window on the
+  face showing it is fully charged (bright Info Blue #4090CC — the UI's energy
+  color from battle.md, not Volt cyan). The charge indicator uses the game's
+  existing semantic: blue = energy.
+- Contact terminals at the top/end: small rounded terminals for connection (not
+  the same as Boltwell locking rings — these are disposable snaps, simpler)
+
+NOTE ON COLOR: Use Info Blue #4090CC for the charge indicator, NOT Volt cyan
+#2FE8E8. Per art-bible §4.5, the Energy bar in battle uses Info Blue (hue 210°,
+deliberately offset from Volt cyan hue 180°) to distinguish Energy from Volt element.
+This consumable restores Energy, so it uses the Energy semantic color.
+
+UI CHROME RULES: Chamfered 45-degree frame corners. Single #374350 border (Common).
+No element glow.
+
+PALETTE: Slate Gunmetal #374350 cell body; Info Blue #4090CC charge indicator;
+Bone White #F2EDDF on terminal contacts and structural highlights.
+
+GREYSCALE TEST: At 32x32px reads as a battery/cell shape with a charge indicator
+strip. The terminal contacts at one end differentiate it from a canister.
+
+NEGATIVE: No Lightning Fork glyph (not a Volt elemental item — it restores Energy
+as a resource, not as element). Do NOT use Volt cyan #2FE8E8 (use Info Blue
+#4090CC for the energy charge indicator). No photoreal. No painterly gradients.
+No rounded frame corners.

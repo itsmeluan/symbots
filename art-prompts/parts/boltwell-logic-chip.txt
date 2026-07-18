@@ -1,0 +1,47 @@
+ASSET: Part Icon — Logic Chip
+PART ID: boltwell_logic_chip
+SLOT: CHIPSET (slot_type 3)
+RARITY: Common (rarity 1) — single gunmetal border, no glow
+ELEMENT: Volt (cyan #2FE8E8, Lightning Fork glyph)
+MANUFACTURER: Boltwell (exposed structural; cable ties, locking rings; instrument finish)
+CANVAS: 256x256 px (Workshop/catalog display — CHIPSET is flush-embedded in battle, below resolution threshold)
+TARGET PATH: assets/art/parts/part_boltwell_chipset_logic_chip.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Part icon: Logic Chip (Boltwell, Common, CHIPSET slot, Volt).
+Canvas 256x256 px. Front/top-down view, part isolated on transparent background.
+
+DESCRIPTION: "Boltwell silicon. Runs cool, thinks fast enough."
+A compact electronic module — the CHIPSET slot part. This is embedded INSIDE the
+CHASSIS (flush-mounted, no silhouette protrusion in battle). For the icon, it should
+look like an actual high-tech circuit board or processing module: small, dense, precise.
+
+CHIPSET SLOT SHAPE LANGUAGE (art-bible §3.3):
+- Does NOT protrude from the bot silhouette — it is flush-embedded
+- Small, compact, symmetric indicator panel form
+- At battle scale (64px) it may be below the resolution threshold (correct)
+- At Workshop/catalog scale (this icon) it reads as fine detail rewarding scrutiny
+- NEVER designed with geometry that could be confused with ARMS or WEAPON
+
+VISUAL CHARACTER:
+A circuit board / processing module aesthetic. Compact rectangular or square form.
+Dense surface detail: microprocessor pads, trace lines, component mounts visible at
+Workshop zoom scale. The Boltwell high-tech instrument finish at miniaturized scale —
+cable tie mounting posts, locking retention clips on the edge for chassis mounting.
+Small indicator lights or trace-connections at corners (circuit board / instrument panel).
+
+BOLTWELL FINISH: Exposed structure at this scale means visible circuit trace geometry
+(trace runs as structural detail), connector post rows, locking clip edges.
+Instrument-grade precision manufacturing — clean, purposeful, no wasted surface.
+
+VOLT ELEMENT: Cyan #2FE8E8 on circuit trace highlights and indicator pads. Lightning
+Fork glyph (bifurcated diagonal bolt) on the primary processor area.
+
+RARITY FRAME (Common): Single #374350 border. No glow. Entry-tier processing part.
+
+GREYSCALE TEST: At 64x64px reads as a small electronic module/chip — dense detail,
+rectangular, clearly electronic rather than structural.
+
+NEGATIVE: No limb shape. No weapon shape. No body/chassis protrusion. No organic curves.
+No photoreal. No painterly gradients. No rounded UI frame.

@@ -1,0 +1,65 @@
+ASSET: Volt Sentinel (Enemy)
+ENEMY ID: volt_sentinel
+CANVAS: 256x256 px (detail) — mipmapped to 128x128 for battle
+PERSPECTIVE: 3/4 side view, slight upward angle
+ELEMENT: Volt (cyan #2FE8E8, Lightning Fork glyph — bifurcated diagonal bolt)
+MANUFACTURER: Boltwell (exposed structural beams/struts/cabling as surface decoration;
+              cable ties, locking rings, exposed connectors; high-tech instrument finish)
+ROLE: Patient guard unit — high armor/resistance, energy attacker, tactical/defensive stance
+TARGET PATH: assets/art/enemies/enemy_volt_sentinel_battle.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Enemy Symbot: Volt Sentinel. Canvas 256x256 px. 3/4 side-view combat perspective.
+
+CONCEPT: "A Boltwell guard unit. Patient, well-shielded, and quick to punish an opening."
+This is a defensive, measured machine — not aggressive, but dangerous when provoked. High
+structure and resistance, energy attacker. The visual should communicate: fortified,
+watching, calculating.
+
+SILHOUETTE DESCRIPTION:
+Upright, symmetrical, guard-post stance. Heavy CHASSIS torso — broad, tall, the dominant
+shape with shield-like planar surfaces that imply armor layering. LEGS are planted,
+wide-based, immovable (defense role — broad, squat, multiple ground contacts). ARMS are
+flush with CHASSIS, not extended aggressively — they carry capacitor/emitter geometry
+rather than melee reach (energy attacker, not physical). HEAD sensor crest is the most
+technically elaborate element: elevated, with a prominent horizontal scan-array (multiple
+sensor nodes across a horizontal visor band) — tactical, all-seeing quality. The
+"punishment for an opening" read comes from subtle energy-emitter geometry on ARMS or
+CHASSIS that implies ranged discharge capability.
+
+BOLTWELL MANUFACTURER FINISH: Exposed structural beams visible on CHASSIS panels —
+deliberate voids and struts between solid nodes. Cable routing visible on exterior,
+locking rings where major structural members join. Conduit bundles at CHASSIS-ARM and
+CHASSIS-HEAD seams. All voids between struts are filled with darkened space (not missing
+panels — designed cutouts). High-tech instrument quality. Looks purpose-built, not salvaged.
+
+VOLT ELEMENT ACCENT: Cyan #2FE8E8 on energy emitter geometry (ARM capacitor nodes or
+CHASSIS-mounted emitter plates), conducting cables/conduits in the Boltwell structural
+routing, HEAD sensor glow. Lightning Fork glyph (bifurcated diagonal bolt) on the
+emitter face or CHASSIS panel. Subtle cyan ambient glow on the emitter nodes (~25%
+opacity, reinforcing the Rare or lower rarity this enemy carries).
+
+BREAK REGIONS (distinct targetable silhouette zones):
+- HEAD (region_fraction 24%): the elevated scan-array HEAD must be clearly distinct —
+  elevated above CHASSIS, wider than expected (horizontal sensor bank), separated by
+  a neck narrowing. Breaking it removes the distinctive scan array.
+- CORE (region_fraction 30%): a visible "core housing" panel in the center CHASSIS —
+  a heavier structural node that implies the CORE location (Boltwell exposes structure,
+  so the core housing reads as a prominent reinforced panel in the chest). Breaking it
+  cracks that panel open.
+
+IDLE STANCE: Upright, feet planted, arms at sides or slightly angled outward with
+capacitor nodes facing forward. HEAD sensor scanning forward (horizontal visor active).
+Reads: "on duty, waiting, measuring."
+
+WORLD PALETTE BASE: Slate Gunmetal #374350 structural chassis; Circuit Teal #2B6E68
+on exposed conduit/cable runs; Bone White #F2EDDF on load-bearing structural nodes.
+Cyan #2FE8E8 accents on emitter nodes and sensor glow.
+
+GREYSCALE TEST: At 64x64 greyscale — elevated HEAD (scan array), wide planted LEGS,
+and CHASSIS with visible structural NODE at center (core housing) must read as distinct zones.
+
+NEGATIVE: No Scrapjaw salvage look (this is clean Boltwell precision). No aggressive
+forward lean (guard stance = upright). No exposed glow sphere for CORE. No facial
+expressions. No photoreal. No painterly gradients. No rounded UI.

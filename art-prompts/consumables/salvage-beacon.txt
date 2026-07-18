@@ -1,0 +1,47 @@
+ASSET: Consumable Icon — Salvage Beacon
+CONSUMABLE ID: salvage_beacon
+RARITY: Rare (rarity 2) — double border + diamond pip; soft glow at ~25%
+EFFECT: Doubles drop rate multiplier for the next loot drop (overworld use, targets enemy loot)
+CANVAS: 64x64 px
+TARGET PATH: assets/art/consumables/icon_consumable_salvage_beacon.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Consumable icon: Salvage Beacon. Canvas 64x64 px. Front-facing centered icon.
+
+A scanning/loot-enhancement device. Deployed before engaging an enemy to double the
+drop rate multiplier for their loot. The "beacon" reads as: active scan device,
+target-marking emitter, field intelligence tool.
+
+VISUAL CONCEPT: A compact deployable beacon device — a box or stake with an
+active upward-pointing scan emitter or signal horn on top. The beacon is broadcasting
+a scan signal (reading enemy loot potential). Should feel like a military/field
+intelligence device: sophisticated, precision-built.
+
+ICON COMPOSITION (centered, 64x64):
+- Primary: a compact rectangular base unit (Boltwell instrument-grade quality —
+  this is a sophisticated device). Angular, chamfered body. Could be handheld or
+  stand-mountable.
+- Emitter top: a small horn or cone emitter at the top pointing upward, with a
+  visible signal pulse wave (concentric arc lines above the emitter tip — the "scan"
+  broadcasting upward). The signal arcs are the active element.
+- Signal arcs: 2-3 fine concentric arc lines above the emitter (radio/scan signal
+  visual). These are the most visually distinctive feature.
+- Small screen or indicator on the face showing a target/scan readout
+
+COLOR: Reward Gold #E8B820 on the emitter tip and signal arc lines (this item
+creates a loot reward — Gold is the semantic reward color from art-bible §4.3,
+with star/trophy glyph). The signal arcs are gold-tinted to read as "valuable
+target marked." The body is Slate Gunmetal #374350.
+
+UI CHROME RULES: Chamfered 45-degree frame corners. Double border + diamond pip
+(Rare). Soft ambient gold glow ~25% from the emitter.
+
+PALETTE: Slate Gunmetal #374350 device body; Reward Gold #E8B820 on emitter and
+signal arcs; Bone White #F2EDDF on structural frame highlights.
+
+GREYSCALE TEST: At 32x32px reads as a box-with-emitter-top shape. The signal arcs
+above the emitter are the key identifying feature.
+
+NEGATIVE: No Lightning Fork (not Volt). No Flame Chevron. No weapon silhouette.
+No photoreal. No painterly gradients. No rounded frame corners.

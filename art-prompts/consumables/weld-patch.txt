@@ -1,0 +1,43 @@
+ASSET: Consumable Icon — Weld Patch
+CONSUMABLE ID: weld_patch
+RARITY: Common (rarity 1) — single gunmetal border, no glow
+EFFECT: Restores 25 Structure (small heal)
+CANVAS: 64x64 px (consumable icon — small inventory item)
+TARGET PATH: assets/art/consumables/icon_consumable_weld_patch.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Consumable icon: Weld Patch. Canvas 64x64 px. Front-facing centered icon.
+
+A small consumable item icon for the inventory/battle UI. This is the simplest,
+cheapest Structure-repair item in the game — a disposable field patch used to
+seal cracks and restore minor structural integrity.
+
+VISUAL CONCEPT: A welded metal patch — a small rectangular or irregular-shape metal
+plate with fresh weld bead along its edges, designed to be slapped over a crack.
+Think: the simplest possible emergency repair tool. A flat metal patch with a
+visible weld bead perimeter, plus a small propane/weld-pen applicator beside it
+or shown as a secondary element. The patch plate itself is the dominant shape.
+
+ICON COMPOSITION (centered, 64x64):
+- Primary: the metal patch plate — slightly irregular rectangular shape, Slate
+  Gunmetal #374350 metal surface, Bone White structural highlight on the face
+- Secondary: fresh weld bead along the patch perimeter — bright white-orange weld
+  point (not Thermal glow — just the physics of welding, a mechanical process)
+- Optional: tiny weld pen/applicator at one corner for context
+
+UI CHROME RULES: The icon frame uses chamfered 45-degree corners (NOT rounded).
+Single #374350 gunmetal border (Common rarity). No glow.
+
+PALETTE: Slate Gunmetal #374350 patch body; Bone White #F2EDDF structural highlight;
+warm white-orange weld bead (hot metal color, kept neutral/matte — not Thermal amber
+glyph — this is a physical process, not an element effect). Alloy Ochre #C49A35 as
+metal surface variation.
+
+GREYSCALE TEST: At 32x32px reads as a flat patch plate with edge detail. Clear and
+readable as a "repair material" item.
+
+NEGATIVE: No organic shapes. No element glyphs (this is a mechanical tool, not
+elemental). No Thermal Flame Chevron (weld ≠ Thermal element). No photoreal.
+No painterly gradients. No rounded corners on the frame. No complex scene — single
+centered object, icon format.

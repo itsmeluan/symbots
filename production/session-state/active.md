@@ -1,5 +1,14 @@
 # Active Session State
 
+## Session Extract — UI .tscn+Theme migration + asset pipeline (2026-07-18c)
+- USER DIRECTIVE: migrate the 3 code-built screens → .tscn + central Theme; THEN build the asset pipeline; THEN a separate folder of English Pixel Lab prompts for EVERYTHING.
+- **Theme** `assets/ui/theme/symbots_theme.tres` = single source of truth (base Button/Panel/ProgressBar/Label + variations TitleLabel/HeadingLabel/DimLabel/Enemy|Player|Energy|BreakBar/PrimaryButton/TargetButton). Sprite-swap path = StyleBoxFlat→StyleBoxTexture, no screen edits. NOTE: placeholder uses ROUNDED corners; art-bible wants CHAMFERED 45° — switch when real chrome lands.
+- **Migration (hybrid)**: static shell in .tscn w/ `%`-unique nodes; data-driven content (enemy markers, candidate list, stat rows, target buttons, reveal overlay) STAYS code-generated into named containers. Battle/Overworld/Workshop all done. ScreenManager already `load(.tscn).instantiate()`s all three — @onready %refs resolve.
+- **Asset pipeline**: project.godot set pixel-art defaults (canvas `default_texture_filter=0` Nearest + `[importer_defaults] texture` lossless/no-mipmaps/no-3d-compress). `assets/art/{hud,ui,characters,enemies,parts,consumables,overworld,icons,workshop}/` created (+.gdkeep). `assets/art/README.md` = full pipeline doc. LIVE HOOK: new `src/ui/art.gd` (`class_name Art`, static `texture(cat,id)`/`has`) + overworld enemy markers upgrade ColorRect→TextureRect when `enemies/<id>.png` exists (fallback safe). Convention: `res://assets/art/<category>/<id-with-underscores>.png`.
+- **VERIFY**: --import clean, boot smoke clean (overworld 6 markers), **GUT 956/956 green, 4837 asserts** after every change incl. Art. No test references screens → migration can't regress the suite; boot is the screen gate.
+- **art-prompts/**: `_style-guide.txt` (locked style) + `_README.txt` + characters(3) + enemies(10) + parts(13/16). Background agent a0c1d187e005165d2 RESUMED to finish: 3 wild parts, 8 consumables, hud/ui/overworld/icons/workshop categories, `_index.txt`. Awaiting completion notification.
+- NEXT: on agent completion, verify art-prompts count/coverage; report to user. All 6 build tasks (#7–12) complete except art-prompts (#11, in background).
+
 <!-- STATUS -->
 Epic: Production stage ENTERED 2026-07-17 — Pre-Production → Production gate PASSED and stage.txt advanced by user say-so. Epic/Feature/Task tracking now active.
 Feature: Presentation-tier authoring complete (all 4 gate gaps closed: hud/main-menu/pause specs Approved, art-bible v0.2 all 9 §, entity-inventory written). Next production work: /ux-design the 7 unspecced screens, then art/asset specs.
