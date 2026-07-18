@@ -48,7 +48,7 @@
 | 22 | Main Menu (Title) | Session front door — Continue / New Game / Settings / Quit(Mac). | `design/ux/main-menu.md` | Specced (UX — /ux-review APPROVED) |
 | 23 | Pause Menu | In-session hub/escape hatch; overworld-hub + battle-minimal variants. | `design/ux/pause.md` | Specced (UX — /ux-review APPROVED) |
 | 24 | Battle / Combat | The core combat screen (PG-01…09). | `design/ux/battle.md` | Specced (UX — /ux-review APPROVED) |
-| 25 | Workshop / Build | Equip/unequip, live stats, synergy indicators, preview delta, core level + XP bar. | systems-index #18 (workshop.md) | Needed (UX spec) |
+| 25 | Workshop / Build | Equip/unequip, live stats, synergy indicators, preview delta, core level + XP bar. | systems-index #18 (workshop.md) | Specced (UX — pending /ux-review) |
 | 26 | Inventory | Build-relevance organization (slot/rarity/family); scrap-confirm, batch-scrap, stack-full. | systems-index #11 (inventory UX) | Needed (UX spec) |
 | 27 | World Map | Zone graph, player location, zone status, boss-gate WIN_COUNT readouts. | systems-index #20 (world-map.md) | Needed (UX spec) |
 | 28 | Overworld / Navigation | Avatar movement through zone tiles; encounter trigger. | systems-index #16 (overworld) | Needed (UX spec) |

@@ -1,6 +1,6 @@
 # UX Spec: Workshop
 
-> **Status**: In Design
+> **Status**: Ready for Review
 > **Author**: Luan + ux-designer
 > **Last Updated**: 2026-07-18
 > **Journey Phase(s)**: Home base / between-encounters (no player-journey map yet — see Open Questions)
@@ -114,66 +114,280 @@ Ranked by what the player must perceive first (drives all zone decisions):
 
 ### Layout Zones
 
-[To be designed]
+**Orientation: landscape** (anchored to the approved reference mock, 2026-07-18). This
+suits both the iOS-primary target (landscape is comfortable for a two-handed "bench"
+session) and the Mac dev/launch platform. A three-column composition:
+
+| Zone | Position | Width (approx) | Contents |
+|------|----------|----------------|----------|
+| **Z1 — Top Bar** | Full width, top | 100% × ~8% | `WORKSHOP` title + wrench glyph (left); **Scrap** counter (center-right, MVP-only — see note); pause/menu hamburger (right) |
+| **Z2 — Slot Rail** | Left column | ~22% | Vertical list of the 8 build slots (icon + label); selected slot highlighted; `BUILD SUMMARY ›` pinned at the bottom |
+| **Z3 — Stage** | Center column | ~44% | Symbot composite on a slowly-rotating turntable in the workshop diorama (§2.6); `‹ ›` manual-rotate controls; **Core level badge + XP bar** pinned bottom-center; **Part Picker filmstrip** docks here (bottom of Stage) when a slot is selected |
+| **Z4 — Detail Panel** | Right column | ~34% | Context-sensitive: candidate-part card + **Stat Comparison** + **Synergy** + `PREVIEW`/`EQUIP` when a candidate is selected; equipped-part card + `UPGRADE` when the equipped part is inspected; **Build Status** banner pinned at the bottom |
+
+> **Currency note (MVP reconciliation):** the reference mock shows three currency
+> counters. MVP ships **Scrap only** (the gear counter). The gem and cube counters map
+> to post-MVP systems (the cube's `+` reads as **Designs/blueprint fabrication**, an
+> Alpha feature). Z1 reserves horizontal space for them but renders only Scrap in MVP.
+
+> **Part Picker placement:** tapping a slot in Z2 docks a horizontal **candidate
+> filmstrip** at the bottom of Z3 (thumb-reachable; does not occlude the bot or Z4).
+> Selecting a candidate populates Z4. This keeps the bot and the comparison visible at
+> the same time as the choice — the core "see the consequence before commit" read.
 
 ### Component Inventory
 
-[To be designed]
+**Z1 — Top Bar**
+| Component | Type | Content | Interactive | Pattern |
+|-----------|------|---------|-------------|---------|
+| Screen title | Label + glyph | "WORKSHOP" + wrench | No | — |
+| Scrap counter | Stat display | Current Scrap balance (gear glyph) | No (tap → tooltip) | PC-02 (long-press explains) |
+| Menu button | Button | Opens pause/settings overlay | Yes | PC-01 → `pause.md` |
+
+**Z2 — Slot Rail**
+| Component | Type | Content | Interactive | Pattern |
+|-----------|------|---------|-------------|---------|
+| Slot entry ×8 | Toggle/list item | Slot icon + label (CORE, CHASSIS, CHIPSET, ENERGY CELL, HEAD, ARMS, LEGS, WEAPON); shows equipped part's rarity glyph/glow | Yes — selects the slot | PC-01; selected = highlighted state |
+| Build Summary | Button | Opens full readout (all 11 stats, every active synergy incl. overflow per DCO-1, all passive/active effect names by `display_name`) | Yes | PC-01 → sub-panel |
+
+**Z3 — Stage**
+| Component | Type | Content | Interactive | Pattern |
+|-----------|------|---------|-------------|---------|
+| Symbot composite | Rendered sprite stack | 8-layer live composite (assembly Visual/Audio table); rarity overlays per equipped part; swaps in-frame on equip/preview | Yes (rotate) | new pattern — "Turntable" |
+| Rotate controls | Button ×2 | `‹` `›` manual rotate; idle = slow auto-rotate | Yes | PC-01 |
+| Core badge + XP bar | Data display | `CORE LV n` + XP progress `cur / next` (core-progression reads) | Tap → core detail | PG-01-like bar |
+| Part Picker filmstrip | Horizontal list | Inventory filtered to selected slot, sorted by build-relevance (slot/rarity/family, inventory UI-Req-3/4); under-level parts greyed + "Core level N required" | Yes — tap = set candidate; long-press = inspect | PC-02 + new "Filmstrip" |
+
+**Z4 — Detail Panel**
+| Component | Type | Content | Interactive | Pattern |
+|-----------|------|---------|-------------|---------|
+| Part card | Card | Candidate/equipped part: thumbnail, name, rarity + element + manufacturer badges (each with non-color glyph, accessibility §1.3) | Tap → full detail popover | PC-02 |
+| Stat Comparison | Data table | Headline POWER/ARMOR/MOBILITY: `current → delta` with **up/down arrow glyph** (§2.6 non-color cue); `(i)` expands to full 11 stats | Yes (`i` expand) | new "Stat Delta Row" |
+| Synergy block | Indicator list | Build-relevant tiers (3–8): active / progressing / inactive states + combined dual-track (Synergy UI-Req-1); pips + "N more to activate"; preview shows would-activate/would-lose distinctly (non-color, UI-Req-3) | Yes — tap tier = effect detail (DCO-4) | new "Synergy Indicator" |
+| PREVIEW button | Button | Try the candidate *on the bot* (composite sprite swap + synergy preview), no commit (DCO-3 explicit touch gesture) | Yes | PC-01 |
+| EQUIP button | Button | Commit the equip (`part_equipped`); displaced part → inventory (AC-SA-04) | Yes | PC-01 |
+| UPGRADE button | Button | (Equipped-part mode) next-tier stat gain + **Scrap cost**; disabled if unaffordable or at tier cap (Common +3) | Yes | PG-05 affordable/disabled |
+| Build Status banner | Status banner | Combat-legality (EC-CP-05): ✓ "All systems go" (legal) OR ⚠ list of over-level parts blocking combat (non-color icon + text) | Tap → detail when invalid | new "Build Status" |
 
 ### ASCII Wireframe
 
-[To be designed]
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│ 🔧 WORKSHOP                       ⚙ 12,450 Scrap              [☰]      │  Z1
+├───────────────┬────────────────────────────────┬─────────────────────┤
+│ ▣ CORE        │                                │ ┌────┐ SERVO ARM     │
+│ ▤ CHASSIS     │          ╱▛▜╲                   │ │ ▟▙ │ [RARE][VOLT]  │  Z4
+│ ▦ CHIPSET     │         ▐ ●● ▌   (turntable)    │ └────┘ [IRONCLAD]    │
+│ ▬ ENERGY CELL │          ▜██▛                   │ STAT COMPARISON  (i) │
+│ ◗ HEAD        │         ╱    ╲                  │ ⚔ POWER  156  ▲ +18  │
+│▸▣ ARMS   ◂ sel│        ▐      ▌                 │ 🛡 ARMOR  102  ▲  +4  │
+│ ▤ LEGS        │     ‹  ◯ stand ◯  ›             │ 👟 MOBIL  128  ▼  −3  │
+│ ▭ WEAPON      │  ┌─ picker filmstrip ─────────┐ │ SYNERGY          (i) │
+│               │  │[▟▙][▤][▦][▬]… (slot=ARMS)  │ │ 🛡 IRONCLAD 2/3 ◆◆⬡  │
+│               │  └────────────────────────────┘ │    1 more to activate│
+│ ▤ BUILD       │      ┌──────┐                    │ [   👁  PREVIEW    ] │
+│    SUMMARY ›  │      │CORE L4│ XP ▓▓▓▓▓░ 1240/1800│ [   🔧  EQUIP      ] │
+├───────────────┴──────┴──────┴───────────────────┼─────────────────────┤
+│                                                  │ ✓ BUILD STATUS      │
+│                                                  │   All systems go.   │
+└──────────────────────────────────────────────────┴─────────────────────┘
+```
+
+*(Wireframe reconciled to MVP: single Scrap currency in Z1; PREVIEW = try-on-bot,
+EQUIP = commit; UPGRADE replaces the EQUIP slot when an already-equipped part is
+inspected; Build Status doubles as the EC-CP-05 legality banner.)*
 
 ---
 
 ## States & Variants
 
-[To be designed]
+| State / Variant | Trigger | What changes |
+|-----------------|---------|--------------|
+| **Default (populated)** | Normal load with an assembled build | All zones populated; a slot pre-selected (last-used or CORE) |
+| **First-run reduced** | Tutorial / before first boss | Picker limited to swap; `UPGRADE` hidden; Synergy block may be empty; `BUILD SUMMARY` minimal — matches the reduced first-run introduced in symbot-assembly |
+| **Empty slot** | Selected slot has no part | Composite shows a gap in that layer; Z4 reads "Empty — tap to install"; `EQUIP` acts as "install" |
+| **Candidate selected** | Tap a part in the filmstrip | Z4 shows candidate card + **hypothetical** stat delta (`compute_stat_delta()`, no commit); `PREVIEW`/`EQUIP` enabled |
+| **Preview active** | `PREVIEW` tapped | Composite swaps to the candidate sprite; Synergy shows *would-activate* / *would-lose* distinctly (non-color, Synergy UI-Req-3); a "previewing — EQUIP or ✕" affordance appears; nothing committed |
+| **Equipped-part inspected** | Tap an already-filled slot (no candidate pending) | Z4 shows the equipped card + **`UPGRADE`** (next-tier delta + Scrap cost) in place of `EQUIP` |
+| **Upgrade unaffordable** | `Scrap < upgrade cost` | `UPGRADE` disabled (PG-05) with cost shown in deficit styling + reason text |
+| **Upgrade at cap** | Part at its tier cap (Common +3, per Part-DB Rule 10) | `UPGRADE` replaced by a "Max tier" label |
+| **Invalid build** | A core swap orphans over-level parts (EC-CP-05) | Build Status banner = ⚠ + lists offending parts; over-level parts greyed in the rail with "Core level N required"; "cannot enter combat while invalid" |
+| **Under-level part in picker** | `part.level_req > core level` | Greyed filmstrip entry + "Core level N required"; not equippable |
+| **Loading / save-on-enter** | Screen entry (Workshop is the save point) | Brief; no spinner unless the save write is async — if async, a quiet inline "Saving…" not a blocking modal |
+| **Rarity overlay** | Per equipped part rarity | Common = none · Rare = element glow · Boss = radiant · Prototype = flicker — all bounded to <3 flashes/sec (accessibility §1.4) |
 
 ---
 
 ## Interaction Map
 
-[To be designed]
+Input methods (from `technical-preferences.md`): **Touch primary** (iOS), **Mouse/Keyboard**
+(Mac). **No gamepad.** No hover-only affordances — every hover enhancement has a touch/tap
+equivalent (ADR-0008 unified press-release path; ≥44×44pt, ≥56px preferred targets).
+
+| Component | Touch | Mouse | Keyboard | Immediate feedback | Outcome |
+|-----------|-------|-------|----------|--------------------|---------|
+| Slot entry (rail) | tap | click | focus + Enter | slot highlights | Selects slot; docks the picker filmstrip |
+| Filmstrip part | tap = set candidate · long-press = inspect | click · right-click | Enter · hold | card slides into Z4 | Sets candidate (PC-02 popover on inspect) |
+| Rotate `‹ ›` | tap | click | ← / → | bot rotates | Manual rotate; idle resumes slow auto-rotate |
+| `PREVIEW` | tap | click | Enter | composite swaps + seam highlight | Try-on-bot + synergy preview (no commit) |
+| `EQUIP` | tap | click | Enter | settle + confirm check | Commits `part_equipped`; displaced part → inventory |
+| `UPGRADE` | tap | click | Enter | Scrap counter ticks down | Spends Scrap; raises the part's tier |
+| Synergy tier row | tap | click | Enter | detail popover | Shows the tier's effect detail (DCO-4) |
+| `(i)` expanders | tap | click | Enter | panel expands | Reveals full 11 stats / full synergy list |
+| `BUILD SUMMARY ›` | tap | click | Enter | panel opens | Full readout (all stats + synergies incl. overflow) |
+| Scrap counter | long-press | hover → tooltip | focus | tooltip | Explains the Scrap currency |
+| `☰` menu | tap | click | Esc | overlay slides | Opens pause/settings overlay |
+| Back / exit | system back | — | Esc (from overlay) | fade | Returns to Overworld (autosave) |
+
+**Keyboard focus order:** slot rail (top → bottom) → picker filmstrip (when open) → Z4
+actions (`PREVIEW`/`EQUIP` or `UPGRADE`) → Z4 detail expanders → top bar (`☰`).
 
 ---
 
 ## Events Fired
 
-[To be designed]
+| Player Action | Event Fired | Payload / Notes |
+|---------------|-------------|-----------------|
+| Select slot | *(UI-local)* — optional `workshop_slot_selected` analytics | No game-state write |
+| Set candidate | *(UI-local)* | Hypothetical `compute_stat_delta()`; reads the pure core, no write |
+| `PREVIEW` | *(UI-local)* | Hypothetical derive (SynergyEvaluator.preview + StatPipeline hypothetical, ADR-0008); no write |
+| **`EQUIP`** | **`part_equipped`** | ⚠ **Persistent build write** → deferred autosave quiesce (ADR-0001/0002). Architecture attention. |
+| **`UPGRADE`** | **`part_upgraded`** + Scrap debit | ⚠ **Persistent economy write** (Scrap balance + part tier). Architecture attention. |
+| Rotate / expand / open summary | *(none)* | Pure presentation |
+| Exit to Overworld | Autosave (Workshop is the save point) | Deferred-autosave quiesce on screen teardown (ADR-0002) |
+
+> Two actions modify persistent state — `EQUIP` (build) and `UPGRADE` (economy + tier).
+> Both are flagged for the architecture team; the UI **owns neither** — it calls into the
+> systems that own build state and the Scrap economy (Data Requirements below).
 
 ---
 
 ## Transitions & Animations
 
-[To be designed]
+Everything here sits under **art-bible §2.6** — the Workshop is the lowest-energy, no-clock
+space: *"Visual noise, ambient animation, and urgency-implying dynamic lighting are excluded
+here"* and *"Background darker than subject but controlled and stable — no flicker, no
+atmospheric motion."*
+
+- **Enter:** unhurried slide/fade-in; the bot settles onto the neutral stand; slow
+  auto-rotate begins. No urgency cue, no clock.
+- **Exit:** gentle fade to the Overworld.
+- **Preview slide-in:** the candidate part slides onto the composite (§2.6 "unhurried
+  preview slide-in"); a seam edge-highlight pulses **once** on the swapped part, then holds.
+- **Equip confirm:** brief settle + a checkmark on the Build Status banner — an
+  audio-independent visual confirm (accessibility §4.1).
+- **Synergy activation** (during preview or on equip): Beat 3 "The Click" — visual + audio
+  confirmation, bounded to **<3 flashes/sec** (accessibility §1.4).
+- **Delta arrows:** static up/down glyphs — no flashing.
+- **Reduced-motion alternative:** auto-rotate pauses to a static 3/4 pose; the preview
+  slide-in becomes an instant swap; the seam highlight renders static (no pulse); the
+  synergy "Click" keeps its audio + a single static state change, no flash.
 
 ---
 
 ## Data Requirements
 
-[To be designed]
+The Workshop **owns none of this data** — it reads from and writes through the systems that
+own each element (ADR-0008: the UI subscribes and calls, it does not hold game state).
+
+| Data | Source System | R / W | Notes |
+|------|---------------|-------|-------|
+| Current build (6 slots + equipped parts) | Assembly (symbot-assembly) | R | Feeds the live composite |
+| Part definitions (stats, rarity, element, manufacturer, `level_req`, effects) | Part Database (`part_catalog.tres`) | R | Static content |
+| Effective stats (11) | Stat Pipeline (`src/core/stats/`, ADR-0005) | R | SYN-F4 composition point |
+| Hypothetical stat delta | Stat Pipeline hypothetical derive | R | `compute_stat_delta()` — read-only, no write |
+| Synergy tiers + states | SynergyEvaluator.preview (ADR-0008) | R | active / progressing / inactive |
+| Core level + XP | Core Progression | R | Badge + bar |
+| Build legality | Core Progression / build validator (EC-CP-05) | R | Over-level orphan check |
+| Scrap balance | Economy / Inventory | R | Z1 counter; updates on `UPGRADE` |
+| Inventory parts for the selected slot | Inventory | R | Filmstrip source, sorted build-relevance |
+| Equip a part | Assembly | **W** | Fires `part_equipped` |
+| Upgrade a part | Part upgrade / economy | **W** | Debits Scrap + bumps tier |
+| Save on enter/exit | Save/Load (ADR-0001) | **W** | Workshop is the save point |
+
+No data element lists "UI" as owner. The two write paths (`EQUIP`, `UPGRADE`) call into the
+owning systems and are surfaced for architecture attention in **Events Fired**.
 
 ---
 
 ## Accessibility
 
-[To be designed]
+Target tier: **GAG Basic + selected WCAG 2.1 AA** (per `design/accessibility-requirements.md`).
+
+- **Contrast & size:** text ≥ 4.5:1; all interactive targets ≥ 44×44pt (≥ 56px preferred).
+- **Color never alone:** rarity = glyph + label · element = glyph · stat delta = up/down
+  **arrow glyph** · synergy state = pip shape + text ("N more to activate") · build status =
+  icon + text. *(Verified by AC-WS-06.)*
+- **Keyboard-only:** documented focus order (slot rail → filmstrip → Z4 actions → expanders →
+  top bar); every action reachable via focus + Enter. No gamepad (per tech-prefs).
+  *(Verified by AC-WS-07.)*
+- **Reduced-motion:** auto-rotate pauses to a static pose; preview slide-in → instant swap;
+  seam highlight static; synergy "Click" keeps audio + one static state change, no flash.
+  *(Verified by AC-WS-09.)*
+- **Photosensitivity:** rarity flicker (Prototype) and the synergy "Click" bounded to
+  < 3 flashes/sec (accessibility §1.4).
+- **Screen reader:** announces slot selection, candidate name + delta summary, equip
+  confirmation, and the build-invalid warning (with the offending part names).
+- **Text scaling:** the large-text toggle (Settings) must reflow the layout — slot-rail
+  labels tolerate a 2-line wrap; Z4 tables must not clip.
 
 ---
 
 ## Localization Considerations
 
-[To be designed]
+- **Longest text elements:** slot label `ENERGY CELL`; `Core level N required`;
+  `1 more part to activate`; buttons `PREVIEW` / `EQUIP` / `UPGRADE` / `BUILD SUMMARY`;
+  banner `All systems go.`
+- **Expansion:** reserve **+40%** for all UI strings; the slot rail tolerates a 2-line wrap;
+  Z4 action buttons must not truncate their verbs.
+- **Number formatting:** stat values and the Scrap balance are locale-formatted (thousands
+  separator differs — `12,450` vs `12.450`).
+- **Proper nouns:** manufacturer (Ironclad/Scrapjaw/Boltwell) and element (Volt/Thermal/
+  Kinetic) names are proper nouns — whether they localize is **OQ3**.
 
 ---
 
 ## Acceptance Criteria
 
-[To be designed]
+- **AC-WS-01** — Selecting a slot docks a filmstrip filtered to that slot type; parts with
+  `level_req > core level` render greyed with "Core level N required" and cannot be set as a
+  candidate.
+- **AC-WS-02** — Setting a candidate displays a signed delta for POWER/ARMOR/MOBILITY with an
+  up/down arrow glyph; `(i)` expands to all 11 stats; no build state is written
+  (`compute_stat_delta()` is read-only).
+- **AC-WS-03** — `PREVIEW` swaps the composite sprite to the candidate and shows
+  would-activate / would-lose synergy states without committing; `✕` restores the equipped
+  sprite; `EQUIP` commits, fires `part_equipped`, and moves the displaced part to inventory.
+- **AC-WS-04** — With an equipped part selected and Scrap ≥ cost, `UPGRADE` raises the tier
+  and debits Scrap; with Scrap < cost `UPGRADE` is disabled and states the deficit; at the
+  tier cap it shows "Max tier".
+- **AC-WS-05** — After a core swap that orphans an over-level part, Build Status shows ⚠
+  listing each offending part, those parts grey in the rail, and combat entry is blocked
+  until resolved (EC-CP-05).
+- **AC-WS-06** — Every color-coded element (rarity, element, delta sign, synergy state, build
+  status) remains distinguishable with color disabled — glyph or label present.
+- **AC-WS-07** — All interactive targets are ≥ 44×44pt; a keyboard-only user can select a
+  slot, set/preview/equip a part, and upgrade using focus + Enter in the documented focus
+  order.
+- **AC-WS-08** — The screen opens within ≤ [perf budget, OQ1] ms; equipping a part updates
+  the composite within one frame budget (16.6ms target) with no visible stall.
+- **AC-WS-09** — With reduced-motion enabled, no animation exceeds a static state change;
+  auto-rotate is paused; nothing flashes > 3/sec.
 
 ---
 
 ## Open Questions
 
-[To be designed]
+- **OQ1** — Exact screen-open performance budget (ms). Needs architecture/perf confirmation
+  (feeds AC-WS-08).
+- **OQ2** — The three "headline" stats (POWER/ARMOR/MOBILITY) → the real 11-stat vocabulary:
+  are these aggregate labels or literal stats? Confirm against the Stat Pipeline / GDD.
+- **OQ3** — Do manufacturer/element proper nouns localize, or stay canonical across locales?
+- **OQ4** — No player-journey map at `design/player-journey.md` — context-on-arrival
+  assumptions are unvalidated. Template at `.claude/docs/templates/player-journey.md`.
+- **OQ5** — Upgrade UI granularity: per-stat gains or a summary line? Confirm against Part-DB
+  Rule 10 upgrade curve (10/20/40/80/160).
+- **OQ6** — Filmstrip scaling: how does it behave when a slot has many candidates? May need a
+  "see all" handoff to `inventory.md` (grid view).
+- **OQ7** — Is `BUILD SUMMARY` an in-Workshop panel or a handoff to `inventory.md`? Defines
+  the boundary with the (not-yet-written) Inventory screen spec.
