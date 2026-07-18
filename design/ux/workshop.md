@@ -1,6 +1,6 @@
 # UX Spec: Workshop
 
-> **Status**: Ready for Review
+> **Status**: Approved — passed /ux-review 2026-07-18 (0 blocking, 4 advisory: Platform-Target header field, numeric loc counts, forward dep on `inventory.md`, keyboard-exceeds-floor)
 > **Author**: Luan + ux-designer
 > **Last Updated**: 2026-07-18
 > **Journey Phase(s)**: Home base / between-encounters (validated against game-concept core loop + onboarding; full player-journey map deferred — OQ4 resolved)
