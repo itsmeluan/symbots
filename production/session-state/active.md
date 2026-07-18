@@ -41,11 +41,21 @@ Task: DONE 2026-07-18b → WORKSHOP UX SPEC COMPLETE (`design/ux/workshop.md`, S
   - **BUILD ORDER**: Phase 0 (project.godot autoloads + main_scene) → Phase 1 (Game.tscn/
     ScreenManager/Screen/ServiceContext) → Phase 2-A (BattleController +~14 view-signals, ∥) →
     Phase 2-B (wrapper) → Phase 3 (BootScreen) → Phase 4 (BattleScreen UI = resume /team-ui).
-  - **NOW RUNNING** (Wave 1, godot-specialist model:sonnet, WRITES FILES): Phase 0 + Phase 1 +
-    Phase 2-B-skeleton — get `godot --headless --import` clean + GUT still green.
-  - NEXT after Wave 1 verified: Wave 2 = Phase 2-A view-signals (gameplay-programmer) + extend
-    wrapper; then Phase 3 BootScreen; then Phase 4 BattleScreen (ui-programmer, using the
-    godot-specialist Phase-3 engine blueprint from earlier this session).
+  - **✅ WAVE 1 COMPLETE + VERIFIED (2026-07-18c)**: Phase 0 + Phase 1 + Phase 2-B-skeleton.
+    All 11 autoloads (`src/autoloads/`), `src/scenes/game.tscn` + `screen_manager.gd`,
+    `src/ui/screen.gd` + `service_context.gd`, Option-A wrapper, `control-manifest.md` +2
+    forbidden, 4 presentation `_test.gd` (24 tests). **`--headless --import` clean; GUT 937/937
+    pass, 4771 asserts** on Godot 4.7.
+  - **KEY FIX — slot-11 singleton renamed `BattleController` → `TBC`** (user-ratified). Collides
+    with core `class_name BattleController`; `TBC` matches ADR-0002 §4. Recorded as ADR-0007 §1
+    erratum + plan-doc row + memory. Agent stalled mid-write twice + shipped the collision +
+    2 silently-skipped test files (parse errors on `BattleController.` as singleton); main-loop
+    caught via per-file test-COUNT check, fixed, re-verified. ScreenManager →
+    `get_node_or_null("TransitionLayer")`; bus-count test → `get_script_signal_list()`.
+  - NEXT: **Wave 2 = Phase 2-A** — ~14 view-signals on `src/core/battle/battle_controller.gd`
+    + emission sites (plan §5 table) + per-signal GUT (gameplay-programmer, model:sonnet), then
+    extend the wrapper's marked "Phase 2-A" block to forward them; then Phase 3 BootScreen;
+    then Phase 4 BattleScreen (ui-programmer, using the godot-specialist Phase-3 blueprint).
 - **Phase 4**: parallel review (ux-designer + art-director + accessibility-specialist) — after impl.
 - **Phase 5**: polish.
 

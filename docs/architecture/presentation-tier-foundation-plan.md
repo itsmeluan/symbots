@@ -40,7 +40,7 @@ Register in `project.godot` `[autoload]`. Set `run/main_scene` = `res://src/scen
 | 8 | `WorldLootDB` | `src/autoloads/world_loot_db_autoload.gd` | Stub (`load_catalog` no-op; DB not authored) |
 | 9 | `RngService` | `src/autoloads/rng_service_autoload.gd` | `init()`/`next_seed()`/`make_rng()` (ADR-0006) |
 | 10 | `SaveLoad` | `src/autoloads/save_load_autoload.gd` | Provider registry + autosave + quiesce (ADR-0001) |
-| 11 | `BattleController` | `src/autoloads/battle_controller_autoload.gd` | **Option A wrapper** — creates/holds the RefCounted, proxies API, forwards signals |
+| 11 | `TBC` | `src/autoloads/battle_controller_autoload.gd` | **Option A wrapper** — creates/holds the `BattleController` RefCounted, proxies API, forwards signals. **Singleton is `TBC`, NOT `BattleController`** (that name is the core `class_name`; a same-named autoload throws "hides an autoload singleton"). Matches ADR-0002 §4's `TBC.is_battle_active()`. See ADR-0007 §1 erratum (2026-07-18). |
 
 All autoloads: **zero `_ready` work** (ADR-0004 inertness rule — boot orchestration belongs to
 BootScreen). DB wrappers move no logic; they are stable global names delegating to `src/core/content/`.

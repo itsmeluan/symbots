@@ -109,7 +109,18 @@ technical preference, or an engine reference doc — nothing here is invented.
 
 ### Forbidden Approaches
 - **Never poll model state in `_process`/`_physics_process`** — subscribe to owner signals and render as a pure function of the last payload (`view_state_polling`) — source: ADR-0008
+  - *Pattern name*: `view_state_polling`
+  - *Definition*: A screen or view reads game model state (owner properties, autoload fields) inside `_process()` or `_physics_process()` rather than subscribing to a signal and updating on payload receipt.
+  - *Why forbidden*: Burns frame budget; violates the signal-driven view contract; fights the 200-draw-call discipline; ignores the self-sufficient-payload ADR-0002 contract.
+  - *Detection*: CI grep for game-state reads inside `_process` / `_physics_process` in `src/ui/`. Code review checklist item.
+  - *Registered*: 2026-07-18 (Wave 1 foundation build)
 - **Never leave a subscription to a persistent owner connected when the screen frees** — disconnect on `NOTIFICATION_EXIT_TREE`; Godot 4.6 does NOT reliably auto-drop the connection (`undisconnected_view_subscription`) — source: ADR-0008
+  - *Pattern name*: `undisconnected_view_subscription`
+  - *Definition*: A `connect()` call in `Screen.setup()` or `_ready()` that is NOT registered via `Screen._connect_owned()`. The connection dangles after the screen is freed, and the next signal emission fires into a freed node.
+  - *Why forbidden*: Godot 4 does NOT reliably auto-drop connections when the subscriber is freed. A dangling connection to a persistent owner (CoreProgression, SynergyEvaluator, EventBus, BattleController autoload) will eventually fire into freed memory.
+  - *Correct pattern*: Call `_connect_owned(signal, Callable(self, "_on_method"))` in `setup()`. The Screen base auto-disconnects all registered connections on NOTIFICATION_EXIT_TREE. Named Callables only — lambdas that close over `self`/`ctx` cannot be individually disconnected.
+  - *Detection*: Code review checklist; GUT leak test frees a Screen subclass and asserts zero dangling connections on the emitter.
+  - *Registered*: 2026-07-18 (Wave 1 foundation build)
 - **Never make an affordance discoverable/triggerable ONLY via hover or ONLY via keyboard/gamepad focus** — touch has no hover and 4.6 keyboard focus is separate (`hover_only_affordance`) — source: ADR-0008
 - **Never carry per-widget unique material/shader instances on UI nodes**; also watch `clip_contents = true`, nested `CanvasLayer`, and per-frame `RichTextLabel`/BBCode updates — each breaks 2D batching (`ui_unique_material_batch_break`) — source: ADR-0008
 

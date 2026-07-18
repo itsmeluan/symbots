@@ -58,9 +58,11 @@ Beyond placement, the runtime battle FSM itself is unspecified: the turn-based-c
 
 Five parts.
 
-### 1. Host — `BattleController` autoload (slot 11)
+### 1. Host — `TBC` autoload (slot 11)
 
-A new thin autoload `BattleController` (`class_name` not required; registered as an autoload singleton) is added as **slot 11**, amending ADR-0004's fixed roster of 10. It holds only: `is_battle_active: bool`, `_state: BattleState`, and a reference to the current `BattleContext` (null outside battle). It does **no** work in `_ready` (`autoload_ready_work` honored) — the FSM is driven exclusively by `start_battle()`.
+> **Erratum (2026-07-18, user-ratified):** the slot-11 autoload singleton is registered as **`TBC`**, NOT `BattleController`. Godot shares one global namespace between autoload singleton names and `class_name`s; the pure-core RefCounted already owns `class_name BattleController`, so a same-named autoload throws *"Class 'BattleController' hides an autoload singleton."* `TBC` is also the exact name ADR-0002 §4 already wrote as the global-call contract (`TBC.is_battle_active()`), so this correction makes §1 self-consistent. Implementation (Option A wrapper): singleton `TBC` → `src/autoloads/battle_controller_autoload.gd` (file name retained); it holds/creates the per-session `BattleController` core RefCounted. Read every "`BattleController` autoload" / "`BattleController` singleton" below as **`TBC`**; "the per-session `BattleController`" / "`BattleController.new(...)`" continue to mean the core class.
+
+A new thin autoload `TBC` (`class_name` not required; registered as an autoload singleton) is added as **slot 11**, amending ADR-0004's fixed roster of 10. It holds only: `is_battle_active: bool`, `_state: BattleState`, and a reference to the current `BattleContext` (null outside battle). It does **no** work in `_ready` (`autoload_ready_work` honored) — the FSM is driven exclusively by `start_battle()`.
 
 Chosen over a persistent node under `Game.tscn` because ADR-0002 §4's accepted contract already writes `TBC.is_battle_active()` as a global call, and **SaveLoad is itself an autoload** (slot 10): a peer-autoload query needs no injected reference, whereas a scene node would force late-bound registration into SaveLoad (inverting autoload construction order and reintroducing `_ready` wiring). The orchestrator is genuinely a global singleton — exactly one battle exists at a time, and `is_battle_active` must answer *even when no battle is running* (SaveLoad manual-save gate).
 
