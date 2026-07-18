@@ -33,12 +33,19 @@ Task: DONE 2026-07-18b → WORKSHOP UX SPEC COMPLETE (`design/ux/workshop.md`, S
     none of the per-stat runtime view-signals a live HUD binds to. Core battle + content logic IS
     built. This is the "trailing-UI" antipattern the producer flagged (contract systems LEAD).
   - **USER DECISION 2026-07-18c**: **Build the foundation first**, then resume battle screen.
-  - **NOW RUNNING** (background, godot-specialist resumed model:sonnet): a FOUNDATION IMPLEMENTATION
-    PLAN (autoload/boot roster · Screen base · ServiceContext · ScreenManager · BattleController
-    view-signal additions · ordered build sequence w/ owners+GUT obligations · 4.6→4.7 re-validation
-    flags · minimal-viable cut). Output = plan for USER APPROVAL, no code yet.
-  - NEXT: review plan → get changeset approval → implement foundation (godot-specialist/
-    gameplay-programmer/ui-programmer, all model:sonnet) → THEN resume /team-ui battle Phase 3.
+  - **PLAN APPROVED 2026-07-18c** → `docs/architecture/presentation-tier-foundation-plan.md`
+    (executable spec) + memory [[project-presentation-tier-foundation]]. Two ratified decisions:
+    (A) **BattleController = Option A autoload wrapper** (thin Node slot 11 wraps the per-session
+    RefCounted, forwards signals; honors ADR-0007, NO erratum); (B) **FULL ADR-0004 scope**
+    (BootScreen sequencer + catalog load + Overworld keep-alive).
+  - **BUILD ORDER**: Phase 0 (project.godot autoloads + main_scene) → Phase 1 (Game.tscn/
+    ScreenManager/Screen/ServiceContext) → Phase 2-A (BattleController +~14 view-signals, ∥) →
+    Phase 2-B (wrapper) → Phase 3 (BootScreen) → Phase 4 (BattleScreen UI = resume /team-ui).
+  - **NOW RUNNING** (Wave 1, godot-specialist model:sonnet, WRITES FILES): Phase 0 + Phase 1 +
+    Phase 2-B-skeleton — get `godot --headless --import` clean + GUT still green.
+  - NEXT after Wave 1 verified: Wave 2 = Phase 2-A view-signals (gameplay-programmer) + extend
+    wrapper; then Phase 3 BootScreen; then Phase 4 BattleScreen (ui-programmer, using the
+    godot-specialist Phase-3 engine blueprint from earlier this session).
 - **Phase 4**: parallel review (ux-designer + art-director + accessibility-specialist) — after impl.
 - **Phase 5**: polish.
 
