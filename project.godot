@@ -17,8 +17,6 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 
 [autoload]
 
-; ADR-0004 §1 — 11-slot roster in exact order. All are thin hosts; zero _ready work.
-; EventBus MUST be first — it must exist before any other autoload can connect to it.
 EventBus="*res://src/autoloads/event_bus.gd"
 Log="*res://src/autoloads/log_autoload.gd"
 PartDB="*res://src/autoloads/part_db_autoload.gd"
@@ -29,9 +27,6 @@ ConsumableDB="*res://src/autoloads/consumable_db_autoload.gd"
 WorldLootDB="*res://src/autoloads/world_loot_db_autoload.gd"
 RngService="*res://src/autoloads/rng_service_autoload.gd"
 SaveLoad="*res://src/autoloads/save_load_autoload.gd"
-; Singleton is named TBC (not BattleController) — the core RefCounted owns the
-; `class_name BattleController` global; a same-named autoload would shadow it.
-; TBC matches ADR-0002 §4's `TBC.is_battle_active()` global-call contract.
 TBC="*res://src/autoloads/battle_controller_autoload.gd"
 
 [editor_plugins]
