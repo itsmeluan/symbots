@@ -1,0 +1,57 @@
+ASSET: HUD — Break Pip Row
+CANVAS: 128x16 px (horizontal row of 3 break pips — fixed size, NOT 9-slice)
+PERSPECTIVE: Front-facing flat UI element
+TARGET PATH: assets/art/ui/hud/ui_break_pip_row.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+HUD element: Break Pip Row. Canvas 128x16 px. Flat UI, fixed size (not 9-sliced).
+
+Break pips indicate the enemy's breakable regions and their status.
+Per art-bible §3.6: "Break pips = small rectilinear indicators, NEVER circular."
+This rule is BLOCKING — circles read too close to bot sensor/joint shapes and create
+figure/ground ambiguity in the most read-critical combat UI.
+
+ANATOMY: Three small rectilinear (rectangular) pips in a horizontal row.
+Each pip is approximately 32x14 px (3 pips + 4px gaps fit in 128px width:
+3×32 + 4×4 = 112px — center with 8px margins total).
+
+PIP STATES (generate the full row in each state, labeled):
+
+STATE 1 — ALL INTACT (enemy has all regions at full HP):
+- All 3 pips: C-3 Chrome Interactive #3A4455 fill
+- Outline: C-5 Divider #4B5668
+- Chamfered 45-degree corners on each pip (same UI language as everything else —
+  small chamfers at ~2px diagonal on each corner)
+- Reads as: "no regions broken"
+
+STATE 2 — ONE BROKEN (first pip broken):
+- Pip 1: C-1 HUD Dark #1E2229 fill (darkened — region is gone), outline C-5
+  (noticeably darker than intact to show it is depleted)
+- Pips 2 & 3: intact color
+- The empty pip should have a subtle crack/X overlay baked in OR just be visibly
+  darker with no fill content (UI programmer places the crack TextureRect overlay)
+
+STATE 3 — TWO BROKEN:
+- Pips 1 & 2: darkened/empty
+- Pip 3: intact
+
+STATE 4 — ALL BROKEN:
+- All 3 pips: darkened/empty
+
+LABEL ICONS: Each pip has space for a tiny slot icon overlay placed by the UI
+programmer (ARM / HEAD / CORE icons from the icon set). The pip background should
+be clean enough that a small icon reads on it. Do NOT bake icons into the pip sprites.
+
+ENRAGE INDICATOR: When an enemy enters enrage state, the entire pip row gets a
+warm border/outline (Harvest Crimson #B33020 or near — the rim light warning
+color from art-bible §4.6). This is an OVERLAY applied by the shader/UI programmer,
+not baked into the pip sprites.
+
+GREYSCALE TEST: In greyscale, a broken pip (darkened) must be distinguishable from
+an intact pip (mid-tone fill) purely by luminance difference — no color needed.
+
+NEGATIVE: NO CIRCULAR PIPS. NEVER rounded corners that approach circular. The rectilinear
+chamfered rectangle form is mandatory per art-bible §3.6. No organic curves. No photoreal.
+No pip larger than 32x14px at @1x. No decorative fills that would interfere with the
+small slot-icon overlay.

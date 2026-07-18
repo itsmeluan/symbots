@@ -1,0 +1,64 @@
+ASSET: HUD — Heat Gauge / Heat Meter
+CANVAS: 256x32 px (9-slice stretchable horizontal bar) — or 32x128 px vertical variant
+9-SLICE MARGINS: Left 8px, Right 8px, Top 4px, Bottom 4px (horizontal)
+PERSPECTIVE: Front-facing flat UI element
+TARGET PATH: assets/art/ui/hud/ui_bar_heat.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+HUD element: Heat Gauge. Canvas 256x32 px horizontal (primary). Flat UI, 9-slice.
+
+The Heat gauge tracks bot internal heat buildup during combat. High heat risks
+overheat. This is the game's third resource bar and the most accessibility-critical
+because it spans amber-to-red, a known Deuteranopia risk. Per battle-visual-design.md
+§2.3, three distinct zone colors with MANDATORY non-color channels for each zone.
+
+THREE HEAT ZONES (generate each as a variant):
+
+ZONE 1 — COOL (0-69%):
+- Fill: C-3 Chrome Interactive #3A4455 (blue-slate — cool temperature read)
+- No warning indicator on the bar itself
+- Non-color channel: numeric readout (placed by UI programmer, not baked in)
+- Reads as: "under control, no action needed"
+
+ZONE 2 — WARNING / AMBER (70-89%):
+- Fill: Thermal Amber #F0900A
+- A small ⚠ marker appears at the 70% fill threshold (baked into the bar sprite
+  as a ZONE MARKER LINE at the 70% position — a thin C-6 #E8E8E8 vertical tick
+  at 70% of the inner fill area, so the threshold is always visually marked)
+- Non-color channel: the ⚠ icon (placed as overlay by UI programmer) + numeric value
+- Reads as: "attention required"
+
+ZONE 3 — DANGER / OVERHEAT (90-100%):
+- Fill: Danger Red #CC3020
+- A second zone marker tick at 90% of the inner fill area
+- Non-color channel: the ⚠ icon upgrades to a critical indicator (UI programmer)
+  + numeric value
+- Reads as: "imminent overheat"
+
+SPRITE DELIVERY:
+Generate 3 fill variants at 256x32:
+1. Cool fill (#3A4455), with zone marker ticks at 70% and 90% positions as thin
+   vertical C-6 lines (subtle — they mark thresholds, not dominate the design)
+2. Warning fill (#F0900A), same zone markers
+3. Danger fill (#CC3020), same zone markers
+
+The container shape is identical to the Structure and Energy bars:
+- Chamfered 45-degree corners (NOT rounded)
+- C-2 #2C3340 empty track
+- C-5 #4B5668 outline
+
+ACCESSIBILITY NOTE: The three fill colors span a Deuteranopia risk range. The zone
+marker ticks at 70% and 90% are the non-color channel for zone transitions — they
+must be visible in greyscale. Do NOT rely on the color change alone to communicate
+the zone shift.
+
+9-SLICE MARGINS: Left 8px, Right 8px, Top 4px, Bottom 4px.
+
+GREYSCALE TEST: The two zone marker tick lines at 70% and 90% of fill width must
+be visible in greyscale. The three fill zones are NOT distinguishable in greyscale
+— the ticks carry that information.
+
+NEGATIVE: No Flame Chevron glyph (heat ≠ Thermal element — heat is an internal
+resource, not an element state). No rounded corners. No organic curves. No decorative
+tiling in stretch zone. No photoreal.

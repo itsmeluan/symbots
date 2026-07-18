@@ -1,0 +1,43 @@
+ASSET: UI Button — Normal State (base generic button)
+CANVAS: 192x56 px (9-slice stretchable button)
+9-SLICE MARGINS: Left 16px, Right 16px, Top 8px, Bottom 8px
+  (16px end caps contain chamfered corners; center stretches for label text)
+PERSPECTIVE: Front-facing flat UI element
+TARGET PATH: assets/art/ui/buttons/ui_btn_generic_normal.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+UI element: Generic Button — Normal (idle) state. Canvas 192x56 px. 9-slice.
+
+The base button chrome used throughout the game for secondary actions, menu items,
+and non-primary interactions. All button states derive from this base form.
+
+ANATOMY:
+Per art-bible §3.6 and §7.1: chamfered 45-degree corners (NOT rounded), geometric,
+angular, precise. The button is a rectilinear shape with chamfered corners.
+
+BUTTON LAYERS (front to back):
+1. OUTER EDGE: C-5 Divider #4B5668 outline, 1px
+2. BUTTON BODY: C-3 Interactive Surface #3A4455 fill (mid-dark, interactive register)
+3. TOP HIGHLIGHT: 1px C-5 #4B5668 lighter line along the top inner edge
+   (suggests a slight upward-facing bevel — the button reads as a raised surface)
+4. CHAMFERED CORNERS: 45-degree cuts at all four corners (~14px diagonal,
+   sized to fit within the 16px margin cleanly). The cut is clean — no rounded
+   transitions at the cut endpoint.
+5. CENTER AREA: flat C-3 fill, clear of decoration (label text placed by UI programmer)
+
+The button reads as a functional, machined surface — the Gunpla intentionality at
+UI scale. Clean, precise, no organic softness.
+
+TOUCH TARGET NOTE: The full bounding box (192x56px = well above 44pt iOS minimum)
+is the touch target. The visual chamfer is smaller than the touch area.
+
+GREYSCALE TEST: The button body (mid-grey #3A4455) reads as interactive surface
+between the outer edge (#4B5668) and the content above it. Clear button shape.
+
+9-SLICE NOTE: The center horizontal and vertical stretch zones are featureless
+flat #3A4455 fill. Only the corners and edge bands have detail.
+
+NEGATIVE: NO ROUNDED CORNERS. No organic curves. No gradient fills (flat #3A4455).
+No glow in the normal state. No label text baked in. No decorative elements in
+the stretch zone. No photoreal.

@@ -1,0 +1,49 @@
+ASSET: HUD — Energy Bar (Player)
+CANVAS: 256x32 px (9-slice stretchable horizontal bar)
+9-SLICE MARGINS: Left 8px, Right 8px, Top 4px, Bottom 4px
+PERSPECTIVE: Front-facing flat UI element
+TARGET PATH: assets/art/ui/hud/ui_bar_energy.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+HUD element: Player Energy Bar. Canvas 256x32 px. Flat UI, 9-slice stretchable.
+
+The player's Energy resource bar. Energy is spent to use moves in combat.
+Per battle-visual-design.md §2.2: fill color is Info Blue #4090CC (C-4).
+
+CRITICAL COLOR NOTE (art-bible §4.3 and §4.5):
+The Energy bar uses Info Blue #4090CC — NOT Volt Cyan #2FE8E8. This is deliberate:
+Info Blue is hue 210°, Volt Cyan is hue 180°. They must not be confused. The Energy
+bar is CHROME (it tracks a resource) — it does not signal the Volt ELEMENT. A player
+with Volt-element parts will see the Lightning Fork glyph on their moves; the bar
+color is orthogonal to element identity. This distinction must be maintained in the
+sprite's fill color.
+
+ANATOMY:
+- Container: chamfered 45-degree corners (NOT rounded), C-2 #2C3340 empty track,
+  C-5 #4B5668 outline, same geometry as the Structure bars
+- Fill: Info Blue #4090CC
+- Subtle top highlight: 1px lighter blue at the top of the fill (same treatment
+  as Structure bar for consistency)
+- Label zone clear (left or right cap) — UI programmer places "ENERGY" label
+
+EMPTY STATE: When Energy = 0, all moves with energy cost become greyed-out in
+the move panel. The bar shows the empty track only. No special indicator on the
+bar itself at zero (the grey-out of moves carries the "can't act" signal).
+
+STATES (generate 2 variants at 256x32):
+- Normal Info Blue fill: #4090CC
+- Empty track: C-2 #2C3340 only
+
+The Energy bar does NOT have a "critical" state the same way Structure does —
+there is no sub-20% danger threshold for Energy in the base system.
+
+9-SLICE MARGINS: Left 8px, Right 8px, Top 4px, Bottom 4px.
+
+GREYSCALE TEST: At 32px height — the track/fill/outline three-layer read holds
+in greyscale. The bar must be distinguishable from the Structure bar by COLOR only
+(same geometry; different fill hue).
+
+NEGATIVE: NO Volt Cyan #2FE8E8 (use Info Blue #4090CC). No Lightning Fork glyph
+on the bar sprite itself. No rounded corners. No organic curves. No decorative
+tiling elements in stretch zone. No photoreal.

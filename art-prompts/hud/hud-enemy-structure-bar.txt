@@ -1,0 +1,45 @@
+ASSET: HUD — Enemy Structure Bar
+CANVAS: 256x32 px (9-slice stretchable horizontal bar)
+9-SLICE MARGINS: Left 8px, Right 8px, Top 4px, Bottom 4px
+PERSPECTIVE: Front-facing flat UI element
+TARGET PATH: assets/art/ui/hud/ui_bar_structure_enemy.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+HUD element: Enemy Structure Bar. Canvas 256x32 px. Flat UI, 9-slice stretchable.
+
+The enemy card's Structure bar. Per battle-visual-design.md §2.2: "Same color
+assignments as player Structure bar. The shared semantic makes the tactical read
+instant: 'green bar = Structure' is universal, not player-specific."
+
+This is IDENTICAL to the player Structure bar in color and shape, but slightly
+narrower at default display size (the game engine scales it) and positioned on
+the enemy half of the combat screen.
+
+ANATOMY: Identical to hud-player-structure-bar:
+- Chamfered 45-degree corners (NOT rounded)
+- C-2 Mid Panel #2C3340 empty track
+- C-5 Divider #4B5668 outline
+- Normal fill: Heal Green #3AB54A
+- Critical fill: Danger Red #CC3020
+
+KEY DIFFERENCE from player bar:
+- The enemy bar is displayed on the enemy card (upper-right side of the screen)
+- The label zone orientation may be mirrored (right-cap for label, left for numeric)
+  but the sprite content is the same — orientation is handled in the game engine
+- The enemy bar also shows the BREAK STATE visually: when the enemy's structure
+  drops significantly, the bar may display differently. For this sprite, produce
+  the standard 3 states (normal/critical/empty) — same as player bar.
+
+STATES (generate 3 variants at 256x32):
+- Normal green fill: #3AB54A
+- Critical red fill: #CC3020
+- Empty track
+
+9-SLICE MARGINS: Left 8px, Right 8px, Top 4px, Bottom 4px (same as player bar).
+
+GREYSCALE TEST: Identical greyscale profile to the player bar. The shared visual
+language is intentional — the player reads both bars the same way.
+
+NEGATIVE: Same as player structure bar — no rounded corners, no organic curves,
+no glow on the bar, no decorative tiling elements in the stretch zone. No photoreal.

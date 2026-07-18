@@ -1,0 +1,58 @@
+ASSET: HUD — Player Structure Bar
+CANVAS: 256x32 px (9-slice stretchable horizontal bar)
+9-SLICE MARGINS: Left 8px, Right 8px, Top 4px, Bottom 4px
+  (the 8px end caps contain the chamfered corner geometry; the center stretches freely)
+PERSPECTIVE: Front-facing flat UI element
+TARGET PATH: assets/art/ui/hud/ui_bar_structure_player.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+HUD element: Player Structure Bar. Canvas 256x32 px. Flat UI, 9-slice stretchable.
+
+A horizontal resource bar showing the player bot's current Structure (hit points).
+This is combat-critical UI — always legible, always visible during battle.
+
+ANATOMY (from art-bible §7.1 and battle-visual-design.md §2.2):
+The bar is a single 256x32 sprite intended to be 9-sliced in the game engine.
+It has three visual layers:
+
+1. CONTAINER/TRACK (full width):
+   - Chamfered 45-degree corners at left and right ends (NOT rounded — chamfer
+     is the UI signature; corner cuts at ~6px diagonal)
+   - Background: C-2 Mid Panel #2C3340 — the "empty" track color
+   - Outline: C-5 Divider/Chamfer #4B5668, 1-2px
+   - No rounded corners anywhere on this element
+
+2. FILL AREA (the bar fill — this sprite shows the "full" state):
+   - Fill color NORMAL: Heal Green #3AB54A
+   - The fill occupies the inner area with ~3px inset from the container outline
+   - The fill has a subtle top highlight (1px lighter green stripe at top of fill,
+     reading as top-lit from the workshop-light metaphor) — but the fill is still
+     predominantly flat/matte
+
+3. LABEL AREA INDICATOR:
+   - At the left side of the bar, outside the fill: a small LABEL ZONE implied by
+     a slightly wider left cap area where a "STRUCTURE" or ♦ icon would be placed
+     by the UI programmer. Do NOT bake text into the sprite.
+   - Right cap area similarly left clear for the numeric readout (UI programmer places)
+
+STATES NEEDED (generate 4 variants at 256x32):
+- Normal (green fill, full): #3AB54A fill
+- Critical (red fill ≤20%): #CC3020 Danger Red fill — the fill color changes at threshold
+  (generate the full-bar version in red; the engine crops to the correct fill level)
+- Empty (no fill): C-2 track only, no fill visible; same container shape
+- For this sprite sheet: stack vertically or generate separately as labeled variants
+
+CRITICAL STATE: At critical threshold, a cracked-icon overlay (separate asset) appears.
+This bar sprite does NOT include the cracked-icon — that is a separate TextureRect overlay.
+
+9-SLICE NOTE: The center horizontal stretch zone should be featureless fill/track —
+the chamfered end caps are the detailed elements. Keep the center stretch-clean.
+
+GREYSCALE TEST: At 32px height the bar track vs. fill vs. outline reads as three
+distinct layers without color.
+
+NEGATIVE: No rounded corners. No decorative effects that would tile incorrectly under
+9-slice stretch. No HUD Dark #1E2229 fill (that reads as empty — use it only for track).
+No glow effects on the bar itself (glow = rarity indicator for parts, not HUD bars).
+No organic curves. No photoreal.

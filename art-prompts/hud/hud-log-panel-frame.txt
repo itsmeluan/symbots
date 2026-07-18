@@ -1,0 +1,60 @@
+ASSET: HUD — Combat Log Panel Frame / General Panel Frame
+CANVAS: 256x128 px (9-slice panel frame — the center is transparent/empty)
+9-SLICE MARGINS: Left 12px, Right 12px, Top 12px, Bottom 12px
+  (12px border on all sides contains the chamfered corner geometry and frame detail;
+  center is empty — the game engine fills with background or content)
+PERSPECTIVE: Front-facing flat UI element
+TARGET PATH: assets/art/ui/hud/ui_panel_frame_general.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+HUD element: General Panel Frame / Combat Log Frame. Canvas 256x128 px.
+9-slice panel (border only — center transparent). Flat UI.
+
+A reusable chamfered-corner panel frame for HUD and UI surfaces. Per art-bible §3.6
+and §7.1: "Panel shapes: straight lines, chamfered corners (45° cuts, not rounded),
+hard right angles. No flowing curves." The chamfer IS the UI's signature shape.
+
+ANATOMY:
+This sprite is a FRAME ONLY — the center (256-24)x(128-24) = 232x104 px area is
+fully transparent (alpha = 0). The frame border is 12px wide on all sides.
+
+FRAME STRUCTURE:
+- Outer edge: 1-2px C-5 Divider/Chamfer line #4B5668
+- Frame body (the 12px border zone): C-1 HUD Dark #1E2229 base plate
+- Inner edge: 1px C-5 Divider line #4B5668
+- Chamfered corners: at each corner, the outer edge makes a 45-degree cut
+  approximately 10-12px long (matching the 12px margin so the chamfer fits cleanly)
+- The four corner chamfers are the most visually distinctive element —
+  they are the UI's signature
+
+VARIANTS (generate 2 at 256x128):
+
+VARIANT 1 — STANDARD PANEL (general use):
+- Frame: C-1 #1E2229 body, C-5 #4B5668 outline (as above)
+- No inner glow, no accent color
+- Alpha center
+
+VARIANT 2 — ACTIVE/SELECTED PANEL (when a panel is focused/selected in combat):
+- Same frame geometry
+- Inner edge line: Info Blue #4090CC instead of C-5 (selection highlight)
+- A subtle inner shadow/glow at 4px inset from the inner edge in Info Blue #4090CC
+  at low opacity (~30%)
+- Alpha center
+
+COMBAT LOG FADING FRAME NOTE: Per hud.md, the combat log uses "transparent corner
+text where each new line fades in." The fading-transparency treatment is handled
+by the UI programmer (alpha animation on the TextureRect/Label nodes). This panel
+frame sprite provides the base chrome; the transparency is applied at runtime.
+
+9-SLICE DELIVERY:
+The 12px margins must be clean and consistent so the 9-slicer can tile the edge
+bands without visual artifacts. The CENTER is 100% transparent (alpha channel = 0).
+
+GREYSCALE TEST: The frame reads as a rectangular border with four distinctive
+chamfered corners. The chamfer angles are visible at small scale.
+
+NEGATIVE: NO ROUNDED CORNERS. The chamfer is the game's UI signature. No gradient
+fills in the frame body. No organic curves. No decorative detail in the stretch bands
+(only the corners have unique geometry). No glow unrelated to selection state.
+No photoreal. No painterly gradients.

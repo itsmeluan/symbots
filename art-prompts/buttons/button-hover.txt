@@ -1,0 +1,42 @@
+ASSET: UI Button — Hover/Focus State
+CANVAS: 192x56 px (9-slice stretchable button — same geometry as Normal)
+9-SLICE MARGINS: Left 16px, Right 16px, Top 8px, Bottom 8px
+PERSPECTIVE: Front-facing flat UI element
+TARGET PATH: assets/art/ui/buttons/ui_btn_generic_hover.png
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+UI element: Generic Button — Hover/Focus state. Canvas 192x56 px. 9-slice.
+
+The button's appearance when the player's cursor rests on it (Mac) or when it
+receives keyboard focus. Per art-bible §7.4: "crisp, mechanical, snappy — chrome
+animates like a machine actuating." The hover state is a machine "acknowledging."
+
+Per art-bible §7.5 and accessibility-requirements.md: "hover = enhancement only"
+for touch-primary. On iOS the hover state may not trigger — the touch path goes
+directly to pressed. This state is the enhancement layer, not a required channel.
+
+VISUAL CHANGE FROM NORMAL:
+Same geometry (chamfered, 9-slice). Body lightens to C-2 Medium #2C3340 or a slightly
+brighter surface — NOT a neon glow, just a mechanical brightness step.
+
+ANATOMY:
+1. OUTER EDGE: C-4 Active/Selected #4090CC (Info Blue) outline replaces C-5 —
+   this is the focus/selection indicator at the border level
+2. BUTTON BODY: Slightly lighter than Normal — C-3 #3A4455 brightened to midway
+   toward C-2 #2C3340 (or use C-2 #2C3340 directly for the hover body)
+3. OUTER GLOW: 2px soft outer glow in Info Blue #4090CC at ~30% opacity —
+   subtle machine "lit up" feel, not neon
+4. TOP HIGHLIGHT: Same 1px lighter line, slightly more pronounced
+5. CHAMFERED CORNERS: Same geometry, same cuts
+
+The hover state communicates: "I am ready. I noticed you."
+
+GREYSCALE TEST: The outer edge brightens (C-4 vs C-5 has a slight luminance
+difference). The button reads as "active / focused" vs the Normal's "idle."
+
+9-SLICE: Same margins, same featureless stretch zone.
+
+NEGATIVE: No dramatic glow (hover is subtle, per "enhancement only"). No color
+change to the body fill (keep the flat surface — only the outline and a hint of
+glow change). No rounded corners. No organic curves. No photoreal.
