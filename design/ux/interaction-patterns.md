@@ -1,6 +1,7 @@
 # Interaction Pattern Library — Symbots
 
-> **Status**: Seeded 2026-07-15 from `design/ux/battle.md` (9 game patterns + 2 control primitives)
+> **Status**: Seeded 2026-07-15 from `design/ux/battle.md` (9 game patterns + 2 control primitives);
+> extended 2026-07-18 from `design/ux/workshop.md` (+5 game patterns PG-10…PG-14, +1 control primitive PC-03)
 > **Author**: Luan + ux-designer
 > **Scope**: Touch-first iOS + Mac (mouse = tap), no gamepad, keyboard post-MVP
 > **Authority**: This document is the single source of truth for reusable interaction
@@ -37,6 +38,7 @@
 |---|---|---|---|---|
 | **PC-01** | Button (touch press-release) | Control primitive | battle | battle (all actions) |
 | **PC-02** | Long-press Inspect Popover | Control primitive | battle | battle (move/region/status/bench/chip) |
+| **PC-03** | Destructive-Action Confirm Dialog | Control primitive | workshop | workshop (upgrade) |
 | **PG-01** | Resource Bar (Structure / Energy) | Game HUD | battle | battle |
 | **PG-02** | Capped Gauge w/ Threshold Warning (Heat) | Game HUD | battle | battle |
 | **PG-03** | Segmented Progress Pip (Break Regions) | Game HUD | battle | battle |
@@ -46,11 +48,18 @@
 | **PG-07** | Floating Feedback Text | Game HUD | battle | battle |
 | **PG-08** | Event Log | Game HUD | battle | battle |
 | **PG-09** | Ordered Initiative Ribbon w/ Active-Turn Marker | Game HUD | battle | battle |
+| **PG-10** | Turntable (rotatable composite stage) | Game screen | workshop | workshop |
+| **PG-11** | Filmstrip (horizontal scrolling candidate strip) | Game screen | workshop | workshop |
+| **PG-12** | Stat Delta Row (headline + expandable full-stat) | Game screen | workshop | workshop |
+| **PG-13** | Synergy Indicator (tiered activation states) | Game screen | workshop | workshop |
+| **PG-14** | Build Status Banner (legality readout) | Game screen | workshop | workshop |
 
 **Deferred standard controls** (add when a screen first requires one — do not pre-build):
-toggle, slider, dropdown, list, grid, modal, dialog, toast, tooltip, input field, tab bar,
-scroll container. Likely first callers: Workshop (equip/compare), Inventory (grid + scrap
-confirm dialog), Settings (sliders + toggles). Each gets a `PC-##` entry when authored.
+toggle, slider, dropdown, list, grid, modal, toast, tooltip, input field, tab bar,
+scroll container. Likely first callers: Workshop (equip/compare — now authored: PG-10…PG-14),
+Inventory (grid), Settings (sliders + toggles). Each gets a `PC-##` entry when authored.
+*(The destructive-confirm dialog is no longer deferred — it is now **PC-03**, first called by
+Workshop's upgrade.)*
 
 ---
 
@@ -93,8 +102,8 @@ Anatomy · States · Accessibility (pattern-specific) · Godot notes · Used by.
 
 **When to use**: any single-tap commit or navigation action (action-cluster buttons, move
 `‹ back`, tap-to-continue).
-**When NOT to use**: destructive/irreversible actions without a confirm step (those add a
-confirm dialog — deferred standard control); read-only inspection (use **PC-02**).
+**When NOT to use**: destructive/irreversible actions without a confirm step (those wrap the
+commit in a **PC-03** confirm dialog); read-only inspection (use **PC-02**).
 
 **Anatomy**: `Button` subclass · visible text label *or* icon + `accessibility_name` ·
 optional leading glyph · `custom_minimum_size ≥ (44,44)`.
@@ -144,6 +153,45 @@ is built from the pure core (e.g. `SynergyEvaluator.preview`, `compute_damage` h
 — no reimplementation of formulas in the view (ADR-0008).
 
 **Used by**: battle — move/region/status detail, bench inspect, initiative chip inspect.
+
+---
+
+## PC-03 — Destructive-Action Confirm Dialog
+
+**When to use**: any **irreversible, resource-spending or state-destroying** commit —
+upgrading a part (spends Scrap permanently), scrapping/disassembling a part, overwriting a
+save. Encodes accessibility **§2.4 (destructive-action confirmation, COMMITTED / HIGH gate)**.
+**When NOT to use**: reversible turn choices (battle target selection commits with **no**
+confirm — locked decision; see Consistency Rules); pure navigation; read-only inspection
+(use **PC-02**).
+
+**Anatomy**: a themed modal layer (dimmed scrim + centered `PanelContainer`) with — a
+**title** naming the action · a **body** stating the exact irreversible consequence in words
+(e.g. "Upgrade to +3? This spends **40 Scrap** and cannot be undone.") · **two buttons**:
+a **Confirm** (labelled with the verb, e.g. "Upgrade") and a **Cancel**. The dialog is the
+only place the cost/consequence is committed — the affordance that opens it never mutates
+state.
+
+**States**: `hidden` → `shown` (scrim + panel, prior screen inert behind it) → `confirmed`
+(the write fires exactly once, dialog dismisses) / `cancelled` (dismiss, **no** state change).
+Re-entry is idempotent: opening the dialog twice never double-charges — the debit is bound to
+`confirmed`, not to opening.
+
+**Accessibility**: **Cancel is the default focus** (a11y §2.4 — the safe action is the
+one a stray Enter/tap lands on); Confirm is never auto-focused. Both buttons ≥44×44pt.
+The consequence is stated in **text, never by color alone** (a11y §1.3) — a red Confirm
+button still spells out the cost. Dismiss-on-scrim-tap resolves to **Cancel** (never
+Confirm). No timing pressure (a11y §2.3) — the dialog waits indefinitely.
+
+**Godot notes**: use a themed `ConfirmationDialog` **or** a `PanelContainer` in a
+`CanvasLayer` with `PC-01` buttons — **not** an OS/JS `AcceptDialog` that blocks the event
+loop. Set `dialog_close_on_escape`/scrim-tap to route to Cancel. Wire **Confirm** to a
+**named** `Callable` that performs the single write (e.g. debit Scrap + bump tier), then
+closes; disconnect on `NOTIFICATION_EXIT_TREE`. The dialog reads the consequence values
+(cost, resulting tier) passed in at open time — it computes nothing itself.
+
+**Used by**: workshop — `UPGRADE` (spends Scrap per `quick-specs/upgrade-cost-curve.md`).
+*Future callers*: Inventory scrap/disassemble, Save overwrite.
 
 ---
 
@@ -396,6 +444,163 @@ never a commit target.
 
 ---
 
+## PG-10 — Turntable (rotatable composite stage)
+
+**When to use**: presenting an assembled multi-part entity the player can turn to inspect
+from any angle while they edit it (the Symbot composite on its Workshop stand), in a
+low-energy space with a slow ambient auto-rotate.
+**When NOT to use**: a static portrait or an icon (use a `TextureRect`); anything requiring
+urgency or dynamic lighting (excluded by art-bible §2.6 in the Workshop).
+
+**Anatomy**: a layered sprite composite (per-slot layers with rarity overlays) on a neutral
+stand · **`‹ ›` manual-rotate controls** (≥44×44pt) · a **slow ambient auto-rotate** ·
+in-frame **swap** of the affected layer on preview/equip.
+
+**States**: `auto-rotating` (idle ambient spin) · `manual` (player is dragging/tapping
+`‹ ›`; auto-rotate paused, resumes after a beat) · `previewing` (a candidate layer slides
+into the composite — see the preview slide-in) · `reduced-motion` (auto-rotate off, held at a
+static 3/4 pose; preview becomes an instant swap — a11y §1.4 / art-bible §2.6).
+
+**Accessibility**: rotation is **enhancement, not information** — no game state is encoded in
+the angle, so a player who never rotates loses nothing. Auto-rotate obeys the reduced-motion
+setting (static pose). `‹ ›` controls carry `accessibility_name`. Ambient motion is slow and
+never flashes (well under 3Hz).
+
+**Godot notes**: a `Node2D`/`SubViewport` layer stack, one layer per equipped slot, rebuilt
+from a subscribed `part_equipped` / preview signal — the composite is **not** re-instanced per
+frame. Auto-rotate via a `Tween`/`AnimationPlayer` that **pauses on the reduced-motion flag**
+and on manual input. Shared Theme; no per-layer `Material` that breaks batching (200 draw-call
+budget, ADR-0008).
+
+**Used by**: workshop — Symbot stage (Z3).
+
+---
+
+## PG-11 — Filmstrip (horizontal scrolling candidate strip)
+
+**When to use**: choosing one item from a **slot-filtered, relevance-sorted** set of
+thumbnails that scrolls horizontally and is thumb-reachable, with an overflow handoff to a
+full grid (the part picker docked under the stage).
+**When NOT to use**: a small fixed target set (use a vertical list / **PG-06**); the full
+unfiltered inventory (that is the grid the `⊞ All ›` affordance hands off to).
+
+**Anatomy**: a horizontal `ScrollContainer` of **part thumbnails** (icon + rarity glyph +
+element glyph) sorted by build-relevance (slot / rarity / family) · **under-level entries
+greyed** with a "Core level N required" label · a trailing **`⊞ All ›`** affordance handing
+off to the Inventory grid (filtered to the slot) and returning the chosen candidate · an
+**empty-state line** ("No parts for this slot yet") when the filtered set is empty.
+
+**States**: `populated` (scrollable strip) · `entry-idle` / `entry-pressed` · `candidate-set`
+(tap selects a candidate — routes its card into the detail panel) · `entry-inspect`
+(long-press → **PC-02** popover) · `under-level` (greyed, non-selectable, "Core level N
+required") · `empty` (empty-state line, not a blank strip) · `handoff` (`⊞ All ›` → grid,
+returns a candidate).
+
+**Accessibility**: tap = set candidate, **long-press = inspect** (the uniform PC-01/PC-02
+split); entries ≥44pt. Under-level state is **grey + text label**, never color alone
+(a11y §1.3). Horizontal scroll does not hide the `⊞ All ›` escape — overflow always has a
+reachable full-grid path. Empty state is text, not a silently blank strip.
+
+**Godot notes**: horizontal `ScrollContainer` → `HBoxContainer` of `Button` thumbnails
+(PC-01 base); populate from the subscribed inventory query (slot-filtered, sorted
+build-relevance) — never polled. `⊞ All ›` is a trailing `Button` that pushes the Inventory
+grid and awaits a returned candidate. Reuse pooled thumbnail nodes on slot change rather than
+rebuilding the tree each time.
+
+**Used by**: workshop — part picker (docks in Z3 when a slot is selected).
+
+---
+
+## PG-12 — Stat Delta Row (headline + expandable full-stat)
+
+**When to use**: showing the **before → after** effect of a hypothetical change (equipping a
+candidate, upgrading a tier) as a compact headline the player reads at a glance, with an
+expander to the full stat set.
+**When NOT to use**: a single live resource (use PG-01/02); a committed value with no
+comparison.
+
+**Anatomy**: a **headline of 3 display stats** (`current → delta`, e.g. POWER / ARMOR /
+MOBILITY) each with an **up/down arrow glyph** · an **`(i)` expander** revealing the full **11
+canonical stats by their real keys** · deltas computed as a **hypothetical, no commit**.
+
+**States**: `collapsed` (headline 3 + arrows) · `expanded` (`(i)` → full 11) · `positive` /
+`negative` / `no-change` per stat (arrow **up / down / dash glyph** — the non-color channel) ·
+`upgrade-variant` (same idiom for a next-tier preview; adds a skill unlock/enhance callout when
+`upgrade_effects[next_tier]` exists).
+
+**Accessibility**: the **arrow glyph (▲/▼/–) is the non-color channel** — direction reads
+without green/red (a11y §1.3). Headline uses **display labels** (POWER/ARMOR/MOBILITY) but the
+`(i)` expansion shows the **real canonical stat keys** so nothing is hidden behind an
+aggregate. Values ≥16pt.
+
+**Godot notes**: a `GridContainer` (stat · current · arrow · delta) with a `FoldableContainer`
+(or toggled child) for the `(i)` expansion; deltas from the **pure core hypothetical**
+(`compute_stat_delta()` / `StatPipeline` hypothetical derive — ADR-0005/0008), **not**
+reimplemented in the view. Rebuild on candidate/tier change from the subscribed signal.
+
+**Used by**: workshop — Stat Comparison (equip candidate + upgrade preview, Z4).
+
+---
+
+## PG-13 — Synergy Indicator (tiered activation states)
+
+**When to use**: showing progress toward and the state of **threshold-based set bonuses** that
+activate at counts (synergy tiers 3–8), including a **preview** of what a pending change would
+activate or lose.
+**When NOT to use**: a binary on/off flag (use a badge); a continuous resource (use a bar).
+
+**Anatomy**: a list of **build-relevant tiers**, each with **pips + "N more to activate"** ·
+per-tier state (**active / progressing / inactive**) · a **combined dual-track** readout
+(Synergy UI-Req-1) · in **preview**, would-activate and would-lose tiers shown **distinctly**
+(non-color, UI-Req-3) · a **tappable tier → effect detail** (DCO-4).
+
+**States**: `active` · `progressing` (pips partway + "N more") · `inactive` ·
+`would-activate` (preview — a tier the pending change turns on) · `would-lose` (preview — a
+tier it turns off). The activation moment is **"The Click"** — a visual + audio confirm bounded
+to **<3 flashes/sec** (a11y §1.4).
+
+**Accessibility**: **pip shape + "N more to activate" text are the non-color channel**
+(a11y §1.3); would-activate / would-lose distinction is a glyph/text state, not a hue.
+Activation flash obeys the 3Hz gate; reduced-motion keeps the audio + a single static state
+change (no flash). Tier rows are ≥44pt (tappable for detail).
+
+**Godot notes**: a `VBoxContainer` of tier rows; pips are child controls, "N more" a `Label`;
+states from **`SynergyEvaluator.preview`** (ADR-0008) — the same pure core the commit uses, so
+preview and result never diverge. Tap → detail via a themed popover (PC-02 family). Debounce
+rapid preview churn so the "Click" does not thrash (DCO-7). No `_process` polling.
+
+**Used by**: workshop — Synergy block (Z4).
+
+---
+
+## PG-14 — Build Status Banner (legality readout)
+
+**When to use**: a persistent **valid / invalid** verdict for an editable configuration, with
+the reason surfaced when invalid (combat legality — the EC-CP-05 over-level orphan check).
+**When NOT to use**: transient one-shot feedback (use **PG-07**); a resource value (use a bar).
+
+**Anatomy**: a pinned banner — **✓ "All systems go"** (legal) **OR** **⚠** + a **list of the
+over-level parts** blocking combat · icon **+ text** (never icon/color alone) · tappable to a
+detail readout when invalid.
+
+**States**: `valid` (✓ + "All systems go") · `invalid` (⚠ + offending-part list; "cannot enter
+combat while invalid") · `equip-confirm` (a brief settle + checkmark doubles as the
+audio-independent equip confirm — a11y §4.1). When invalid, the offending parts are also greyed
+in the slot rail with "Core level N required".
+
+**Accessibility**: **icon (✓ / ⚠) + text are the non-color channel** (a11y §1.3) — legality
+reads without green/amber. The checkmark is an **audio-independent** visual equip confirm
+(a11y §4.1). Banner text ≥16pt; the invalid detail target is ≥44pt.
+
+**Godot notes**: a `PanelContainer` → `HBox`(icon `TextureRect` + `Label`); state from the
+subscribed build-validator signal (Core Progression / EC-CP-05), **not** polled. The
+checkmark-settle is a short `Tween`/`AnimationPlayer` (under 3Hz). Display-only — it reports
+legality; it does not itself gate the combat transition (the validator does).
+
+**Used by**: workshop — Build Status banner (Z4, bottom).
+
+---
+
 ## Animation Standards
 
 Timings extracted from `battle.md` / TBC GDD V2–V3; all pulses obey **<3 flashes/sec**
@@ -413,6 +618,11 @@ Timings extracted from `battle.md` / TBC GDD V2–V3; all pulses obey **<3 flash
 | Initiative reorder | chip flash + slide to projected slot; commit at ROUND_START | PG-09 | V3-2 / Rule 3 |
 | Overheat beat | 0.6–1.0s: steam flash, gauge 0→20 two-step, screen-shake <0.3s | PG-02 | V3-8 |
 | Screen enter | wipe ~0.3–0.5s → reveal → cards slide in | (screen) | battle |
+| Turntable auto-rotate | slow ambient spin; pauses on manual input + reduced-motion (static 3/4 pose) | PG-10 | workshop §2.6 |
+| Preview slide-in | unhurried candidate slide onto composite; seam edge-highlight pulses **once** then holds; reduced-motion → instant swap | PG-10/PG-12 | workshop §2.6 |
+| Synergy "The Click" | activation visual + audio confirm, **<3 flashes/sec**; reduced-motion keeps audio + one static change | PG-13 | workshop §2.6 |
+| Equip confirm | brief settle + checkmark on Build Status banner (audio-independent) | PG-14 | workshop §4.1 |
+| Delta arrows | static up/down glyphs — no flashing | PG-12 | workshop |
 
 ---
 
@@ -446,9 +656,10 @@ The binding cross-cutting rule this library enforces now:
   per-item cancel; "Back" sits consistently in the same position across screens (a11y §3.2).
 - **No-confirm commits**: within battle, target selection commits with **no confirm dialog**
   (locked decision). Destructive, irreversible actions elsewhere (scrap/upgrade/disassemble)
-  **do** require a confirm step (a11y §2.4) — a future modal/dialog standard control; the
-  two rules do not conflict because they apply to different action classes (reversible turn
-  choice vs. permanent inventory change).
+  **do** require a confirm step — now the **PC-03** Destructive-Action Confirm Dialog
+  (a11y §2.4), first called by Workshop's `UPGRADE`. The two rules do not conflict because
+  they apply to different action classes (reversible turn choice vs. permanent
+  resource/inventory change).
 - **Color-never-sole**: every pattern names its non-color channel; no pattern relies on hue.
 
 ---
@@ -457,10 +668,17 @@ The binding cross-cutting rule this library enforces now:
 
 - **2026-07-15** — Seeded from `battle.md`: PC-01, PC-02, PG-01…PG-09. Animation Standards
   populated from battle/TBC V2–V3; Sound Standards structured with audio deferred to V4.
+- **2026-07-18** — Promoted 6 patterns from `workshop.md` (its `/ux-review` flagged them as
+  new patterns to library-ize): **PC-03** Destructive-Action Confirm Dialog (encodes a11y §2.4;
+  closes Workshop advisory #1 — upgrade now confirms before spending Scrap), **PG-10** Turntable,
+  **PG-11** Filmstrip, **PG-12** Stat Delta Row, **PG-13** Synergy Indicator, **PG-14** Build
+  Status Banner. Catalog table, Animation Standards (turntable / preview slide-in / synergy
+  "Click" / equip confirm), and the "No-confirm commits" consistency rule updated; the
+  destructive-confirm dialog is no longer a deferred control.
 - **DF OQ-1** — PG-06's pre-commit effectiveness glyph depends on Damage Formula exposing
   `type_mult` before commit; erratum pending on `damage-formula.md`.
-- **Deferred standard controls** — toggle/slider/dropdown/modal/dialog/toast/tooltip/input/
-  tab/grid/scroll are added on first use (likely Workshop / Inventory / Settings). The
-  modal/dialog entry must encode the a11y §2.4 destructive-confirm behavior when authored.
+- **Deferred standard controls** — toggle/slider/dropdown/toast/tooltip/input/tab/grid/scroll
+  are added on first use (likely Inventory / Settings). *(The destructive-confirm dialog is now
+  authored as PC-03.)*
 - **Calibration gate** — all ≥44pt / ≥16pt figures assume the virtual-px→pt on-device
   calibration (a11y Decision 5); verify in the first UI story before pattern audits.

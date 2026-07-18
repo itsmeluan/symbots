@@ -176,21 +176,21 @@ AC-WS-10.)*
 **Z3 — Stage**
 | Component | Type | Content | Interactive | Pattern |
 |-----------|------|---------|-------------|---------|
-| Symbot composite | Rendered sprite stack | 8-layer live composite (assembly Visual/Audio table); rarity overlays per equipped part; swaps in-frame on equip/preview | Yes (rotate) | new pattern — "Turntable" |
+| Symbot composite | Rendered sprite stack | 8-layer live composite (assembly Visual/Audio table); rarity overlays per equipped part; swaps in-frame on equip/preview | Yes (rotate) | **PG-10 "Turntable"** |
 | Rotate controls | Button ×2 | `‹` `›` manual rotate; idle = slow auto-rotate | Yes | PC-01 |
 | Core badge + XP bar | Data display | `CORE LV n` + XP progress `cur / next` (core-progression reads) | Tap → core detail | PG-01-like bar |
-| Part Picker filmstrip | Horizontal **scrolling** list | Inventory filtered to selected slot, sorted by build-relevance (slot/rarity/family, inventory UI-Req-3/4); under-level parts greyed + "Core level N required"; a trailing **`⊞ All ›`** affordance hands off to the Inventory grid (filtered to the slot) and returns the chosen candidate (resolves OQ6) | Yes — tap = set candidate; long-press = inspect | PC-02 + PG-06 + new "Filmstrip" |
+| Part Picker filmstrip | Horizontal **scrolling** list | Inventory filtered to selected slot, sorted by build-relevance (slot/rarity/family, inventory UI-Req-3/4); under-level parts greyed + "Core level N required"; a trailing **`⊞ All ›`** affordance hands off to the Inventory grid (filtered to the slot) and returns the chosen candidate (resolves OQ6) | Yes — tap = set candidate; long-press = inspect | PC-02 + PG-06 + **PG-11 "Filmstrip"** |
 
 **Z4 — Detail Panel**
 | Component | Type | Content | Interactive | Pattern |
 |-----------|------|---------|-------------|---------|
 | Part card | Card | Candidate/equipped part: thumbnail, name, rarity + element + manufacturer badges (each with non-color glyph, accessibility §1.3) | Tap → full detail popover | PC-02 |
-| Stat Comparison | Data table | Headline **POWER / ARMOR / MOBILITY** (display labels — see mapping note): `current → delta` with **up/down arrow glyph** (§2.6 non-color cue); `(i)` expands to the full 11 canonical stats by their real keys | Yes (`i` expand) | new "Stat Delta Row" |
-| Synergy block | Indicator list | Build-relevant tiers (3–8): active / progressing / inactive states + combined dual-track (Synergy UI-Req-1); pips + "N more to activate"; preview shows would-activate/would-lose distinctly (non-color, UI-Req-3) | Yes — tap tier = effect detail (DCO-4) | new "Synergy Indicator" |
+| Stat Comparison | Data table | Headline **POWER / ARMOR / MOBILITY** (display labels — see mapping note): `current → delta` with **up/down arrow glyph** (§2.6 non-color cue); `(i)` expands to the full 11 canonical stats by their real keys | Yes (`i` expand) | **PG-12 "Stat Delta Row"** |
+| Synergy block | Indicator list | Build-relevant tiers (3–8): active / progressing / inactive states + combined dual-track (Synergy UI-Req-1); pips + "N more to activate"; preview shows would-activate/would-lose distinctly (non-color, UI-Req-3) | Yes — tap tier = effect detail (DCO-4) | **PG-13 "Synergy Indicator"** |
 | PREVIEW button | Button | Try the candidate *on the bot* (composite sprite swap + synergy preview), no commit (DCO-3 explicit touch gesture) | Yes | PC-01 |
 | EQUIP button | Button | Commit the equip (`part_equipped`); displaced part → inventory (AC-SA-04) | Yes | PC-01 |
-| UPGRADE button | Button | (Equipped-part mode) next-tier preview using the **same delta idiom** as a swap — headline 3 + `(i)` full 11 (Part-DB Rule 10 multiplies **all** stats ×1.15→×2.00) — plus a **skill unlock/enhance callout** when `upgrade_effects[next_tier]` exists (Move DB `display_name`); **Scrap cost** (economy-owned, values TBD — resolves OQ5); disabled if unaffordable or at tier cap (Common +3 / Rare+ +5) | Yes | PG-05 affordable/disabled |
-| Build Status banner | Status banner | Combat-legality (EC-CP-05): ✓ "All systems go" (legal) OR ⚠ list of over-level parts blocking combat (non-color icon + text) | Tap → detail when invalid | new "Build Status" |
+| UPGRADE button | Button | (Equipped-part mode) next-tier preview using the **same delta idiom** as a swap — headline 3 + `(i)` full 11 (Part-DB Rule 10 multiplies **all** stats ×1.15→×2.00) — plus a **skill unlock/enhance callout** when `upgrade_effects[next_tier]` exists (Move DB `display_name`); **Scrap cost** from the ratified curve (`quick-specs/upgrade-cost-curve.md`: 10/20/40/80/160 — resolves OQ5); commit routes through a **confirm step** (a11y §2.4 destructive action); disabled if unaffordable or at tier cap (Common +3 / Rare+ +5) | Yes | PG-05 + **PC-03 (confirm)** |
+| Build Status banner | Status banner | Combat-legality (EC-CP-05): ✓ "All systems go" (legal) OR ⚠ list of over-level parts blocking combat (non-color icon + text) | Tap → detail when invalid | **PG-14 "Build Status"** |
 
 > **Headline stat mapping (resolves OQ2):** the 11 canonical stat keys (`structure`,
 > `armor`, `resistance`, `physical_power`, `energy_power`, `mobility`, `targeting`,
@@ -246,6 +246,7 @@ inspected; Build Status doubles as the EC-CP-05 legality banner.)*
 | **Equipped-part inspected** | Tap an already-filled slot (no candidate pending) | Z4 shows the equipped card + **`UPGRADE`** (next-tier delta + Scrap cost) in place of `EQUIP` |
 | **Upgrade unaffordable** | `Scrap < upgrade cost` | `UPGRADE` disabled (PG-05) with cost shown in deficit styling + reason text |
 | **Upgrade at cap** | Part at its tier cap (Common +3, per Part-DB Rule 10) | `UPGRADE` replaced by a "Max tier" label |
+| **Upgrade confirm** | `UPGRADE` tapped with Scrap ≥ cost | A **confirm step (PC-03)** states the tier change + Scrap cost + any skill unlock *before* debiting; the Scrap debit + tier bump fire only on confirm (a11y §2.4 destructive-action). Cancel returns to the equipped-part inspect with no change. *(Verified by AC-WS-04.)* |
 | **Invalid build** | A core swap orphans over-level parts (EC-CP-05) | Build Status banner = ⚠ + lists offending parts; over-level parts greyed in the rail with "Core level N required"; "cannot enter combat while invalid" |
 | **Under-level part in picker** | `part.level_req > core level` | Greyed filmstrip entry + "Core level N required"; not equippable |
 | **Filmstrip empty (no candidates)** | Selected slot has zero eligible parts in inventory | Filmstrip shows an empty-state line — "No parts for this slot yet" — instead of an empty strip; the currently equipped part (if any) stays inspectable in Z4 so `UPGRADE` remains reachable. Distinct from *Empty slot* (which is about the slot being unfilled, not the picker being empty). |
@@ -268,7 +269,7 @@ equivalent (ADR-0008 unified press-release path; ≥44×44pt, ≥56px preferred 
 | Rotate `‹ ›` | tap | click | ← / → | bot rotates | Manual rotate; idle resumes slow auto-rotate |
 | `PREVIEW` | tap | click | Enter | composite swaps + seam highlight | Try-on-bot + synergy preview (no commit) |
 | `EQUIP` | tap | click | Enter | settle + confirm check | Commits `part_equipped`; displaced part → inventory |
-| `UPGRADE` | tap | click | Enter | Scrap counter ticks down | Spends Scrap; raises the part's tier |
+| `UPGRADE` | tap | click | Enter | confirm step (PC-03) → Scrap counter ticks down | Confirm → spends Scrap; raises the part's tier (a11y §2.4) |
 | Synergy tier row | tap | click | Enter | detail popover | Shows the tier's effect detail (DCO-4) |
 | `(i)` expanders | tap | click | Enter | panel expands | Reveals full 11 stats / full synergy list |
 | `BUILD SUMMARY ›` | tap | click | Enter | panel opens | Full readout (all stats + synergies incl. overflow) |
@@ -358,6 +359,10 @@ Target tier: **GAG Basic + selected WCAG 2.1 AA** (per `design/accessibility-req
 - **Keyboard-only:** documented focus order (slot rail → filmstrip → Z4 actions → expanders →
   top bar); every action reachable via focus + Enter. No gamepad (per tech-prefs).
   *(Verified by AC-WS-07.)*
+- **Destructive-action confirm:** `UPGRADE` irreversibly spends Scrap, so it routes through a
+  **PC-03 confirm step** (a11y §2.4) — the first tap only opens the confirm stating the cost;
+  Scrap is never debited until the player confirms, and Cancel is always the default focus.
+  *(Verified by AC-WS-04.)*
 - **Reduced-motion:** auto-rotate pauses to a static pose; preview slide-in → instant swap;
   seam highlight static; synergy "Click" keeps audio + one static state change, no flash.
   *(Verified by AC-WS-09.)*
@@ -401,9 +406,11 @@ Target tier: **GAG Basic + selected WCAG 2.1 AA** (per `design/accessibility-req
 - **AC-WS-04** — With an equipped part selected, the upgrade preview shows the next-tier
   delta using the **same headline-3 + `(i)`-full-11 idiom** as a swap (Rule 10 scales all
   stats), and surfaces a skill unlock/enhance callout whenever `upgrade_effects[next_tier]`
-  is defined. With Scrap ≥ cost, `UPGRADE` raises the tier and debits Scrap; with Scrap < cost
-  it is disabled and states the deficit; at the tier cap (Common +3 / Rare+ +5) it shows
-  "Max tier". *(Resolves OQ5. Scrap cost values are economy-owned, not fixed by this spec.)*
+  is defined. With Scrap ≥ cost, `UPGRADE` presents a **confirm step (PC-03)** stating the
+  cost, and only on confirm debits Scrap and raises the tier — a first tap never debits
+  (a11y §2.4 destructive-action); with Scrap < cost it is disabled and states the deficit; at
+  the tier cap (Common +3 / Rare+ +5) it shows "Max tier". *(Resolves OQ5; cost per the
+  ratified `quick-specs/upgrade-cost-curve.md` = 10/20/40/80/160.)*
 - **AC-WS-05** — After a core swap that orphans an over-level part, Build Status shows ⚠
   listing each offending part, those parts grey in the rail, and combat entry is blocked
   until resolved (EC-CP-05).
@@ -452,9 +459,11 @@ reflected in the section noted.
   `design/player-journey.md` is deferred until a second screen needs it. *(→ Header.)*
 - **OQ5 — Upgrade UI granularity → RESOLVED.** Reuse the swap delta idiom (headline 3 + `(i)`
   full 11; Rule 10 scales all stats), plus a skill unlock/enhance callout when
-  `upgrade_effects[next_tier]` exists. Per-tier **Scrap cost values are economy-owned** (not
-  fixed here; the "10/20/40/80/160" placeholder was unsourced — Rule 10 defers cost to a
-  Workshop-System/economy owner). *(→ UPGRADE component + AC-WS-04.)*
+  `upgrade_effects[next_tier]` exists. Per-tier **Scrap cost is the ratified
+  `quick-specs/upgrade-cost-curve.md` curve** (10/20/40/80/160; Common max 70 at +3, Rare+ max
+  310 at +5) — the values the Drop System economy model was validated against, now owned by the
+  Workshop as its Scrap sink (discharges Drop System Rule 9). The commit routes through a PC-03
+  confirm (a11y §2.4). *(→ UPGRADE component + AC-WS-04.)*
 - **OQ6 — Filmstrip scaling → RESOLVED.** Horizontal scrolling strip sorted by build-relevance
   with a trailing **`⊞ All ›`** handoff to the Inventory grid (filtered to the slot), returning
   the chosen candidate. *(→ Part Picker filmstrip component.)*
