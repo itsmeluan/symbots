@@ -1,6 +1,6 @@
 # UX Spec: Main Menu (Title Screen)
 
-> **Status**: In Review
+> **Status**: Approved — passed /ux-review 2026-07-17 (0 blocking, 3 advisory)
 > **Author**: Luan + ux-designer
 > **Last Updated**: 2026-07-17
 > **Journey Phase(s)**: Session entry — the game's front door (every session begins here)

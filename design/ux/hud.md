@@ -1,6 +1,6 @@
 # HUD Design
 
-> **Status**: In Design
+> **Status**: Approved — passed /ux-review 2026-07-17 (0 blocking, 3 advisory)
 > **Author**: Luan + ux-designer
 > **Last Updated**: 2026-07-17
 > **Template**: HUD Design

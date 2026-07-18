@@ -1,6 +1,6 @@
 # UX Spec: Pause Menu
 
-> **Status**: In Review
+> **Status**: Approved — passed /ux-review 2026-07-17 (0 blocking, 3 advisory)
 > **Author**: Luan + ux-designer
 > **Last Updated**: 2026-07-17
 > **Journey Phase(s)**: Mid-session interruption — reachable from any active gameplay context
