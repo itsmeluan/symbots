@@ -1,12 +1,14 @@
 # Art Bible: Symbots
 
 ## Document Status
-- **Version**: 0.2 (complete)
-- **Last Updated**: 2026-07-17
+- **Version**: 0.3 (complete — pixel-art reconciliation)
+- **Last Updated**: 2026-07-19
 - **Owned By**: art-director
 - **Status**: Complete — all 9 sections authored. Visual Identity Foundation (§1–4) locked 2026-07-15; Production Guides (§5–8) + Reference Direction (§9) authored 2026-07-17 (gate: Pre-Production → Production).
 - **Scope**: Full bible. §5–9 are production guides derived from the locked §1–4 foundation — they introduce no new palette, shape, or color commitments; they translate existing ones into producible rules.
 - **Art Director Sign-Off (AD-ART-BIBLE)**: **APPROVED [2026-07-17]** — authored and signed in the art-director role. §5–9 add zero new visual commitments beyond the ratified §1–4 foundation, so the sign-off certifies faithful translation, not fresh direction. *Formal director-panel spawn is N/A on this pass:* lean review mode skips AD-ART-BIBLE as a non-phase-gate, **and** subagent spawning is disabled for this project per a durable user instruction (past "1M-context credits" subagent failures — the same reason `/gate-check`'s Director Panel is recorded as skipped). **Resolved decision (2026-07-18):** §3.8 was reframed — manufacturer is a **surface-finish + set-synergy identity, orthogonal to role and element** (role = mass/§3.2, element = color/§4.2). The old placeholder shape-vocabulary names (Smoothshell/Hardform/Wirework/Fluxform) are **retired**; the canonical manufacturer identities (Ironclad / Scrapjaw / Boltwell) *are* the vocabularies, and `wild` is the evolved-organic, biome-adaptive exception. No narrative rename is pending.
+
+- **v0.3 change (2026-07-19) — pixel-art reconciliation**: the bible previously described the medium as "matte-painted 2D" while `project.godot` (`mipmaps/generate=false`, `default_texture_filter=0` nearest) and the `production/art-sources/parts-v1/` Pixel Lab pipeline were already built for **pixel art**. User confirmed pixel art 2026-07-19, closing the fork `game-concept.md` had left open. Changed: §1 (new Medium Declaration + DNA-survival table), §5.6, §6.3, §7.3 (rewritten — one typeface, vector sans, with the rationale defended), §8.3 (**rewritten** — the mip-chain LOD model was technically invalid under nearest/no-mipmaps and would have shipped aliasing; replaced with native-grid + integer-scale), §8.4, §8.5, §9. **Open**: `TODO(native-grid)` in §8.3 — the native pixel dimension awaits a resolution spike. **Handed off**: `project.godot` has no `[display]`/stretch-mode config at all → `godot-specialist`.
 
 > **Seeded from**: `design/gdd/game-concept.md` § Visual Identity Anchor ("Colorful Mechanical Wilderness")
 > and its references, reweighted so **Medabots is the primary anchor** (per user direction 2026-07-15).
@@ -27,6 +29,45 @@
 
 ## 1. Visual Identity Statement
 *(Sections 1–4 = Visual Identity Foundation — authored this pass.)*
+
+### Medium Declaration
+
+> Symbots is a **pixel art** game. This resolves the open fork left in
+> `design/gdd/game-concept.md` § Visual Identity Anchor ("pixel art or clean
+> vector sprites") — confirmed by the user 2026-07-19, and consistent with the
+> committed engine settings (`project.godot`: `mipmaps/generate=false`,
+> `default_texture_filter=0` nearest) and the production pipeline already built
+> around Pixel Lab AI-conversion (`production/art-sources/parts-v1/`).
+
+Every asset is authored on a **fixed, low native-pixel grid** (art-pixels, not
+device pixels) with hard, unantialiased silhouette edges. Detail is added by
+placing more pixels of a *different value*, never by smoothing, blurring, or
+adding a gradient. Two techniques are explicitly forbidden on any game-content
+asset (UI chrome has its own rules, §7):
+
+- **No soft/painterly gradients or airbrushed shading.** Value transitions are
+  stepped (a limited shade-ramp per color, typically 2–4 steps: highlight / base
+  / shadow / optional ambient-occlusion), never a smooth blend.
+- **No smooth anti-aliasing on silhouette edges.** Edges are a deliberate
+  1–2px outline (§3.4's "engineered seam" made literal) or a hard color-to-
+  transparent step. Any softness must come from *dithering* (an intentional
+  pixel-pattern technique), never from a blur or an alpha ramp wider than the
+  outline itself.
+
+This changes *how* every principle in §1–§4 is executed, but changes
+remarkably little about *what* those principles say — see the survival
+assessment below.
+
+### What Survives, What Needs Restatement
+
+| Design DNA element | Survives translation? | Restatement needed |
+|---|---|---|
+| One-Line Visual Rule ("grew into its job… looks like a decision") | **Survives unchanged** | None — silhouette-first, function-signaling design is pixel art's native mode, not a compromise against it. |
+| Medabots-primary reference set | **Survives, strengthened** | None to the reference list; §9's Horizon "Avoid/Diverge" cell is reworded accordingly. |
+| Organic contour / engineered seam (§3.4) | **Survives, needs a literal restatement** | At native-grid resolution a "seam" is a minimum 1px hard value/hue break, not necessarily a drawn stroke. §3.4's "hard-edge meeting" clause should say this explicitly so a pixel artist isn't asked to draw detail the grid can't hold. |
+| Dual silhouette read — slot=vertical axis, role=mass/stance (§3.2) | **Survives unchanged** | None — this is a shape-language rule, medium-agnostic. |
+| Manufacturer finish vocabularies (§3.8) | **Survives at Workshop scale; degrades at combat scale** | New caveat (ties to §8.3): dense panel-line cadences (Ironclad's grid, Scrapjaw's diagonal slashes) may not resolve at the smallest native combat grid. At combat scale, manufacturer read should lean on **silhouette notch + a locked 2–3 color finish palette**; full cadence detail is reserved for whichever context displays the asset largest. |
+| 7-color world palette + 3 element colors + mandatory glyphs (§4) | **Survives as hex anchors; needs a production rule added** | Each asset uses a small **locked local palette** (recommend ≤24–32 indexed colors incl. shade ramps) built from these anchors — no per-asset gradient sampling outside the ramp. Glyphs must be hand-fit to each icon's native pixel grid, not a scaled vector import (which would reintroduce anti-aliasing on import). |
 
 ### One-Line Visual Rule
 
@@ -845,8 +886,12 @@ Detail budget is spent accordingly:
   must not draw the eye at combat distance anyway, so shedding their detail at the
   play LOD costs nothing.
 - **Full detail reserved for the Workshop**, where the camera is close, parts read at
-  true color (§4.6 Workshop), and the player is *inspecting a decision*. Author each
-  part at Workshop resolution (§8) and let the atlas/mip chain resolve the combat LOD.
+  true color (§4.6 Workshop), and the player is *inspecting a decision*. In pixel art,
+  "full detail" does not mean a higher-resolution render of the same asset — it means
+  the native pixel grid is simply displayed **larger** (integer-scaled up, nearest-
+  filtered, so pixels stay crisp squares) at Workshop zoom. See §8.3 for the resolution
+  policy this implies: one native asset per part, no separate high-res "master" that
+  gets downsampled for combat.
 - **Design test**: if a part's identity survives to 64×64px greyscale but its charm
   only appears in the Workshop, that is correct — not a failure.
 
@@ -881,13 +926,21 @@ below serves that rule.
   wallpaper — a busy background is a §3.5 violation and directly harms the combat
   read.
 
-### 6.3 Texture Philosophy — Matte Painted, Not PBR
+### 6.3 Texture Philosophy — Pixel Art, Not PBR
 
-- **Stylized painted surfaces, matte finish.** No physically-based rendering, no
-  glossy speculars competing with the bots (Kinetic's chrome finish, §4.2, must stay
-  the shiniest thing on screen — an environment must never out-specular a bot).
+- **Stylized pixel-art surfaces, matte finish.** Hard-stepped shading (2–4 value
+  steps per surface color), no physically-based rendering, no glossy speculars
+  competing with the bots (Kinetic's chrome finish, §4.2, must stay the shiniest
+  thing on screen — on a pixel-art chrome surface this reads as a hard 1–2px
+  light-value highlight streak, never a smooth specular gradient; an environment
+  must never out-specular a bot).
 - **World palette only** (§4.1): Ironmoss Green / Alloy Ochre / Slate Gunmetal /
-  Wilderness Amber / Circuit Teal / Harvest Crimson / Bone White.
+  Wilderness Amber / Circuit Teal / Harvest Crimson / Bone White — each expressed
+  as a small locked shade-ramp (base + 1–2 shadow steps + 1 highlight step), not a
+  continuous gradient.
+- **Tiling discipline**: environment tiles are authored on the same native pixel
+  grid as the zone's base tile size (§8.3) so terrain tiles never show a seam or
+  scaling mismatch against neighbors.
 - **The matte-amber discipline is BLOCKING** (§4.1 handshake): environment ambers
   (W-2 Alloy Ochre, W-4 Wilderness Amber) are **matte and never carry the Flame
   Chevron glyph**. No environment surface is ever both amber-hued *and* glyph-bearing
@@ -984,11 +1037,61 @@ The game's icon language is **not invented here** — it is ratified in §4:
 same chamfered, precise register as the panels. No illustrated or photoreal icons; an
 icon must read at target-picker scale on a C-1 plate.
 
-### 7.3 Typography
+### 7.3 Typography — One Typeface, By Design
 
-- **Technical/engineered sans-serif** — clean, high-legibility, mechanical
-  personality (matches "machined" chrome; avoids humanist warmth reserved for the
-  organic bots/world).
+Pixel art raises a question painted 2D never had to answer: **should the type
+itself be pixel art too?** For Symbots, the answer is **no** — the whole game
+renders through a single **geometric sans-serif**, vector/outline, everywhere,
+titles included. This is deliberate, not an oversight, and worth defending
+explicitly, since it's the one place the pixel-art medium declaration (§1) does
+*not* propagate all the way down — a future reader (including a future you) will
+reasonably ask "wait, shouldn't the type match the art?" Here is why it doesn't:
+
+- **iOS retina forces integer steps on any bitmap font.** A pixel/bitmap font has
+  a fixed native pixel height; at 2x/3x device scale you get discrete steps
+  (8px/16px/24px…), not a continuous "13–14pt." Every size in the UX specs is
+  chosen freely against real legibility needs — tying it to a bitmap font's
+  native-step ladder would mean redesigning the whole size scale around the font
+  instead of the reverse.
+- **The accessibility large-text toggle (+4pt, `accessibility-requirements.md`
+  §1.2) needs continuous, smooth scaling.** A vector font scales cleanly to any
+  target size. A bitmap font can only step by its native-pixel multiples —
+  landing on an arbitrary +4pt target on every device density would force either
+  a blur (breaking §6.3's no-antialiasing rule) or an inconsistent, unpredictable
+  jump. This is a hard technical conflict, not a stylistic preference, and it
+  alone would rule out a bitmap font for any accessibility-load-bearing text —
+  which in this game's UI is most of it.
+- **Dense numerals need unambiguous 6/8/B and 1/l/I.** Stat values, damage
+  numbers, Energy costs, and Heat percentages are read fast and often. A
+  well-chosen geometric sans guarantees disambiguating strokes; many small pixel
+  fonts (≤8px cap height) don't have enough pixels to draw them at all.
+- **(Minor, secondary)** the project's working language during development is
+  PT-BR, and the shipping language is English — so accented-glyph coverage
+  (ã õ ç á é í ó ú â ê ô) is **not** a blocking selection criterion. It's still a
+  nice-to-have for the solo dev's own debug/editor-string readability, and doesn't
+  foreclose a PT-BR localization later, but it does not drive the typeface
+  decision the way the three points above do.
+
+**Relationship to §3.6/§7.1 ("curves are content, hard edges are chrome")**:
+typography is not an application of that shape-grammar rule — it sits on a
+**separate visual channel** entirely. §1's pixel-art medium declaration governs
+*rendered art* (sprites, tiles, icons, VFX); it does not automatically propagate
+to *type*, which has its own legibility, accessibility, and localization
+constraints that pixel art does not solve better than a vector font. Stating this
+explicitly prevents someone assuming "pixel-art game → pixel-art font" as an
+automatic consequence of §1.
+
+**If this is ever revisited** (e.g. a title-only decorative face becomes desirable
+for a splash screen or main-menu logo), the bar it would need to clear is: (a)
+full accented-glyph coverage if a PT-BR localization is ever shipped, (b) native
+pixel steps that can still satisfy the large-text accessibility delta at the
+game's chosen device scale factors, and (c) scope limited to large, sparse,
+non-functional text only (splash headlines, logos) — never stat numerics, move
+names, or anything read under time pressure. This analysis is preserved here so
+the decision is revisitable, not lost.
+
+- **Mechanical personality** — the chosen sans matches "machined" chrome; avoids
+  humanist warmth reserved for the organic bots/world.
 - **Hierarchy by weight and size**, not by color (color is reserved for semantics,
   §4.3). Primary text C-6 `#E8E8E8` (13.5:1 on C-1); secondary C-7 `#98A4B4` (4.9:1).
 - **Mobile-legible**: type sized for phone viewing distance; body text meets the
@@ -1072,30 +1175,69 @@ ceiling. Modular compositing multiplies sprite count, so batching is mandatory:
   material per part. A per-part material for glow would blow the draw-call budget on
   exactly the rarest, most-visible items.
 
-### 8.3 Resolution Tiers & LOD
+### 8.3 Native Resolution & Display Scaling (replaces LOD/mip-chain model)
 
-- **Author at Workshop resolution** (target **256×256px** per part), where the camera
-  is close and parts read at true color (§4.6). This is the source-of-truth asset.
-- **Combat LOD ≈ 64×64px** (the recurring greyscale-test scale) resolves from the
-  authored asset via the atlas **mip chain** — not a separately-drawn asset. §5.6's
-  LOD philosophy governs *what* survives; the mip chain is *how*.
-- **The 512 MB ceiling governs authoring resolution, not the reverse**: if the full
-  part catalog at 256px + atlases exceeds the memory budget on device, resolution
-  drops toward the ceiling — **never the silhouette clarity** (§3.1). Silhouette read
-  is load-bearing; a pixel-count is not.
+> **Why this changed**: the previous version of this section specified a **mip
+> chain** resolving Workshop-resolution art down to a 64×64px combat LOD. That
+> model is built for smoothly-filtered/mipmapped textures. Pixel art is the
+> opposite technique — `project.godot` already commits to it
+> (`mipmaps/generate=false`, `default_texture_filter=0` nearest) — so there is
+> no mip chain to resolve *from*. This section replaces the mip-chain model with
+> the standard pixel-art pipeline: **one native-resolution asset per part,
+> displayed at an integer multiple of its native pixel grid for every context.**
 
-> **Flagged conflict, resolved (art preference vs. technical constraint).**
-> *Ideal:* author every part high enough for satisfying Workshop zoom.
-> *Constraint:* 512 MB iOS ceiling across a growing modular catalog + atlases.
-> *Resolution:* 256px authoring + shared atlases + mipmaps. Measure atlas memory
-> against the ceiling during the vertical-slice hardware pass (VC-7, deferred). If it
-> exceeds, reduce authoring resolution catalog-wide before sacrificing any §3
-> silhouette/greyscale contract. **The greyscale read is never the variable that gives.**
+> **TODO(native-grid): pixel dimensions not yet chosen.** Every reference to
+> **N×Npx (native grid — TBD)** in this section is a placeholder for a single
+> number to be set by a resolution spike (candidates under consideration:
+> 32×32, 48×48, 64×64 — render one already-generated part, e.g.
+> `ironclad_bulwark_frame`, at each candidate, integer-scale to combat display
+> size, and pick by the existing §3.1 greyscale/thumbnail test). Do not begin
+> full-catalog part production against a guessed number — the spike exists
+> specifically to avoid re-authoring 100+ parts later.
+
+- **One native pixel grid per asset class.** Every part is authored once, at a
+  fixed **native pixel resolution — N×Npx (native grid — TBD, see TODO above)** —
+  the actual number of unique pixel cells across the sprite, not the size of the
+  exported PNG. Combat and Workshop do **not** get separately-detailed art; they
+  get the **same** native grid shown at different **integer scale factors**
+  (1x, 2x, 4x…). This is what keeps every displayed pixel a crisp square at any zoom.
+- **Integer scaling, not resampling.** The project's `nearest` filter is correct
+  *only* when the scale factor is a whole number and the destination rect is
+  pixel-aligned. A non-integer scale, or a resize-down from a larger source,
+  aliases — this is the concrete bug the old mip-chain language would have shipped.
+- **Project-level base resolution + stretch mode required.** `project.godot`
+  currently has no `[display]`/stretch configuration at all. Pixel-perfect scaling
+  requires a fixed base viewport resolution and Godot's `canvas_items` stretch mode
+  (or an equivalent integer-scaling viewport setup) so the *entire game*, not just
+  part sprites, scales by one consistent integer factor per device. **Ownership**:
+  this is an engine-configuration change, owned by `godot-specialist` (per
+  `technical-preferences.md`'s engine routing — project-wide rendering/viewport
+  config, not a `.tscn`/`.tres` content file); `technical-artist` is consulted on
+  the resulting **integer scale factor** once the native grid (TODO above) is set.
+  This bible states the requirement and constraint (nearest filter is already
+  correct; a stretch mode + base resolution must be added) — it does not specify
+  the `project.godot` values themselves, and art-director does not implement it.
+- **What replaces the Workshop/combat LOD split**: "full detail in the Workshop"
+  now means the same native sprite drawn **larger on screen**, not that a
+  higher-resolution source exists. §5.6's detail-shedding guidance (panel-line
+  density, fasteners, embedded CHIPSET/ENERGY_CELL dropping first) still applies —
+  but it is now a rule about **what the artist spends native pixels on**, not what
+  an automatic mip level discards.
+- **Manufacturer surface vocabulary caveat** (ties to §3.8): if the chosen native
+  grid is too small to resolve a manufacturer's panel-line cadence, the
+  combat-scale read falls back to **silhouette notch + a locked 2–3 color finish
+  palette**, reserving full cadence for the largest display context.
+- **The 512 MB ceiling still governs, but the pressure is lower.** A small native
+  pixel grid is *cheaper* per-asset than the previous 256×256 full-color painted
+  authoring target — this is a relief on the constraint, not a new risk. Silhouette
+  read remains load-bearing; a pixel-count is not. **The greyscale read is never
+  the variable that gives** (§3.1).
 
 ### 8.4 File Formats & Naming
 
-- **Source art**: PNG (lossless, alpha) → Godot `.import`. No lossy source for parts
-  (compositing + mip chain compound artifacts).
+- **Source art**: PNG (lossless, alpha) → Godot `.import`. No lossy source for parts —
+  lossy compression introduces off-palette pixels and softened edges, which violate
+  §1's locked-palette and no-antialiasing rules and compound across composited slots.
 - **Game data**: stays `.tres` — the existing content pipeline (`PartDef`, catalogs)
   is unchanged; §8 governs the *visual* asset only.
 - **Naming** (matches `technical-preferences.md` snake_case file convention):
@@ -1112,7 +1254,8 @@ ceiling. Modular compositing multiplies sprite count, so batching is mandatory:
 
 ### 8.5 Asset Delivery Checklist (per part)
 
-- [ ] Authored at 256×256px PNG, alpha-clean, matte (no baked specular except Kinetic chrome finish §4.2).
+- [ ] Authored at the project's locked native pixel grid (**N×Npx, native grid — TBD**, §8.3 TODO), exported at an **integer multiple** of that grid, alpha-clean, matte (no baked specular except Kinetic chrome finish §4.2).
+- [ ] No anti-aliased/soft edges on the silhouette; no gradient shading outside the locked shade-ramp (§6.3).
 - [ ] Attach points on the §3.8 standardized grid — composites without manual nudging.
 - [ ] Passes the §3.9 part-artist shape checklist (slot read, greyscale, connection grammar, break legibility).
 - [ ] Assigned to the correct manufacturer/slot atlas (batches within the 200-call budget).
@@ -1132,7 +1275,7 @@ per source. References are **additive** — no two point in the same direction. 
 | Reference | **Take** (specific) | **Avoid / Diverge** |
 |---|---|---|
 | **Medabots** *(PRIMARY)* | Each part **visibly signals its function**; part-break as spectacle (parts detach when destroyed — mirrors our break loop §3.7); bots read as **charismatic personalities** via silhouette + stance, not appliances; bright saturated character-forward color. | Do **not** copy Medabots' anime line-art rendering or its exact bot roster/IP silhouettes. Our bots are player-*assembled* systems (§5.1), not fixed named characters — the modularity is deeper and the read must survive at 64×64px greyscale, which the source never needed. |
-| **Horizon Zero Dawn** | Machines-as-**nature**: the wonder of mechanical things that *grew into* an ecosystem (§6.1 "grew here, not placed here"). | Diverge **hard** from photoreal 3D + PBR. We are stylized, colorful, matte **2D** (§6.3). Take the *concept* of the machine-wilderness, not one pixel of the rendering. |
+| **Horizon Zero Dawn** | Machines-as-**nature**: the wonder of mechanical things that *grew into* an ecosystem (§6.1 "grew here, not placed here"). | Diverge **hard** from photoreal 3D + PBR. We are stylized, colorful, **pixel art** (§6.3). Take the *concept* of the machine-wilderness, not one pixel of the rendering. |
 | **Zoids** | Creature-archetype legibility from the **mechanical silhouette** — insectoid / reptilian / avian read instantly from outline. Reinforces the §3.2 role-from-silhouette contract. | Avoid Zoids' realistic mechanical density and monochrome-military palette — it fights our saturated figure/ground (§3.5) and the 64px greyscale read. |
 | **Gunpla (Gundam kits)** | **Intentional** panel seams and panel lines — every Symbot reads as a kit *deliberately assembled*, never a random pile (§1 One-Line Rule "looks like a decision"; §3.8 attachment grammar). | Avoid Gunpla's realistic panel-line *density* and neutral kit-grey — too high-frequency and too desaturated for the combat read at scale. Take the **intentionality**, not the detail count. |
 | **Digimon** | Companions that feel **engineered, not magical**; a bright saturated palette used as a character-forward signal (supports Pillar 4 "colorful mechanical wilderness"). | Avoid Digimon's organic-creature body plans and any "monster" reading — our companions are unambiguously *machines* (engineered seam §3.4), and the CORE bond (§5.3) replaces the monster-partner trope. |

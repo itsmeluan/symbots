@@ -49,9 +49,43 @@ approved by user)**:
 
 **How to apply**: Do not treat art-bible.md's "matte painted" language as current
 truth in future sessions — a reconciliation proposal exists (drafted 2026-07-19,
-awaiting user review) covering §1 medium declaration, §5.6/§8.3 LOD-to-integer-
-scale rewrite, §6.3 texture philosophy, §9 reference-direction wording, and a
-§7.3 hybrid typography split (functional geometric-sans for dense/accessibility/
-PT-BR-accented text vs. an optional pixel display font for large sparse titles
-only). None of it is written to the file yet — confirm current file state before
-assuming any of these edits landed.
+revised 2026-07-19 after user decisions, awaiting final write) covering §1
+medium declaration, §5.6/§8.3 LOD-to-integer-scale rewrite, §6.3 texture
+philosophy, §9 reference-direction wording, and §7.3 typography. None of it is
+written to the file yet — confirm current file state before assuming any of
+these edits landed.
+
+**Round-2 decisions (2026-07-19, same day, via coordinator)**:
+- **OQ#2 (authoring model) — RESOLVED**: single native asset + integer
+  upscale (not two separately-authored LOD tiers). Confirmed, no change to
+  the §8.3 structural approach drafted in round 1.
+- **OQ#3 (PT-BR coverage) — RESOLVED, downgraded**: the game ships in
+  English; PT-BR is the user's own working/dev language only. Accented-glyph
+  coverage (ã õ ç á é í ó ú â ê ô) is **advisory**, not a blocking font-
+  selection criterion, wherever it's mentioned (§7.3, battle-visual-design
+  §6.5). Do not delete the consideration — just don't gate on it.
+- **OQ#4 (pixel display font for titles) — RESOLVED, rejected**: **one
+  typeface only** — a vector geometric sans-serif, everywhere, titles
+  included. The round-1 draft's Type 1 / Type 2 split is dead; §7.3 was
+  rewritten single-typeface, leading with *why* a pixel-art game still uses a
+  vector font for text (iOS integer-step bitmap-font problem, accessibility
+  large-text-toggle continuous-scaling requirement, dense-numeral
+  disambiguation). The forward-looking "conditions under which this could be
+  revisited" analysis was preserved rather than deleted.
+- **OQ#1 (native pixel grid size) — still OPEN.** Recommendation stands:
+  write §8.3's structural fix now (native-grid + integer-scale model, no mip
+  chain) with the actual pixel count as an explicit `TODO(native-grid)`
+  placeholder token, rather than blocking the whole reconciliation on the
+  number. A resolution spike (render one existing part at 2-3 candidate
+  grids, e.g. 32/48/64px, pick by the existing §3.1 greyscale test) is the
+  recommended way to close it.
+- **OQ#5 (`game-concept.md` line 249)** — diff drafted ("pixel art or clean
+  vector sprites" → "Pixel art."), explicitly flagged as **cross-domain**
+  (file is in `design/gdd/`, not `design/art/`) per `coordination-rules.md`
+  Rule 5 — art-director does not edit GDD files even with user approval of
+  the content; routes through the coordinator/game-designer.
+- **`project.godot` `[display]`/stretch-mode gap** — confirmed out of
+  art-director's domain. Ownership stated explicitly in the revised §8.3
+  text: `godot-specialist` owns the engine-configuration change; `technical-
+  artist` is consulted on the integer scale factor once the native grid (the
+  still-open OQ#1) is set. Art-bible states the requirement/constraint only.

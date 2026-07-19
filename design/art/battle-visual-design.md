@@ -329,8 +329,8 @@ positioning rule (a11y §3.2 / interaction-patterns Consistency Rules).
 
 ## 3. Typography
 
-All type uses the project's **technical/engineered sans-serif** (art-bible §7.3) —
-clean, high-legibility, mechanical personality. No humanist warmth. Type is styled
+All battle-screen type uses the project's **geometric sans-serif** (art-bible §7.3)
+— clean, high-legibility, mechanical personality. No humanist warmth. Type is styled
 by weight and size, never by hue (hue is reserved for semantics, §4.3).
 
 | Role | Art-bible type role | Size | Weight | Color | Notes |
@@ -584,16 +584,22 @@ below; implementation is delegated.
 
 ### 6.5 Fonts
 
-No new fonts specified — the project font (technical/engineered sans-serif, art-bible
-§7.3) applies uniformly. The visual design spec does not specify a typeface (that is
-a project-level asset pipeline decision); it specifies **roles, sizes, weights, and
-colors** per §3 above.
+No new fonts specified — the project's geometric sans-serif (art-bible §7.3) applies
+uniformly to every text role in this document. This spec does not specify a typeface
+(that is a project-level asset pipeline decision); it specifies **roles, sizes,
+weights, and colors** per §3 above.
 
 The font must be:
-- A geometric sans-serif with consistent stroke weights (mechanical feel)
+- A geometric sans-serif with consistent stroke weights (mechanical feel);
+  **vector/outline, not a bitmap pixel font** — see art-bible §7.3 for why a
+  pixel-art game still uses a vector typeface
 - Highly legible at 13–14pt on a dark plate (the minimum use case in this spec)
 - Include Regular, Medium, Semi-Bold, and Bold weights
 - Licensed for game distribution on Mac and iOS
+- **Advisory**: reasonable Latin Extended-A / PT-BR accented glyph coverage
+  (ã õ ç á é í ó ú â ê ô) is a nice-to-have, not a selection blocker — the game
+  ships in English; PT-BR is the solo dev's working language only. Worth checking
+  if two candidate fonts are otherwise equal, not a gate any candidate must clear
 
 Recommendation to flag to the technical-artist: verify that the selected font atlas
 is included in the shared Theme (`assets/ui/theme.tres`) and that each weight is a

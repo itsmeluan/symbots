@@ -246,7 +246,7 @@ The world looks like nature, but built from gears, circuits, and alloys. Wild Sy
 | ---- | ---- |
 | **Engine** | Godot 4.6 — excellent for 2D turn-based RPGs; exports natively to Mac and iOS; free and open-source |
 | **Key Technical Challenges** | Modular visual assembly (rendering part combinations that look intentional); iOS export pipeline (requires Xcode + Apple dev account); save system for large parts inventories |
-| **Art Style** | Stylized 2D — pixel art or clean vector sprites. Modular silhouette design for all Symbot parts |
+| **Art Style** | Pixel art. Modular silhouette design for all Symbot parts |
 | **Art Pipeline Complexity** | Medium-High (custom 2D with modular part system; each part type needs visual zone consistency) |
 | **Audio Needs** | Moderate — distinct hit sounds per element type, workshop ambience, encounter music. Part-break events need satisfying audio feedback |
 | **Networking** | None (MVP); potential async build sharing post-launch |
