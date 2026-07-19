@@ -29,6 +29,26 @@ RngService="*res://src/autoloads/rng_service_autoload.gd"
 SaveLoad="*res://src/autoloads/save_load_autoload.gd"
 TBC="*res://src/autoloads/battle_controller_autoload.gd"
 
+[display]
+
+; Pixel-art base resolution. See design/art/art-bible.md §8.3.
+; PROVISIONAL (2026-07-19): 480x270 is under evaluation, not a ratified decision —
+; §8.3's TODO(native-grid) is still open. Chosen as 4x-exact to 1920x1080.
+window/size/viewport_width=480
+window/size/viewport_height=270
+; Base viewport doubles as the initial OS window size unless overridden;
+; without these the Mac window opens at a literal 480x270 px.
+window/size/window_width_override=1920
+window/size/window_height_override=1080
+window/stretch/mode="canvas_items"
+; expand = no letterbox on iOS ~19.5:9; base res becomes a MINIMUM guaranteed
+; visible area, wider screens reveal more world. UI must not use hardcoded
+; absolute offsets from screen edges.
+window/stretch/aspect="expand"
+; integer = floors the scale factor; this is what keeps pixels crisp.
+window/stretch/scale_mode="integer"
+window/handheld/orientation=0
+
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/gut/plugin.cfg")
