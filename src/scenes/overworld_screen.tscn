@@ -39,6 +39,10 @@ tile_set = ExtResource("3_tileset")
 unique_name_in_owner = true
 tile_set = ExtResource("3_tileset")
 
+[node name="Obstacles" type="TileMapLayer" parent="WorldView/WorldViewport"]
+unique_name_in_owner = true
+tile_set = ExtResource("3_tileset")
+
 [node name="Markers" type="Node2D" parent="WorldView/WorldViewport"]
 unique_name_in_owner = true
 

@@ -39,6 +39,13 @@ const MARKER_HEIGHT := 84.0                  # on-screen height; width follows t
 const ARRIVE_EPSILON := 4.0
 const DECAL_TILES := 3                       # atlas tiles 1..3 are transparent overlay decals
 
+# Collision box, in world px, measured at the character's FEET rather than the whole
+# sprite. Top-down games collide by the ground contact point: a box covering the full
+# 126px sprite would stop the player a head's height short of every wall and make the
+# world feel cramped and untraceable. Tune these if the character art changes shape.
+const FEET_SIZE := Vector2(34.0, 18.0)
+const FEET_OFFSET_Y := 48.0                  # sprite centre -> feet-box centre
+
 # ---------------------------------------------------------------------------
 # PLAYER SPRITE SHEETS — 8 directions, idle + walk
 # ---------------------------------------------------------------------------
@@ -81,6 +88,7 @@ var _log: LogSink
 @onready var _vp: SubViewport = %WorldViewport
 @onready var _terrain: TileMapLayer = %Terrain
 @onready var _decals: TileMapLayer = %Decals
+@onready var _obstacles: TileMapLayer = %Obstacles
 @onready var _markers_root: Node2D = %Markers
 @onready var _player: AnimatedSprite2D = %Player
 @onready var _camera: Camera2D = %Camera
@@ -137,7 +145,10 @@ func _world_size() -> Vector2:
 ## ground layer punches a hole in the floor — so ground fills every cell on _terrain and
 ## decals are sprinkled sparsely on _decals above it.
 ##
-## This is a starting fill, not a hand-authored map: both TileMapLayers are normal editor
+## The Obstacles layer is NEVER auto-filled — it is yours to paint. Anything painted there
+## blocks movement (see _is_blocked), so a generated fill would wall the player in.
+##
+## This is a starting fill, not a hand-authored map: the TileMapLayers are normal editor
 ## nodes, so the map can be repainted in the Godot editor and this fill only applies to
 ## cells left empty.
 func _build_terrain() -> void:
@@ -225,6 +236,28 @@ func _add_directional_anims(frames: SpriteFrames, prefix: StringName, sprite: St
 			at.region = Rect2(Vector2(col * fw, dir_index * fh), Vector2(fw, fh))
 			frames.add_frame(anim, at)
 	return DIR_COUNT
+
+
+## True when the player's feet box at [param centre] overlaps any painted Obstacles cell.
+## Every tile on that layer is solid — "painted there" IS the rule, so no per-tile flag to
+## configure and nothing to keep in sync when new tiles are added.
+func _is_blocked(centre: Vector2) -> bool:
+	if _obstacles == null:
+		return false
+	var box := _feet_box(centre)
+	var first := _obstacles.local_to_map(box.position)
+	var last := _obstacles.local_to_map(box.end - Vector2.ONE)
+	for y in range(first.y, last.y + 1):
+		for x in range(first.x, last.x + 1):
+			if _obstacles.get_cell_source_id(Vector2i(x, y)) != -1:
+				return true
+	return false
+
+
+## The ground-contact rectangle for a given sprite centre.
+func _feet_box(centre: Vector2) -> Rect2:
+	return Rect2(centre + Vector2(-FEET_SIZE.x * 0.5, FEET_OFFSET_Y - FEET_SIZE.y * 0.5),
+			FEET_SIZE)
 
 
 ## Half the player's on-screen size, measured from the live sprite frame so a swapped-in
