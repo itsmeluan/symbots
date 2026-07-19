@@ -32,21 +32,37 @@ extends Screen
 const MOVE_SPEED := 170.0                    # world px/sec
 const TILE := 64                             # world px per tile (matches terrain_tileset.tres)
 const WORLD_TILES := Vector2i(40, 26)        # 40x26 tiles = 2560x1664 world px (~2.7 x 3 screens)
-const PLAYER_SIZE := Vector2(64.0, 96.0)     # native frame size — no rescale, no colour averaging
+const PLAYER_HEIGHT := 96.0                  # on-screen height; width follows the sheet aspect
 const TRIGGER_RADIUS := 46.0
 const MAX_MARKERS := 6
 const MARKER_HEIGHT := 84.0                  # on-screen height; width follows the sprite aspect
 const ARRIVE_EPSILON := 4.0
 const DECAL_TILES := 3                       # atlas tiles 1..3 are transparent overlay decals
 
-## Walk sheet layout: 256x384 = 4 columns x 4 rows of 64x96 frames.
-## Row 0 = facing down (front), row 2 = side profile (right; flipped for left),
-## row 3 = facing up (back). Row 1 is a three-quarter pose, unused for 4-way movement.
+# ---------------------------------------------------------------------------
+# SWAPPING THE PLAYER SPRITE
+# ---------------------------------------------------------------------------
+# Drop a new PNG at assets/art/characters/<PLAYER_SPRITE>.png and it is picked up on
+# the next Godot import — no code change needed. Two requirements:
+#
+#   1. The sheet is a grid of SHEET_COLS x SHEET_ROWS frames. Any pixel resolution
+#      works (128x192, 256x384, 512x768 ...) as long as it divides evenly by the grid;
+#      the frame size is measured from the texture, not hardcoded. An uneven sheet is
+#      logged as overworld_bad_walk_sheet and the old sprite is kept rather than
+#      silently slicing frames at the wrong offsets.
+#   2. Row order is the direction convention below. Only rows 0/2/3 are drawn.
+#
+# To use one of the other shipped variants, point PLAYER_SPRITE at it — e.g.
+# &"char_mechanic_fem_overworld_walk" or &"char_mechanic_masc_overworld_walk".
+#
+# On-screen size is driven by PLAYER_HEIGHT with width following the sheet's own
+# aspect, so a taller or wider character still reads at a consistent height.
+const PLAYER_SPRITE := &"char_mechanic_walk"
 const SHEET_COLS := 4
-const FRAME_SIZE := Vector2i(64, 96)
-const ROW_DOWN := 0
-const ROW_SIDE := 2
-const ROW_UP := 3
+const SHEET_ROWS := 4
+const ROW_DOWN := 0                          # row 0 — facing the camera
+const ROW_SIDE := 2                          # row 2 — profile facing right (flipped for left)
+const ROW_UP := 3                            # row 3 — facing away
 const WALK_FPS := 8.0
 
 # encounter_resolved result codes (EventBus): WIN=1, LOSS=2, FLEE=3.
@@ -144,13 +160,28 @@ func _decal_for(x: int, y: int) -> int:
 	return 1 + (h / 9) % DECAL_TILES
 
 
-## Build the 3 directional walk animations from the single 4x4 walk sheet using
-## AtlasTextures (one shared source texture — no per-frame image copies).
+## Build the 3 directional walk animations from the walk sheet using AtlasTextures
+## (one shared source texture — no per-frame image copies).
+##
+## The frame size is MEASURED from the texture rather than hardcoded, so any sheet
+## resolution works as long as it is a SHEET_COLS x SHEET_ROWS grid — see the
+## "SWAPPING THE PLAYER SPRITE" notes at the top of this file.
 func _build_player_frames() -> void:
-	var sheet := Art.texture("characters", &"char_mechanic_walk")
+	var sheet := Art.texture("characters", PLAYER_SPRITE)
 	if sheet == null:
-		_log.warn(&"overworld_no_player_sprite", {}) if _log != null else null
+		_warn(&"overworld_no_player_sprite", {"sprite": String(PLAYER_SPRITE)})
 		return
+	var tex_size := sheet.get_size()
+	if int(tex_size.x) % SHEET_COLS != 0 or int(tex_size.y) % SHEET_ROWS != 0:
+		# Slicing an uneven sheet would silently shear every frame. Refuse instead —
+		# a missing sprite is obvious; subtly misaligned frames are not.
+		_warn(&"overworld_bad_walk_sheet", {
+			"sprite": String(PLAYER_SPRITE),
+			"size": "%dx%d" % [int(tex_size.x), int(tex_size.y)],
+			"expected_grid": "%dx%d" % [SHEET_COLS, SHEET_ROWS],
+		})
+		return
+	var frame := Vector2(tex_size.x / SHEET_COLS, tex_size.y / SHEET_ROWS)
 	var frames := SpriteFrames.new()
 	frames.remove_animation(&"default")
 	for entry in [[&"down", ROW_DOWN], [&"side", ROW_SIDE], [&"up", ROW_UP]]:
@@ -162,15 +193,37 @@ func _build_player_frames() -> void:
 		for col in SHEET_COLS:
 			var at := AtlasTexture.new()
 			at.atlas = sheet
-			at.region = Rect2(Vector2(col * FRAME_SIZE.x, row * FRAME_SIZE.y), Vector2(FRAME_SIZE))
+			at.region = Rect2(Vector2(col * frame.x, row * frame.y), frame)
 			frames.add_frame(anim, at)
 	_player.sprite_frames = frames
 	_player.animation = &"down"
-	# Frames are authored at 64x96 and the 960x540 base viewport is the scale they were
-	# drawn for — render 1:1 (no rescale, so no colour averaging on the pixel art). The
-	# mechanic lands at ~18% of viewport height, an overworld proportion.
-	_player.scale = PLAYER_SIZE / Vector2(FRAME_SIZE)
+	# Scale to PLAYER_HEIGHT with width following the sheet's own aspect, so swapping in
+	# a taller or wider character keeps a consistent on-screen size instead of changing
+	# how big the player reads. At the shipped 64x96 frame this is 1:1 — no resampling.
+	var k := PLAYER_HEIGHT / frame.y
+	_player.scale = Vector2(k, k)
 	_player.centered = true
+
+
+## Half the player's on-screen size, measured from the live sprite frame. Falls back to
+## a PLAYER_HEIGHT-square when no sheet loaded, so movement still clamps sanely.
+func _player_half_extents() -> Vector2:
+	var frames := _player.sprite_frames
+	if frames == null or not frames.has_animation(_player.animation):
+		return Vector2(PLAYER_HEIGHT, PLAYER_HEIGHT) * 0.5
+	var tex := frames.get_frame_texture(_player.animation, 0)
+	if tex == null:
+		return Vector2(PLAYER_HEIGHT, PLAYER_HEIGHT) * 0.5
+	return tex.get_size() * _player.scale * 0.5
+
+
+## Warn through the injected LogSink when setup() has run, else through the Log autoload.
+## _ready() builds the sprite before setup() injects the context, so the sink may be null.
+func _warn(event: StringName, data: Dictionary) -> void:
+	if _log != null:
+		_log.warn(event, data)
+	else:
+		Log.sink.warn(event, data)
 
 
 ## Camera follows the player and is clamped to the world bounds, so the map scrolls
@@ -206,8 +259,11 @@ func _physics_process(delta: float) -> void:
 		return
 	pos += dir * MOVE_SPEED * delta
 	var ws := _world_size()
-	pos.x = clampf(pos.x, PLAYER_SIZE.x * 0.5, ws.x - PLAYER_SIZE.x * 0.5)
-	pos.y = clampf(pos.y, PLAYER_SIZE.y * 0.5, ws.y - PLAYER_SIZE.y * 0.5)
+	# Keep the whole sprite inside the world. Half-extents come from the live sprite so a
+	# swapped-in sheet of different proportions clamps correctly without a code change.
+	var half := _player_half_extents()
+	pos.x = clampf(pos.x, half.x, ws.x - half.x)
+	pos.y = clampf(pos.y, half.y, ws.y - half.y)
 	_player.position = pos
 	_camera.position = pos
 	_apply_facing(dir)

@@ -31,25 +31,13 @@ TBC="*res://src/autoloads/battle_controller_autoload.gd"
 
 [display]
 
-; Pixel-art base resolution. See design/art/art-bible.md §8.3.
-; PROVISIONAL (2026-07-19): 960x540 — chosen because the shipped art is authored for it
-; (64px terrain tiles, 96px character = ~18% of screen height). 2x exact to 1920x1080.
-; §8.3's TODO(native-grid) is still open — this pins the display base, not the
-; per-asset native grid.
 window/size/viewport_width=960
 window/size/viewport_height=540
-; Base viewport doubles as the initial OS window size unless overridden;
-; without these the Mac window opens at a literal 960x540 px.
 window/size/window_width_override=1920
 window/size/window_height_override=1080
 window/stretch/mode="canvas_items"
-; expand = no letterbox on iOS ~19.5:9; base res becomes a MINIMUM guaranteed
-; visible area, wider screens reveal more world. UI must not use hardcoded
-; absolute offsets from screen edges.
 window/stretch/aspect="expand"
-; integer = floors the scale factor; this is what keeps pixels crisp.
 window/stretch/scale_mode="integer"
-window/handheld/orientation=0
 
 [editor_plugins]
 

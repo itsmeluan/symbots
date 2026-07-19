@@ -70,30 +70,66 @@ their own styleboxes — skin them independently the same way. Bars: swap
 `ProgressBar/styles/fill` (and each `*Bar/styles/fill` variation) to a `StyleBoxTexture`.
 
 > Art-bible reminder (`../../art-prompts/_style-guide.txt`): UI panels use **chamfered 45°
-> corners, NEVER rounded**, and break pips are **rectilinear, never circles**. The current
-> placeholder theme uses rounded corners — when real chrome arrives, the StyleBoxTexture
-> carries the chamfer and the `corner_radius` fields become irrelevant.
+> corners, NEVER rounded**, and break pips are **rectilinear, never circles**. The theme's
+> `corner_radius` fields are now all **0** — hard edges, which is the closest a
+> `StyleBoxFlat` gets to the rule. The actual 45° chamfer needs real chrome art: when it
+> arrives, the StyleBoxTexture carries the chamfer and `corner_radius` becomes irrelevant.
 
 ---
 
-## 4. The sprite-swap recipe (content → nodes)
+## 4. Swapping content sprites (player, enemies, parts)
 
-For things that are *content*, not chrome (player token, enemy markers, part icons), the
-placeholder is a `ColorRect` generated in code. Swap path:
+**These are already wired.** Every one of them resolves through
+`Art.texture(category, id)` (`src/ui/art.gd`) → `res://assets/art/<category>/<id>.png`.
+So swapping art is **replace the file, keep the name** — no code edit, no scene edit.
 
-- **Player token** — `src/scenes/overworld_screen.tscn` node `%Token` is a `ColorRect`.
-  Replace it with a `Sprite2D`/`TextureRect` (keep the `Token` name + `unique_name_in_owner`)
-  and set the texture to `characters/…png`. `overworld_screen.gd` only sets its `.position`,
-  which both node types support — no code change needed.
-- **Enemy markers** — generated in `overworld_screen.gd::_spawn_enemy_markers()` as
-  `ColorRect`s. Change the factory to make a `TextureRect` and load
-  `"res://assets/art/enemies/%s.png" % e.id`; fall back to the ColorRect when the file is
-  absent so the map never breaks mid-migration.
-- **Part icons** — Workshop rows are text today. Add a `TextureRect` to each candidate/slot
-  button pointing at `parts/<id>.png` by the naming convention in §1.
+### Player walk sprite
 
-Keep the convention `res://assets/art/<category>/<id>.png` and code can resolve art from an
-entity id without a manifest.
+**File:** `characters/char_mechanic_walk.png`
+
+Overwrite it and the mechanic changes on the next import. Two rules:
+
+1. **It must be a 4×4 grid** of frames. *Any* pixel resolution works — 128×192, 256×384,
+   512×768 — as long as width divides by 4 and height divides by 4. The frame size is
+   measured from the texture, not hardcoded. An uneven sheet is refused with a
+   `overworld_bad_walk_sheet` warning (naming the actual size) rather than silently
+   slicing every frame at the wrong offset.
+2. **Row order is the direction convention:**
+
+   | Row | Direction | Used? |
+   |-----|-----------|-------|
+   | 0 | Facing the camera (down) | yes |
+   | 1 | Three-quarter turn | **no** — free for anything |
+   | 2 | Profile facing **right** | yes (mirrored for left) |
+   | 3 | Facing away (up) | yes |
+
+   Left is the right-facing row flipped horizontally, so do not draw a separate left row.
+
+On-screen size is driven by `PLAYER_HEIGHT` in `overworld_screen.gd`, with width following
+the sheet's own aspect — a taller or wider character still reads at a consistent height,
+and the movement clamp measures the live sprite so it stays inside the world either way.
+
+To use a different shipped variant instead of replacing the file, point `PLAYER_SPRITE`
+(top of `overworld_screen.gd`) at it, e.g. `&"char_mechanic_fem_overworld_walk"`.
+
+### Enemy sprites
+
+**Files:** `enemies/<enemy_id>.png` — the id from `assets/data/enemies/*.tres`
+(`rustcrawler.png`, `volt_sentinel.png`, …). One still image, no sheet.
+
+Scaled to a fixed on-screen height with width following the source aspect, so a squat
+crawler and a tall sentinel both read correctly. Crop transparent padding before saving —
+scaling is driven by the image bounds, so a sprite floating in a large empty canvas renders
+small.
+
+### Part icons
+
+**Files:** `parts/<part_id>.png` — the id from `assets/data/parts/*.tres`. They appear on
+Workshop slot and candidate buttons automatically.
+
+> **The filename must equal the content id.** Art-bible §8.4. A file named anything else
+> is never loaded — this already cost the project 16 dead `part_*.png` files and 10
+> unreachable `enemy_*_battle.png` files.
 
 ---
 
