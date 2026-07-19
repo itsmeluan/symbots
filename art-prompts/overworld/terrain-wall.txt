@@ -1,0 +1,52 @@
+ASSET: Overworld — Wall / Impassable Block (seamless obstacle tile)
+TARGET FILE: assets/art/overworld/terrain_wall.png
+CANVAS: 64x64 px (seamlessly tileable — edges must tile against ITSELF without seam)
+PERSPECTIVE: Top-down (direct overhead view — Pokemon-style overworld)
+USED BY: the Obstacles TileMapLayer — anything painted there blocks movement
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Overworld obstacle tile. Canvas 64x64 px. Top-down, seamlessly tileable.
+
+This tile is the ONE EXCEPTION to the terrain set's recede-into-the-background rule,
+and the exception is functional rather than aesthetic: a wall the player cannot read
+as a wall is a wall they walk into repeatedly. It must be UNAMBIGUOUSLY DISTINCT from
+all four walkable terrains at a glance — the player has to know where they can go
+without testing it.
+
+It still must not out-compete the character. The way to be readable without shouting:
+distinguish by VALUE and EDGE, not by hue saturation or busy detail. A wall is darker,
+harder-edged and flatter than any ground. It does not need colour to be obvious.
+
+CONTENT:
+- PRIMARY: Slate Gunmetal #374350 — structural rock and poured plate
+- SECONDARY (~15%): Bone White #F2EDDF — exposed structural frame along the top
+  facing edge, matte, reading as the lit rim of a raised mass
+- TERTIARY (~8%): Alloy Ochre #C49A35 — mineral staining, matte, sparse
+- TEXTURE REGISTER: solid, blocky, planar. Reads as MASS — something with height that
+  the character is looking at the top and near side of, not a flat floor patch.
+
+HEIGHT READ IS THE WHOLE JOB: from directly overhead, "solid" comes from a defined
+top face plus a suggestion of thickness at the lower edge. A slightly lighter top face
+and a darker band along the bottom edge is enough — a hard stepped transition, never a
+gradient (art-bible 1: no soft shading, stepped ramps only).
+
+SEAMLESS TILING: walls are painted in runs and blocks, so the tile must tile against
+ITSELF cleanly in every direction — horizontal runs, vertical runs, and solid filled
+areas must all look deliberate. Avoid a design that only reads correctly as a single
+isolated tile.
+
+FULLY OPAQUE: every pixel at alpha 255. No transparency, no soft alpha edge. A wall
+tile that is partly transparent shows the void behind the map.
+
+WORLD PALETTE ONLY: Slate Gunmetal #374350, Bone White #F2EDDF, Alloy Ochre #C49A35.
+No Ironmoss Green, no Circuit Teal (those read as walkable ground). No Harvest Crimson
+— crimson is hazard, and a wall is an obstacle, not a threat.
+
+GREYSCALE TEST: in greyscale the wall must still be clearly separable from all four
+ground tiles by value alone. This is the test that matters most for this asset — if it
+only reads as a wall in colour, colourblind players walk into it.
+
+NEGATIVE: No bot sprites. No UI chrome. No element glyphs. No transparency. No
+gradients or soft shading. No baked drop shadow onto neighbouring ground (the tile
+does not know what is next to it). No photoreal. No PBR. No rounded corners.

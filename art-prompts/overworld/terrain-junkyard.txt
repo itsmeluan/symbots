@@ -1,0 +1,58 @@
+ASSET: Overworld — Terrain: JUNKYARD (seamless ground tile)
+TARGET FILE: assets/art/overworld/terrain_junkyard.png
+CANVAS: 64x64 px (seamlessly tileable — all four edges must tile without visible seam)
+PERSPECTIVE: Top-down (direct overhead view — Pokemon-style overworld)
+TERRAIN TYPE: JUNKYARD (src/core/encounter_zone/terrain_patch.gd)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Overworld ground tile. Canvas 64x64 px. Top-down, seamlessly tileable.
+
+This is one of FOUR terrain tiles that must be TELLABLE APART AT A GLANCE while all
+four recede behind the character. In this game terrain is a gameplay lever, not
+decoration: the terrain the player stands on decides which enemies they meet, so a
+player must be able to see which terrain they are in without stopping to look.
+Differentiate the four by HUE and TEXTURE REGISTER — never by contrast. Raising
+contrast to stand out breaks the figure/ground contract for every tile in the set.
+
+ZONE VOCABULARY (art-bible 6.5 — "Industrial-Debris"): prior bots fought and fell
+here — history without a cutscene. Angular wreckage, standardized panels, spent
+chassis. Debris implies previous Symbots; it rewards looking.
+
+CONTENT:
+- PRIMARY: Slate Gunmetal #374350 — packed scrap and plate underfoot
+- SECONDARY (~20%): Alloy Ochre #C49A35 — rust and oxidised metal, matte
+- TERTIARY (~6%): Harvest Crimson #B33020 — hazard striping on buried panels. This is
+  the ONE terrain permitted crimson, as environmental danger (art-bible 4.3 collision
+  guard #6) — a world surface, never a UI icon. Keep it sparse; it is a spice.
+- TEXTURE REGISTER: angular, flat-planed, standardized. Straight panel edges and
+  right-angle fragments half-buried at varied rotations. This is the HARD-EDGED end of
+  the terrain set — the direct contrast partner to mechanical grass.
+
+WORLD PALETTE ONLY: Slate Gunmetal #374350, Alloy Ochre #C49A35, Harvest Crimson
+#B33020 (sparse). No Ironmoss Green — vegetation belongs to the grass terrain and
+mixing them collapses the two into one read.
+
+CRITICAL — THE PREVIOUS DELIVERY FAILED ON THESE TWO. Read them twice:
+
+1. FULLY OPAQUE. Every pixel at alpha 255. The last ground tile shipped at alpha
+   70-120 with zero fully-opaque pixels, so it blended with the dark background and
+   rendered as grey mud instead of coloured ground. No transparency anywhere, no soft
+   alpha edges, no semi-transparent overlay layer.
+
+2. LOW-FREQUENCY, LOW-CONTRAST. The last tile shipped as a high-contrast checkerboard
+   which read as visual noise competing with the character. Required instead: broad
+   soft patches, gentle variation, the eye should slide over it. Keep the lightest and
+   darkest pixel CLOSE in value. If the tile is interesting to look at on its own, it
+   is wrong — it is a stage, not a subject (art-bible 3.5, 6.2).
+
+SEAMLESS TILING: all four edges tile without a seam. The tile must hold up as a 40x26
+grid without the repeat becoming visible — avoid any single distinctive element that
+the eye can lock onto and count.
+
+GREYSCALE TEST: reads as an even mid-tone surface with no element the eye catches.
+
+NEGATIVE: No bot sprites. No UI chrome. No element glyphs on the ground. No glyphed
+amber (art-bible 4.1 matte-amber discipline). No transparency. No high contrast. No
+pixel-noise stippling. No photoreal. No PBR. No baked lighting or drop shadow. No
+visible tile border.

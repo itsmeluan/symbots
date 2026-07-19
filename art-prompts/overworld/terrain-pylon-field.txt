@@ -1,0 +1,61 @@
+ASSET: Overworld — Terrain: PYLON FIELD (seamless ground tile)
+TARGET FILE: assets/art/overworld/terrain_pylon_field.png
+CANVAS: 64x64 px (seamlessly tileable — all four edges must tile without visible seam)
+PERSPECTIVE: Top-down (direct overhead view — Pokemon-style overworld)
+TERRAIN TYPE: PYLON_FIELD (src/core/encounter_zone/terrain_patch.gd)
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Overworld ground tile. Canvas 64x64 px. Top-down, seamlessly tileable.
+
+This is one of FOUR terrain tiles that must be TELLABLE APART AT A GLANCE while all
+four recede behind the character. In this game terrain is a gameplay lever, not
+decoration: the terrain the player stands on decides which enemies they meet, so a
+player must be able to see which terrain they are in without stopping to look.
+Differentiate the four by HUE and TEXTURE REGISTER — never by contrast. Raising
+contrast to stand out breaks the figure/ground contract for every tile in the set.
+
+ZONE VOCABULARY (art-bible 6.5 — "Crystalline"): a place where energy crystallized.
+Faceted mineral growth, sharp geodes, refractive veins. Volt-adjacent, ancient.
+
+CONTENT:
+- PRIMARY: Circuit Teal #2B6E68 — cool mineral ground, the coldest terrain in the set
+- SECONDARY (~18%): Slate Gunmetal #374350 — the rock the crystal grew out of
+- TERTIARY (~7%): Bone White #F2EDDF — refractive vein highlights along facet edges,
+  matte, never glowing
+- TEXTURE REGISTER: faceted and crystalline. Flat mineral planes meeting at sharp
+  angles, veins running in branching lines. Angular like the junkyard but MINERAL and
+  cool rather than manufactured and rusted — that is the distinction the player reads.
+
+IMPORTANT — DO NOT USE THE VOLT ELEMENT COLOUR. Volt cyan #2FE8E8 is reserved for
+element identity on parts, glyphs and ability FX. A ground surface wearing it would
+read as an element marker. This terrain is Volt-ADJACENT in story, expressed through
+the cooler Circuit Teal, never through the element accent. No Lightning Fork glyph.
+No emissive glow anywhere on the ground.
+
+WORLD PALETTE ONLY: Circuit Teal #2B6E68, Slate Gunmetal #374350, Bone White #F2EDDF
+(sparse). No Ironmoss Green. No Harvest Crimson.
+
+CRITICAL — THE PREVIOUS DELIVERY FAILED ON THESE TWO. Read them twice:
+
+1. FULLY OPAQUE. Every pixel at alpha 255. The last ground tile shipped at alpha
+   70-120 with zero fully-opaque pixels, so it blended with the dark background and
+   rendered as grey mud instead of coloured ground. No transparency anywhere, no soft
+   alpha edges, no semi-transparent overlay layer.
+
+2. LOW-FREQUENCY, LOW-CONTRAST. The last tile shipped as a high-contrast checkerboard
+   which read as visual noise competing with the character. Required instead: broad
+   soft patches, gentle variation, the eye should slide over it. Keep the lightest and
+   darkest pixel CLOSE in value. If the tile is interesting to look at on its own, it
+   is wrong — it is a stage, not a subject (art-bible 3.5, 6.2).
+
+SEAMLESS TILING: all four edges tile without a seam. The tile must hold up as a 40x26
+grid without the repeat becoming visible — avoid any single distinctive element that
+the eye can lock onto and count.
+
+GREYSCALE TEST: reads as an even mid-tone surface with no element the eye catches.
+
+NEGATIVE: No bot sprites. No UI chrome. No element glyphs on the ground. No glyphed
+amber (art-bible 4.1 matte-amber discipline). No transparency. No high contrast. No
+pixel-noise stippling. No photoreal. No PBR. No baked lighting or drop shadow. No
+visible tile border.

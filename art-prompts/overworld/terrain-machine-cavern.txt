@@ -1,0 +1,67 @@
+ASSET: Overworld — Terrain: MACHINE CAVERN (seamless ground tile)
+TARGET FILE: assets/art/overworld/terrain_machine_cavern.png
+CANVAS: 64x64 px (seamlessly tileable — all four edges must tile without visible seam)
+PERSPECTIVE: Top-down (direct overhead view — Pokemon-style overworld)
+TERRAIN TYPE: MACHINE_CAVERN (src/core/encounter_zone/terrain_patch.gd)
+
+NOTE FOR THE ART DIRECTOR: art-bible 6.5 seeds THREE zone vocabularies (Crystalline,
+Vegetation, Industrial-Debris) but the code defines FOUR terrain types. This is the
+fourth, so the vocabulary below is a PROPOSAL, not an existing bible entry. If it is
+accepted it should be folded back into 6.5 as a fourth seed vocabulary.
+
+--- PREPEND _style-guide.txt SHARED STYLE PREAMBLE, THEN ADD: ---
+
+Overworld ground tile. Canvas 64x64 px. Top-down, seamlessly tileable.
+
+This is one of FOUR terrain tiles that must be TELLABLE APART AT A GLANCE while all
+four recede behind the character. In this game terrain is a gameplay lever, not
+decoration: the terrain the player stands on decides which enemies they meet, so a
+player must be able to see which terrain they are in without stopping to look.
+Differentiate the four by HUE and TEXTURE REGISTER — never by contrast. Raising
+contrast to stand out breaks the figure/ground contract for every tile in the set.
+
+PROPOSED ZONE VOCABULARY — "Interior/Excavated": not a place machines grew, a place
+that was CUT INTO. Worked floor rather than open ground: tooled surfaces, poured
+substrate, the underside of the world. Where the other three terrains are outdoors and
+lit, this one reads enclosed and shadowless.
+
+CONTENT:
+- PRIMARY: Slate Gunmetal #374350, pushed DARKER than the junkyard's — the darkest
+  terrain in the set, which is how the player reads "I am inside now"
+- SECONDARY (~15%): Alloy Ochre #C49A35 — mineral seams in the cut rock, matte
+- TERTIARY (~6%): Circuit Teal #2B6E68 — conduit lines embedded in the floor, running
+  in long straight runs rather than the grass terrain's root-like branching
+- TEXTURE REGISTER: smooth and worked. Large flat expanses with tool-cut grooves in
+  long parallel runs. This is the LOWEST-detail terrain of the four — its identity is
+  emptiness and darkness, not incident.
+
+DARKNESS CAVEAT: darker than the others, but the contrast cap still applies. Go darker
+in VALUE while keeping internal contrast low. A dark tile with high internal contrast
+is worse for the figure/ground contract than a light one, not better.
+
+WORLD PALETTE ONLY: Slate Gunmetal #374350 (darkened), Alloy Ochre #C49A35, Circuit
+Teal #2B6E68 (sparse). No Ironmoss Green. No Harvest Crimson.
+
+CRITICAL — THE PREVIOUS DELIVERY FAILED ON THESE TWO. Read them twice:
+
+1. FULLY OPAQUE. Every pixel at alpha 255. The last ground tile shipped at alpha
+   70-120 with zero fully-opaque pixels, so it blended with the dark background and
+   rendered as grey mud instead of coloured ground. No transparency anywhere, no soft
+   alpha edges, no semi-transparent overlay layer.
+
+2. LOW-FREQUENCY, LOW-CONTRAST. The last tile shipped as a high-contrast checkerboard
+   which read as visual noise competing with the character. Required instead: broad
+   soft patches, gentle variation, the eye should slide over it. Keep the lightest and
+   darkest pixel CLOSE in value. If the tile is interesting to look at on its own, it
+   is wrong — it is a stage, not a subject (art-bible 3.5, 6.2).
+
+SEAMLESS TILING: all four edges tile without a seam. The tile must hold up as a 40x26
+grid without the repeat becoming visible — avoid any single distinctive element that
+the eye can lock onto and count.
+
+GREYSCALE TEST: reads as an even mid-tone surface with no element the eye catches.
+
+NEGATIVE: No bot sprites. No UI chrome. No element glyphs on the ground. No glyphed
+amber (art-bible 4.1 matte-amber discipline). No transparency. No high contrast. No
+pixel-noise stippling. No photoreal. No PBR. No baked lighting or drop shadow. No
+visible tile border.
