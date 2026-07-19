@@ -1240,9 +1240,24 @@ ceiling. Modular compositing multiplies sprite count, so batching is mandatory:
   §1's locked-palette and no-antialiasing rules and compound across composited slots.
 - **Game data**: stays `.tres` — the existing content pipeline (`PartDef`, catalogs)
   is unchanged; §8 governs the *visual* asset only.
-- **Naming** (matches `technical-preferences.md` snake_case file convention):
-  - In-world part sprite: `part_[manufacturer]_[slot]_[name].png`
-    (e.g. `part_ironclad_chassis_bulwark_frame.png`); `[manufacturer]` ∈ `{ironclad, scrapjaw, boltwell, wild}`.
+- **Naming — the filename IS the content id** (matches `technical-preferences.md`
+  snake_case file convention):
+  - In-world part sprite: `[part_id].png` — the file stem must equal the `PartDef`
+    `id` exactly (e.g. `ironclad_bulwark_frame.png` for `id = &"ironclad_bulwark_frame"`).
+    This is not a style preference: `Art.texture(category, id)` (`src/ui/art.gd`)
+    resolves `res://assets/art/<category>/<id>.png` by convention and returns `null`
+    on any other name, so a file that does not match its id is **never loaded**.
+  - The same id-equals-filename rule governs every other content category resolved
+    through `Art`: `assets/art/enemies/[enemy_id].png`,
+    `assets/art/consumables/[consumable_id].png`, and so on.
+
+  > **Corrected 2026-07-19.** This section previously mandated
+  > `part_[manufacturer]_[slot]_[name].png` (e.g.
+  > `part_ironclad_chassis_bulwark_frame.png`). That convention was never loadable —
+  > 16 files following it shipped and were provably dead, since `Art.texture()` only
+  > ever looks up the id. They were deleted; the id-named files were already the live
+  > ones. Manufacturer identity is not lost: part ids already carry the manufacturer
+  > token as their prefix.
   - **UI slot-glyph icon is a SEPARATE asset** from the in-world sprite (§3.2 tertiary
     identifier / §3.6 — the identity icon lives in inventory/Workshop/target-picker UI
     and is **never applied to the in-world model**): `icon_slot_[slot].png`,
