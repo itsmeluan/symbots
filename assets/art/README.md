@@ -83,34 +83,47 @@ their own styleboxes — skin them independently the same way. Bars: swap
 `Art.texture(category, id)` (`src/ui/art.gd`) → `res://assets/art/<category>/<id>.png`.
 So swapping art is **replace the file, keep the name** — no code edit, no scene edit.
 
-### Player walk sprite
+### Player sprites — 8 directions, idle + walk
 
-**File:** `characters/char_mechanic_walk.png`
+**Generated files:** `characters/char_mechanic_walk.png` and `char_mechanic_idle.png`.
+**Do not hand-edit them** — they are built from a folder of per-direction GIFs, because
+Godot has no GIF importer.
 
-Overwrite it and the mechanic changes on the next import. Two rules:
+To swap the character, point the tool at a new delivery folder and re-run it:
 
-1. **It must be a 4×4 grid** of frames. *Any* pixel resolution works — 128×192, 256×384,
-   512×768 — as long as width divides by 4 and height divides by 4. The frame size is
-   measured from the texture, not hardcoded. An uneven sheet is refused with a
-   `overworld_bad_walk_sheet` warning (naming the actual size) rather than silently
-   slicing every frame at the wrong offset.
-2. **Row order is the direction convention:**
+```
+python3 tools/build_character_spritesheets.py ~/Downloads/char-sprites
+```
 
-   | Row | Direction | Used? |
-   |-----|-----------|-------|
-   | 0 | Facing the camera (down) | yes |
-   | 1 | Three-quarter turn | **no** — free for anything |
-   | 2 | Profile facing **right** | yes (mirrored for left) |
-   | 3 | Facing away (up) | yes |
+The folder must contain `char-idle/` and `char-walking/`, each with one GIF (or still
+PNG) per direction. Filenames are matched loosely — case, spaces, hyphens and underscores
+are ignored — so `idle- north.gif` and `idle_North.GIF` both work. Idle and walk may have
+different frame counts.
 
-   Left is the right-facing row flipped horizontally, so do not draw a separate left row.
+**Sheet contract:** 8 rows (one per direction), N columns (one per frame), **square
+frames**. Square is what makes the sheet self-describing: frame side = height / 8, so
+column count = width / that. Nothing in the game code needs to be told the frame count.
+A sheet that violates this is refused with an `overworld_bad_walk_sheet` warning naming
+the actual size, rather than silently slicing every frame at a wrong offset.
 
-On-screen size is driven by `PLAYER_HEIGHT` in `overworld_screen.gd`, with width following
-the sheet's own aspect — a taller or wider character still reads at a consistent height,
-and the movement clamp measures the live sprite so it stays inside the world either way.
+**Row order is SCREEN direction, clockwise from right:**
 
-To use a different shipped variant instead of replacing the file, point `PLAYER_SPRITE`
-(top of `overworld_screen.gd`) at it, e.g. `&"char_mechanic_fem_overworld_walk"`.
+| Row | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+|---|---|---|---|---|---|---|---|---|
+| Heading | → | ↘ | ↓ | ↙ | ← | ↖ | ↑ | ↗ |
+
+which is `round(atan2(dy, dx) / 45°)` with +x right and +y down.
+
+> **The delivered art labels east/west mirrored relative to screen space** — the file
+> named `east` draws the character facing screen-*left*. The tool's `DIRECTIONS` list owns
+> that translation so it lives in one documented place. **If a new delivery uses a
+> different convention, re-check it**: build the sheet, then look at row 0 and confirm the
+> character is oriented rightward.
+
+On-screen size is `PLAYER_SCALE` in `overworld_screen.gd` — **integer only**. A fractional
+scale gives pixel art uneven pixel widths and shimmer on movement, which is exactly what
+the project's nearest filter and integer stretch mode exist to prevent. The movement clamp
+measures the live sprite, so a taller or wider character still stays inside the world.
 
 ### Enemy sprites
 
