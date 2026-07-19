@@ -45,21 +45,17 @@ except ImportError:  # pragma: no cover - environment guard
 # player is heading i * 45 degrees, computed as round(atan2(dy, dx) / 45deg) with +x right
 # and +y DOWN. Must match overworld_screen.gd's direction indexing.
 #
-# THE SOURCE FILENAMES ARE MIRRORED ON X — verified by eye against the delivered art:
-# the file named "east" draws the character facing screen-LEFT, "southeast" faces
-# down-LEFT, "northeast" up-LEFT, and so on; only north and south are unambiguous. So the
-# compass word paired with each screen direction below is the artist's label, deliberately
-# swapped east<->west. Re-check this if a new art delivery uses a different convention:
-# render row 0 and confirm the character faces right.
+# The compass words are the STANDARD screen mapping — east is screen-right, south is
+# toward the camera. Name the source files to match and the sheet comes out correct.
 DIRECTIONS = [
-    "west",       # row 0 — heading right
-    "southwest",  # row 1 — down-right
+    "east",       # row 0 — heading right
+    "southeast",  # row 1 — down-right
     "south",      # row 2 — down (faces camera)
-    "southeast",  # row 3 — down-left
-    "east",       # row 4 — left
-    "northeast",  # row 5 — up-left
+    "southwest",  # row 3 — down-left
+    "west",       # row 4 — left
+    "northwest",  # row 5 — up-left
     "north",      # row 6 — up (faces away)
-    "northwest",  # row 7 — up-right
+    "northeast",  # row 7 — up-right
 ]
 
 OUT_DIR = Path("assets/art/characters")
@@ -75,21 +71,52 @@ def normalise(name: str) -> str:
     return re.sub(r"[^a-z]", "", name.lower())
 
 
-def find_for_direction(files: list[Path], direction: str) -> Path:
-    """Pick the file whose name contains this direction, preferring the longest match.
+def assign_directions(files: list[Path], folder: Path) -> dict[str, Path]:
+    """Map each direction to exactly one file, by classifying every file once.
 
-    Longest-first matters: 'north' is a substring of 'northeast', so matching greedily
-    would hand the northeast art to north.
+    Substring matching in the other direction (asking "which file contains 'west'?") is a
+    trap: 'west' is inside 'northwest' and 'southwest', 'east' is inside 'northeast' and
+    'southeast'. Any tie-break on top of that -- shortest name, alphabetical -- silently
+    hands one compass point another's art and leaves a direction unused. That exact bug
+    shipped once here: 'west' resolved to walking-northwest.gif, so west was missing and
+    northwest appeared twice.
+
+    So: classify each FILE by the LONGEST direction its normalised name ends with, then
+    require the result to be a bijection. Ambiguity becomes a hard error, not a guess.
     """
-    target = normalise(direction)
-    matches = [f for f in files if target in normalise(f.stem)]
-    if not matches:
-        raise SystemExit(f"  no file matches direction '{direction}' in {files[0].parent}")
-    if len(matches) > 1:
-        # Prefer an exact stem match, else the shortest name (fewest extra tokens).
-        exact = [f for f in matches if normalise(f.stem).endswith(target)]
-        matches = exact or sorted(matches, key=lambda f: len(f.stem))
-    return matches[0]
+    longest_first = sorted(DIRECTIONS, key=len, reverse=True)
+    owner: dict[str, list[Path]] = {d: [] for d in DIRECTIONS}
+    unmatched: list[Path] = []
+
+    for f in files:
+        stem = normalise(f.stem)
+        hit = next((d for d in longest_first if stem.endswith(normalise(d))), None)
+        if hit is None:
+            unmatched.append(f)
+        else:
+            owner[hit].append(f)
+
+    problems = []
+    for d in DIRECTIONS:
+        if not owner[d]:
+            problems.append(f"    '{d}': no file")
+        elif len(owner[d]) > 1:
+            names = ", ".join(p.name for p in owner[d])
+            problems.append(f"    '{d}': {len(owner[d])} files ({names})")
+    if problems:
+        detail = "\n".join(problems)
+        extra = ""
+        if unmatched:
+            extra = "\n    unrecognised: " + ", ".join(p.name for p in unmatched)
+        raise SystemExit(
+            f"  {folder}: each of the 8 directions needs exactly one file.\n"
+            f"{detail}{extra}\n"
+            "  Name files so each ends with its direction, e.g. walking-northwest.gif."
+        )
+    if unmatched:
+        print(f"    ignoring {len(unmatched)} file(s) with no direction in the name: "
+              + ", ".join(p.name for p in unmatched))
+    return {d: owner[d][0] for d in DIRECTIONS}
 
 
 def load_frames(path: Path) -> list[Image.Image]:
@@ -133,9 +160,11 @@ def main() -> int:
             print(f"  skip: {src} not found")
             continue
         files = sorted(p for p in src.iterdir() if p.suffix.lower() in {".gif", ".png"})
+        chosen = assign_directions(files, src)
         per_dir = []
         for d in DIRECTIONS:
-            frames = load_frames(find_for_direction(files, d))
+            print(f"    {d:10} <- {chosen[d].name}")
+            frames = load_frames(chosen[d])
             per_dir.append(frames)
             all_frames.extend(frames)
         counts = {len(f) for f in per_dir}
