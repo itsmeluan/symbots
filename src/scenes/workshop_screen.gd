@@ -72,7 +72,7 @@ func _on_exit_tree() -> void:
 func _build_slot_buttons() -> void:
 	for slot_type: int in SLOT_ORDER:
 		var b := Button.new()
-		b.custom_minimum_size = Vector2(0, 46)
+		b.custom_minimum_size = Vector2(0, 54)
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.toggle_mode = true
 		b.set_meta("slot_type", slot_type)
@@ -109,6 +109,7 @@ func _refresh() -> void:
 		var btn: Button = _slot_buttons[slot_type]
 		btn.text = "%s\n  %s" % [_slot_name(slot_type), occupant]
 		btn.button_pressed = (slot_type == _selected_slot)
+		_apply_part_icon(btn, equipped)
 	_refresh_candidates()
 	_render_stats({})
 
@@ -129,7 +130,7 @@ func _refresh_candidates() -> void:
 	var equipped: PartInstance = _ctx.build.get_equipped(_selected_slot)
 	for inst: PartInstance in parts:
 		var b := Button.new()
-		b.custom_minimum_size = Vector2(0, 46)
+		b.custom_minimum_size = Vector2(0, 54)
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.text = "%s\n  %s · %s" % [
 			inst.part.display_name, _element_name(inst.part.element),
@@ -138,6 +139,7 @@ func _refresh_candidates() -> void:
 		if is_current:
 			b.text += "   (equipped)"
 			b.disabled = true
+		_apply_part_icon(b, inst)
 		b.pressed.connect(_on_candidate_pressed.bind(inst))
 		_candidate_list.add_child(b)
 
@@ -257,6 +259,18 @@ func _rarity_name(rarity: int) -> String:
 		PartDef.Rarity.BOSS_GRADE: return "Boss"
 		PartDef.Rarity.PROTOTYPE: return "Prototype"
 	return "—"
+
+
+## Show the part's sprite on a slot/candidate button, or clear it for an empty slot.
+## Resolved by convention through Art.texture("parts", <part_id>) — art-bible §8.4: the
+## filename IS the content id. expand_icon lets one 200-ish px source serve any button
+## height without a per-size asset.
+func _apply_part_icon(btn: Button, inst: PartInstance) -> void:
+	if inst == null:
+		btn.icon = null
+		return
+	btn.icon = Art.texture("parts", inst.part.id)
+	btn.expand_icon = true
 
 
 func _label(parent: Node, text: String, size: int, bold: bool = false) -> Label:

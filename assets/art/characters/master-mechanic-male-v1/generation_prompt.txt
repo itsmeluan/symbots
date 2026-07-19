@@ -1,0 +1,11 @@
+Use case: identity-preserve.
+Asset type: production master turnaround sheet for a top-down/isometric 2D game character.
+Input image: the supplied image is the sole identity and costume reference.
+
+Create one clean master turnaround sheet showing exactly eight views of the same young male field mechanic in a neutral standing idle pose. Preserve his identity and every costume invariant from the reference: chibi proportions; tan skin; large brown eyes; thick dark eyebrows; short messy dark teal-black hair with the same spiky silhouette; olive drab mechanic jacket with rolled pale cuffs, chest pockets and tiny red patch; white undershirt; dark charcoal cargo trousers with knee pads; black fingerless work gloves; brown heavy boots; dark belt; mustard-orange tool pouch with visible wrench tools and one small dangling cyan vial, always attached to the character's left hip. No weapon.
+
+Exact grid: four equal columns by two equal rows, one character centered in each cell, generous equal spacing, no overlap. Direction order: top row South, Southwest, West, Northwest; bottom row North, Northeast, East, Southeast. All eight figures use the same height, head size, proportions, clothing construction, colors, lighting, outline weight and foot baseline. Neutral animation-ready stance, hands empty, no walking stride. Rotate the same character around a fixed vertical axis without redesigning details.
+
+Style: polished game pixel art, deliberately placed square pixels, limited shared palette, readable one-to-two-pixel dark outline at intended scale, clustered shading, no antialiasing, no painterly or vector-smooth edges, no blur.
+
+Background: perfectly flat solid chroma magenta #ff00ff. No grid lines, labels, text, floor, shadows, reflections, scenery, effects, extra objects, duplicates or animation frames.

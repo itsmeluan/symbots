@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "character": "main_mechanic_male",
+  "source": "assets/art/characters/master-mechanic-male-v1/source/master_turnaround_keyed.png",
+  "frame_size": [
+    128,
+    128
+  ],
+  "pivot": {
+    "x": 64,
+    "y": 118,
+    "meaning": "shared foot baseline / animation origin"
+  },
+  "direction_order": [
+    "south",
+    "southwest",
+    "west",
+    "northwest",
+    "north",
+    "northeast",
+    "east",
+    "southeast"
+  ],
+  "atlas_layout": {
+    "columns": 8,
+    "rows": 1
+  },
+  "grid_layout": {
+    "columns": 4,
+    "rows": 2
+  },
+  "palette_colors": 48,
+  "alpha": "binary transparent/opaque",
+  "animation_ready_contract": {
+    "canvas_locked": true,
+    "body_axis_x": 64,
+    "foot_baseline_y": 118,
+    "do_not_recenter_by_silhouette": true
+  }
+}
