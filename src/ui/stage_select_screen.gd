@@ -18,6 +18,10 @@ const StageDefScript := preload("res://src/core/stages/stage_def.gd")
 ## the battle screen; the map does not perform transitions itself (ADR-0004/0008).
 signal stage_chosen(stage: StageDef)
 
+## Emitted when the player wants the Workshop. Same discipline — the map requests, the
+## root transitions.
+signal workshop_requested
+
 const MIN_ROW_HEIGHT := 60  ## comfortably past the 44pt touch minimum
 const CARD_SEPARATION := 6
 
@@ -58,6 +62,12 @@ func _build_layout() -> void:
 	header.add_child(_scrap_label)
 	_alloy_label = Label.new()
 	header.add_child(_alloy_label)
+
+	var workshop_button := Button.new()
+	workshop_button.text = "Workshop"
+	workshop_button.custom_minimum_size = Vector2(0, 44)
+	workshop_button.pressed.connect(Callable(self, "_on_workshop_pressed"))
+	root.add_child(workshop_button)
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -126,6 +136,10 @@ func _card_text(stage: StageDef, cleared: bool) -> String:
 		StageDefScript.Mode.RAID: kind = "  RAID"
 		StageDefScript.Mode.ENDLESS: kind = "  ENDLESS"
 	return "%s%d. %s%s" % [marker, stage.stage_level, stage.display_name, kind]
+
+
+func _on_workshop_pressed() -> void:
+	workshop_requested.emit()
 
 
 func _on_stage_pressed(stage: StageDef) -> void:

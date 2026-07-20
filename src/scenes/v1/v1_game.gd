@@ -12,6 +12,7 @@ extends Node
 
 const StageSelectScreenScript := preload("res://src/ui/stage_select_screen.gd")
 const BattleScreenScript := preload("res://src/ui/battle/battle_screen.gd")
+const WorkshopScreenScript := preload("res://src/ui/workshop/workshop_screen_v1.gd")
 const StageRunnerScript := preload("res://src/core/stages/stage_runner.gd")
 const BattleEngineScript := preload("res://src/core/battle_v1/battle_engine.gd")
 
@@ -25,6 +26,7 @@ var ctx: ServiceContext = null
 
 var _map: StageSelectScreen = null
 var _battle: BattleScreen = null
+var _workshop: WorkshopScreenV1 = null
 
 ## The run in progress: its runner, its stage, and where in the battle sequence we are.
 var _runner: StageRunner = null
@@ -84,6 +86,17 @@ func show_map() -> void:
 	add_child(_map)
 	_map.setup(ctx)
 	_map.stage_chosen.connect(Callable(self, "_on_stage_chosen"))
+	_map.workshop_requested.connect(Callable(self, "show_workshop"))
+
+
+## The Scrap sink. Reachable from the map because that is where the player lands after
+## every fight — an upgrade screen buried a level deeper is one the player forgets exists.
+func show_workshop() -> void:
+	_clear_screens()
+	_workshop = WorkshopScreenScript.new()
+	add_child(_workshop)
+	_workshop.setup(ctx)
+	_workshop.closed.connect(Callable(self, "show_map"))
 
 
 func _on_stage_chosen(stage: StageDef) -> void:
@@ -157,3 +170,7 @@ func _clear_screens() -> void:
 		remove_child(_battle)
 		_battle.queue_free()
 		_battle = null
+	if _workshop != null:
+		remove_child(_workshop)
+		_workshop.queue_free()
+		_workshop = null
