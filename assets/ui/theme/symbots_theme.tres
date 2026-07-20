@@ -1,61 +1,7 @@
-[gd_resource type="Theme" load_steps=18 format=3]
+[gd_resource type="Theme" format=3 uid="uid://b4kr08j0ufus0"]
 
-; Symbots — central UI Theme (ADR-0008 presentation tier).
-;
-; SINGLE SOURCE OF TRUTH for UI appearance. Edit colors/fonts/styles HERE and every
-; screen updates at once — no per-widget overrides in the .gd files.
-;
-; SPRITE SWAP PATH: when pixel art exists, change a StyleBoxFlat below to a
-; StyleBoxTexture (set its `texture` to your PNG) and every widget of that type gets
-; the sprite. Buttons/panels/bars are 9-slice friendly via content margins.
-;
-; Palette preserved from the code-built placeholder UI so the migration is visually
-; 1:1. Named type variations (TitleLabel, EnemyBar, PrimaryButton, ...) let a screen
-; opt a widget into a role via `theme_type_variation`.
-
-[sub_resource type="StyleBoxFlat" id="panel_card"]
-content_margin_left = 12.0
-content_margin_top = 12.0
-content_margin_right = 12.0
-content_margin_bottom = 12.0
-bg_color = Color(0.16, 0.17, 0.2, 1)
-corner_radius_top_left = 0
-corner_radius_top_right = 0
-corner_radius_bottom_right = 0
-corner_radius_bottom_left = 0
-
-[sub_resource type="StyleBoxFlat" id="btn_normal"]
-content_margin_left = 14.0
-content_margin_top = 8.0
-content_margin_right = 14.0
-content_margin_bottom = 8.0
-bg_color = Color(0.2, 0.22, 0.27, 1)
-corner_radius_top_left = 0
-corner_radius_top_right = 0
-corner_radius_bottom_right = 0
-corner_radius_bottom_left = 0
-
-[sub_resource type="StyleBoxFlat" id="btn_hover"]
-content_margin_left = 14.0
-content_margin_top = 8.0
-content_margin_right = 14.0
-content_margin_bottom = 8.0
-bg_color = Color(0.26, 0.29, 0.35, 1)
-corner_radius_top_left = 0
-corner_radius_top_right = 0
-corner_radius_bottom_right = 0
-corner_radius_bottom_left = 0
-
-[sub_resource type="StyleBoxFlat" id="btn_pressed"]
-content_margin_left = 14.0
-content_margin_top = 8.0
-content_margin_right = 14.0
-content_margin_bottom = 8.0
-bg_color = Color(0.24, 0.42, 0.62, 1)
-corner_radius_top_left = 0
-corner_radius_top_right = 0
-corner_radius_bottom_right = 0
-corner_radius_bottom_left = 0
+[sub_resource type="StyleBoxFlat" id="bar_fill_break"]
+bg_color = Color(0.92, 0.7, 0.24, 1)
 
 [sub_resource type="StyleBoxFlat" id="btn_disabled"]
 content_margin_left = 14.0
@@ -63,63 +9,43 @@ content_margin_top = 8.0
 content_margin_right = 14.0
 content_margin_bottom = 8.0
 bg_color = Color(0.15, 0.16, 0.19, 1)
-corner_radius_top_left = 0
-corner_radius_top_right = 0
-corner_radius_bottom_right = 0
-corner_radius_bottom_left = 0
 
-[sub_resource type="StyleBoxFlat" id="bar_bg"]
-bg_color = Color(0.08, 0.08, 0.1, 1)
-corner_radius_top_left = 0
-corner_radius_top_right = 0
-corner_radius_bottom_right = 0
-corner_radius_bottom_left = 0
+[sub_resource type="StyleBoxFlat" id="btn_hover"]
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+bg_color = Color(0.26, 0.29, 0.35, 1)
 
-[sub_resource type="StyleBoxFlat" id="bar_fill_default"]
-bg_color = Color(0.5, 0.5, 0.5, 1)
-corner_radius_top_left = 0
-corner_radius_top_right = 0
-corner_radius_bottom_right = 0
-corner_radius_bottom_left = 0
+[sub_resource type="StyleBoxFlat" id="btn_normal"]
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+bg_color = Color(0.2, 0.22, 0.27, 1)
+
+[sub_resource type="StyleBoxFlat" id="btn_pressed"]
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+bg_color = Color(0.24, 0.42, 0.62, 1)
 
 [sub_resource type="StyleBoxFlat" id="bar_fill_enemy"]
 bg_color = Color(0.85, 0.3, 0.28, 1)
-corner_radius_top_left = 0
-corner_radius_top_right = 0
-corner_radius_bottom_right = 0
-corner_radius_bottom_left = 0
-
-[sub_resource type="StyleBoxFlat" id="bar_fill_player"]
-bg_color = Color(0.32, 0.72, 0.4, 1)
-corner_radius_top_left = 0
-corner_radius_top_right = 0
-corner_radius_bottom_right = 0
-corner_radius_bottom_left = 0
 
 [sub_resource type="StyleBoxFlat" id="bar_fill_energy"]
 bg_color = Color(0.3, 0.55, 0.85, 1)
-corner_radius_top_left = 0
-corner_radius_top_right = 0
-corner_radius_bottom_right = 0
-corner_radius_bottom_left = 0
 
-[sub_resource type="StyleBoxFlat" id="bar_fill_break"]
-bg_color = Color(0.92, 0.7, 0.24, 1)
-corner_radius_top_left = 0
-corner_radius_top_right = 0
-corner_radius_bottom_right = 0
-corner_radius_bottom_left = 0
-
-[sub_resource type="StyleBoxFlat" id="primary_normal"]
-content_margin_left = 16.0
+[sub_resource type="StyleBoxFlat" id="panel_card"]
+content_margin_left = 12.0
 content_margin_top = 12.0
-content_margin_right = 16.0
+content_margin_right = 12.0
 content_margin_bottom = 12.0
-bg_color = Color(0.28, 0.5, 0.74, 1)
-corner_radius_top_left = 0
-corner_radius_top_right = 0
-corner_radius_bottom_right = 0
-corner_radius_bottom_left = 0
+bg_color = Color(0.16, 0.17, 0.2, 1)
+
+[sub_resource type="StyleBoxFlat" id="bar_fill_player"]
+bg_color = Color(0.32, 0.72, 0.4, 1)
 
 [sub_resource type="StyleBoxFlat" id="primary_hover"]
 content_margin_left = 16.0
@@ -127,10 +53,13 @@ content_margin_top = 12.0
 content_margin_right = 16.0
 content_margin_bottom = 12.0
 bg_color = Color(0.34, 0.58, 0.82, 1)
-corner_radius_top_left = 0
-corner_radius_top_right = 0
-corner_radius_bottom_right = 0
-corner_radius_bottom_left = 0
+
+[sub_resource type="StyleBoxFlat" id="primary_normal"]
+content_margin_left = 16.0
+content_margin_top = 12.0
+content_margin_right = 16.0
+content_margin_bottom = 12.0
+bg_color = Color(0.28, 0.5, 0.74, 1)
 
 [sub_resource type="StyleBoxFlat" id="primary_pressed"]
 content_margin_left = 16.0
@@ -138,26 +67,12 @@ content_margin_top = 12.0
 content_margin_right = 16.0
 content_margin_bottom = 12.0
 bg_color = Color(0.22, 0.4, 0.6, 1)
-corner_radius_top_left = 0
-corner_radius_top_right = 0
-corner_radius_bottom_right = 0
-corner_radius_bottom_left = 0
 
-[sub_resource type="StyleBoxFlat" id="target_normal"]
-content_margin_left = 12.0
-content_margin_top = 10.0
-content_margin_right = 12.0
-content_margin_bottom = 10.0
-bg_color = Color(0.18, 0.2, 0.24, 1)
-border_color = Color(0.28, 0.3, 0.35, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-corner_radius_top_left = 0
-corner_radius_top_right = 0
-corner_radius_bottom_right = 0
-corner_radius_bottom_left = 0
+[sub_resource type="StyleBoxFlat" id="bar_bg"]
+bg_color = Color(0.08, 0.08, 0.1, 1)
+
+[sub_resource type="StyleBoxFlat" id="bar_fill_default"]
+bg_color = Color(0.5, 0.5, 0.5, 1)
 
 [sub_resource type="StyleBoxFlat" id="target_hover"]
 content_margin_left = 12.0
@@ -165,10 +80,18 @@ content_margin_top = 10.0
 content_margin_right = 12.0
 content_margin_bottom = 10.0
 bg_color = Color(0.22, 0.24, 0.29, 1)
-corner_radius_top_left = 0
-corner_radius_top_right = 0
-corner_radius_bottom_right = 0
-corner_radius_bottom_left = 0
+
+[sub_resource type="StyleBoxFlat" id="target_normal"]
+content_margin_left = 12.0
+content_margin_top = 10.0
+content_margin_right = 12.0
+content_margin_bottom = 10.0
+bg_color = Color(0.18, 0.2, 0.24, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.28, 0.3, 0.35, 1)
 
 [sub_resource type="StyleBoxFlat" id="target_pressed"]
 content_margin_left = 12.0
@@ -176,57 +99,53 @@ content_margin_top = 10.0
 content_margin_right = 12.0
 content_margin_bottom = 10.0
 bg_color = Color(0.32, 0.28, 0.12, 1)
-border_color = Color(0.92, 0.7, 0.24, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-corner_radius_top_left = 0
-corner_radius_top_right = 0
-corner_radius_bottom_right = 0
-corner_radius_bottom_left = 0
+border_color = Color(0.92, 0.7, 0.24, 1)
 
 [resource]
 default_font_size = 15
+BreakBar/base_type = &"ProgressBar"
+BreakBar/styles/fill = SubResource("bar_fill_break")
 Button/colors/font_color = Color(0.9, 0.92, 0.95, 1)
+Button/colors/font_disabled_color = Color(0.45, 0.46, 0.5, 1)
 Button/colors/font_hover_color = Color(1, 1, 1, 1)
 Button/colors/font_pressed_color = Color(1, 1, 1, 1)
-Button/colors/font_disabled_color = Color(0.45, 0.46, 0.5, 1)
 Button/font_sizes/font_size = 16
-Button/styles/normal = SubResource("btn_normal")
-Button/styles/hover = SubResource("btn_hover")
-Button/styles/pressed = SubResource("btn_pressed")
 Button/styles/disabled = SubResource("btn_disabled")
-Label/colors/font_color = Color(0.86, 0.88, 0.92, 1)
-PanelContainer/styles/panel = SubResource("panel_card")
-ProgressBar/colors/font_color = Color(0.86, 0.88, 0.92, 1)
-ProgressBar/styles/background = SubResource("bar_bg")
-ProgressBar/styles/fill = SubResource("bar_fill_default")
-TitleLabel/base_type = &"Label"
-TitleLabel/colors/font_color = Color(1, 1, 1, 1)
-TitleLabel/font_sizes/font_size = 22
-HeadingLabel/base_type = &"Label"
-HeadingLabel/colors/font_color = Color(0.55, 0.75, 0.95, 1)
-HeadingLabel/font_sizes/font_size = 15
+Button/styles/hover = SubResource("btn_hover")
+Button/styles/normal = SubResource("btn_normal")
+Button/styles/pressed = SubResource("btn_pressed")
 DimLabel/base_type = &"Label"
 DimLabel/colors/font_color = Color(0.62, 0.64, 0.68, 1)
 DimLabel/font_sizes/font_size = 13
 EnemyBar/base_type = &"ProgressBar"
 EnemyBar/styles/fill = SubResource("bar_fill_enemy")
-PlayerBar/base_type = &"ProgressBar"
-PlayerBar/styles/fill = SubResource("bar_fill_player")
 EnergyBar/base_type = &"ProgressBar"
 EnergyBar/styles/fill = SubResource("bar_fill_energy")
-BreakBar/base_type = &"ProgressBar"
-BreakBar/styles/fill = SubResource("bar_fill_break")
+HeadingLabel/base_type = &"Label"
+HeadingLabel/colors/font_color = Color(0.55, 0.75, 0.95, 1)
+HeadingLabel/font_sizes/font_size = 15
+Label/colors/font_color = Color(0.86, 0.88, 0.92, 1)
+PanelContainer/styles/panel = SubResource("panel_card")
+PlayerBar/base_type = &"ProgressBar"
+PlayerBar/styles/fill = SubResource("bar_fill_player")
 PrimaryButton/base_type = &"Button"
 PrimaryButton/colors/font_color = Color(1, 1, 1, 1)
 PrimaryButton/font_sizes/font_size = 20
-PrimaryButton/styles/normal = SubResource("primary_normal")
 PrimaryButton/styles/hover = SubResource("primary_hover")
+PrimaryButton/styles/normal = SubResource("primary_normal")
 PrimaryButton/styles/pressed = SubResource("primary_pressed")
+ProgressBar/colors/font_color = Color(0.86, 0.88, 0.92, 1)
+ProgressBar/styles/background = SubResource("bar_bg")
+ProgressBar/styles/fill = SubResource("bar_fill_default")
 TargetButton/base_type = &"Button"
 TargetButton/font_sizes/font_size = 18
-TargetButton/styles/normal = SubResource("target_normal")
 TargetButton/styles/hover = SubResource("target_hover")
+TargetButton/styles/normal = SubResource("target_normal")
 TargetButton/styles/pressed = SubResource("target_pressed")
+TitleLabel/base_type = &"Label"
+TitleLabel/colors/font_color = Color(1, 1, 1, 1)
+TitleLabel/font_sizes/font_size = 22
