@@ -276,3 +276,26 @@ extends Resource
 ## Scrap charged to pull an install item back out of a socket (§4.4, owner's call:
 ## "podem ser removidos, mas custa scrap").
 @export var item_removal_scrap_cost: int = 400
+
+# ---------------------------------------------------------------------------
+# v1 economy tuning (design/v1/00-core-design.md §5). APPEND-ONLY.
+# ---------------------------------------------------------------------------
+
+## Part upgrade cost curve: base + linear*(L-1) + quadratic*(L-1)^2.
+## Quadratic rather than linear because a linear curve makes late levels trivial, and once
+## upgrades are trivial the single Scrap pool stops being a constraint — which is the whole
+## tension §5.2 is built on.
+@export var part_upgrade_base_cost: int = 40
+@export var part_upgrade_linear_cost: int = 15
+@export var part_upgrade_quadratic_cost: int = 1
+
+## Scrap for winning one battle, and the per-stage increment. Kept deliberately BELOW the
+## rate at which upgrade costs climb: if income kept pace with costs, the budget would stop
+## mattering and every upgrade would become a formality rather than a decision.
+@export var scrap_reward_base: int = 60
+@export var scrap_reward_per_stage: int = 5
+
+## The stage-completion chest, as a multiple of one battle's reward (§6). Large enough that
+## finishing beats farming the first fight forever — otherwise players optimise by
+## replaying the easiest battle and the stage structure stops meaning anything.
+@export var scrap_chest_multiplier: int = 6

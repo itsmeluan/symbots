@@ -344,6 +344,12 @@ game's hook is the Scrap-budget tension; selling infinite Scrap sells the hook i
 
 ## 9. Open items
 
+- **Economy pacing needs a playtest pass.** The cost and reward curves in
+  `BalanceConfig` have the right SHAPE — costs accelerate, income does not keep pace, so
+  the §5.2 budget tension holds — and the shape is what the tests pin. The magnitudes are
+  an informed guess, not a measurement: at the current values one part reaches its Mk I cap
+  in ~51 battles and all five in ~258, which is what triggers Retrofit. Whether that reads
+  as a satisfying first arc or as a grind can only be answered by playing it.
 - Exact stat list and formulas → `02-stats-and-formulas.md`
 - Tree layout and node budget → `04-skill-tree.md`
 - The 8 slice species → `05-species.md`
