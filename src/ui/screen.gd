@@ -40,6 +40,31 @@ func setup(ctx: ServiceContext) -> void:
 	pass
 
 
+## Install a full-screen background image behind the screen's content, dimmed so the UI
+## panels stay legible on top. A missing texture is a no-op — a screen without its art
+## still works, just on the flat backdrop.
+##
+## Added as the FIRST child so it sits behind everything, and mouse-ignoring so taps fall
+## through to the controls. Call from setup() BEFORE building the layout, or the content
+## will end up behind the image.
+func _set_background(path: String, dim: float = 0.55) -> void:
+	if not ResourceLoader.exists(path):
+		return
+	var bg := TextureRect.new()
+	bg.texture = load(path)
+	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(bg)
+	# A dark scrim so text and panels read against busy art.
+	var scrim := ColorRect.new()
+	scrim.color = Color(UIPalette.INK, dim)
+	scrim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(scrim)
+
+
 ## Godot notification handler. Handles EXIT_TREE to auto-disconnect all owned
 ## connections and call the subclass hook. Subclasses that override _notification
 ## MUST call super._notification(what) first.

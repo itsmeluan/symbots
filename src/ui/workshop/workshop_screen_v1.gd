@@ -32,6 +32,7 @@ var _retrofit_button: Button
 
 func setup(ctx: ServiceContext) -> void:
 	_ctx = ctx
+	_set_background("res://assets/art/workshop/bench_backdrop.png", 0.6)
 	_build_layout()
 	if _ctx.wallet != null:
 		_connect_owned(_ctx.wallet.balance_changed, Callable(self, "_on_balance_changed"))

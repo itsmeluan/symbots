@@ -48,6 +48,7 @@ var _auto_enabled: bool = false
 
 func setup(ctx: ServiceContext) -> void:
 	_ctx = ctx
+	_set_background("res://assets/art/battle/battle_arena_background.png", 0.62)
 	_build_layout()
 
 
