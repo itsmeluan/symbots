@@ -49,10 +49,10 @@ func _on_exit_tree() -> void:
 
 
 func _build_layout() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var root := VBoxContainer.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.add_theme_constant_override("separation", 4)
 	add_child(root)
 
@@ -313,6 +313,7 @@ func _on_symbot_selected(symbot: SymbotInstance) -> void:
 	_selected_node = &""
 	# Recentre on the new Symbot's doorway — leaving the pan where it was would drop the
 	# player somewhere unrelated to the build they just switched to.
+	_view._has_user_panned = false
 	_view.center_on(_entry_of(symbot))
 	refresh()
 

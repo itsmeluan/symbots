@@ -54,10 +54,10 @@ func _on_exit_tree() -> void:
 
 
 func _build_layout() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var root := VBoxContainer.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.add_theme_constant_override("separation", 6)
 	add_child(root)
 
@@ -75,18 +75,21 @@ func _build_layout() -> void:
 	workshop_button.text = "Workshop"
 	workshop_button.custom_minimum_size = Vector2(0, 44)
 	workshop_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	workshop_button.clip_text = true
 	workshop_button.pressed.connect(Callable(self, "_on_workshop_pressed"))
 	menu.add_child(workshop_button)
 	var squad_button := Button.new()
 	squad_button.text = "Squad"
 	squad_button.custom_minimum_size = Vector2(0, 44)
 	squad_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	squad_button.clip_text = true
 	squad_button.pressed.connect(Callable(self, "_on_squad_pressed"))
 	menu.add_child(squad_button)
 	var tree_button := Button.new()
 	tree_button.text = "Skill Tree"
 	tree_button.custom_minimum_size = Vector2(0, 44)
 	tree_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tree_button.clip_text = true
 	tree_button.pressed.connect(Callable(self, "_on_tree_pressed"))
 	menu.add_child(tree_button)
 

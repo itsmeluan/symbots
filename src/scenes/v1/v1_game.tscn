@@ -2,5 +2,9 @@
 
 [ext_resource type="Script" path="res://src/scenes/v1/v1_game.gd" id="1_v1game"]
 
-[node name="V1Game" type="Node"]
+[node name="V1Game" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 script = ExtResource("1_v1game")

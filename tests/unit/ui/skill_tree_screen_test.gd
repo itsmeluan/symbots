@@ -61,6 +61,10 @@ func test_the_screen_opens_on_a_fielded_symbot() -> void:
 
 func test_the_view_is_centred_on_the_symbots_doorway() -> void:
 	# Opening on the origin of a 156-node graph would show the player empty space.
+	# The re-centre has to survive the first layout: setup() runs while the control is
+	# still 0x0, and centring on a zero rect parks the doorway in the top-left corner.
+	await get_tree().process_frame
+	await get_tree().process_frame
 	var species: SpeciesDef = _game.ctx.species.get_species(_symbot().species_id)
 	var entry := _game.ctx.tree.get_node_def(species.tree_entry_node)
 	var on_screen := entry.position + _screen._view._pan

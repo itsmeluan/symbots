@@ -12,8 +12,13 @@
 ## class_name'd so tests can declare `var game: V1Game` and get typed member access. Left
 ## untyped, every `game.ctx.<anything>` is a Variant and `:=` inference fails at parse time
 ## — which GUT reports by silently skipping the whole file while staying green.
+##
+## Extends CONTROL, not Node. A Control child of a plain Node never resolves its anchors, so
+## every Screen was laid out at size (0,0): the visible widgets fell back to their minimum
+## sizes and anything with EXPAND_FILL — the stage list, the tree graph, the battlefield —
+## got zero space and vanished. The whole game rendered as a strip in the corner.
 class_name V1Game
-extends Node
+extends Control
 
 const StageSelectScreenScript := preload("res://src/ui/stage_select_screen.gd")
 const BattleScreenScript := preload("res://src/ui/battle/battle_screen.gd")
@@ -71,6 +76,8 @@ var _result = null
 
 
 func _ready() -> void:
+	# Fill the viewport, so every screen parented here has a real rect to anchor against.
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	ctx = build_context()
 	attach_save(SaveLoadService.new(ctx.log, save_backend))
 	load_or_start_new()
@@ -86,14 +93,24 @@ func attach_save(service: SaveLoadService) -> void:
 			ctx.inventory_items, ctx.item_catalog, ctx.expeditions, ctx.progress))
 
 
-## Load the save, or hand a brand-new player their squad.
+## Load the save, then make sure the player actually has Symbots.
 ##
-## The gift is only for a genuinely NEW player, so it is gated on the load having found
-## nothing. Granting after a successful load would hand duplicates to anyone whose roster
-## happened to be empty — which is exactly what a player who scrapped everything looks like.
+## The gift is gated on the ROSTER BEING EMPTY after restoring — not on the load having
+## failed. An earlier version used the load result, reasoning that re-granting could hand
+## duplicates to someone who had scrapped everything. That was the wrong trade: the failure
+## it prevented is cosmetic, and the one it caused is fatal.
+##
+## What it caused: a save written by the OLD game parses fine and returns ok, but contains
+## no `v1_state` at all. The v1 roster restored empty, the gift was skipped because the load
+## "succeeded", and the player booted into a stage map with no squad — every stage
+## unenterable, no way out, and nothing on screen explaining why.
+##
+## Emptiness is also the honest condition on its own terms: a player with zero Symbots
+## cannot play, so re-granting is the correct recovery rather than a bug to avoid.
 func load_or_start_new() -> void:
-	var result := save_service.load(SAVE_SLOT) if save_service != null else {}
-	if not result.get("ok", false):
+	if save_service != null:
+		save_service.load(SAVE_SLOT)
+	if ctx.roster.symbots.is_empty():
 		StartingSquad.grant(ctx.roster, ctx.species, ctx.log)
 
 
@@ -146,11 +163,21 @@ func _resolve_log() -> LogSink:
 # Screens
 # ---------------------------------------------------------------------------
 
+## Add a screen and give it the full viewport BEFORE setup runs.
+##
+## Every screen goes through here. Adding a Control without sizing it leaves it at 0x0, and
+## a screen at 0x0 still draws its fixed-size widgets while everything with EXPAND_FILL —
+## the stage list, the tree graph, the battlefield — silently gets no space at all.
+func _present(screen: Screen) -> void:
+	add_child(screen)
+	screen.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	screen.setup(ctx)
+
+
 func show_map() -> void:
 	_clear_screens()
 	_map = StageSelectScreenScript.new()
-	add_child(_map)
-	_map.setup(ctx)
+	_present(_map)
 	_map.stage_chosen.connect(Callable(self, "_on_stage_chosen"))
 	_map.workshop_requested.connect(Callable(self, "show_workshop"))
 	_map.tree_requested.connect(Callable(self, "show_tree"))
@@ -162,8 +189,7 @@ func show_map() -> void:
 func show_workshop() -> void:
 	_clear_screens()
 	_workshop = WorkshopScreenScript.new()
-	add_child(_workshop)
-	_workshop.setup(ctx)
+	_present(_workshop)
 	_workshop.closed.connect(Callable(self, "_on_sub_screen_closed"))
 
 
@@ -173,8 +199,7 @@ func show_workshop() -> void:
 func show_tree() -> void:
 	_clear_screens()
 	_tree_screen = SkillTreeScreenScript.new()
-	add_child(_tree_screen)
-	_tree_screen.setup(ctx)
+	_present(_tree_screen)
 	_tree_screen.closed.connect(Callable(self, "_on_sub_screen_closed"))
 
 
@@ -183,8 +208,7 @@ func show_tree() -> void:
 func show_squad() -> void:
 	_clear_screens()
 	_squad = SquadScreenScript.new()
-	add_child(_squad)
-	_squad.setup(ctx)
+	_present(_squad)
 	_squad.closed.connect(Callable(self, "_on_sub_screen_closed"))
 
 
@@ -205,8 +229,7 @@ func _on_stage_chosen(stage: StageDef) -> void:
 
 	_clear_screens()
 	_battle = BattleScreenScript.new()
-	add_child(_battle)
-	_battle.setup(ctx)
+	_present(_battle)
 	_battle.battle_finished.connect(Callable(self, "_on_battle_finished"))
 	_start_next_battle()
 
@@ -260,8 +283,7 @@ func _finish_run(cleared: bool) -> void:
 func show_reward(result, stage: StageDef) -> void:
 	_clear_screens()
 	_reward = RewardScreenScript.new()
-	add_child(_reward)
-	_reward.setup(ctx)
+	_present(_reward)
 	_reward.show_result(result, stage)
 	_reward.dismissed.connect(Callable(self, "show_map"))
 

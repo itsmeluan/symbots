@@ -74,10 +74,10 @@ func begin_battle(p_engine: BattleEngine, skill_table: Dictionary) -> void:
 # ---------------------------------------------------------------------------
 
 func _build_layout() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var root := VBoxContainer.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.add_theme_constant_override("separation", 4)
 	add_child(root)
 
@@ -308,6 +308,9 @@ func _add_skill_button(skill_id: StringName, enabled: bool, is_ult := false) -> 
 	button.text = ("★ " if is_ult else "") + skill.display_name
 	button.custom_minimum_size = Vector2(0, MIN_BUTTON_HEIGHT)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# Truncate a long skill name rather than letting it widen the bar past the screen edge —
+	# an overflowing row puts the last button somewhere the thumb cannot reach.
+	button.clip_text = true
 	button.disabled = not enabled
 	button.pressed.connect(Callable(self, "_on_skill_pressed").bind(skill_id))
 	_skill_bar.add_child(button)

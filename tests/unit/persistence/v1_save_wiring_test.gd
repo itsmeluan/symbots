@@ -79,8 +79,8 @@ func test_a_reopened_game_finds_what_it_left() -> void:
 
 
 func test_reopening_does_not_hand_out_a_second_starting_squad() -> void:
-	# The gift is gated on the LOAD finding nothing, not on the roster being empty. Gating
-	# on emptiness would re-gift to anyone who had scrapped everything.
+	# The gift is gated on the roster being empty AFTER restore, so a save that actually
+	# restored Symbots must not trigger it again.
 	_game.save_now()
 	var reopened := _new_game(_backend)
 	assert_eq(reopened.ctx.roster.symbots.size(), StartingSquad.SPECIES.size(),
@@ -159,6 +159,39 @@ func test_the_app_being_backgrounded_saves() -> void:
 # ---------------------------------------------------------------------------
 # Failure modes
 # ---------------------------------------------------------------------------
+
+func test_a_save_from_the_old_game_still_gives_the_player_a_squad() -> void:
+	# The bug that shipped: a v0 save parses fine and load() returns ok, but contains no
+	# `v1_state` at all. Gating the gift on the load result meant the roster restored empty,
+	# the gift was skipped because the load "succeeded", and the player booted into a stage
+	# map with no squad — every stage unenterable and nothing on screen explaining why.
+	var backend := MemoryBackend.new()
+	backend.files["user://save_slot_0.json"] = JSON.stringify({
+		"save_format_version": 1,
+		"providers": {"player_state": {"equipped": {}, "inventory": []}},
+	})
+
+	var game := _new_game(backend)
+
+	assert_eq(game.ctx.roster.symbots.size(), StartingSquad.SPECIES.size(),
+		"a save with no v1 state must still leave the player able to play")
+	assert_eq(game.ctx.roster.squad_size(), 4)
+
+
+func test_an_empty_roster_is_repaired_rather_than_left_unplayable() -> void:
+	# A player with zero Symbots cannot play at all, so re-granting is the correct recovery
+	# rather than a duplicate to guard against.
+	var backend := MemoryBackend.new()
+	backend.files["user://save_slot_0.json"] = JSON.stringify({
+		"save_format_version": 1,
+		"providers": {"v1_state": {"symbots": [], "squad": [], "wallet": {"scrap": 900}}},
+	})
+
+	var game := _new_game(backend)
+
+	assert_eq(game.ctx.roster.symbots.size(), StartingSquad.SPECIES.size())
+	assert_eq(game.ctx.wallet.scrap, 900, "and the rest of the save is untouched")
+
 
 func test_a_corrupt_save_starts_a_new_game_rather_than_crashing() -> void:
 	_game.save_now()

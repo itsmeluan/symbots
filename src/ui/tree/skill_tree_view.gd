@@ -38,6 +38,17 @@ var frontier: Dictionary = {}
 var selected: StringName = &""
 
 var _pan := Vector2.ZERO
+
+## The node the view wants centred, re-applied whenever the control is resized.
+##
+## center_on() runs during setup(), when the control still measures 0x0 — centring on a
+## zero-size rect puts the focus node in the top-left corner instead of the middle. Layout
+## happens a frame later, so the pan has to be recomputed then.
+var _focus_id: StringName = &""
+
+## Once the player has dragged, the view is theirs: a resize must not yank it back.
+var _has_user_panned := false
+
 var _dragging := false
 var _drag_started_at := Vector2.ZERO
 var _drag_distance := 0.0
@@ -46,16 +57,24 @@ var _drag_distance := 0.0
 func _init() -> void:
 	clip_contents = true
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	resized.connect(_on_resized)
+
+
+func _on_resized() -> void:
+	if not _has_user_panned:
+		center_on(_focus_id)
 
 
 ## Bind the tree and centre the view on [param focus] — normally the species' entry node,
 ## because opening on the origin of a 156-node graph would show the player empty space.
 func bind(p_tree: SkillTree, focus: StringName) -> void:
 	tree = p_tree
+	_has_user_panned = false
 	center_on(focus)
 
 
 func center_on(node_id: StringName) -> void:
+	_focus_id = node_id
 	if tree == null:
 		return
 	var node := tree.get_node_def(node_id)
@@ -149,6 +168,7 @@ func _gui_input(event: InputEvent) -> void:
 					node_tapped.emit(hit)
 		accept_event()
 	elif event is InputEventMouseMotion and _dragging:
+		_has_user_panned = true
 		_pan += event.relative
 		_drag_distance += event.relative.length()
 		queue_redraw()
