@@ -73,6 +73,7 @@ var progress: StageProgress
 var species: SpeciesCatalog
 var stages: StageCatalog
 var tree: SkillTree
+var item_catalog: InstallItemCatalog
 
 ## skill_id -> SkillDef, built once from the catalog (§3.4).
 var skills: Dictionary = {}

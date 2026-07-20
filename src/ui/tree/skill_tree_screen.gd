@@ -11,6 +11,7 @@ extends Screen
 
 const SkillTreeViewScript := preload("res://src/ui/tree/skill_tree_view.gd")
 const SkillNodeDefScript := preload("res://src/core/tree/skill_node_def.gd")
+const ItemFittingScript := preload("res://src/core/tree/item_fitting.gd")
 
 signal closed
 
@@ -27,6 +28,9 @@ var _node_title: Label
 var _node_detail: Label
 var _allocate_button: Button
 var _respec_button: Button
+
+## Fit / unfit controls, shown only when the selected node is a socket.
+var _fit_row: HBoxContainer
 
 
 func setup(ctx: ServiceContext) -> void:
@@ -92,6 +96,10 @@ func _build_layout() -> void:
 	_allocate_button.pressed.connect(Callable(self, "_on_allocate_pressed"))
 	root.add_child(_allocate_button)
 
+	_fit_row = HBoxContainer.new()
+	_fit_row.custom_minimum_size = Vector2(0, MIN_BUTTON_HEIGHT)
+	root.add_child(_fit_row)
+
 	_respec_button = Button.new()
 	_respec_button.custom_minimum_size = Vector2(0, MIN_BUTTON_HEIGHT)
 	_respec_button.pressed.connect(Callable(self, "_on_respec_pressed"))
@@ -105,6 +113,7 @@ func refresh() -> void:
 	_refresh_points()
 	_refresh_view()
 	_refresh_detail()
+	_refresh_fitting()
 	_refresh_respec()
 
 
@@ -214,6 +223,85 @@ func _refresh_respec() -> void:
 	var cost := TreeAllocator.respec_cost(_selected_symbot, _ctx.balance)
 	_respec_button.text = "Respec (%d Scrap)" % cost
 	_respec_button.disabled = not _ctx.wallet.can_afford(Wallet.SCRAP, cost)
+
+
+## Socket controls. Hidden entirely for a non-socket node rather than shown disabled — an
+## always-present "Fit" button that is dead on 140 of 156 nodes trains the player to ignore
+## the whole row.
+func _refresh_fitting() -> void:
+	for child in _fit_row.get_children():
+		_fit_row.remove_child(child)
+		child.queue_free()
+
+	if _selected_symbot == null or _selected_node == &"":
+		_fit_row.visible = false
+		return
+	var node := _ctx.tree.get_node_def(_selected_node)
+	if node == null or node.node_type != SkillNodeDefScript.NodeType.SOCKET:
+		_fit_row.visible = false
+		return
+	_fit_row.visible = true
+
+	if _selected_symbot.installed_items.has(_selected_node):
+		_build_unfit_button(node)
+		return
+
+	var options := ItemFittingScript.fitting_options(_ctx.tree, _selected_node,
+		_ctx.inventory_items, _ctx.item_catalog)
+	if options.is_empty():
+		var none := Label.new()
+		none.text = "No %s owned" % String(node.socket_accepts).replace("_", " ")
+		_fit_row.add_child(none)
+		return
+	# Strongest first — the player almost always wants their best chip.
+	for item_id in options:
+		_fit_row.add_child(_build_fit_button(item_id))
+
+
+func _build_fit_button(item_id: StringName) -> Button:
+	var item: InstallItemDef = _ctx.item_catalog.get_item(item_id)
+	var button := Button.new()
+	button.text = "Fit %s (x%d)" % [item.display_name if item != null else String(item_id),
+		_ctx.inventory_items.count(item_id)]
+	button.custom_minimum_size = Vector2(0, MIN_BUTTON_HEIGHT)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.pressed.connect(Callable(self, "_on_fit_pressed").bind(item_id))
+	return button
+
+
+func _build_unfit_button(node: SkillNodeDef) -> void:
+	var fitted: StringName = _selected_symbot.installed_items[_selected_node]
+	var item: InstallItemDef = _ctx.item_catalog.get_item(fitted)
+	var cost := ItemFittingScript.removal_cost(_selected_symbot, _selected_node,
+		_ctx.item_catalog)
+
+	var label := Label.new()
+	label.text = "Fitted: %s" % (item.display_name if item != null else String(fitted))
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_fit_row.add_child(label)
+
+	var button := Button.new()
+	# The warning is on the button because pulling a chip ALSO re-locks the node, and a
+	# player who loses a node they paid a point for without being told would be right to
+	# call it a bug.
+	button.text = "Remove (%d Scrap, re-locks)" % cost
+	button.custom_minimum_size = Vector2(0, MIN_BUTTON_HEIGHT)
+	button.disabled = ItemFittingScript.can_unfit(_selected_symbot, _selected_node,
+		_ctx.wallet, _ctx.item_catalog) != ItemFittingScript.Refusal.OK
+	button.pressed.connect(Callable(self, "_on_unfit_pressed"))
+	_fit_row.add_child(button)
+
+
+func _on_fit_pressed(item_id: StringName) -> void:
+	ItemFittingScript.fit(_ctx.tree, _selected_symbot, _selected_node, item_id,
+		_ctx.inventory_items, _ctx.item_catalog)
+	refresh()
+
+
+func _on_unfit_pressed() -> void:
+	ItemFittingScript.unfit(_selected_symbot, _selected_node, _ctx.inventory_items,
+		_ctx.wallet, _ctx.item_catalog)
+	refresh()
 
 
 # ---------------------------------------------------------------------------
