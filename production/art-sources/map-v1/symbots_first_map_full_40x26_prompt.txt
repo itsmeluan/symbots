@@ -1,0 +1,7 @@
+Create one enormous edge-to-edge overview of the entire first Symbots overworld map, as if the camera is high above and the player can scroll across the whole world. The map represents 40 columns by 26 rows of conceptual 64x64 tiles. Do not draw the grid, but align paths, floors, walls, cave mouths, props and terrain changes to an invisible regular tile grid.
+
+Preserve the supplied first-map reference's bright mechanical-wilderness identity: open Mechanical Grass in the center, irregular alloy-ochre paths, dense ironmoss vegetation around the borders, circuit-teal root networks, cyan crystal formations, slate-gunmetal industrial ruins, round platforms, pipes, pylon fields, junkyard terrain, ancient gates, maintenance structures and machine-cavern entrances.
+
+Build a navigable world with a southern spawn approach, central safe clearing, western junkyard ruins, northwestern overgrown wilds, northern monumental boss-gate approach, northeastern pylon field, eastern rocky mechanical ridge and cavern entrances, southeastern service depot, southwestern mossy ruins, connected loops, shortcuts, crossroads, encounter clearings, hidden pockets and natural blocked borders.
+
+True polished 2D pixel art, direct top-down with slight Pokémon-style 2.5D readability, crisp square pixels, clustered shading, consistent pixel density and clean outlines. Bright warm daytime. No UI, HUD, characters, Symbots, enemies, labels, text, legend, border, visible tile grid, water, lava, snow, desert, modern city, medieval architecture, blur or empty corners.

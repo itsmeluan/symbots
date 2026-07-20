@@ -1,0 +1,15 @@
+{
+  "asset": "Symbots first overworld — full map reference",
+  "output": "symbots_first_map_full_40x26_pixel_art.png",
+  "dimensions": [2560, 1664],
+  "conceptual_tile_size": [64, 64],
+  "conceptual_map_grid": [40, 26],
+  "generation_mode": "Built-in ImageGen with local deterministic pixel-art export",
+  "visual_reference": "/Volumes/SSDLuan/Projetos/symbots/assets/art/overworld/map_background.png",
+  "post_processing": {
+    "native_pixel_canvas": [1280, 832],
+    "palette_colors": 256,
+    "final_scale": "2x nearest-neighbor"
+  },
+  "notes": "Complete map overview only. No visible grid, UI, characters or enemy markers. Saved outside the project as requested."
+}
