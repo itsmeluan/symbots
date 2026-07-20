@@ -1,0 +1,60 @@
+[gd_resource type="Resource" script_class="SpeciesDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/species/species_def.gd" id="1_species"]
+
+[resource]
+script = ExtResource("1_species")
+id = &"rapierbill"
+display_name = "Rapierbill"
+description = "One target. One strike. It has never needed a second."
+role = 1
+rarity = 3
+tree_entry_node = &"entry_dps_duelist"
+base_stats = Dictionary[StringName, int]({
+&"structure": 105,
+&"armor": 20,
+&"resistance": 20,
+&"physical_power": 58,
+&"energy_power": 26,
+&"mobility": 39,
+&"targeting": 39,
+&"processing": 13,
+&"cooling": 6,
+&"energy_capacity": 6,
+&"recharge": 6
+})
+part_growth = {
+0: {
+&"energy_capacity": 1,
+&"recharge": 1
+},
+1: {
+&"structure": 6,
+&"armor": 1
+},
+2: {
+&"targeting": 3,
+&"processing": 1
+},
+3: {
+&"physical_power": 4
+},
+4: {
+&"mobility": 2,
+&"cooling": 1
+}
+}
+unique_passives = Array[Dictionary]([{
+"passive_id": &"pass_pinpoint",
+"unlock_level": 5
+}, {
+"passive_id": &"pass_riposte",
+"unlock_level": 15
+}, {
+"passive_id": &"pass_bloodgroove",
+"unlock_level": 30
+}])
+basic_attack_id = &"basic_strike"
+starting_skills = Array[StringName]([&"skill_lunge"])
+starting_ultimate = &"ult_perfect_thrust"
+craft_alloy_cost = 300

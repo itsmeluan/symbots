@@ -15,6 +15,9 @@ enum Kind {
 	BURN = 1, CORRODE = 2, SHOCK = 3,
 	## Control
 	STUN = 10, SLOW = 11, TAUNT_BREAK = 12,
+	## Tempo — HASTE is the positive counterpart of SLOW (mobility up), used by the
+	## tactician support to move an ally up the turn order.
+	HASTE = 13,
 	## Defensive
 	REGEN = 20, DAMAGE_REDUCTION = 21,
 	## Offensive

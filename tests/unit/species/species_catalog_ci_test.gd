@@ -19,9 +19,11 @@ const SKILL_CATALOG_PATH := "res://assets/data/catalogs/skill_catalog.tres"
 const EXPECTED_SPECIES: Array[StringName] = [
 	&"rustcrawler", &"voltfang", &"boltshell", &"ironmaul",
 	&"solderfly", &"nanoweave", &"coilsprite", &"hexcircuit",
+	&"quillrack", &"rapierbill", &"foldscale", &"slaghorn",
+	&"candlestag", &"mosshollow", &"cogwatch", &"splicewyrm",
 ]
 
-const EXPECTED_SKILL_COUNT := 18
+const EXPECTED_SKILL_COUNT := 34
 
 var _spy: SpyLogSink
 var _species: SpeciesCatalog
@@ -49,18 +51,18 @@ func test_the_shipped_catalogs_raise_no_warnings() -> void:
 	assert_eq(_spy.warns.size(), 0, "a warning today is an error once content grows")
 
 
-func test_the_slice_roster_is_exactly_the_eight_authored_species() -> void:
+func test_the_roster_is_exactly_the_sixteen_authored_species() -> void:
 	var ids: Array = _species.entries.map(func(s): return s.id)
 	for expected in EXPECTED_SPECIES:
 		assert_true(ids.has(expected), "%s is missing from the catalog" % expected)
 	assert_eq(_species.entries.size(), EXPECTED_SPECIES.size())
 
 
-func test_every_role_is_represented_twice() -> void:
-	# Two per role is what lets a player field a full squad of any composition (§2.1).
+func test_every_role_has_four_species() -> void:
+	# Four per role at full roster (§2.1): the choice of which to field is the strategy.
 	for role in SpeciesValidator.REQUIRED_ROLES:
-		assert_eq(_species.by_role(role).size(), 2,
-			"role %d should have exactly 2 slice species" % role)
+		assert_eq(_species.by_role(role).size(), 4,
+			"role %d should have exactly 4 species at full roster" % role)
 
 
 func test_every_species_enters_the_tree_at_its_own_point() -> void:
@@ -69,7 +71,7 @@ func test_every_species_enters_the_tree_at_its_own_point() -> void:
 	for e in entries:
 		unique[e] = true
 	assert_eq(unique.size(), _species.entries.size(),
-		"the slice exercises eight DISTINCT entry points, so eight tree paths get walked")
+		"all sixteen species enter at distinct points, so all sixteen tree doors are used")
 
 
 func test_the_skill_catalog_ships_the_expected_count() -> void:

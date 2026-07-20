@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="SkillDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/battle_v1/skill_def.gd" id="1_skill"]
+
+[resource]
+script = ExtResource("1_skill")
+id = &"skill_consecrate"
+display_name = "Consecrate"
+description = "A wash of warm light over the squad."
+target_mode = 3
+cooldown = 3
+initial_cooldown = 0
+power_percent = 140
+scaling_stat = &"processing"
+effects = Array[Dictionary]([{
+"kind": 2
+}])
+ignores_taunt = false
+is_taunt_skill = false
+is_ultimate = false
+charge_cost = 0

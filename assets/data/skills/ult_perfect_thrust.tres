@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="SkillDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/battle_v1/skill_def.gd" id="1_skill"]
+
+[resource]
+script = ExtResource("1_skill")
+id = &"ult_perfect_thrust"
+display_name = "Perfect Thrust"
+description = "Draws the blade and picks one throat."
+target_mode = 5
+cooldown = 0
+initial_cooldown = 0
+power_percent = 650
+scaling_stat = &"physical_power"
+effects = Array[Dictionary]([{
+"kind": 1
+}])
+ignores_taunt = true
+is_taunt_skill = false
+is_ultimate = true
+charge_cost = 100

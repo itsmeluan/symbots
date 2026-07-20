@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="SkillDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/battle_v1/skill_def.gd" id="1_skill"]
+
+[resource]
+script = ExtResource("1_skill")
+id = &"ult_spike_barrage"
+display_name = "Spike Barrage"
+description = "Empties every launcher at once."
+target_mode = 6
+cooldown = 0
+initial_cooldown = 0
+power_percent = 170
+scaling_stat = &"physical_power"
+effects = Array[Dictionary]([{
+"kind": 1
+}, {
+"kind": 4,
+"status": 2,
+"turns": 2,
+"is_debuff": true,
+"tick_amount": 10
+}])
+ignores_taunt = false
+is_taunt_skill = false
+is_ultimate = true
+charge_cost = 100

@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="SkillDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/battle_v1/skill_def.gd" id="1_skill"]
+
+[resource]
+script = ExtResource("1_skill")
+id = &"ult_full_uplink"
+display_name = "Full Uplink"
+description = "Every ally on one circuit, amplifying the rest."
+target_mode = 3
+cooldown = 0
+initial_cooldown = 0
+power_percent = 0
+scaling_stat = &"processing"
+effects = Array[Dictionary]([{
+"kind": 4,
+"status": 30,
+"turns": 3,
+"is_debuff": false,
+"percent_mods": {
+&"physical_power": 30,
+&"energy_power": 30
+}
+}, {
+"kind": 4,
+"status": 32,
+"turns": 3,
+"is_debuff": false,
+"percent_mods": {
+&"targeting": 60
+}
+}, {
+"kind": 4,
+"status": 21,
+"turns": 3,
+"is_debuff": false,
+"percent_mods": {
+&"armor": 25,
+&"resistance": 25
+}
+}])
+ignores_taunt = false
+is_taunt_skill = false
+is_ultimate = true
+charge_cost = 100

@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="SkillDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/battle_v1/skill_def.gd" id="1_skill"]
+
+[resource]
+script = ExtResource("1_skill")
+id = &"skill_regrowth"
+display_name = "Regrowth"
+description = "Seeds the most hurt ally with slow-mending moss."
+target_mode = 4
+cooldown = 2
+initial_cooldown = 0
+power_percent = 0
+scaling_stat = &"processing"
+effects = Array[Dictionary]([{
+"kind": 4,
+"status": 20,
+"turns": 3,
+"is_debuff": false,
+"tick_amount": 45
+}])
+ignores_taunt = false
+is_taunt_skill = false
+is_ultimate = false
+charge_cost = 0

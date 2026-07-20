@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="SpeciesCatalog" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="SpeciesCatalog" load_steps=19 format=3]
 
 [ext_resource type="Script" path="res://src/core/species/species_def.gd" id="1_def"]
 [ext_resource type="Script" path="res://src/core/species/species_catalog.gd" id="2_cat"]
@@ -10,7 +10,15 @@
 [ext_resource type="Resource" path="res://assets/data/species/nanoweave.tres" id="8_s"]
 [ext_resource type="Resource" path="res://assets/data/species/coilsprite.tres" id="9_s"]
 [ext_resource type="Resource" path="res://assets/data/species/hexcircuit.tres" id="10_s"]
+[ext_resource type="Resource" path="res://assets/data/species/quillrack.tres" id="11_s"]
+[ext_resource type="Resource" path="res://assets/data/species/rapierbill.tres" id="12_s"]
+[ext_resource type="Resource" path="res://assets/data/species/foldscale.tres" id="13_s"]
+[ext_resource type="Resource" path="res://assets/data/species/slaghorn.tres" id="14_s"]
+[ext_resource type="Resource" path="res://assets/data/species/candlestag.tres" id="15_s"]
+[ext_resource type="Resource" path="res://assets/data/species/mosshollow.tres" id="16_s"]
+[ext_resource type="Resource" path="res://assets/data/species/cogwatch.tres" id="17_s"]
+[ext_resource type="Resource" path="res://assets/data/species/splicewyrm.tres" id="18_s"]
 
 [resource]
 script = ExtResource("2_cat")
-entries = Array[ExtResource("1_def")]([ExtResource("3_s"), ExtResource("4_s"), ExtResource("5_s"), ExtResource("6_s"), ExtResource("7_s"), ExtResource("8_s"), ExtResource("9_s"), ExtResource("10_s")])
+entries = Array[ExtResource("1_def")]([ExtResource("3_s"), ExtResource("4_s"), ExtResource("5_s"), ExtResource("6_s"), ExtResource("7_s"), ExtResource("8_s"), ExtResource("9_s"), ExtResource("10_s"), ExtResource("11_s"), ExtResource("12_s"), ExtResource("13_s"), ExtResource("14_s"), ExtResource("15_s"), ExtResource("16_s"), ExtResource("17_s"), ExtResource("18_s")])
