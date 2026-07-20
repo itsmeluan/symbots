@@ -31,6 +31,9 @@ signal squad_requested
 ## Emitted when the player wants the Foundry (crafting).
 signal foundry_requested
 
+## Emitted when the player wants offline expeditions.
+signal expeditions_requested
+
 const MIN_ROW_HEIGHT := 60  ## comfortably past the 44pt touch minimum
 const CARD_SEPARATION := 6
 
@@ -95,6 +98,13 @@ func _build_layout() -> void:
 	foundry_button.clip_text = true
 	foundry_button.pressed.connect(Callable(self, "_on_foundry_pressed"))
 	menu.add_child(foundry_button)
+	var exped_button := Button.new()
+	exped_button.text = "Expeditions"
+	exped_button.custom_minimum_size = Vector2(0, 44)
+	exped_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	exped_button.clip_text = true
+	exped_button.pressed.connect(Callable(self, "_on_expeditions_pressed"))
+	menu.add_child(exped_button)
 	var tree_button := Button.new()
 	tree_button.text = "Skill Tree"
 	tree_button.custom_minimum_size = Vector2(0, 44)
@@ -186,6 +196,10 @@ func _on_squad_pressed() -> void:
 
 func _on_foundry_pressed() -> void:
 	foundry_requested.emit()
+
+
+func _on_expeditions_pressed() -> void:
+	expeditions_requested.emit()
 
 
 func _on_stage_pressed(stage: StageDef) -> void:

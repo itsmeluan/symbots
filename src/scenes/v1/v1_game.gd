@@ -27,6 +27,7 @@ const SkillTreeScreenScript := preload("res://src/ui/tree/skill_tree_screen.gd")
 const RewardScreenScript := preload("res://src/ui/reward_screen.gd")
 const SquadScreenScript := preload("res://src/ui/squad_screen.gd")
 const FoundryScreenScript := preload("res://src/ui/foundry_screen.gd")
+const ExpeditionScreenScript := preload("res://src/ui/expedition_screen.gd")
 const StageRunnerScript := preload("res://src/core/stages/stage_runner.gd")
 const BattleEngineScript := preload("res://src/core/battle_v1/battle_engine.gd")
 const V1StateProviderScript := preload("res://src/persistence/v1_state_provider.gd")
@@ -68,6 +69,7 @@ var _tree_screen: SkillTreeScreen = null
 var _reward: RewardScreen = null
 var _squad: SquadScreen = null
 var _foundry: FoundryScreen = null
+var _expeditions: ExpeditionScreen = null
 
 ## The run in progress: its runner, its stage, and where in the battle sequence we are.
 var _runner: StageRunner = null
@@ -187,6 +189,7 @@ func show_map() -> void:
 	_map.tree_requested.connect(Callable(self, "show_tree"))
 	_map.squad_requested.connect(Callable(self, "show_squad"))
 	_map.foundry_requested.connect(Callable(self, "show_foundry"))
+	_map.expeditions_requested.connect(Callable(self, "show_expeditions"))
 
 
 ## The Scrap sink. Reachable from the map because that is where the player lands after
@@ -223,6 +226,15 @@ func show_foundry() -> void:
 	_foundry = FoundryScreenScript.new()
 	_present(_foundry)
 	_foundry.closed.connect(Callable(self, "_on_sub_screen_closed"))
+
+
+## Offline expeditions (§7). Leaving it saves — an expedition in progress is state the
+## player expects to persist.
+func show_expeditions() -> void:
+	_clear_screens()
+	_expeditions = ExpeditionScreenScript.new()
+	_present(_expeditions)
+	_expeditions.closed.connect(Callable(self, "_on_sub_screen_closed"))
 
 
 func _on_stage_chosen(stage: StageDef) -> void:
@@ -346,3 +358,7 @@ func _clear_screens() -> void:
 		remove_child(_foundry)
 		_foundry.queue_free()
 		_foundry = null
+	if _expeditions != null:
+		remove_child(_expeditions)
+		_expeditions.queue_free()
+		_expeditions = null

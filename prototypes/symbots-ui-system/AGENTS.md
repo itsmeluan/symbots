@@ -5,3 +5,5 @@ Run the local server yourself and open the preview in the browser available to t
 Before making substantial visual changes, use the Product Design plugin's `get-context` skill when the visual source is unclear or no longer matches the current goal. When the user gives durable prototype-specific design feedback, preferences, or decisions, record them in `AGENTS.md`.
 
 When implementing from a selected generated mock, treat that image as the source of truth for layout, component anatomy, density, spacing, color, typography, visible content, and hierarchy.
+
+The selected v1 visual direction is the first displayed ideation result from 2026-07-20: a portrait 390×844 “Command Rail” battle UI with four paired combat lanes, compact turn order, dark chamfered industrial chrome, cyan allied state, coral enemy state, amber commands, and a bottom thumb-zone action deck. Extend this same system to the v1 stage map, Workshop, Squad, Skill Tree, and rewards.
