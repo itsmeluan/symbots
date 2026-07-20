@@ -37,14 +37,15 @@ const TRIGGER_RADIUS := 46.0
 const MAX_MARKERS := 6
 const MARKER_HEIGHT := 64.0                  # on-screen height; width follows the sprite aspect
 const ARRIVE_EPSILON := 4.0
+const SPAWN_TILE := Vector2i(20, 13)     # walkable, verified against the painted map
 const DECAL_TILES := 3                       # atlas tiles 1..3 are transparent overlay decals
 
 # Collision box, in world px, measured at the character's FEET rather than the whole
 # sprite. Top-down games collide by the ground contact point: a box covering the full
 # 126px sprite would stop the player a head's height short of every wall and make the
 # world feel cramped and untraceable. Tune these if the character art changes shape.
-const FEET_SIZE := Vector2(34.0, 18.0)
-const FEET_OFFSET_Y := 48.0                  # sprite centre -> feet-box centre
+const FEET_WIDTH_RATIO := 0.55               # of the sprite's on-screen width
+const FEET_HEIGHT_RATIO := 0.22              # of its height
 
 # ---------------------------------------------------------------------------
 # PLAYER SPRITE SHEETS — 8 directions, idle + walk
@@ -89,6 +90,7 @@ var _log: LogSink
 @onready var _terrain: TileMapLayer = %Terrain
 @onready var _decals: TileMapLayer = %Decals
 @onready var _obstacles: TileMapLayer = %Obstacles
+@onready var _background: Sprite2D = %MapBackground
 @onready var _markers_root: Node2D = %Markers
 @onready var _player: AnimatedSprite2D = %Player
 @onready var _camera: Camera2D = %Camera
@@ -108,7 +110,7 @@ func _ready() -> void:
 	# Spawn the player at the centre of the world (position is behaviour, not layout).
 	# The camera must be placed here too — it only tracks the player while moving, so
 	# without this the first frame looks at the world origin instead of the character.
-	_player.position = _world_size() * 0.5
+	_player.position = _tile_centre(SPAWN_TILE)
 	_camera.position = _player.position
 	_camera.reset_smoothing()
 
@@ -152,6 +154,18 @@ func _world_size() -> Vector2:
 ## nodes, so the map can be repainted in the Godot editor and this fill only applies to
 ## cells left empty.
 func _build_terrain() -> void:
+	# A painted map background replaces the tile layers entirely: the art carries the
+	# terrain, and filling tiles underneath would only waste draw calls on pixels no one
+	# can see. Collision still lives on Obstacles — it is derived from this same image by
+	# tools/derive_map_collision.py, so art and collision cannot drift apart silently.
+	if _background != null and _background.texture != null:
+		_terrain.visible = false
+		_decals.visible = false
+		# Obstacles becomes collision DATA, not art: the painted map already draws every
+		# wall, so rendering the layer would stack placeholder tiles on top of the art it
+		# was derived from. The cells stay — _is_blocked reads them either way.
+		_obstacles.visible = false
+		return
 	for y in WORLD_TILES.y:
 		for x in WORLD_TILES.x:
 			var cell := Vector2i(x, y)
@@ -255,9 +269,17 @@ func _is_blocked(centre: Vector2) -> bool:
 
 
 ## The ground-contact rectangle for a given sprite centre.
+##
+## Derived from the LIVE sprite size rather than fixed constants. A hardcoded offset is a
+## trap here: it was tuned against a 126px sprite, and halving PLAYER_SCALE left the box
+## floating below the character's feet, so he walked into walls before anything tested
+## solid. Sizing off the sprite means the box follows any art or scale change.
 func _feet_box(centre: Vector2) -> Rect2:
-	return Rect2(centre + Vector2(-FEET_SIZE.x * 0.5, FEET_OFFSET_Y - FEET_SIZE.y * 0.5),
-			FEET_SIZE)
+	var half := _player_half_extents()
+	var size := Vector2(half.x * 2.0 * FEET_WIDTH_RATIO, half.y * 2.0 * FEET_HEIGHT_RATIO)
+	# Sit the box at the bottom of the sprite — that is where the character touches ground.
+	var top_left := centre + Vector2(-size.x * 0.5, half.y - size.y)
+	return Rect2(top_left, size)
 
 
 ## Half the player's on-screen size, measured from the live sprite frame so a swapped-in
@@ -313,13 +335,31 @@ func _physics_process(delta: float) -> void:
 	if dir == Vector2.ZERO:
 		_play_state(&"idle")
 		return
-	pos += dir * MOVE_SPEED * delta
+	var step := dir * MOVE_SPEED * delta
 	var ws := _world_size()
 	# Keep the whole sprite inside the world. Half-extents come from the live sprite so a
 	# swapped-in sheet of different proportions clamps correctly without a code change.
 	var half := _player_half_extents()
-	pos.x = clampf(pos.x, half.x, ws.x - half.x)
-	pos.y = clampf(pos.y, half.y, ws.y - half.y)
+	# Resolve the axes SEPARATELY so a diagonal into a wall slides along it instead of
+	# stopping dead. Moving both at once and reverting the whole step is what makes a
+	# character stick to corners.
+	var moved := false
+	if not is_zero_approx(step.x):
+		var try_x := pos
+		try_x.x = clampf(pos.x + step.x, half.x, ws.x - half.x)
+		if not _is_blocked(try_x):
+			pos = try_x
+			moved = true
+	if not is_zero_approx(step.y):
+		var try_y := pos
+		try_y.y = clampf(pos.y + step.y, half.y, ws.y - half.y)
+		if not _is_blocked(try_y):
+			pos = try_y
+			moved = true
+	if not moved:
+		# Fully blocked. Drop any tap-move target, else the player keeps walking on the
+		# spot into a wall forever with no way to cancel except another tap.
+		_target_pos = Vector2.INF
 	_player.position = pos
 	_camera.position = pos
 	_apply_facing(dir)
@@ -479,18 +519,29 @@ func _make_marker_label(text: String) -> Label:
 	return lbl
 
 
-## Six deterministic scatter points spread across the world (no RNG, so the map is
-## stable across sessions and headless-verifiable).
+## Six deterministic scatter points (no RNG, so the map is stable across sessions and
+## headless-verifiable). These are TILE coordinates chosen against the painted map, not
+## fractions of the world: they are picked to sit on walkable ground, clear of walls by at
+## least one tile, spread apart, and inside a 3-tile border margin. Every one is verified
+## reachable from SPAWN_TILE by flood fill — a walled-off enemy is content the player
+## never sees, and the map renders identically either way.
+##
+## Re-derive with tools/derive_map_collision.py if the map art changes.
+const ENEMY_TILES: Array[Vector2i] = [
+	Vector2i(3, 3), Vector2i(36, 3), Vector2i(36, 22),
+	Vector2i(6, 19), Vector2i(15, 3), Vector2i(31, 12),
+]
+
 func _scatter_spots() -> Array:
-	var ws := _world_size()
-	return [
-		Vector2(ws.x * 0.18, ws.y * 0.24),
-		Vector2(ws.x * 0.78, ws.y * 0.20),
-		Vector2(ws.x * 0.26, ws.y * 0.74),
-		Vector2(ws.x * 0.82, ws.y * 0.70),
-		Vector2(ws.x * 0.52, ws.y * 0.14),
-		Vector2(ws.x * 0.46, ws.y * 0.88),
-	]
+	var out: Array = []
+	for t: Vector2i in ENEMY_TILES:
+		out.append(_tile_centre(t))
+	return out
+
+
+## World-space centre of a tile.
+func _tile_centre(t: Vector2i) -> Vector2:
+	return Vector2(t) * float(TILE) + Vector2(TILE, TILE) * 0.5
 
 
 func _on_workshop_pressed() -> void:
