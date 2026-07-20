@@ -10,7 +10,7 @@ const WorkshopScreenScript := preload("res://src/ui/workshop/workshop_screen_v1.
 const SymbotInstanceScript := preload("res://src/core/species/symbot_instance.gd")
 const UpgradeEconomyScript := preload("res://src/core/economy/upgrade_economy.gd")
 
-var _game
+var _game: V1Game
 var _shop: WorkshopScreenV1
 
 

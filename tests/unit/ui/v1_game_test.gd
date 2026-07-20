@@ -10,7 +10,7 @@ const StageSelectScreenScript := preload("res://src/ui/stage_select_screen.gd")
 const StageDefScript := preload("res://src/core/stages/stage_def.gd")
 const SymbotInstanceScript := preload("res://src/core/species/symbot_instance.gd")
 
-var _game
+var _game: V1Game
 
 
 func before_each() -> void:

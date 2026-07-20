@@ -22,6 +22,9 @@ signal stage_chosen(stage: StageDef)
 ## root transitions.
 signal workshop_requested
 
+## Emitted when the player wants the skill tree.
+signal tree_requested
+
 const MIN_ROW_HEIGHT := 60  ## comfortably past the 44pt touch minimum
 const CARD_SEPARATION := 6
 
@@ -63,11 +66,20 @@ func _build_layout() -> void:
 	_alloy_label = Label.new()
 	header.add_child(_alloy_label)
 
+	var menu := HBoxContainer.new()
+	root.add_child(menu)
 	var workshop_button := Button.new()
 	workshop_button.text = "Workshop"
 	workshop_button.custom_minimum_size = Vector2(0, 44)
+	workshop_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	workshop_button.pressed.connect(Callable(self, "_on_workshop_pressed"))
-	root.add_child(workshop_button)
+	menu.add_child(workshop_button)
+	var tree_button := Button.new()
+	tree_button.text = "Skill Tree"
+	tree_button.custom_minimum_size = Vector2(0, 44)
+	tree_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tree_button.pressed.connect(Callable(self, "_on_tree_pressed"))
+	menu.add_child(tree_button)
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -140,6 +152,10 @@ func _card_text(stage: StageDef, cleared: bool) -> String:
 
 func _on_workshop_pressed() -> void:
 	workshop_requested.emit()
+
+
+func _on_tree_pressed() -> void:
+	tree_requested.emit()
 
 
 func _on_stage_pressed(stage: StageDef) -> void:

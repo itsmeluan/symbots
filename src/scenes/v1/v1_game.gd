@@ -8,11 +8,17 @@
 ## in project.godot. See design §9.
 ##
 ## Screens request; the root decides. A screen never performs its own transition.
+##
+## class_name'd so tests can declare `var game: V1Game` and get typed member access. Left
+## untyped, every `game.ctx.<anything>` is a Variant and `:=` inference fails at parse time
+## — which GUT reports by silently skipping the whole file while staying green.
+class_name V1Game
 extends Node
 
 const StageSelectScreenScript := preload("res://src/ui/stage_select_screen.gd")
 const BattleScreenScript := preload("res://src/ui/battle/battle_screen.gd")
 const WorkshopScreenScript := preload("res://src/ui/workshop/workshop_screen_v1.gd")
+const SkillTreeScreenScript := preload("res://src/ui/tree/skill_tree_screen.gd")
 const StageRunnerScript := preload("res://src/core/stages/stage_runner.gd")
 const BattleEngineScript := preload("res://src/core/battle_v1/battle_engine.gd")
 
@@ -27,6 +33,7 @@ var ctx: ServiceContext = null
 var _map: StageSelectScreen = null
 var _battle: BattleScreen = null
 var _workshop: WorkshopScreenV1 = null
+var _tree_screen: SkillTreeScreen = null
 
 ## The run in progress: its runner, its stage, and where in the battle sequence we are.
 var _runner: StageRunner = null
@@ -87,6 +94,7 @@ func show_map() -> void:
 	_map.setup(ctx)
 	_map.stage_chosen.connect(Callable(self, "_on_stage_chosen"))
 	_map.workshop_requested.connect(Callable(self, "show_workshop"))
+	_map.tree_requested.connect(Callable(self, "show_tree"))
 
 
 ## The Scrap sink. Reachable from the map because that is where the player lands after
@@ -97,6 +105,17 @@ func show_workshop() -> void:
 	add_child(_workshop)
 	_workshop.setup(ctx)
 	_workshop.closed.connect(Callable(self, "show_map"))
+
+
+## The skill-point sink. Sits beside the Workshop because the two are the same decision
+## seen twice — where does this Symbot's investment go — and splitting them across the menu
+## would hide that.
+func show_tree() -> void:
+	_clear_screens()
+	_tree_screen = SkillTreeScreenScript.new()
+	add_child(_tree_screen)
+	_tree_screen.setup(ctx)
+	_tree_screen.closed.connect(Callable(self, "show_map"))
 
 
 func _on_stage_chosen(stage: StageDef) -> void:
@@ -174,3 +193,7 @@ func _clear_screens() -> void:
 		remove_child(_workshop)
 		_workshop.queue_free()
 		_workshop = null
+	if _tree_screen != null:
+		remove_child(_tree_screen)
+		_tree_screen.queue_free()
+		_tree_screen = null

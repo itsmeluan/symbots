@@ -131,7 +131,7 @@ func test_the_progress_bar_tracks_partial_progress() -> void:
 # ---------------------------------------------------------------------------
 
 func test_winning_a_stage_levels_the_squad() -> void:
-	var game = V1GameScript.new()
+	var game: V1Game = V1GameScript.new()
 	add_child_autofree(game)
 	var symbot: SymbotInstance = game.ctx.roster.squad_symbots()[0]
 	var xp_before := symbot.xp
@@ -148,7 +148,7 @@ func test_a_lost_run_still_pays_for_the_fights_that_were_won() -> void:
 	# §6: defeat costs the chest and the time, never the session.
 	var result := StageRunnerScript.Result.new()
 	result.battles_won = 2
-	var game = V1GameScript.new()
+	var game: V1Game = V1GameScript.new()
 	add_child_autofree(game)
 	var runner := StageRunnerScript.new(game.ctx.stages.get_stage(&"stage_05"),
 		game.ctx.species, game.ctx.skills, game.ctx.tree, _cfg, RandomNumberGenerator.new(),
