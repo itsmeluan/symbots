@@ -316,6 +316,34 @@ purpose and players optimise by dying deliberately.
 **Defeat** **[owner]**: the player keeps everything already dropped. Losing costs the
 chest and the time, never the session.
 
+### 6.1 Enemies are the same species you collect **[owner]**
+
+**There is no separate enemy roster and no palette-swap variants.** Every enemy is one of
+the ordinary species, built from the same `SpeciesDef` at a level the stage sets. The
+Pokémon model: what you fight is what you can own.
+
+Why this and not a cheaper generic tier:
+
+- **Art is the project's bottleneck.** A second content type means a second art pipeline,
+  and that is precisely what stalled the previous direction.
+- **It teaches the roster by playing.** Losing to a Boltshell is how a player learns what
+  a tank does, and the reason they then want one.
+- **It makes blueprints coherent** — you beat a Hexcircuit, you get the Hexcircuit
+  blueprint.
+
+**The cost, accepted knowingly:** with only 8 species authored, stages 1-10 field the same
+eight creatures and will feel repetitive. The fix is **more species, not more variants** —
+enemy variety and collection variety are the same axis, so every new species pays twice.
+The owner accepts this because the concept-to-pixel pipeline (GPT concept → Aseprite +
+Pixel Lab) makes new species cheap enough to keep authoring.
+
+Rejected: tint/palette-swap variants. They would have been free to implement, but they
+split the roster into "real" and "recoloured" creatures and dilute the collection.
+
+Implementation: already the case. `StageDef.battles` holds species ids; `UnitBuilder`
+builds enemies with no tree and no fitted hardware, so a stage's difficulty stays one
+readable dial (`enemy_level`).
+
 ---
 
 ## 7. Offline expeditions **[owner]**
@@ -360,4 +388,5 @@ game's hook is the Scrap-budget tension; selling infinite Scrap sells the hook i
 - Exact stat list and formulas → `02-stats-and-formulas.md`
 - Tree layout and node budget → `04-skill-tree.md`
 - The 8 slice species → `05-species.md`
-- Enemy roster and stage table → `06-content.md`
+- Stage table and the species roster beyond the slice 8 → `06-content.md`
+  (enemy POLICY is settled in §6.1 — what remains is authoring more species)
