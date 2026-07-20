@@ -82,6 +82,10 @@ var _result = null
 func _ready() -> void:
 	# Fill the viewport, so every screen parented here has a real rect to anchor against.
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# The design system, applied once at the root — every screen inherits the dark sci-fi
+	# look instead of Godot's editor grey. See src/ui/theme (from the approved v1 prototype).
+	theme = UITheme.build()
+	_install_backdrop()
 	ctx = build_context()
 	attach_save(SaveLoadService.new(ctx.log, save_backend))
 	load_or_start_new()
@@ -168,6 +172,16 @@ func _resolve_log() -> LogSink:
 # ---------------------------------------------------------------------------
 # Screens
 # ---------------------------------------------------------------------------
+
+## A full-rect navy backdrop behind every screen, so gaps and transparent areas read as
+## deep space rather than the editor's default grey.
+func _install_backdrop() -> void:
+	var bg := ColorRect.new()
+	bg.color = UIPalette.BG
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(bg)
+
 
 ## Add a screen and give it the full viewport BEFORE setup runs.
 ##

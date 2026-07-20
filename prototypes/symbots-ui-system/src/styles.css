@@ -96,7 +96,7 @@ button:focus-visible { outline: 3px solid #ffffff; outline-offset: 2px; }
 .battle-unit--enemy .unit-sprite-wrap { order: 1; }
 .unit-nameplate { align-self: start; margin-top: 5px; padding: 4px 5px 5px; min-width: 0; border-width: 6px; background: rgba(9,15,22,.9); z-index: 2; }
 .unit-line { display: flex; align-items: baseline; justify-content: space-between; gap: 3px; }
-.unit-line strong { font-family: "Rajdhani", sans-serif; font-size: 13px; letter-spacing: .06em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.unit-line strong { min-width: 0; font-family: "Rajdhani", sans-serif; font-size: 11px; letter-spacing: .035em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .unit-line span { color: var(--muted); font-size: 8px; white-space: nowrap; }
 .unit-meta { height: 14px; display: flex; align-items: center; justify-content: space-between; gap: 2px; color: var(--cyan); font-size: 8px; }
 .unit-meta .icon-label svg { width: 10px; height: 10px; }

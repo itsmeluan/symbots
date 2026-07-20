@@ -142,3 +142,4 @@ $RECYCLE.BIN/
 *.msm
 *.msp
 *.lnk
+prototypes/*/node_modules/
