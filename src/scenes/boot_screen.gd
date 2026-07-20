@@ -14,6 +14,7 @@
 extends Node
 
 const PlayerInventory := preload("res://src/persistence/player_inventory.gd")
+const PlayerStateProvider := preload("res://src/persistence/player_state_provider.gd")
 
 const BALANCE_PATH := "res://assets/data/balance_config.tres"
 const PART_CATALOG_PATH := "res://assets/data/catalogs/part_catalog.tres"
@@ -81,9 +82,24 @@ func _run_boot() -> void:
 	# Combat UI drives the TBC autoload directly (ADR-0007 Option A) — give it the config.
 	TBC.set_config(cfg, log)
 
-	# --- Step 5–6 (deferred): SaveLoad provider registration + autosave triggers ---
-	# TODO(persistence hardening): SaveLoad.register_provider(...) per state owner;
-	#   SaveLoad.connect_autosave_triggers() on encounter_resolved / zone_entered.
+	# --- Step 5–6: SaveLoad provider registration + autosave triggers ---
+	# Registration happens HERE and not in the autoload's _ready, per the ADR-0004
+	# inertness rule: providers need the state owners built at step 4b, which do not
+	# exist yet when autoloads initialise.
+	SaveLoad.setup(log)
+	SaveLoad.register_provider(PlayerStateProvider.KEY,
+		PlayerStateProvider.new(build, inventory, log))
+	SaveLoad.connect_autosave_triggers()
+
+	# --- Step 6b: resume a previous session, if there is one ---
+	# Restored AFTER the starter build exists, so a fresh player and a returning one take
+	# the same path: the restore overwrites the starters rather than racing them.
+	if SaveLoad.has_save():
+		var loaded := SaveLoad.load_slot()
+		if loaded.get("ok", false):
+			log.info(&"save_restored", {"parts": inventory.count()})
+		else:
+			log.warn(&"save_restore_failed", {"reason": str(loaded.get("reason", "unknown"))})
 
 	# --- Step 7: hand off the context and enter the Overworld ---
 	screen_manager.set_context(ctx)

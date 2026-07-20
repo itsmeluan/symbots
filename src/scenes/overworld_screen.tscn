@@ -1,8 +1,8 @@
-[gd_scene format=4 uid="uid://dykmuv0un6b54"]
+[gd_scene format=3 uid="uid://dykmuv0un6b54"]
 
 [ext_resource type="Script" uid="uid://5ym0p6wb54xw" path="res://src/scenes/overworld_screen.gd" id="1_overworld"]
 [ext_resource type="Theme" uid="uid://b4kr08j0ufus0" path="res://assets/ui/theme/symbots_theme.tres" id="2_theme"]
-[ext_resource type="TileSet" path="res://assets/art/overworld/cainos_tileset.tres" id="3_tileset"]
+[ext_resource type="TileSet" uid="uid://bdxux8pf6dlul" path="res://assets/art/overworld/cainos_tileset.tres" id="3_tileset"]
 
 [node name="OverworldScreen" type="Control" unique_id=732205248]
 layout_mode = 3
