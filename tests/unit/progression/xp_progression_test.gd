@@ -8,6 +8,7 @@ extends GutTest
 const SymbotInstanceScript := preload("res://src/core/species/symbot_instance.gd")
 const StageRunnerScript := preload("res://src/core/stages/stage_runner.gd")
 const V1GameScript := preload("res://src/scenes/v1/v1_game.gd")
+const MemoryBackend := preload("res://tests/support/memory_backend.gd")
 
 var _cfg: BalanceConfig
 var _inst: SymbotInstance
@@ -132,6 +133,7 @@ func test_the_progress_bar_tracks_partial_progress() -> void:
 
 func test_winning_a_stage_levels_the_squad() -> void:
 	var game: V1Game = V1GameScript.new()
+	game.save_backend = MemoryBackend.new()
 	add_child_autofree(game)
 	var symbot: SymbotInstance = game.ctx.roster.squad_symbots()[0]
 	var xp_before := symbot.xp
@@ -149,6 +151,7 @@ func test_a_lost_run_still_pays_for_the_fights_that_were_won() -> void:
 	var result := StageRunnerScript.Result.new()
 	result.battles_won = 2
 	var game: V1Game = V1GameScript.new()
+	game.save_backend = MemoryBackend.new()
 	add_child_autofree(game)
 	var runner := StageRunnerScript.new(game.ctx.stages.get_stage(&"stage_05"),
 		game.ctx.species, game.ctx.skills, game.ctx.tree, _cfg, RandomNumberGenerator.new(),

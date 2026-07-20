@@ -21,6 +21,7 @@ const WorkshopScreenScript := preload("res://src/ui/workshop/workshop_screen_v1.
 const SkillTreeScreenScript := preload("res://src/ui/tree/skill_tree_screen.gd")
 const StageRunnerScript := preload("res://src/core/stages/stage_runner.gd")
 const BattleEngineScript := preload("res://src/core/battle_v1/battle_engine.gd")
+const V1StateProviderScript := preload("res://src/persistence/v1_state_provider.gd")
 
 const SPECIES_PATH := "res://assets/data/catalogs/species_catalog.tres"
 const SKILL_PATH := "res://assets/data/catalogs/skill_catalog.tres"
@@ -29,6 +30,28 @@ const STAGE_PATH := "res://assets/data/catalogs/stage_catalog.tres"
 const TREE_PATH := "res://assets/data/tree/skill_tree.tres"
 
 var ctx: ServiceContext = null
+
+## Persistence. Public so a test can point it at a spy backend instead of the disk.
+var save_service: SaveLoadService = null
+
+## Storage backend, settable BEFORE the node enters the tree. Null means the real
+## FileBackend and the real `user://` slot.
+##
+## The injection point has to be a property rather than a constructor argument because
+## _ready() fires on add_child, before a test could otherwise reach in. Without it every UI
+## test would read and write the player's actual save — destroying it, and making the suite
+## order-dependent on whatever the previous run left behind.
+var save_backend = null
+
+## Diagnostics channel, settable before the node enters the tree. Null means the project's
+## Log autoload. Same rationale as [member save_backend]: a test that exercises a failure
+## path should not be routing push_error into the runner, where a CORRECT recovery reads as
+## a failed test.
+var log_override: LogSink = null
+
+## The slot this session reads and writes. One slot for now — the design has no
+## multi-save requirement, and a slot picker is a screen nobody asked for.
+const SAVE_SLOT := 0
 
 var _map: StageSelectScreen = null
 var _battle: BattleScreen = null
@@ -45,15 +68,43 @@ var _result = null
 
 func _ready() -> void:
 	ctx = build_context()
-	StartingSquad.grant(ctx.roster, ctx.species, ctx.log)
+	attach_save(SaveLoadService.new(ctx.log, save_backend))
+	load_or_start_new()
 	show_map()
+
+
+## Register the v1 provider against [param service]. Split from _ready so a test can
+## inject a service backed by memory rather than writing to the real user:// directory.
+func attach_save(service: SaveLoadService) -> void:
+	save_service = service
+	save_service.register_provider(V1StateProviderScript.KEY,
+		V1StateProviderScript.new(ctx.roster, ctx.wallet, ctx.species, ctx.tree, ctx.log))
+
+
+## Load the save, or hand a brand-new player their squad.
+##
+## The gift is only for a genuinely NEW player, so it is gated on the load having found
+## nothing. Granting after a successful load would hand duplicates to anyone whose roster
+## happened to be empty — which is exactly what a player who scrapped everything looks like.
+func load_or_start_new() -> void:
+	var result := save_service.load(SAVE_SLOT) if save_service != null else {}
+	if not result.get("ok", false):
+		StartingSquad.grant(ctx.roster, ctx.species, ctx.log)
+
+
+## Write the save. Called after anything the player would be upset to redo — finishing a
+## run, upgrading a part, allocating a node. Saving on a timer instead would mean the crash
+## always lands between the tick and the thing they just did.
+func save_now() -> void:
+	if save_service != null:
+		save_service.save(SAVE_SLOT)
 
 
 ## Assemble the v1 service bundle. Public and side-effect-free so tests can build the same
 ## context the game runs on rather than a hand-stubbed approximation that drifts from it.
 func build_context() -> ServiceContext:
 	var c := ServiceContext.new()
-	c.log = _resolve_log()
+	c.log = log_override if log_override != null else _resolve_log()
 	c.balance = BalanceConfig.new()
 	c.roster = PlayerRoster.new()
 	c.wallet = Wallet.new()
@@ -104,7 +155,7 @@ func show_workshop() -> void:
 	_workshop = WorkshopScreenScript.new()
 	add_child(_workshop)
 	_workshop.setup(ctx)
-	_workshop.closed.connect(Callable(self, "show_map"))
+	_workshop.closed.connect(Callable(self, "_on_sub_screen_closed"))
 
 
 ## The skill-point sink. Sits beside the Workshop because the two are the same decision
@@ -115,7 +166,7 @@ func show_tree() -> void:
 	_tree_screen = SkillTreeScreenScript.new()
 	add_child(_tree_screen)
 	_tree_screen.setup(ctx)
-	_tree_screen.closed.connect(Callable(self, "show_map"))
+	_tree_screen.closed.connect(Callable(self, "_on_sub_screen_closed"))
 
 
 func _on_stage_chosen(stage: StageDef) -> void:
@@ -172,10 +223,25 @@ func _on_battle_finished(outcome: int) -> void:
 func _finish_run(cleared: bool) -> void:
 	_runner.settle(_result, cleared)
 	_runner.award(_result, ctx.wallet, ctx.progress, ctx.roster.squad_symbots())
+	save_now()
 	_runner = null
 	_stage = null
 	_units = []
 	show_map()
+
+
+## Leaving the Workshop or the tree is the natural commit point for whatever was spent
+## there — the player has finished a session of decisions and is walking away from them.
+func _on_sub_screen_closed() -> void:
+	save_now()
+	show_map()
+
+
+## The app being backgrounded on a phone is a real close, not a pause (ADR-0001
+## save_emergency lifecycle path). Losing a run to a phone call is not acceptable.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_APPLICATION_PAUSED:
+		save_now()
 
 
 func _clear_screens() -> void:

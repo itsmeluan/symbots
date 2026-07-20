@@ -14,9 +14,20 @@ var _game: V1Game
 var _screen: SkillTreeScreen
 
 
+
+const MemoryBackend := preload("res://tests/support/memory_backend.gd")
+
+
+## Build a V1Game whose persistence lives in memory. The backend has to be set before
+## add_child, because _ready() boots the save service the moment the node enters the tree.
+func _make_game(backend = null) -> V1Game:
+	var game: V1Game = V1GameScript.new()
+	game.save_backend = backend if backend != null else MemoryBackend.new()
+	add_child_autofree(game)
+	return game
+
 func before_each() -> void:
-	_game = V1GameScript.new()
-	add_child_autofree(_game)
+	_game = _make_game()
 	_game.show_tree()
 	_screen = _game._tree_screen
 
