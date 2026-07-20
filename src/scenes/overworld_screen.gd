@@ -32,10 +32,10 @@ extends Screen
 const MOVE_SPEED := 170.0                    # world px/sec
 const TILE := 64                             # world px per tile (matches terrain_tileset.tres)
 const WORLD_TILES := Vector2i(40, 26)        # 40x26 tiles = 2560x1664 world px (~2.7 x 3 screens)
-const PLAYER_SCALE := 2                      # integer only — pixel art must not resample
+const PLAYER_SCALE := 1                      # integer only — pixel art must not resample
 const TRIGGER_RADIUS := 46.0
 const MAX_MARKERS := 6
-const MARKER_HEIGHT := 84.0                  # on-screen height; width follows the sprite aspect
+const MARKER_HEIGHT := 64.0                  # on-screen height; width follows the sprite aspect
 const ARRIVE_EPSILON := 4.0
 const DECAL_TILES := 3                       # atlas tiles 1..3 are transparent overlay decals
 
