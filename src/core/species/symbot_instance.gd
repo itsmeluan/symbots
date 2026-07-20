@@ -15,9 +15,13 @@ extends RefCounted
 const MARK_CAPS: Array[int] = [20, 40, 60]
 const MAX_MARK := 3
 
-## The six fixed parts every species has (Core Design §2.4).
-enum PartSlot { CORE = 0, CHASSIS = 1, HEAD = 2, ARMS = 3, LEGS = 4, WEAPON = 5 }
-const PART_COUNT := 6
+## The five fixed parts every species has (Core Design §2.4).
+##
+## WEAPON was removed 2026-07-20: on a fixed-species sprite a separate weapon never read
+## as its own part, so it cost art effort and returned no visual identity. What a species
+## fights with is now expressed by its ARMS and its skills.
+enum PartSlot { CORE = 0, CHASSIS = 1, HEAD = 2, ARMS = 3, LEGS = 4 }
+const PART_COUNT := 5
 
 ## Stable per-instance id. Two copies of the same species are distinct instances with
 ## distinct progress, so the roster keys on this and never on species_id.
@@ -34,7 +38,7 @@ var xp: int = 0
 var overclock: int = 0
 
 ## Part level per slot, indexed by PartSlot. Levelled with Scrap.
-var part_levels: PackedInt32Array = PackedInt32Array([1, 1, 1, 1, 1, 1])
+var part_levels: PackedInt32Array = PackedInt32Array([1, 1, 1, 1, 1])
 
 ## Allocated skill-tree node ids. Order is allocation order, which the respec cost model
 ## reads to refund most-recent-first.

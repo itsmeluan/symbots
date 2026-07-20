@@ -89,13 +89,15 @@ share a number, so the player learns one scale instead of two.
 
 ### 2.4 Parts
 
-Parts are **fixed components of a species**, not equipment. Each Symbot has **6 parts**:
-`CORE`, `CHASSIS`, `HEAD`, `ARMS`, `LEGS`, `WEAPON`.
+Parts are **fixed components of a species**, not equipment. Each Symbot has **5 parts**:
+`CORE`, `CHASSIS`, `HEAD`, `ARMS`, `LEGS`.
 
-**[claude]** Six, not the v0 eight: `CHIPSET` and `ENERGY_CELL` existed to be swapped and
-carry synergy tags. With nothing to swap and synergy replaced by the tree, they became
-two more upgrade sinks with no identity. Six parts × 60 levels is already 360 upgrade
-steps per Symbot.
+**[claude]** Five, not the v0 eight. `CHIPSET` and `ENERGY_CELL` existed to be swapped and
+to carry synergy tags; with nothing to swap and synergy replaced by the tree they were two
+more upgrade sinks with no identity. **[owner]** `WEAPON` came out because on a
+fixed-species sprite a separate weapon never reads as its own part — it costs art effort
+and returns no visual identity. What a species fights with is expressed by its ARMS and
+its skills. Five parts x 60 levels is still 300 upgrade steps per Symbot.
 
 Levelling a part costs **Scrap** and raises the stats that part contributes. Part
 identity (which stats it feeds) is authored per species, so the same slot means different
