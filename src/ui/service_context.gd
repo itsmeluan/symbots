@@ -66,6 +66,9 @@ var wallet: Wallet
 ## Install items owned but not fitted (§4.4).
 var inventory_items: ItemInventory
 
+## Species blueprints the player has learned to craft (§5.1).
+var blueprints: BlueprintLibrary
+
 ## Which stages are cleared, and therefore which are open (§6).
 var progress: StageProgress
 

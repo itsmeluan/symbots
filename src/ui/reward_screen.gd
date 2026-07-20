@@ -73,12 +73,18 @@ func show_result(result, stage: StageDef) -> void:
 		stage.display_name if stage != null else "", result.battles_won,
 		stage.battle_count() if stage != null else 0])
 	_add_line("Scrap  +%d" % result.scrap_earned)
+	if result.alloy_earned > 0:
+		_add_line("Alloy  +%d" % result.alloy_earned)
 	_add_line("XP     +%d each" % result.xp_each)
 
 	# Only mention levels when some were gained. "Levels +0" is noise that makes the line
 	# the player actually cares about harder to find.
 	if result.levels_gained > 0:
 		_add_line("Levels +%d across the squad" % result.levels_gained)
+
+	# A newly-learned blueprint is the headline of a boss clear — announce it above the loot.
+	if result.blueprint_was_new and result.chest_blueprint != &"":
+		_add_line("BLUEPRINT LEARNED: %s" % _species_name(result.chest_blueprint))
 
 	if result.chest_items.is_empty() and result.chest_blueprint == &"":
 		if not result.cleared:
@@ -90,6 +96,13 @@ func show_result(result, stage: StageDef) -> void:
 			_add_line("   %s" % _item_name(item_id))
 		if result.chest_blueprint != &"":
 			_add_line("   Blueprint: %s" % result.chest_blueprint)
+
+
+func _species_name(species_id: StringName) -> String:
+	if _ctx == null or _ctx.species == null:
+		return String(species_id)
+	var sp: SpeciesDef = _ctx.species.get_species(species_id)
+	return sp.display_name if sp != null else String(species_id)
 
 
 func _item_name(item_id: StringName) -> String:

@@ -26,6 +26,7 @@ const WorkshopScreenScript := preload("res://src/ui/workshop/workshop_screen_v1.
 const SkillTreeScreenScript := preload("res://src/ui/tree/skill_tree_screen.gd")
 const RewardScreenScript := preload("res://src/ui/reward_screen.gd")
 const SquadScreenScript := preload("res://src/ui/squad_screen.gd")
+const FoundryScreenScript := preload("res://src/ui/foundry_screen.gd")
 const StageRunnerScript := preload("res://src/core/stages/stage_runner.gd")
 const BattleEngineScript := preload("res://src/core/battle_v1/battle_engine.gd")
 const V1StateProviderScript := preload("res://src/persistence/v1_state_provider.gd")
@@ -66,6 +67,7 @@ var _workshop: WorkshopScreenV1 = null
 var _tree_screen: SkillTreeScreen = null
 var _reward: RewardScreen = null
 var _squad: SquadScreen = null
+var _foundry: FoundryScreen = null
 
 ## The run in progress: its runner, its stage, and where in the battle sequence we are.
 var _runner: StageRunner = null
@@ -90,7 +92,8 @@ func attach_save(service: SaveLoadService) -> void:
 	save_service = service
 	save_service.register_provider(V1StateProviderScript.KEY,
 		V1StateProviderScript.new(ctx.roster, ctx.wallet, ctx.species, ctx.tree, ctx.log,
-			ctx.inventory_items, ctx.item_catalog, ctx.expeditions, ctx.progress))
+			ctx.inventory_items, ctx.item_catalog, ctx.expeditions, ctx.progress,
+			ctx.blueprints))
 
 
 ## Load the save, then make sure the player actually has Symbots.
@@ -131,6 +134,7 @@ func build_context() -> ServiceContext:
 	c.roster = PlayerRoster.new()
 	c.wallet = Wallet.new()
 	c.inventory_items = ItemInventory.new()
+	c.blueprints = BlueprintLibrary.new()
 	c.expeditions = ExpeditionBoard.new()
 	c.progress = StageProgress.new()
 	c.species = load(SPECIES_PATH)
@@ -182,6 +186,7 @@ func show_map() -> void:
 	_map.workshop_requested.connect(Callable(self, "show_workshop"))
 	_map.tree_requested.connect(Callable(self, "show_tree"))
 	_map.squad_requested.connect(Callable(self, "show_squad"))
+	_map.foundry_requested.connect(Callable(self, "show_foundry"))
 
 
 ## The Scrap sink. Reachable from the map because that is where the player lands after
@@ -210,6 +215,14 @@ func show_squad() -> void:
 	_squad = SquadScreenScript.new()
 	_present(_squad)
 	_squad.closed.connect(Callable(self, "_on_sub_screen_closed"))
+
+
+## The Alloy sink and the collection board. Sits beside the other build screens on the map.
+func show_foundry() -> void:
+	_clear_screens()
+	_foundry = FoundryScreenScript.new()
+	_present(_foundry)
+	_foundry.closed.connect(Callable(self, "_on_sub_screen_closed"))
 
 
 func _on_stage_chosen(stage: StageDef) -> void:
@@ -265,7 +278,7 @@ func _on_battle_finished(outcome: int) -> void:
 func _finish_run(cleared: bool) -> void:
 	_runner.settle(_result, cleared)
 	_runner.award(_result, ctx.wallet, ctx.progress, ctx.roster.squad_symbots(),
-		ctx.inventory_items)
+		ctx.inventory_items, ctx.blueprints)
 	save_now()
 
 	# The reward screen reads the settled result, so the stage reference has to survive
@@ -329,3 +342,7 @@ func _clear_screens() -> void:
 		remove_child(_squad)
 		_squad.queue_free()
 		_squad = null
+	if _foundry != null:
+		remove_child(_foundry)
+		_foundry.queue_free()
+		_foundry = null

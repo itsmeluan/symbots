@@ -21,10 +21,14 @@ class Result extends RefCounted:
 	var cleared: bool = false
 	var battles_won: int = 0
 	var scrap_earned: int = 0
+	var alloy_earned: int = 0
 	var xp_each: int = 0
 	var levels_gained: int = 0
 	var chest_items: Array[StringName] = []
 	var chest_blueprint: StringName = &""
+	## True only when the blueprint in the chest was NEW to the player — so the reward screen
+	## announces "blueprint unlocked" once, not on every replay of a cleared boss.
+	var blueprint_was_new: bool = false
 	## One BattleEngine per fight, in order, so a caller can replay or inspect any of them.
 	var battles: Array = []
 
@@ -141,20 +145,33 @@ func settle(result: Result, cleared: bool) -> Result:
 		result.scrap_earned += UpgradeEconomy.chest_reward(_stage.stage_level, _cfg)
 		result.chest_items = _stage.chest_item_ids.duplicate()
 		result.chest_blueprint = _stage.chest_blueprint_id
+		# Alloy — the rare currency — only comes from boss chests (dungeons/raids), per
+		# §5.1. A plain stage pays Scrap and items; Alloy is what makes clearing a DUNGEON
+		# worth more than farming trash, and it is the only way to afford crafting.
+		if _stage.carries_structure():
+			result.alloy_earned = _cfg.alloy_reward_base \
+				+ _cfg.alloy_reward_per_stage * maxi(0, _stage.stage_level - 1)
 	return result
 
 
 ## Pay a result into the player's wallet and mark the stage cleared. Separate from settle()
 ## so a caller can show the reward screen before the numbers actually move.
 func award(result: Result, wallet: Wallet, progress: StageProgress,
-		squad: Array = [], items: ItemInventory = null) -> void:
+		squad: Array = [], items: ItemInventory = null,
+		library: BlueprintLibrary = null) -> void:
 	if result.scrap_earned > 0:
 		wallet.earn(Wallet.SCRAP, result.scrap_earned)
+	if result.alloy_earned > 0:
+		wallet.earn(Wallet.ALLOY, result.alloy_earned)
 	# The chest actually hands over its contents. Listing items in a Result that never
 	# reached an inventory made the chest a promise the game did not keep.
 	if items != null:
 		for item_id in result.chest_items:
 			items.add(item_id)
+	# A boss chest teaches its blueprint. unlock() returns true only when it is NEW, so the
+	# reward screen can announce a first-time unlock without lying on every replay.
+	if library != null and result.chest_blueprint != &"":
+		result.blueprint_was_new = library.unlock(result.chest_blueprint)
 	if result.xp_each > 0 and not squad.is_empty():
 		result.levels_gained = XpProgression.grant_squad(squad, result.xp_each, _cfg)
 	if result.cleared:

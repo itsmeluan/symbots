@@ -129,6 +129,16 @@ func test_the_squad_screen_fills_the_viewport() -> void:
 	assert_gt(_tallest_expanding(_game._squad), 50.0, "the bench has no room")
 
 
+func test_the_foundry_fills_the_viewport_without_overflow() -> void:
+	_game.show_foundry()
+	await _settle()
+	_assert_fills(_game._foundry, "foundry")
+	# The row labels can be long ("blueprint not found"); none may push its row past the edge.
+	for row in _game._foundry._list.get_children():
+		assert_lte(row.size.x, _viewport_size().x + 1.0,
+			"a foundry row overflows horizontally")
+
+
 func test_the_battle_screen_fills_the_viewport() -> void:
 	_game._on_stage_chosen(_game.ctx.stages.get_stage(&"stage_01"))
 	await _settle()
@@ -168,7 +178,7 @@ func test_the_battle_skill_bar_fits_on_screen() -> void:
 
 func test_no_screen_is_wider_than_the_viewport() -> void:
 	# Horizontal overflow on a phone means controls the player physically cannot reach.
-	for opener in ["show_map", "show_workshop", "show_tree", "show_squad"]:
+	for opener in ["show_map", "show_workshop", "show_tree", "show_squad", "show_foundry"]:
 		_game.call(opener)
 		await _settle()
 		for child in _game.get_children():

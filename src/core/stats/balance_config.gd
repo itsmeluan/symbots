@@ -353,3 +353,14 @@ extends Resource
 ## the escalation. The stage validator reads these — content cannot break the rule.
 @export var mk2_min_stage_level: int = 6
 @export var mk3_min_stage_level: int = 10
+
+# ---------------------------------------------------------------------------
+# v1 Alloy (crafting) tuning (design §5.1). APPEND-ONLY.
+# ---------------------------------------------------------------------------
+
+## Alloy from a boss chest (dungeon/raid only), scaled by stage level. Alloy is the rare
+## currency: a whole boss clear yields a fraction of one common craft (40), so building a
+## roster is a campaign, not an afternoon. Magnitudes need a playtest pass like every other
+## economy curve (§9).
+@export var alloy_reward_base: int = 12
+@export var alloy_reward_per_stage: int = 4

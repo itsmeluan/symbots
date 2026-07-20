@@ -27,6 +27,7 @@ var _roster: PlayerRoster = null
 var _wallet: Wallet = null
 var _items: ItemInventory = null
 var _expeditions: ExpeditionBoard = null
+var _library: BlueprintLibrary = null
 var _species: SpeciesCatalog = null
 var _tree: SkillTree = null
 var _item_catalog: InstallItemCatalog = null
@@ -37,13 +38,15 @@ var _log: LogSink = null
 func _init(roster: PlayerRoster, wallet: Wallet, species: SpeciesCatalog,
 		tree: SkillTree, log: LogSink = null, items: ItemInventory = null,
 		item_catalog: InstallItemCatalog = null,
-		expeditions: ExpeditionBoard = null, progress: StageProgress = null) -> void:
+		expeditions: ExpeditionBoard = null, progress: StageProgress = null,
+		library: BlueprintLibrary = null) -> void:
 	_roster = roster
 	_wallet = wallet
 	_items = items
 	_item_catalog = item_catalog
 	_expeditions = expeditions
 	_progress = progress
+	_library = library
 	_species = species
 	_tree = tree
 	_log = log
@@ -64,6 +67,7 @@ func snapshot() -> Dictionary:
 		"items": _items.to_dict() if _items != null else {},
 		"expeditions": _expeditions.to_dict() if _expeditions != null else {},
 		"progress": _progress_dict(),
+		"blueprints": _library.to_dict() if _library != null else {},
 	}
 
 
@@ -99,6 +103,12 @@ func restore(data: Dictionary) -> void:
 		var p := StageProgress.from_dict(data.get("progress", {}))
 		_progress.cleared = p.cleared
 		_progress.endless_tier = p.endless_tier
+
+	# Blueprints restore AFTER nothing in particular, but a recipe for a species that no
+	# longer ships is dropped against the catalog — a phantom craftable would fail to build.
+	if _library != null:
+		var lib := BlueprintLibrary.from_dict(data.get("blueprints", {}), _species)
+		_library.unlocked = lib.unlocked
 
 
 func _restore_symbot(raw) -> SymbotInstance:
