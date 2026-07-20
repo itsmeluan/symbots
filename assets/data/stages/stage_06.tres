@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="StageDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/stages/stage_def.gd" id="1_stage"]
+
+[resource]
+script = ExtResource("1_stage")
+id = &"stage_06"
+display_name = "Signal Yard"
+description = "Everything here talks to everything else."
+mode = 1
+stage_level = 6
+requires = Array[StringName]([&"stage_05"])
+battles = Array[Dictionary]([{
+"enemies": Array[StringName]([&"coilsprite", &"voltfang", &"voltfang"])
+}])
+enemy_level = 7
+chest_item_ids = Array[StringName]([&"item_ram_chip_t2"])
+chest_blueprint_id = &""

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="StageDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/stages/stage_def.gd" id="1_stage"]
+
+[resource]
+script = ExtResource("1_stage")
+id = &"stage_10"
+display_name = "The Foreman"
+description = "Whatever has been running this place."
+mode = 2
+stage_level = 10
+requires = Array[StringName]([&"stage_09"])
+battles = Array[Dictionary]([{
+"enemies": Array[StringName]([&"ironmaul", &"voltfang"])
+}, {
+"enemies": Array[StringName]([&"nanoweave", &"hexcircuit", &"boltshell"])
+}, {
+"enemies": Array[StringName]([&"ironmaul", &"ironmaul", &"nanoweave", &"hexcircuit"])
+}])
+enemy_level = 12
+chest_item_ids = Array[StringName]([&"item_servo_t3", &"item_ram_chip_t3"])
+chest_blueprint_id = &"blueprint_hexcircuit"

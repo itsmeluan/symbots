@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="StageDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/stages/stage_def.gd" id="1_stage"]
+
+[resource]
+script = ExtResource("1_stage")
+id = &"stage_02"
+display_name = "Rusted Gantry"
+description = "Something still runs the loading arms."
+mode = 1
+stage_level = 2
+requires = Array[StringName]([&"stage_01"])
+battles = Array[Dictionary]([{
+"enemies": Array[StringName]([&"rustcrawler", &"rustcrawler"])
+}])
+enemy_level = 2
+chest_item_ids = Array[StringName]([&"item_ram_chip_t1"])
+chest_blueprint_id = &""

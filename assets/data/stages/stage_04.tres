@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="StageDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/stages/stage_def.gd" id="1_stage"]
+
+[resource]
+script = ExtResource("1_stage")
+id = &"stage_04"
+display_name = "Fabrication Floor"
+description = "It repairs itself faster than you break it."
+mode = 1
+stage_level = 4
+requires = Array[StringName]([&"stage_03"])
+battles = Array[Dictionary]([{
+"enemies": Array[StringName]([&"solderfly", &"rustcrawler", &"rustcrawler"])
+}])
+enemy_level = 4
+chest_item_ids = Array[StringName]([&"item_processor_t1"])
+chest_blueprint_id = &""

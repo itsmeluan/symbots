@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="StageDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/stages/stage_def.gd" id="1_stage"]
+
+[resource]
+script = ExtResource("1_stage")
+id = &"stage_09"
+display_name = "Deep Fabrication"
+description = "It rebuilds what you destroy."
+mode = 1
+stage_level = 9
+requires = Array[StringName]([&"stage_08"])
+battles = Array[Dictionary]([{
+"enemies": Array[StringName]([&"nanoweave", &"ironmaul", &"ironmaul"])
+}])
+enemy_level = 10
+chest_item_ids = Array[StringName]([&"item_capacitor_t2"])
+chest_blueprint_id = &""

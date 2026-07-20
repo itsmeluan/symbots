@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="StageDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/stages/stage_def.gd" id="1_stage"]
+
+[resource]
+script = ExtResource("1_stage")
+id = &"stage_01"
+display_name = "Scrapyard Verge"
+description = "Where discarded frames go to keep twitching."
+mode = 1
+stage_level = 1
+requires = Array[StringName]([])
+battles = Array[Dictionary]([{
+"enemies": Array[StringName]([&"rustcrawler"])
+}])
+enemy_level = 1
+chest_item_ids = Array[StringName]([])
+chest_blueprint_id = &""

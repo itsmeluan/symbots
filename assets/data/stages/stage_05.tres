@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="StageDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/stages/stage_def.gd" id="1_stage"]
+
+[resource]
+script = ExtResource("1_stage")
+id = &"stage_05"
+display_name = "The Stack"
+description = "A full crew, and they have done this before."
+mode = 2
+stage_level = 5
+requires = Array[StringName]([&"stage_04"])
+battles = Array[Dictionary]([{
+"enemies": Array[StringName]([&"rustcrawler", &"rustcrawler"])
+}, {
+"enemies": Array[StringName]([&"boltshell", &"voltfang"])
+}, {
+"enemies": Array[StringName]([&"boltshell", &"solderfly", &"voltfang", &"rustcrawler"])
+}])
+enemy_level = 5
+chest_item_ids = Array[StringName]([&"item_capacitor_t1", &"item_servo_t1"])
+chest_blueprint_id = &"blueprint_boltshell"

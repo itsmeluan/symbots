@@ -1,0 +1,68 @@
+## StageDef — one node on the stage map (Core Design §6).
+##
+## A stage is a sequence of battles plus a chest. One battle is the common case; a dungeon
+## is the same resource with more entries in [member battles], which is why there is no
+## separate DungeonDef — the modes differ by length and by what carries between fights, not
+## by structure.
+@tool
+class_name StageDef
+extends Resource
+
+## Values are APPEND-ONLY — progress persists the int.
+enum Mode {
+	INVALID = 0,
+	STAGE   = 1,  ## a single battle
+	DUNGEON = 2,  ## a sequence; structure and ult charge carry, everything else resets
+	RAID    = 3,  ## reserved — a longer dungeon behind a boss gate
+	ENDLESS = 4,  ## past the authored stages, difficulty scales without end
+}
+
+@export var id: StringName = &""
+@export var display_name: String = ""
+@export_multiline var description: String = ""
+
+@export var mode: Mode = Mode.STAGE
+
+## Ordering and reward scale. Drives [method UpgradeEconomy.battle_reward], so it is a
+## difficulty dial and an economy dial at once — deliberately, because a stage that pays
+## more than it costs to beat would be the only stage anyone played.
+@export var stage_level: int = 1
+
+## Stages that must be CLEARED before this one opens. Empty means it is available from the
+## start. A list rather than a single id so the map can converge as well as branch.
+@export var requires: Array[StringName] = []
+
+## Each entry is one battle: an array of enemy species ids, 1-4 of them (§3.1).
+## Shape: [ { "enemies": [StringName, ...] } ]
+@export var battles: Array[Dictionary] = []
+
+## Enemy level for this stage's units. Kept separate from `stage_level` so a bonus stage
+## can pay well without being hard, or be brutal without paying more.
+@export var enemy_level: int = 1
+
+## Item ids the completion chest can award (§6). The chest is the ONLY source of
+## blueprints and top-tier hardware — otherwise finishing has no purpose and the optimal
+## play is to farm the first battle and quit.
+@export var chest_item_ids: Array[StringName] = []
+
+## Blueprint this stage's chest can drop, or empty. Blueprints are what make a boss worth
+## repeating.
+@export var chest_blueprint_id: StringName = &""
+
+
+func battle_count() -> int:
+	return battles.size()
+
+
+## Enemy species ids for battle [param index], or an empty array when out of range.
+func enemies_at(index: int) -> Array:
+	if index < 0 or index >= battles.size():
+		return []
+	return battles[index].get("enemies", [])
+
+
+## True when structure carries between this stage's battles (§3.6). Dungeons and raids run
+## as one continuous attrition arc; a plain stage is a single fight, so there is nothing to
+## carry.
+func carries_structure() -> bool:
+	return mode == Mode.DUNGEON or mode == Mode.RAID

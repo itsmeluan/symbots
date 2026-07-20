@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="StageDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/stages/stage_def.gd" id="1_stage"]
+
+[resource]
+script = ExtResource("1_stage")
+id = &"stage_07"
+display_name = "Cold Storage"
+description = "Two walls and something behind them."
+mode = 1
+stage_level = 7
+requires = Array[StringName]([&"stage_06"])
+battles = Array[Dictionary]([{
+"enemies": Array[StringName]([&"boltshell", &"ironmaul", &"solderfly"])
+}])
+enemy_level = 8
+chest_item_ids = Array[StringName]([&"item_heat_sink_t2"])
+chest_blueprint_id = &""

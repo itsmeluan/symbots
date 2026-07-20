@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="StageCatalog" load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://src/core/stages/stage_def.gd" id="1_def"]
+[ext_resource type="Script" path="res://src/core/stages/stage_catalog.gd" id="2_cat"]
+[ext_resource type="Resource" path="res://assets/data/stages/stage_01.tres" id="3_s"]
+[ext_resource type="Resource" path="res://assets/data/stages/stage_02.tres" id="4_s"]
+[ext_resource type="Resource" path="res://assets/data/stages/stage_03.tres" id="5_s"]
+[ext_resource type="Resource" path="res://assets/data/stages/stage_04.tres" id="6_s"]
+[ext_resource type="Resource" path="res://assets/data/stages/stage_05.tres" id="7_s"]
+[ext_resource type="Resource" path="res://assets/data/stages/stage_06.tres" id="8_s"]
+[ext_resource type="Resource" path="res://assets/data/stages/stage_07.tres" id="9_s"]
+[ext_resource type="Resource" path="res://assets/data/stages/stage_08.tres" id="10_s"]
+[ext_resource type="Resource" path="res://assets/data/stages/stage_09.tres" id="11_s"]
+[ext_resource type="Resource" path="res://assets/data/stages/stage_10.tres" id="12_s"]
+
+[resource]
+script = ExtResource("2_cat")
+entries = Array[ExtResource("1_def")]([ExtResource("3_s"), ExtResource("4_s"), ExtResource("5_s"), ExtResource("6_s"), ExtResource("7_s"), ExtResource("8_s"), ExtResource("9_s"), ExtResource("10_s"), ExtResource("11_s"), ExtResource("12_s")])

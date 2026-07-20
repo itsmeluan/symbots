@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="StageDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/stages/stage_def.gd" id="1_stage"]
+
+[resource]
+script = ExtResource("1_stage")
+id = &"stage_08"
+display_name = "Broken Relay"
+description = "It breaks your line before you reach it."
+mode = 1
+stage_level = 8
+requires = Array[StringName]([&"stage_07"])
+battles = Array[Dictionary]([{
+"enemies": Array[StringName]([&"hexcircuit", &"voltfang", &"voltfang", &"boltshell"])
+}])
+enemy_level = 9
+chest_item_ids = Array[StringName]([&"item_processor_t2"])
+chest_blueprint_id = &""
