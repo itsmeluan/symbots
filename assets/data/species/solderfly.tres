@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="SpeciesDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/species/species_def.gd" id="1_species"]
+
+[resource]
+script = ExtResource("1_species")
+id = &"solderfly"
+display_name = "Solderfly"
+description = "Small, fast, and permanently mid-repair on somebody."
+role = 3
+rarity = 1
+tree_entry_node = &"entry_healer_mender"
+base_stats = Dictionary[StringName, int]({
+&"structure": 85,
+&"armor": 15,
+&"resistance": 25,
+&"physical_power": 8,
+&"energy_power": 15,
+&"mobility": 20,
+&"targeting": 5,
+&"processing": 60,
+&"cooling": 12,
+&"energy_capacity": 10,
+&"recharge": 5
+})
+part_growth = {
+0: {
+&"energy_capacity": 2,
+&"recharge": 2
+},
+1: {
+&"structure": 7,
+&"armor": 1
+},
+2: {
+&"processing": 5
+},
+3: {
+&"energy_power": 4
+},
+4: {
+&"mobility": 2,
+&"cooling": 1
+}
+}
+unique_passives = Array[Dictionary]([{
+"passive_id": &"pass_field_repair",
+"unlock_level": 5
+}])
+basic_attack_id = &"basic_pulse"
+starting_skills = Array[StringName]([&"skill_patch"])
+starting_ultimate = &"ult_full_restoration"
+craft_alloy_cost = 40

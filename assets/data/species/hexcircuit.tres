@@ -1,0 +1,60 @@
+[gd_resource type="Resource" script_class="SpeciesDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/species/species_def.gd" id="1_species"]
+
+[resource]
+script = ExtResource("1_species")
+id = &"hexcircuit"
+display_name = "Hexcircuit"
+description = "The reason an enemy tank line stops being a tank line."
+role = 4
+rarity = 3
+tree_entry_node = &"entry_support_disruptor"
+base_stats = Dictionary[StringName, int]({
+&"structure": 111,
+&"armor": 23,
+&"resistance": 29,
+&"physical_power": 13,
+&"energy_power": 32,
+&"mobility": 46,
+&"targeting": 20,
+&"processing": 46,
+&"cooling": 6,
+&"energy_capacity": 6,
+&"recharge": 6
+})
+part_growth = {
+0: {
+&"energy_capacity": 2,
+&"recharge": 1
+},
+1: {
+&"structure": 7,
+&"armor": 1
+},
+2: {
+&"processing": 3,
+&"targeting": 2
+},
+3: {
+&"energy_power": 4
+},
+4: {
+&"mobility": 3,
+&"cooling": 1
+}
+}
+unique_passives = Array[Dictionary]([{
+"passive_id": &"pass_system_noise",
+"unlock_level": 5
+}, {
+"passive_id": &"pass_feedback_loop",
+"unlock_level": 15
+}, {
+"passive_id": &"pass_overclocked_hex",
+"unlock_level": 30
+}])
+basic_attack_id = &"basic_pulse"
+starting_skills = Array[StringName]([&"skill_system_hex"])
+starting_ultimate = &"ult_cascade_failure"
+craft_alloy_cost = 300

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="SkillDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/battle_v1/skill_def.gd" id="1_skill"]
+
+[resource]
+script = ExtResource("1_skill")
+id = &"ult_full_restoration"
+display_name = "Full Restoration"
+description = "Rebuilds the squad and burns off what ails it."
+target_mode = 3
+cooldown = 0
+initial_cooldown = 0
+power_percent = 200
+scaling_stat = &"processing"
+effects = Array[Dictionary]([{
+"kind": 2
+}, {
+"kind": 5
+}])
+ignores_taunt = false
+is_taunt_skill = false
+is_ultimate = true
+charge_cost = 100

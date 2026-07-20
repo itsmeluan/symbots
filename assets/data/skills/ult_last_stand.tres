@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="SkillDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/battle_v1/skill_def.gd" id="1_skill"]
+
+[resource]
+script = ExtResource("1_skill")
+id = &"ult_last_stand"
+display_name = "Last Stand"
+description = "Locks its frame and stops giving ground."
+target_mode = 1
+cooldown = 0
+initial_cooldown = 0
+power_percent = 0
+scaling_stat = &"physical_power"
+effects = Array[Dictionary]([{
+"kind": 4,
+"status": 21,
+"turns": 4,
+"is_debuff": false,
+"percent_mods": {
+&"armor": 80,
+&"resistance": 80
+}
+}, {
+"kind": 4,
+"status": 30,
+"turns": 4,
+"is_debuff": false,
+"percent_mods": {
+&"physical_power": 50
+}
+}])
+ignores_taunt = false
+is_taunt_skill = false
+is_ultimate = true
+charge_cost = 100

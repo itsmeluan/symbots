@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="SpeciesDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/species/species_def.gd" id="1_species"]
+
+[resource]
+script = ExtResource("1_species")
+id = &"coilsprite"
+display_name = "Coilsprite"
+description = "Contributes nothing to a fight except making everyone else terrifying."
+role = 4
+rarity = 1
+tree_entry_node = &"entry_support_amplifier"
+base_stats = Dictionary[StringName, int]({
+&"structure": 85,
+&"armor": 18,
+&"resistance": 22,
+&"physical_power": 10,
+&"energy_power": 25,
+&"mobility": 35,
+&"targeting": 15,
+&"processing": 35,
+&"cooling": 5,
+&"energy_capacity": 5,
+&"recharge": 5
+})
+part_growth = {
+0: {
+&"energy_capacity": 2,
+&"recharge": 1
+},
+1: {
+&"structure": 7,
+&"armor": 1
+},
+2: {
+&"processing": 3,
+&"targeting": 2
+},
+3: {
+&"energy_power": 4
+},
+4: {
+&"mobility": 3,
+&"cooling": 1
+}
+}
+unique_passives = Array[Dictionary]([{
+"passive_id": &"pass_resonant_coil",
+"unlock_level": 5
+}])
+basic_attack_id = &"basic_pulse"
+starting_skills = Array[StringName]([&"skill_overclock_ally"])
+starting_ultimate = &"ult_resonance_field"
+craft_alloy_cost = 40

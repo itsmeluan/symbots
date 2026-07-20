@@ -86,6 +86,16 @@ const UNIQUE_PASSIVES_BY_RARITY := {
 ## wasted (Core Design §3.4).
 @export var basic_attack_id: StringName = &"basic_attack"
 
+## Skills granted by this species' ENTRY-POINT cluster — what it fields at level 1 before
+## a single point is spent. This does not contradict "actives come from the tree" (§3.4):
+## the entry node costs 0 points ([method SkillNodeDef.point_cost]), so what it grants is
+## exactly the species' starting kit. Everything past it still has to be walked to.
+@export var starting_skills: Array[StringName] = []
+
+## The ult the entry cluster grants (§3.4b). One at a time; the tree offers more further
+## out, and swapping is a build decision.
+@export var starting_ultimate: StringName = &""
+
 ## Alloy cost to craft this species from its blueprint.
 @export var craft_alloy_cost: int = 0
 

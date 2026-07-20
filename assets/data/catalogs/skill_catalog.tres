@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="SkillCatalog" load_steps=21 format=3]
+
+[ext_resource type="Script" path="res://src/core/battle_v1/skill_def.gd" id="1_def"]
+[ext_resource type="Script" path="res://src/core/battle_v1/skill_catalog.gd" id="2_cat"]
+[ext_resource type="Resource" path="res://assets/data/skills/basic_pulse.tres" id="3_s"]
+[ext_resource type="Resource" path="res://assets/data/skills/basic_strike.tres" id="4_s"]
+[ext_resource type="Resource" path="res://assets/data/skills/skill_arc_lash.tres" id="5_s"]
+[ext_resource type="Resource" path="res://assets/data/skills/skill_nanite_swarm.tres" id="6_s"]
+[ext_resource type="Resource" path="res://assets/data/skills/skill_overclock_ally.tres" id="7_s"]
+[ext_resource type="Resource" path="res://assets/data/skills/skill_patch.tres" id="8_s"]
+[ext_resource type="Resource" path="res://assets/data/skills/skill_provoke.tres" id="9_s"]
+[ext_resource type="Resource" path="res://assets/data/skills/skill_rend.tres" id="10_s"]
+[ext_resource type="Resource" path="res://assets/data/skills/skill_seismic_slam.tres" id="11_s"]
+[ext_resource type="Resource" path="res://assets/data/skills/skill_system_hex.tres" id="12_s"]
+[ext_resource type="Resource" path="res://assets/data/skills/ult_bulwark_protocol.tres" id="13_s"]
+[ext_resource type="Resource" path="res://assets/data/skills/ult_cascade_failure.tres" id="14_s"]
+[ext_resource type="Resource" path="res://assets/data/skills/ult_full_restoration.tres" id="15_s"]
+[ext_resource type="Resource" path="res://assets/data/skills/ult_last_stand.tres" id="16_s"]
+[ext_resource type="Resource" path="res://assets/data/skills/ult_reassembly.tres" id="17_s"]
+[ext_resource type="Resource" path="res://assets/data/skills/ult_resonance_field.tres" id="18_s"]
+[ext_resource type="Resource" path="res://assets/data/skills/ult_scrap_storm.tres" id="19_s"]
+[ext_resource type="Resource" path="res://assets/data/skills/ult_thunderfang.tres" id="20_s"]
+
+[resource]
+script = ExtResource("2_cat")
+entries = Array[ExtResource("1_def")]([ExtResource("3_s"), ExtResource("4_s"), ExtResource("5_s"), ExtResource("6_s"), ExtResource("7_s"), ExtResource("8_s"), ExtResource("9_s"), ExtResource("10_s"), ExtResource("11_s"), ExtResource("12_s"), ExtResource("13_s"), ExtResource("14_s"), ExtResource("15_s"), ExtResource("16_s"), ExtResource("17_s"), ExtResource("18_s"), ExtResource("19_s"), ExtResource("20_s")])

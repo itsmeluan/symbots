@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="SkillDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/battle_v1/skill_def.gd" id="1_skill"]
+
+[resource]
+script = ExtResource("1_skill")
+id = &"basic_pulse"
+display_name = "Pulse"
+description = "A short energy discharge. Always available."
+target_mode = 5
+cooldown = 0
+initial_cooldown = 0
+power_percent = 100
+scaling_stat = &"energy_power"
+effects = Array[Dictionary]([{
+"kind": 1
+}])
+ignores_taunt = false
+is_taunt_skill = false
+is_ultimate = false
+charge_cost = 0

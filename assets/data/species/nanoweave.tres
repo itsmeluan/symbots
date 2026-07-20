@@ -1,0 +1,56 @@
+[gd_resource type="Resource" script_class="SpeciesDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/species/species_def.gd" id="1_species"]
+
+[resource]
+script = ExtResource("1_species")
+id = &"nanoweave"
+display_name = "Nanoweave"
+description = "Does not repair damage so much as decline to acknowledge it."
+role = 3
+rarity = 2
+tree_entry_node = &"entry_healer_nanite"
+base_stats = Dictionary[StringName, int]({
+&"structure": 98,
+&"armor": 17,
+&"resistance": 29,
+&"physical_power": 9,
+&"energy_power": 17,
+&"mobility": 23,
+&"targeting": 6,
+&"processing": 69,
+&"cooling": 14,
+&"energy_capacity": 11,
+&"recharge": 6
+})
+part_growth = {
+0: {
+&"energy_capacity": 2,
+&"recharge": 2
+},
+1: {
+&"structure": 7,
+&"armor": 1
+},
+2: {
+&"processing": 5
+},
+3: {
+&"energy_power": 4
+},
+4: {
+&"mobility": 2,
+&"cooling": 1
+}
+}
+unique_passives = Array[Dictionary]([{
+"passive_id": &"pass_self_replicating",
+"unlock_level": 5
+}, {
+"passive_id": &"pass_lingering_nanites",
+"unlock_level": 15
+}])
+basic_attack_id = &"basic_pulse"
+starting_skills = Array[StringName]([&"skill_nanite_swarm"])
+starting_ultimate = &"ult_reassembly"
+craft_alloy_cost = 120

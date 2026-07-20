@@ -223,9 +223,14 @@ func _resolve_targets(skill: SkillDef, chosen: BattleUnit, legal: Array) -> Arra
 	return [chosen] if chosen != null else []
 
 
+## Effect dictionaries use STRING keys, not StringName. Godot 4 hashes `"kind"` and
+## `&"kind"` as different keys, and a `.tres` authored in the editor writes String keys —
+## so a StringName lookup here would silently read the default off every authored skill and
+## every skill in the game would do nothing. Matches the existing `PartDef.drop_conditions`
+## convention.
 func _apply_effects(actor: BattleUnit, skill: SkillDef, target: BattleUnit) -> void:
 	for effect in skill.effects:
-		var kind: int = int(effect.get(&"kind", SkillDefScript.EffectKind.INVALID))
+		var kind: int = int(effect.get("kind", SkillDefScript.EffectKind.INVALID))
 		match kind:
 			SkillDefScript.EffectKind.DAMAGE:
 				_apply_damage(actor, skill, target)
@@ -245,7 +250,7 @@ func _apply_effects(actor: BattleUnit, skill: SkillDef, target: BattleUnit) -> v
 			SkillDefScript.EffectKind.REVIVE:
 				if not target.is_alive():
 					target.current_structure = maxi(1, target.max_structure
-						* int(effect.get(&"percent", 25)) / 100)
+						* int(effect.get("percent", 25)) / 100)
 					_emit(&"revived", {&"unit": target.unit_id,
 						&"structure": target.current_structure})
 
@@ -273,12 +278,12 @@ func _apply_damage(actor: BattleUnit, skill: SkillDef, target: BattleUnit) -> vo
 
 func _apply_status(actor: BattleUnit, effect: Dictionary, target: BattleUnit) -> void:
 	var s := StatusEffectScript.new(
-		int(effect.get(&"status", StatusEffectScript.Kind.INVALID)),
-		int(effect.get(&"turns", 1)),
-		bool(effect.get(&"is_debuff", true)))
-	s.tick_amount = int(effect.get(&"tick_amount", 0))
-	s.flat_mods = effect.get(&"flat_mods", {})
-	s.percent_mods = effect.get(&"percent_mods", {})
+		int(effect.get("status", StatusEffectScript.Kind.INVALID)),
+		int(effect.get("turns", 1)),
+		bool(effect.get("is_debuff", true)))
+	s.tick_amount = int(effect.get("tick_amount", 0))
+	s.flat_mods = effect.get("flat_mods", {})
+	s.percent_mods = effect.get("percent_mods", {})
 	s.source_id = actor.unit_id
 	target.add_status(s)
 	_emit(&"status_applied", {

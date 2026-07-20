@@ -49,7 +49,7 @@ func _strike() -> SkillDef:
 	s.target_mode = SkillDefScript.TargetMode.SINGLE_ENEMY
 	s.power_percent = 100
 	s.scaling_stat = &"physical_power"
-	s.effects = [{&"kind": SkillDefScript.EffectKind.DAMAGE}]
+	s.effects = [{"kind": SkillDefScript.EffectKind.DAMAGE}]
 	return s
 
 
