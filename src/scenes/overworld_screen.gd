@@ -30,15 +30,44 @@
 extends Screen
 
 const MOVE_SPEED := 170.0                    # world px/sec
-const TILE := 64                             # world px per tile (matches terrain_tileset.tres)
-const WORLD_TILES := Vector2i(40, 26)        # 40x26 tiles = 2560x1664 world px (~2.7 x 3 screens)
+const TILE := 32                             # world px per tile (matches cainos_tileset.tres)
+const WORLD_TILES := Vector2i(80, 52)        # 80x52 tiles = 2560x1664 world px (~2.7 x 3 screens)
 const PLAYER_SCALE := 1                      # integer only — pixel art must not resample
 const TRIGGER_RADIUS := 46.0
 const MAX_MARKERS := 6
 const MARKER_HEIGHT := 64.0                  # on-screen height; width follows the sprite aspect
 const ARRIVE_EPSILON := 4.0
-const SPAWN_TILE := Vector2i(20, 13)     # walkable, verified against the painted map
-const DECAL_TILES := 3                       # atlas tiles 1..3 are transparent overlay decals
+const SPAWN_TILE := Vector2i(40, 26)     # world centre; verified walkable by flood fill
+# ---------------------------------------------------------------------------
+# CAINOS TILE VOCABULARY (assets/art/overworld/cainos_tileset.tres)
+# ---------------------------------------------------------------------------
+# Source ids follow the order the tileset declares them.
+const SRC_GRASS := 0
+const SRC_WALL := 2
+
+# Grass rows 0-3 are the same base colour with progressively more scatter detail. Row 0
+# is plain; using mostly row 0 with an occasional decorated tile keeps the ground
+# low-frequency (art-bible 6.2) instead of turning the whole field into noise.
+const GRASS_PLAIN := Vector2i(0, 0)
+const GRASS_VARIANTS: Array[Vector2i] = [
+	Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0),
+	Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1),
+]
+
+# Rows 4-7 are cobble patches ON grass — decorative variety, NOT a directional edge set.
+# So a path built from them reads as worn cobble showing through, which is what this pack
+# supports; asking it for a bordered road would need edge tiles it does not have.
+const PATH_DENSE: Array[Vector2i] = [
+	Vector2i(0, 4), Vector2i(1, 4), Vector2i(0, 5), Vector2i(1, 5), Vector2i(0, 6),
+]
+const PATH_SPARSE: Array[Vector2i] = [
+	Vector2i(4, 6), Vector2i(5, 6), Vector2i(6, 6), Vector2i(7, 6),
+]
+
+# Plain brick faces that tile against each other with no edge assumptions.
+const WALL_TILES: Array[Vector2i] = [
+	Vector2i(1, 6), Vector2i(2, 6), Vector2i(3, 6), Vector2i(4, 6),
+]
 
 # Collision box, in world px, measured at the character's FEET rather than the whole
 # sprite. Top-down games collide by the ground contact point: a box covering the full
@@ -90,7 +119,6 @@ var _log: LogSink
 @onready var _terrain: TileMapLayer = %Terrain
 @onready var _decals: TileMapLayer = %Decals
 @onready var _obstacles: TileMapLayer = %Obstacles
-@onready var _background: Sprite2D = %MapBackground
 @onready var _markers_root: Node2D = %Markers
 @onready var _player: AnimatedSprite2D = %Player
 @onready var _camera: Camera2D = %Camera
@@ -138,52 +166,116 @@ func _world_size() -> Vector2:
 # World construction
 # ---------------------------------------------------------------------------
 
-## Fill the two terrain layers with a deterministic pattern. Deterministic (a fixed
-## integer hash, no RNG) so the map is stable across sessions and headless-verifiable —
-## the same discipline the old fixed scatter used.
+## MAP LAYOUT — hand-authored structure, filled procedurally.
 ##
-## TWO LAYERS, ON PURPOSE: atlas tile 0 is the only real ground tile; tiles 1..3 are
-## transparent overlay decals (scrap, plants), not ground. Painting a decal into the
-## ground layer punches a hole in the floor — so ground fills every cell on _terrain and
-## decals are sprinkled sparsely on _decals above it.
+## Roads and buildings are declared as data here rather than baked into the scene so the
+## layout stays readable and editable in one place. The fill only writes cells the editor
+## left empty, so anything painted by hand in overworld_screen.tscn wins.
 ##
-## The Obstacles layer is NEVER auto-filled — it is yours to paint. Anything painted there
-## blocks movement (see _is_blocked), so a generated fill would wall the player in.
+## Buildings are hollow with a door gap: a solid block is an obstacle, but a room the
+## player can enter is a place. The door is what makes the difference.
+const ROADS_H: Array[Vector4i] = [                # x, y, length, thickness
+	Vector4i(4, 25, 72, 3),                        # main spine, west to east
+	Vector4i(12, 12, 18, 2),
+	Vector4i(52, 14, 20, 2),
+	Vector4i(14, 40, 20, 2),
+	Vector4i(50, 42, 22, 2),
+]
+const ROADS_V: Array[Vector4i] = [                # x, y, thickness, length
+	Vector4i(39, 6, 3, 42),                        # main crossing, north to south
+	Vector4i(20, 13, 2, 13),
+	Vector4i(62, 15, 2, 11),
+	Vector4i(22, 27, 2, 14),
+	Vector4i(60, 27, 2, 16),
+]
+## x, y, w, h, door_x, door_y — the door cell is left walkable.
+const BUILDINGS: Array[Array] = [
+	[8, 6, 13, 9, 14, 14],
+	[57, 6, 15, 10, 63, 15],
+	[9, 33, 14, 10, 15, 33],
+	[55, 34, 16, 11, 61, 34],
+]
+## Solid clusters — rubble and outcrops that shape the open ground without enclosing it.
+const WALL_BLOCKS: Array[Vector4i] = [
+	Vector4i(30, 17, 5, 4), Vector4i(47, 19, 4, 6),
+	Vector4i(27, 44, 5, 3), Vector4i(66, 24, 4, 5),
+	Vector4i(31, 33, 4, 4), Vector4i(45, 8, 3, 4),
+]
+
+
+## Fill terrain and obstacles. Deterministic — a fixed integer hash, never RNG — so the
+## map is identical across sessions and can be verified headlessly.
 ##
-## This is a starting fill, not a hand-authored map: the TileMapLayers are normal editor
-## nodes, so the map can be repainted in the Godot editor and this fill only applies to
-## cells left empty.
+## The Obstacles layer now carries WALL ART as well as collision: with a tileset the wall
+## tile is the wall, unlike the painted-map approach where obstacles were invisible data
+## over a drawn wall. One layer, one truth.
 func _build_terrain() -> void:
-	# A painted map background replaces the tile layers entirely: the art carries the
-	# terrain, and filling tiles underneath would only waste draw calls on pixels no one
-	# can see. Collision still lives on Obstacles — it is derived from this same image by
-	# tools/derive_map_collision.py, so art and collision cannot drift apart silently.
-	if _background != null and _background.texture != null:
-		_terrain.visible = false
-		_decals.visible = false
-		# Obstacles becomes collision DATA, not art: the painted map already draws every
-		# wall, so rendering the layer would stack placeholder tiles on top of the art it
-		# was derived from. The cells stay — _is_blocked reads them either way.
-		_obstacles.visible = false
-		return
 	for y in WORLD_TILES.y:
 		for x in WORLD_TILES.x:
 			var cell := Vector2i(x, y)
 			if _terrain.get_cell_source_id(cell) == -1:
-				_terrain.set_cell(cell, 0, Vector2i(0, 0))
-			if _decals.get_cell_source_id(cell) == -1:
-				var decal := _decal_for(x, y)
-				if decal > 0:
-					_decals.set_cell(cell, 0, Vector2i(decal, 0))
+				_terrain.set_cell(cell, SRC_GRASS, _grass_for(x, y))
+	for r: Vector4i in ROADS_H:
+		_paint_road(r.x, r.y, r.z, r.w)
+	for r: Vector4i in ROADS_V:
+		_paint_road(r.x, r.y, r.z, r.w)
+	for b: Array in BUILDINGS:
+		_paint_building(b[0], b[1], b[2], b[3], Vector2i(b[4], b[5]))
+	for w: Vector4i in WALL_BLOCKS:
+		_fill_walls(w.x, w.y, w.z, w.w)
+	_decals.visible = false                        # props layer, unused until prop art lands
 
 
-## Sparse deterministic decal placement — ~1 in 9 cells gets an overlay. Returns 0 for
-## "no decal", else the atlas column (1..DECAL_TILES).
-func _decal_for(x: int, y: int) -> int:
+## Plain grass most of the time, a decorated variant occasionally. Keeping decoration
+## sparse is the point: rows 1-3 of the tileset are busy, and a field of them competes
+## with the character instead of receding behind him.
+func _grass_for(x: int, y: int) -> Vector2i:
 	var h := absi((x * 73856093) ^ (y * 19349663))
 	if h % 9 != 0:
-		return 0
-	return 1 + (h / 9) % DECAL_TILES
+		return GRASS_PLAIN
+	return GRASS_VARIANTS[(h / 9) % GRASS_VARIANTS.size()]
+
+
+## Roads are cobble showing through grass: dense in the middle, sparse at the edges, so
+## they fade out instead of ending on a hard line the tileset has no edge piece for.
+func _paint_road(x0: int, y0: int, w: int, h: int) -> void:
+	for y in range(y0, y0 + h):
+		for x in range(x0, x0 + w):
+			var cell := Vector2i(x, y)
+			if not _in_world(cell):
+				continue
+			var edge := x == x0 or x == x0 + w - 1 or y == y0 or y == y0 + h - 1
+			var pool: Array[Vector2i] = PATH_SPARSE if (edge and w > 2 and h > 2) else PATH_DENSE
+			var h2 := absi((x * 6151) ^ (y * 31337))
+			_terrain.set_cell(cell, SRC_GRASS, pool[h2 % pool.size()])
+
+
+## Hollow rectangle of wall with one walkable door cell.
+func _paint_building(x0: int, y0: int, w: int, h: int, door: Vector2i) -> void:
+	for y in range(y0, y0 + h):
+		for x in range(x0, x0 + w):
+			if x != x0 and x != x0 + w - 1 and y != y0 and y != y0 + h - 1:
+				continue                            # interior stays walkable
+			if Vector2i(x, y) == door:
+				continue
+			_set_wall(Vector2i(x, y))
+
+
+func _fill_walls(x0: int, y0: int, w: int, h: int) -> void:
+	for y in range(y0, y0 + h):
+		for x in range(x0, x0 + w):
+			_set_wall(Vector2i(x, y))
+
+
+func _set_wall(cell: Vector2i) -> void:
+	if not _in_world(cell) or _obstacles.get_cell_source_id(cell) != -1:
+		return
+	var h := absi((cell.x * 92837111) ^ (cell.y * 689287499))
+	_obstacles.set_cell(cell, SRC_WALL, WALL_TILES[h % WALL_TILES.size()])
+
+
+func _in_world(cell: Vector2i) -> bool:
+	return cell.x >= 0 and cell.y >= 0 and cell.x < WORLD_TILES.x and cell.y < WORLD_TILES.y
 
 
 ## Build the 16 player animations — walk_0..walk_7 and idle_0..idle_7 — from the two
@@ -528,8 +620,12 @@ func _make_marker_label(text: String) -> Label:
 ##
 ## Re-derive with tools/derive_map_collision.py if the map art changes.
 const ENEMY_TILES: Array[Vector2i] = [
-	Vector2i(3, 3), Vector2i(36, 3), Vector2i(36, 22),
-	Vector2i(6, 19), Vector2i(15, 3), Vector2i(31, 12),
+	Vector2i(14, 20),   # open ground south of the west building
+	Vector2i(48, 11),   # north-centre, between the crossing and the east building
+	Vector2i(30, 30),   # south of the main spine
+	Vector2i(69, 31),   # far east clearing
+	Vector2i(16, 47),   # south-west corner field
+	Vector2i(47, 47),   # south-centre field
 ]
 
 func _scatter_spots() -> Array:

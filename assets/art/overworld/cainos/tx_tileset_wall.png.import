@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://4asj5j6x0va6"
-path="res://.godot/imported/map_v1.png-b922914fc5e7353f1870826a42fab43a.ctex"
+uid="uid://dhhkte7qgh6rp"
+path="res://.godot/imported/tx_tileset_wall.png-442e7ffe76ef5f48ee89a19d52a1791b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/overworld/map_v1.png"
-dest_files=["res://.godot/imported/map_v1.png-b922914fc5e7353f1870826a42fab43a.ctex"]
+source_file="res://assets/art/overworld/cainos/tx_tileset_wall.png"
+dest_files=["res://.godot/imported/tx_tileset_wall.png-442e7ffe76ef5f48ee89a19d52a1791b.ctex"]
 
 [params]
 

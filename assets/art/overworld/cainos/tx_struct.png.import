@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dredu2v3le22h"
-path="res://.godot/imported/terrain_atlas.png-cfb9870cefa8b25fda00155b0d63bc21.ctex"
+uid="uid://blc6f6ucqebar"
+path="res://.godot/imported/tx_struct.png-1c573e3481f160edbfca324e4b5b7be3.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/overworld/terrain_atlas.png"
-dest_files=["res://.godot/imported/terrain_atlas.png-cfb9870cefa8b25fda00155b0d63bc21.ctex"]
+source_file="res://assets/art/overworld/cainos/tx_struct.png"
+dest_files=["res://.godot/imported/tx_struct.png-1c573e3481f160edbfca324e4b5b7be3.ctex"]
 
 [params]
 

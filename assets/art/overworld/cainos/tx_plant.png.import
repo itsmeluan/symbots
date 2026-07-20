@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://djpcugj4x7r6n"
-path="res://.godot/imported/map_v2.png-0b4184ece941d3a750ddc80450dd939b.ctex"
+uid="uid://bhy57r16pfq8k"
+path="res://.godot/imported/tx_plant.png-83eabe05d3f6078015e3cb7f2b5e4c62.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/overworld/map_v2.png"
-dest_files=["res://.godot/imported/map_v2.png-0b4184ece941d3a750ddc80450dd939b.ctex"]
+source_file="res://assets/art/overworld/cainos/tx_plant.png"
+dest_files=["res://.godot/imported/tx_plant.png-83eabe05d3f6078015e3cb7f2b5e4c62.ctex"]
 
 [params]
 
