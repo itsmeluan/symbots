@@ -26,19 +26,24 @@ const KEY := &"v1_state"
 var _roster: PlayerRoster = null
 var _wallet: Wallet = null
 var _items: ItemInventory = null
+var _expeditions: ExpeditionBoard = null
 var _species: SpeciesCatalog = null
 var _tree: SkillTree = null
 var _item_catalog: InstallItemCatalog = null
+var _progress: StageProgress = null
 var _log: LogSink = null
 
 
 func _init(roster: PlayerRoster, wallet: Wallet, species: SpeciesCatalog,
 		tree: SkillTree, log: LogSink = null, items: ItemInventory = null,
-		item_catalog: InstallItemCatalog = null) -> void:
+		item_catalog: InstallItemCatalog = null,
+		expeditions: ExpeditionBoard = null, progress: StageProgress = null) -> void:
 	_roster = roster
 	_wallet = wallet
 	_items = items
 	_item_catalog = item_catalog
+	_expeditions = expeditions
+	_progress = progress
 	_species = species
 	_tree = tree
 	_log = log
@@ -57,6 +62,8 @@ func snapshot() -> Dictionary:
 		"squad": _roster.squad.map(func(id): return String(id)) if _roster != null else [],
 		"wallet": _wallet.to_dict() if _wallet != null else {},
 		"items": _items.to_dict() if _items != null else {},
+		"expeditions": _expeditions.to_dict() if _expeditions != null else {},
+		"progress": _progress_dict(),
 	}
 
 
@@ -80,6 +87,18 @@ func restore(data: Dictionary) -> void:
 	if _items != null:
 		var restored := ItemInventory.from_dict(data.get("items", {}), _item_catalog)
 		_items.counts = restored.counts
+
+	# Expeditions restore AFTER the roster, so entries naming a Symbot that no longer
+	# loaded can be dropped — an uncollectable expedition would hold a slot forever.
+	if _expeditions != null:
+		var board := ExpeditionBoard.from_dict(data.get("expeditions", {}), _roster)
+		_expeditions.slots = board.slots
+		_expeditions.active = board.active
+
+	if _progress != null:
+		var p := StageProgress.from_dict(data.get("progress", {}))
+		_progress.cleared = p.cleared
+		_progress.endless_tier = p.endless_tier
 
 
 func _restore_symbot(raw) -> SymbotInstance:
@@ -124,6 +143,10 @@ func _drop_missing_nodes(inst: SymbotInstance) -> void:
 	for node_id in inst.installed_items.keys():
 		if not _tree.has_node(StringName(str(node_id))):
 			inst.installed_items.erase(node_id)
+
+
+func _progress_dict() -> Dictionary:
+	return _progress.to_dict() if _progress != null else {}
 
 
 func _restore_squad(raw_squad) -> void:

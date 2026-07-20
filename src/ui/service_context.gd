@@ -69,6 +69,9 @@ var inventory_items: ItemInventory
 ## Which stages are cleared, and therefore which are open (§6).
 var progress: StageProgress
 
+## Timed offline missions for the bench (§7).
+var expeditions: ExpeditionBoard
+
 ## Frozen content catalogs. Screens read; nothing mutates them.
 var species: SpeciesCatalog
 var stages: StageCatalog

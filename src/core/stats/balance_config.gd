@@ -321,3 +321,25 @@ extends Resource
 ## a solo carry, which is the opposite of a squad game.
 @export var xp_reward_base: int = 20
 @export var xp_reward_per_enemy_level: int = 8
+
+# ---------------------------------------------------------------------------
+# v1 expedition tuning (design/v1/00-core-design.md §7). APPEND-ONLY.
+# ---------------------------------------------------------------------------
+
+## Scrap from an expedition, before the duration multiplier. Scales with the sent Symbot's
+## level so the bench keeps pace with the squad instead of falling permanently behind —
+## a bench that pays level-1 rates forever is a bench nobody uses twice.
+@export var expedition_scrap_base: int = 60
+@export var expedition_scrap_per_level: int = 14
+
+## Item-drop chance for a SHORT expedition, in whole percent; longer ones scale up with the
+## duration multiplier. Deliberately not guaranteed — a certain drop makes the expedition a
+## vending machine rather than something worth checking.
+@export var expedition_item_chance_base: int = 22
+
+## What expeditions can return. Deliberately low tiers only: the bench should supplement the
+## player's hardware, never out-earn actually playing a stage.
+@export var expedition_item_pool: Array[StringName] = [
+	&"item_ram_chip_t1", &"item_processor_t1", &"item_capacitor_t1",
+	&"item_heat_sink_t1", &"item_servo_t1", &"item_ram_chip_t2", &"item_servo_t2",
+]

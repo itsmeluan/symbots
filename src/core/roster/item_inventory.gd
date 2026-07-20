@@ -47,11 +47,15 @@ func take(item_id: StringName, amount: int = 1) -> bool:
 	return true
 
 
-## Every owned id, sorted, so a list screen renders in a stable order rather than in
-## whatever order the drops happened to arrive.
+## Every owned id in stable alphabetical order, so a list screen does not reshuffle.
+##
+## Sorted by the STRING form deliberately. Godot compares StringNames by their internal
+## pointer, not lexicographically, so a plain `sort()` gives an order that depends on
+## interning and changes between runs — the list would silently reorder itself on some
+## launches and not others, which is worse than no sorting at all because it looks random.
 func owned_ids() -> Array:
 	var ids: Array = counts.keys()
-	ids.sort()
+	ids.sort_custom(func(a, b): return String(a) < String(b))
 	return ids
 
 

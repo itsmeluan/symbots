@@ -83,7 +83,7 @@ func attach_save(service: SaveLoadService) -> void:
 	save_service = service
 	save_service.register_provider(V1StateProviderScript.KEY,
 		V1StateProviderScript.new(ctx.roster, ctx.wallet, ctx.species, ctx.tree, ctx.log,
-			ctx.inventory_items, ctx.item_catalog))
+			ctx.inventory_items, ctx.item_catalog, ctx.expeditions, ctx.progress))
 
 
 ## Load the save, or hand a brand-new player their squad.
@@ -114,6 +114,7 @@ func build_context() -> ServiceContext:
 	c.roster = PlayerRoster.new()
 	c.wallet = Wallet.new()
 	c.inventory_items = ItemInventory.new()
+	c.expeditions = ExpeditionBoard.new()
 	c.progress = StageProgress.new()
 	c.species = load(SPECIES_PATH)
 	c.stages = load(STAGE_PATH)
