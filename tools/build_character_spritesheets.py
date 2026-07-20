@@ -189,6 +189,11 @@ def main() -> int:
     src_w, src_h = all_frames[0].size
     bw, bh = box[2] - box[0], box[3] - box[1]
     side = max(bw, bh)
+    # Round the side UP TO EVEN. Sprite2D/AnimatedSprite2D with centered=true puts the
+    # texture edge at half the frame size from the node position — an odd side lands it
+    # on a half pixel, so every art pixel straddles the world-pixel grid and renders with
+    # uneven widths. It reads as a blurry sprite against crisp tiles.
+    side += side % 2
     cx, cy = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
     left = int(round(cx - side / 2))
     top = int(round(cy - side / 2))
