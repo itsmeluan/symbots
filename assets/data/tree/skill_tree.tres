@@ -1,0 +1,2924 @@
+[gd_resource type="Resource" script_class="SkillTree" load_steps=159 format=3]
+
+[ext_resource type="Script" path="res://src/core/tree/skill_node_def.gd" id="1_node"]
+[ext_resource type="Script" path="res://src/core/tree/skill_tree.gd" id="2_tree"]
+
+[sub_resource type="Resource" id="ring_00"]
+script = ExtResource("1_node")
+id = &"ring_00"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"endless_00", &"entry_dps_scrapper_socket", &"ring_01", &"ring_31"])
+position = Vector2(520.0, 0.0)
+stat_bonus = Dictionary[StringName, int]({
+&"structure": 12
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_01"]
+script = ExtResource("1_node")
+id = &"ring_01"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"ring_00", &"ring_02"])
+position = Vector2(510.0, 101.4)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"mobility": 3
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_02"]
+script = ExtResource("1_node")
+id = &"ring_02"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_dps_striker_socket", &"ring_01", &"ring_03"])
+position = Vector2(480.4, 199.0)
+stat_bonus = Dictionary[StringName, int]({
+&"structure": 12
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_03"]
+script = ExtResource("1_node")
+id = &"ring_03"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"ring_02", &"ring_04"])
+position = Vector2(432.4, 288.9)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"mobility": 3
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_04"]
+script = ExtResource("1_node")
+id = &"ring_04"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_dps_gunner_socket", &"key_glass_edge", &"ring_03", &"ring_05"])
+position = Vector2(367.7, 367.7)
+stat_bonus = Dictionary[StringName, int]({
+&"structure": 12
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_05"]
+script = ExtResource("1_node")
+id = &"ring_05"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"ring_04", &"ring_06"])
+position = Vector2(288.9, 432.4)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"mobility": 3
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_06"]
+script = ExtResource("1_node")
+id = &"ring_06"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_dps_duelist_socket", &"ring_05", &"ring_07"])
+position = Vector2(199.0, 480.4)
+stat_bonus = Dictionary[StringName, int]({
+&"structure": 12
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_07"]
+script = ExtResource("1_node")
+id = &"ring_07"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"ring_06", &"ring_08"])
+position = Vector2(101.4, 510.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"mobility": 3
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_08"]
+script = ExtResource("1_node")
+id = &"ring_08"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_tank_guardian_socket", &"ring_07", &"ring_09"])
+position = Vector2(0.0, 520.0)
+stat_bonus = Dictionary[StringName, int]({
+&"structure": 12
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_09"]
+script = ExtResource("1_node")
+id = &"ring_09"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"ring_08", &"ring_10"])
+position = Vector2(-101.4, 510.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"mobility": 3
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_10"]
+script = ExtResource("1_node")
+id = &"ring_10"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_tank_breaker_socket", &"ring_09", &"ring_11"])
+position = Vector2(-199.0, 480.4)
+stat_bonus = Dictionary[StringName, int]({
+&"structure": 12
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_11"]
+script = ExtResource("1_node")
+id = &"ring_11"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"ring_10", &"ring_12"])
+position = Vector2(-288.9, 432.4)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"mobility": 3
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_12"]
+script = ExtResource("1_node")
+id = &"ring_12"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_tank_warden_socket", &"key_immovable", &"ring_11", &"ring_13"])
+position = Vector2(-367.7, 367.7)
+stat_bonus = Dictionary[StringName, int]({
+&"structure": 12
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_13"]
+script = ExtResource("1_node")
+id = &"ring_13"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"ring_12", &"ring_14"])
+position = Vector2(-432.4, 288.9)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"mobility": 3
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_14"]
+script = ExtResource("1_node")
+id = &"ring_14"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_tank_juggernaut_socket", &"ring_13", &"ring_15"])
+position = Vector2(-480.4, 199.0)
+stat_bonus = Dictionary[StringName, int]({
+&"structure": 12
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_15"]
+script = ExtResource("1_node")
+id = &"ring_15"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"ring_14", &"ring_16"])
+position = Vector2(-510.0, 101.4)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"mobility": 3
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_16"]
+script = ExtResource("1_node")
+id = &"ring_16"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_healer_mender_socket", &"ring_15", &"ring_17"])
+position = Vector2(-520.0, 0.0)
+stat_bonus = Dictionary[StringName, int]({
+&"structure": 12
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_17"]
+script = ExtResource("1_node")
+id = &"ring_17"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"ring_16", &"ring_18"])
+position = Vector2(-510.0, -101.4)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"mobility": 3
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_18"]
+script = ExtResource("1_node")
+id = &"ring_18"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_healer_nanite_socket", &"ring_17", &"ring_19"])
+position = Vector2(-480.4, -199.0)
+stat_bonus = Dictionary[StringName, int]({
+&"structure": 12
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_19"]
+script = ExtResource("1_node")
+id = &"ring_19"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"ring_18", &"ring_20"])
+position = Vector2(-432.4, -288.9)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"mobility": 3
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_20"]
+script = ExtResource("1_node")
+id = &"ring_20"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_healer_chaplain_socket", &"key_transfusion", &"ring_19", &"ring_21"])
+position = Vector2(-367.7, -367.7)
+stat_bonus = Dictionary[StringName, int]({
+&"structure": 12
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_21"]
+script = ExtResource("1_node")
+id = &"ring_21"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"ring_20", &"ring_22"])
+position = Vector2(-288.9, -432.4)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"mobility": 3
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_22"]
+script = ExtResource("1_node")
+id = &"ring_22"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_healer_reclaimer_socket", &"ring_21", &"ring_23"])
+position = Vector2(-199.0, -480.4)
+stat_bonus = Dictionary[StringName, int]({
+&"structure": 12
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_23"]
+script = ExtResource("1_node")
+id = &"ring_23"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"ring_22", &"ring_24"])
+position = Vector2(-101.4, -510.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"mobility": 3
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_24"]
+script = ExtResource("1_node")
+id = &"ring_24"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_support_amplifier_socket", &"ring_23", &"ring_25"])
+position = Vector2(-0.0, -520.0)
+stat_bonus = Dictionary[StringName, int]({
+&"structure": 12
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_25"]
+script = ExtResource("1_node")
+id = &"ring_25"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"ring_24", &"ring_26"])
+position = Vector2(101.4, -510.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"mobility": 3
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_26"]
+script = ExtResource("1_node")
+id = &"ring_26"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_support_disruptor_socket", &"ring_25", &"ring_27"])
+position = Vector2(199.0, -480.4)
+stat_bonus = Dictionary[StringName, int]({
+&"structure": 12
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_27"]
+script = ExtResource("1_node")
+id = &"ring_27"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"ring_26", &"ring_28"])
+position = Vector2(288.9, -432.4)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"mobility": 3
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_28"]
+script = ExtResource("1_node")
+id = &"ring_28"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_support_tactician_socket", &"key_broadcast", &"ring_27", &"ring_29"])
+position = Vector2(367.7, -367.7)
+stat_bonus = Dictionary[StringName, int]({
+&"structure": 12
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_29"]
+script = ExtResource("1_node")
+id = &"ring_29"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"ring_28", &"ring_30"])
+position = Vector2(432.4, -288.9)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"mobility": 3
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_30"]
+script = ExtResource("1_node")
+id = &"ring_30"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_support_conductor_socket", &"ring_29", &"ring_31"])
+position = Vector2(480.4, -199.0)
+stat_bonus = Dictionary[StringName, int]({
+&"structure": 12
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="ring_31"]
+script = ExtResource("1_node")
+id = &"ring_31"
+display_name = "Circuit Path"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"ring_00", &"ring_30"])
+position = Vector2(510.0, -101.4)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"mobility": 3
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_dps_scrapper"]
+script = ExtResource("1_node")
+id = &"entry_dps_scrapper"
+display_name = "Scrapper Doorway"
+description = "Where a scrapper Symbot begins its walk."
+node_type = 6
+neighbours = Array[StringName]([&"entry_dps_scrapper_s1"])
+position = Vector2(150.0, 0.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 1
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_dps_scrapper_s1"]
+script = ExtResource("1_node")
+id = &"entry_dps_scrapper_s1"
+display_name = "Tuned physical power"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_dps_scrapper", &"entry_dps_scrapper_passive", &"entry_dps_scrapper_s2"])
+position = Vector2(165.0, 0.0)
+stat_bonus = Dictionary[StringName, int]({
+&"physical_power": 8
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_dps_scrapper_s2"]
+script = ExtResource("1_node")
+id = &"entry_dps_scrapper_s2"
+display_name = "Tuned targeting"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_dps_scrapper_active", &"entry_dps_scrapper_s1", &"entry_dps_scrapper_socket"])
+position = Vector2(238.7, -25.1)
+stat_bonus = Dictionary[StringName, int]({
+&"targeting": 6
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_dps_scrapper_passive"]
+script = ExtResource("1_node")
+id = &"entry_dps_scrapper_passive"
+display_name = "Scrapper Instinct"
+description = "A scrapper's learned habit, made permanent."
+node_type = 2
+neighbours = Array[StringName]([&"entry_dps_scrapper_s1"])
+position = Vector2(282.9, 34.7)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &"pass_scrapper_instinct"
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_dps_scrapper_active"]
+script = ExtResource("1_node")
+id = &"entry_dps_scrapper_active"
+display_name = "Scrapper Technique"
+description = "Unlocks a skill this Symbot can slot."
+node_type = 3
+neighbours = Array[StringName]([&"entry_dps_scrapper_s2"])
+position = Vector2(295.4, -52.1)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &"skill_rend"
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_dps_scrapper_socket"]
+script = ExtResource("1_node")
+id = &"entry_dps_scrapper_socket"
+display_name = "Ram Chip Socket"
+description = "Locked until a ram chip is installed."
+node_type = 5
+neighbours = Array[StringName]([&"entry_dps_scrapper_s2", &"ring_00"])
+position = Vector2(345.0, 0.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &"ram_chip"
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_dps_striker"]
+script = ExtResource("1_node")
+id = &"entry_dps_striker"
+display_name = "Striker Doorway"
+description = "Where a striker Symbot begins its walk."
+node_type = 6
+neighbours = Array[StringName]([&"entry_dps_striker_s1"])
+position = Vector2(138.6, 57.4)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 1
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_dps_striker_s1"]
+script = ExtResource("1_node")
+id = &"entry_dps_striker_s1"
+display_name = "Tuned physical power"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_dps_striker", &"entry_dps_striker_passive", &"entry_dps_striker_s2"])
+position = Vector2(152.4, 63.1)
+stat_bonus = Dictionary[StringName, int]({
+&"physical_power": 8
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_dps_striker_s2"]
+script = ExtResource("1_node")
+id = &"entry_dps_striker_s2"
+display_name = "Tuned targeting"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_dps_striker_active", &"entry_dps_striker_s1", &"entry_dps_striker_socket"])
+position = Vector2(230.1, 68.2)
+stat_bonus = Dictionary[StringName, int]({
+&"targeting": 6
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_dps_striker_passive"]
+script = ExtResource("1_node")
+id = &"entry_dps_striker_passive"
+display_name = "Striker Instinct"
+description = "A striker's learned habit, made permanent."
+node_type = 2
+neighbours = Array[StringName]([&"entry_dps_striker_s1"])
+position = Vector2(248.1, 140.3)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &"pass_striker_instinct"
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_dps_striker_active"]
+script = ExtResource("1_node")
+id = &"entry_dps_striker_active"
+display_name = "Striker Technique"
+description = "Unlocks a skill this Symbot can slot."
+node_type = 3
+neighbours = Array[StringName]([&"entry_dps_striker_s2"])
+position = Vector2(292.9, 64.9)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &"skill_arc_lash"
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_dps_striker_socket"]
+script = ExtResource("1_node")
+id = &"entry_dps_striker_socket"
+display_name = "Processor Socket"
+description = "Locked until a processor is installed."
+node_type = 5
+neighbours = Array[StringName]([&"entry_dps_striker_s2", &"ring_02"])
+position = Vector2(318.7, 132.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &"processor"
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_dps_gunner"]
+script = ExtResource("1_node")
+id = &"entry_dps_gunner"
+display_name = "Gunner Doorway"
+description = "Where a gunner Symbot begins its walk."
+node_type = 6
+neighbours = Array[StringName]([&"entry_dps_gunner_s1"])
+position = Vector2(106.1, 106.1)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 1
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_dps_gunner_s1"]
+script = ExtResource("1_node")
+id = &"entry_dps_gunner_s1"
+display_name = "Tuned physical power"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_dps_gunner", &"entry_dps_gunner_passive", &"entry_dps_gunner_s2"])
+position = Vector2(116.7, 116.7)
+stat_bonus = Dictionary[StringName, int]({
+&"physical_power": 8
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_dps_gunner_s2"]
+script = ExtResource("1_node")
+id = &"entry_dps_gunner_s2"
+display_name = "Tuned targeting"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_dps_gunner_active", &"entry_dps_gunner_s1", &"entry_dps_gunner_socket"])
+position = Vector2(186.5, 151.0)
+stat_bonus = Dictionary[StringName, int]({
+&"targeting": 6
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_dps_gunner_passive"]
+script = ExtResource("1_node")
+id = &"entry_dps_gunner_passive"
+display_name = "Gunner Instinct"
+description = "A gunner's learned habit, made permanent."
+node_type = 2
+neighbours = Array[StringName]([&"entry_dps_gunner_s1"])
+position = Vector2(175.5, 224.6)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &"pass_gunner_instinct"
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_dps_gunner_active"]
+script = ExtResource("1_node")
+id = &"entry_dps_gunner_active"
+display_name = "Gunner Technique"
+description = "Unlocks a skill this Symbot can slot."
+node_type = 3
+neighbours = Array[StringName]([&"entry_dps_gunner_s2"])
+position = Vector2(245.7, 172.1)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &"skill_rend"
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_dps_gunner_socket"]
+script = ExtResource("1_node")
+id = &"entry_dps_gunner_socket"
+display_name = "Capacitor Socket"
+description = "Locked until a capacitor is installed."
+node_type = 5
+neighbours = Array[StringName]([&"entry_dps_gunner_s2", &"ring_04"])
+position = Vector2(244.0, 244.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &"capacitor"
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_dps_duelist"]
+script = ExtResource("1_node")
+id = &"entry_dps_duelist"
+display_name = "Duelist Doorway"
+description = "Where a duelist Symbot begins its walk."
+node_type = 6
+neighbours = Array[StringName]([&"entry_dps_duelist_s1"])
+position = Vector2(57.4, 138.6)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 1
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_dps_duelist_s1"]
+script = ExtResource("1_node")
+id = &"entry_dps_duelist_s1"
+display_name = "Tuned physical power"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_dps_duelist", &"entry_dps_duelist_passive", &"entry_dps_duelist_s2"])
+position = Vector2(63.1, 152.4)
+stat_bonus = Dictionary[StringName, int]({
+&"physical_power": 8
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_dps_duelist_s2"]
+script = ExtResource("1_node")
+id = &"entry_dps_duelist_s2"
+display_name = "Tuned targeting"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_dps_duelist_active", &"entry_dps_duelist_s1", &"entry_dps_duelist_socket"])
+position = Vector2(114.5, 210.9)
+stat_bonus = Dictionary[StringName, int]({
+&"targeting": 6
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_dps_duelist_passive"]
+script = ExtResource("1_node")
+id = &"entry_dps_duelist_passive"
+display_name = "Duelist Instinct"
+description = "A duelist's learned habit, made permanent."
+node_type = 2
+neighbours = Array[StringName]([&"entry_dps_duelist_s1"])
+position = Vector2(76.2, 274.6)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &"pass_duelist_instinct"
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_dps_duelist_active"]
+script = ExtResource("1_node")
+id = &"entry_dps_duelist_active"
+display_name = "Duelist Technique"
+description = "Unlocks a skill this Symbot can slot."
+node_type = 3
+neighbours = Array[StringName]([&"entry_dps_duelist_s2"])
+position = Vector2(161.2, 253.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &"skill_arc_lash"
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_dps_duelist_socket"]
+script = ExtResource("1_node")
+id = &"entry_dps_duelist_socket"
+display_name = "Heat Sink Socket"
+description = "Locked until a heat sink is installed."
+node_type = 5
+neighbours = Array[StringName]([&"entry_dps_duelist_s2", &"ring_06"])
+position = Vector2(132.0, 318.7)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &"heat_sink"
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_tank_guardian"]
+script = ExtResource("1_node")
+id = &"entry_tank_guardian"
+display_name = "Guardian Doorway"
+description = "Where a guardian Symbot begins its walk."
+node_type = 6
+neighbours = Array[StringName]([&"entry_tank_guardian_s1"])
+position = Vector2(0.0, 150.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 2
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_tank_guardian_s1"]
+script = ExtResource("1_node")
+id = &"entry_tank_guardian_s1"
+display_name = "Tuned structure"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_tank_guardian", &"entry_tank_guardian_passive", &"entry_tank_guardian_s2"])
+position = Vector2(0.0, 165.0)
+stat_bonus = Dictionary[StringName, int]({
+&"structure": 8
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_tank_guardian_s2"]
+script = ExtResource("1_node")
+id = &"entry_tank_guardian_s2"
+display_name = "Tuned armor"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_tank_guardian_active", &"entry_tank_guardian_s1", &"entry_tank_guardian_socket"])
+position = Vector2(25.1, 238.7)
+stat_bonus = Dictionary[StringName, int]({
+&"armor": 6
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_tank_guardian_passive"]
+script = ExtResource("1_node")
+id = &"entry_tank_guardian_passive"
+display_name = "Guardian Instinct"
+description = "A guardian's learned habit, made permanent."
+node_type = 2
+neighbours = Array[StringName]([&"entry_tank_guardian_s1"])
+position = Vector2(-34.7, 282.9)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &"pass_guardian_instinct"
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_tank_guardian_active"]
+script = ExtResource("1_node")
+id = &"entry_tank_guardian_active"
+display_name = "Guardian Technique"
+description = "Unlocks a skill this Symbot can slot."
+node_type = 3
+neighbours = Array[StringName]([&"entry_tank_guardian_s2"])
+position = Vector2(52.1, 295.4)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &"skill_provoke"
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_tank_guardian_socket"]
+script = ExtResource("1_node")
+id = &"entry_tank_guardian_socket"
+display_name = "Servo Socket"
+description = "Locked until a servo is installed."
+node_type = 5
+neighbours = Array[StringName]([&"entry_tank_guardian_s2", &"ring_08"])
+position = Vector2(0.0, 345.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &"servo"
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_tank_breaker"]
+script = ExtResource("1_node")
+id = &"entry_tank_breaker"
+display_name = "Breaker Doorway"
+description = "Where a breaker Symbot begins its walk."
+node_type = 6
+neighbours = Array[StringName]([&"entry_tank_breaker_s1"])
+position = Vector2(-57.4, 138.6)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 2
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_tank_breaker_s1"]
+script = ExtResource("1_node")
+id = &"entry_tank_breaker_s1"
+display_name = "Tuned structure"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_tank_breaker", &"entry_tank_breaker_passive", &"entry_tank_breaker_s2"])
+position = Vector2(-63.1, 152.4)
+stat_bonus = Dictionary[StringName, int]({
+&"structure": 8
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_tank_breaker_s2"]
+script = ExtResource("1_node")
+id = &"entry_tank_breaker_s2"
+display_name = "Tuned armor"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_tank_breaker_active", &"entry_tank_breaker_s1", &"entry_tank_breaker_socket"])
+position = Vector2(-68.2, 230.1)
+stat_bonus = Dictionary[StringName, int]({
+&"armor": 6
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_tank_breaker_passive"]
+script = ExtResource("1_node")
+id = &"entry_tank_breaker_passive"
+display_name = "Breaker Instinct"
+description = "A breaker's learned habit, made permanent."
+node_type = 2
+neighbours = Array[StringName]([&"entry_tank_breaker_s1"])
+position = Vector2(-140.3, 248.1)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &"pass_breaker_instinct"
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_tank_breaker_active"]
+script = ExtResource("1_node")
+id = &"entry_tank_breaker_active"
+display_name = "Breaker Technique"
+description = "Unlocks a skill this Symbot can slot."
+node_type = 3
+neighbours = Array[StringName]([&"entry_tank_breaker_s2"])
+position = Vector2(-64.9, 292.9)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &"skill_seismic_slam"
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_tank_breaker_socket"]
+script = ExtResource("1_node")
+id = &"entry_tank_breaker_socket"
+display_name = "Ram Chip Socket"
+description = "Locked until a ram chip is installed."
+node_type = 5
+neighbours = Array[StringName]([&"entry_tank_breaker_s2", &"ring_10"])
+position = Vector2(-132.0, 318.7)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &"ram_chip"
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_tank_warden"]
+script = ExtResource("1_node")
+id = &"entry_tank_warden"
+display_name = "Warden Doorway"
+description = "Where a warden Symbot begins its walk."
+node_type = 6
+neighbours = Array[StringName]([&"entry_tank_warden_s1"])
+position = Vector2(-106.1, 106.1)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 2
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_tank_warden_s1"]
+script = ExtResource("1_node")
+id = &"entry_tank_warden_s1"
+display_name = "Tuned structure"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_tank_warden", &"entry_tank_warden_passive", &"entry_tank_warden_s2"])
+position = Vector2(-116.7, 116.7)
+stat_bonus = Dictionary[StringName, int]({
+&"structure": 8
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_tank_warden_s2"]
+script = ExtResource("1_node")
+id = &"entry_tank_warden_s2"
+display_name = "Tuned armor"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_tank_warden_active", &"entry_tank_warden_s1", &"entry_tank_warden_socket"])
+position = Vector2(-151.0, 186.5)
+stat_bonus = Dictionary[StringName, int]({
+&"armor": 6
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_tank_warden_passive"]
+script = ExtResource("1_node")
+id = &"entry_tank_warden_passive"
+display_name = "Warden Instinct"
+description = "A warden's learned habit, made permanent."
+node_type = 2
+neighbours = Array[StringName]([&"entry_tank_warden_s1"])
+position = Vector2(-224.6, 175.5)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &"pass_warden_instinct"
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_tank_warden_active"]
+script = ExtResource("1_node")
+id = &"entry_tank_warden_active"
+display_name = "Warden Technique"
+description = "Unlocks a skill this Symbot can slot."
+node_type = 3
+neighbours = Array[StringName]([&"entry_tank_warden_s2"])
+position = Vector2(-172.1, 245.7)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &"skill_provoke"
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_tank_warden_socket"]
+script = ExtResource("1_node")
+id = &"entry_tank_warden_socket"
+display_name = "Processor Socket"
+description = "Locked until a processor is installed."
+node_type = 5
+neighbours = Array[StringName]([&"entry_tank_warden_s2", &"ring_12"])
+position = Vector2(-244.0, 244.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &"processor"
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_tank_juggernaut"]
+script = ExtResource("1_node")
+id = &"entry_tank_juggernaut"
+display_name = "Juggernaut Doorway"
+description = "Where a juggernaut Symbot begins its walk."
+node_type = 6
+neighbours = Array[StringName]([&"entry_tank_juggernaut_s1"])
+position = Vector2(-138.6, 57.4)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 2
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_tank_juggernaut_s1"]
+script = ExtResource("1_node")
+id = &"entry_tank_juggernaut_s1"
+display_name = "Tuned structure"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_tank_juggernaut", &"entry_tank_juggernaut_passive", &"entry_tank_juggernaut_s2"])
+position = Vector2(-152.4, 63.1)
+stat_bonus = Dictionary[StringName, int]({
+&"structure": 8
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_tank_juggernaut_s2"]
+script = ExtResource("1_node")
+id = &"entry_tank_juggernaut_s2"
+display_name = "Tuned armor"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_tank_juggernaut_active", &"entry_tank_juggernaut_s1", &"entry_tank_juggernaut_socket"])
+position = Vector2(-210.9, 114.5)
+stat_bonus = Dictionary[StringName, int]({
+&"armor": 6
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_tank_juggernaut_passive"]
+script = ExtResource("1_node")
+id = &"entry_tank_juggernaut_passive"
+display_name = "Juggernaut Instinct"
+description = "A juggernaut's learned habit, made permanent."
+node_type = 2
+neighbours = Array[StringName]([&"entry_tank_juggernaut_s1"])
+position = Vector2(-274.6, 76.2)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &"pass_juggernaut_instinct"
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_tank_juggernaut_active"]
+script = ExtResource("1_node")
+id = &"entry_tank_juggernaut_active"
+display_name = "Juggernaut Technique"
+description = "Unlocks a skill this Symbot can slot."
+node_type = 3
+neighbours = Array[StringName]([&"entry_tank_juggernaut_s2"])
+position = Vector2(-253.0, 161.2)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &"skill_seismic_slam"
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_tank_juggernaut_socket"]
+script = ExtResource("1_node")
+id = &"entry_tank_juggernaut_socket"
+display_name = "Capacitor Socket"
+description = "Locked until a capacitor is installed."
+node_type = 5
+neighbours = Array[StringName]([&"entry_tank_juggernaut_s2", &"ring_14"])
+position = Vector2(-318.7, 132.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &"capacitor"
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_healer_mender"]
+script = ExtResource("1_node")
+id = &"entry_healer_mender"
+display_name = "Mender Doorway"
+description = "Where a mender Symbot begins its walk."
+node_type = 6
+neighbours = Array[StringName]([&"entry_healer_mender_s1"])
+position = Vector2(-150.0, 0.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 3
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_healer_mender_s1"]
+script = ExtResource("1_node")
+id = &"entry_healer_mender_s1"
+display_name = "Tuned processing"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_healer_mender", &"entry_healer_mender_passive", &"entry_healer_mender_s2"])
+position = Vector2(-165.0, 0.0)
+stat_bonus = Dictionary[StringName, int]({
+&"processing": 8
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_healer_mender_s2"]
+script = ExtResource("1_node")
+id = &"entry_healer_mender_s2"
+display_name = "Tuned resistance"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_healer_mender_active", &"entry_healer_mender_s1", &"entry_healer_mender_socket"])
+position = Vector2(-238.7, 25.1)
+stat_bonus = Dictionary[StringName, int]({
+&"resistance": 6
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_healer_mender_passive"]
+script = ExtResource("1_node")
+id = &"entry_healer_mender_passive"
+display_name = "Mender Instinct"
+description = "A mender's learned habit, made permanent."
+node_type = 2
+neighbours = Array[StringName]([&"entry_healer_mender_s1"])
+position = Vector2(-282.9, -34.7)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &"pass_mender_instinct"
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_healer_mender_active"]
+script = ExtResource("1_node")
+id = &"entry_healer_mender_active"
+display_name = "Mender Technique"
+description = "Unlocks a skill this Symbot can slot."
+node_type = 3
+neighbours = Array[StringName]([&"entry_healer_mender_s2"])
+position = Vector2(-295.4, 52.1)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &"skill_patch"
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_healer_mender_socket"]
+script = ExtResource("1_node")
+id = &"entry_healer_mender_socket"
+display_name = "Heat Sink Socket"
+description = "Locked until a heat sink is installed."
+node_type = 5
+neighbours = Array[StringName]([&"entry_healer_mender_s2", &"ring_16"])
+position = Vector2(-345.0, 0.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &"heat_sink"
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_healer_nanite"]
+script = ExtResource("1_node")
+id = &"entry_healer_nanite"
+display_name = "Nanite Doorway"
+description = "Where a nanite Symbot begins its walk."
+node_type = 6
+neighbours = Array[StringName]([&"entry_healer_nanite_s1"])
+position = Vector2(-138.6, -57.4)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 3
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_healer_nanite_s1"]
+script = ExtResource("1_node")
+id = &"entry_healer_nanite_s1"
+display_name = "Tuned processing"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_healer_nanite", &"entry_healer_nanite_passive", &"entry_healer_nanite_s2"])
+position = Vector2(-152.4, -63.1)
+stat_bonus = Dictionary[StringName, int]({
+&"processing": 8
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_healer_nanite_s2"]
+script = ExtResource("1_node")
+id = &"entry_healer_nanite_s2"
+display_name = "Tuned resistance"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_healer_nanite_active", &"entry_healer_nanite_s1", &"entry_healer_nanite_socket"])
+position = Vector2(-230.1, -68.2)
+stat_bonus = Dictionary[StringName, int]({
+&"resistance": 6
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_healer_nanite_passive"]
+script = ExtResource("1_node")
+id = &"entry_healer_nanite_passive"
+display_name = "Nanite Instinct"
+description = "A nanite's learned habit, made permanent."
+node_type = 2
+neighbours = Array[StringName]([&"entry_healer_nanite_s1"])
+position = Vector2(-248.1, -140.3)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &"pass_nanite_instinct"
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_healer_nanite_active"]
+script = ExtResource("1_node")
+id = &"entry_healer_nanite_active"
+display_name = "Nanite Technique"
+description = "Unlocks a skill this Symbot can slot."
+node_type = 3
+neighbours = Array[StringName]([&"entry_healer_nanite_s2"])
+position = Vector2(-292.9, -64.9)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &"skill_nanite_swarm"
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_healer_nanite_socket"]
+script = ExtResource("1_node")
+id = &"entry_healer_nanite_socket"
+display_name = "Servo Socket"
+description = "Locked until a servo is installed."
+node_type = 5
+neighbours = Array[StringName]([&"entry_healer_nanite_s2", &"ring_18"])
+position = Vector2(-318.7, -132.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &"servo"
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_healer_chaplain"]
+script = ExtResource("1_node")
+id = &"entry_healer_chaplain"
+display_name = "Chaplain Doorway"
+description = "Where a chaplain Symbot begins its walk."
+node_type = 6
+neighbours = Array[StringName]([&"entry_healer_chaplain_s1"])
+position = Vector2(-106.1, -106.1)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 3
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_healer_chaplain_s1"]
+script = ExtResource("1_node")
+id = &"entry_healer_chaplain_s1"
+display_name = "Tuned processing"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_healer_chaplain", &"entry_healer_chaplain_passive", &"entry_healer_chaplain_s2"])
+position = Vector2(-116.7, -116.7)
+stat_bonus = Dictionary[StringName, int]({
+&"processing": 8
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_healer_chaplain_s2"]
+script = ExtResource("1_node")
+id = &"entry_healer_chaplain_s2"
+display_name = "Tuned resistance"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_healer_chaplain_active", &"entry_healer_chaplain_s1", &"entry_healer_chaplain_socket"])
+position = Vector2(-186.5, -151.0)
+stat_bonus = Dictionary[StringName, int]({
+&"resistance": 6
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_healer_chaplain_passive"]
+script = ExtResource("1_node")
+id = &"entry_healer_chaplain_passive"
+display_name = "Chaplain Instinct"
+description = "A chaplain's learned habit, made permanent."
+node_type = 2
+neighbours = Array[StringName]([&"entry_healer_chaplain_s1"])
+position = Vector2(-175.5, -224.6)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &"pass_chaplain_instinct"
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_healer_chaplain_active"]
+script = ExtResource("1_node")
+id = &"entry_healer_chaplain_active"
+display_name = "Chaplain Technique"
+description = "Unlocks a skill this Symbot can slot."
+node_type = 3
+neighbours = Array[StringName]([&"entry_healer_chaplain_s2"])
+position = Vector2(-245.7, -172.1)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &"skill_patch"
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_healer_chaplain_socket"]
+script = ExtResource("1_node")
+id = &"entry_healer_chaplain_socket"
+display_name = "Ram Chip Socket"
+description = "Locked until a ram chip is installed."
+node_type = 5
+neighbours = Array[StringName]([&"entry_healer_chaplain_s2", &"ring_20"])
+position = Vector2(-244.0, -244.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &"ram_chip"
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_healer_reclaimer"]
+script = ExtResource("1_node")
+id = &"entry_healer_reclaimer"
+display_name = "Reclaimer Doorway"
+description = "Where a reclaimer Symbot begins its walk."
+node_type = 6
+neighbours = Array[StringName]([&"entry_healer_reclaimer_s1"])
+position = Vector2(-57.4, -138.6)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 3
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_healer_reclaimer_s1"]
+script = ExtResource("1_node")
+id = &"entry_healer_reclaimer_s1"
+display_name = "Tuned processing"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_healer_reclaimer", &"entry_healer_reclaimer_passive", &"entry_healer_reclaimer_s2"])
+position = Vector2(-63.1, -152.4)
+stat_bonus = Dictionary[StringName, int]({
+&"processing": 8
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_healer_reclaimer_s2"]
+script = ExtResource("1_node")
+id = &"entry_healer_reclaimer_s2"
+display_name = "Tuned resistance"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_healer_reclaimer_active", &"entry_healer_reclaimer_s1", &"entry_healer_reclaimer_socket"])
+position = Vector2(-114.5, -210.9)
+stat_bonus = Dictionary[StringName, int]({
+&"resistance": 6
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_healer_reclaimer_passive"]
+script = ExtResource("1_node")
+id = &"entry_healer_reclaimer_passive"
+display_name = "Reclaimer Instinct"
+description = "A reclaimer's learned habit, made permanent."
+node_type = 2
+neighbours = Array[StringName]([&"entry_healer_reclaimer_s1"])
+position = Vector2(-76.2, -274.6)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &"pass_reclaimer_instinct"
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_healer_reclaimer_active"]
+script = ExtResource("1_node")
+id = &"entry_healer_reclaimer_active"
+display_name = "Reclaimer Technique"
+description = "Unlocks a skill this Symbot can slot."
+node_type = 3
+neighbours = Array[StringName]([&"entry_healer_reclaimer_s2"])
+position = Vector2(-161.2, -253.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &"skill_nanite_swarm"
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_healer_reclaimer_socket"]
+script = ExtResource("1_node")
+id = &"entry_healer_reclaimer_socket"
+display_name = "Processor Socket"
+description = "Locked until a processor is installed."
+node_type = 5
+neighbours = Array[StringName]([&"entry_healer_reclaimer_s2", &"ring_22"])
+position = Vector2(-132.0, -318.7)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &"processor"
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_support_amplifier"]
+script = ExtResource("1_node")
+id = &"entry_support_amplifier"
+display_name = "Amplifier Doorway"
+description = "Where a amplifier Symbot begins its walk."
+node_type = 6
+neighbours = Array[StringName]([&"entry_support_amplifier_s1"])
+position = Vector2(-0.0, -150.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 4
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_support_amplifier_s1"]
+script = ExtResource("1_node")
+id = &"entry_support_amplifier_s1"
+display_name = "Tuned mobility"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_support_amplifier", &"entry_support_amplifier_passive", &"entry_support_amplifier_s2"])
+position = Vector2(-0.0, -165.0)
+stat_bonus = Dictionary[StringName, int]({
+&"mobility": 8
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_support_amplifier_s2"]
+script = ExtResource("1_node")
+id = &"entry_support_amplifier_s2"
+display_name = "Tuned processing"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_support_amplifier_active", &"entry_support_amplifier_s1", &"entry_support_amplifier_socket"])
+position = Vector2(-25.1, -238.7)
+stat_bonus = Dictionary[StringName, int]({
+&"processing": 6
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_support_amplifier_passive"]
+script = ExtResource("1_node")
+id = &"entry_support_amplifier_passive"
+display_name = "Amplifier Instinct"
+description = "A amplifier's learned habit, made permanent."
+node_type = 2
+neighbours = Array[StringName]([&"entry_support_amplifier_s1"])
+position = Vector2(34.7, -282.9)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &"pass_amplifier_instinct"
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_support_amplifier_active"]
+script = ExtResource("1_node")
+id = &"entry_support_amplifier_active"
+display_name = "Amplifier Technique"
+description = "Unlocks a skill this Symbot can slot."
+node_type = 3
+neighbours = Array[StringName]([&"entry_support_amplifier_s2"])
+position = Vector2(-52.1, -295.4)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &"skill_overclock_ally"
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_support_amplifier_socket"]
+script = ExtResource("1_node")
+id = &"entry_support_amplifier_socket"
+display_name = "Capacitor Socket"
+description = "Locked until a capacitor is installed."
+node_type = 5
+neighbours = Array[StringName]([&"entry_support_amplifier_s2", &"ring_24"])
+position = Vector2(-0.0, -345.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &"capacitor"
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_support_disruptor"]
+script = ExtResource("1_node")
+id = &"entry_support_disruptor"
+display_name = "Disruptor Doorway"
+description = "Where a disruptor Symbot begins its walk."
+node_type = 6
+neighbours = Array[StringName]([&"entry_support_disruptor_s1"])
+position = Vector2(57.4, -138.6)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 4
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_support_disruptor_s1"]
+script = ExtResource("1_node")
+id = &"entry_support_disruptor_s1"
+display_name = "Tuned mobility"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_support_disruptor", &"entry_support_disruptor_passive", &"entry_support_disruptor_s2"])
+position = Vector2(63.1, -152.4)
+stat_bonus = Dictionary[StringName, int]({
+&"mobility": 8
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_support_disruptor_s2"]
+script = ExtResource("1_node")
+id = &"entry_support_disruptor_s2"
+display_name = "Tuned processing"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_support_disruptor_active", &"entry_support_disruptor_s1", &"entry_support_disruptor_socket"])
+position = Vector2(68.2, -230.1)
+stat_bonus = Dictionary[StringName, int]({
+&"processing": 6
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_support_disruptor_passive"]
+script = ExtResource("1_node")
+id = &"entry_support_disruptor_passive"
+display_name = "Disruptor Instinct"
+description = "A disruptor's learned habit, made permanent."
+node_type = 2
+neighbours = Array[StringName]([&"entry_support_disruptor_s1"])
+position = Vector2(140.3, -248.1)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &"pass_disruptor_instinct"
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_support_disruptor_active"]
+script = ExtResource("1_node")
+id = &"entry_support_disruptor_active"
+display_name = "Disruptor Technique"
+description = "Unlocks a skill this Symbot can slot."
+node_type = 3
+neighbours = Array[StringName]([&"entry_support_disruptor_s2"])
+position = Vector2(64.9, -292.9)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &"skill_system_hex"
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_support_disruptor_socket"]
+script = ExtResource("1_node")
+id = &"entry_support_disruptor_socket"
+display_name = "Heat Sink Socket"
+description = "Locked until a heat sink is installed."
+node_type = 5
+neighbours = Array[StringName]([&"entry_support_disruptor_s2", &"ring_26"])
+position = Vector2(132.0, -318.7)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &"heat_sink"
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_support_tactician"]
+script = ExtResource("1_node")
+id = &"entry_support_tactician"
+display_name = "Tactician Doorway"
+description = "Where a tactician Symbot begins its walk."
+node_type = 6
+neighbours = Array[StringName]([&"entry_support_tactician_s1"])
+position = Vector2(106.1, -106.1)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 4
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_support_tactician_s1"]
+script = ExtResource("1_node")
+id = &"entry_support_tactician_s1"
+display_name = "Tuned mobility"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_support_tactician", &"entry_support_tactician_passive", &"entry_support_tactician_s2"])
+position = Vector2(116.7, -116.7)
+stat_bonus = Dictionary[StringName, int]({
+&"mobility": 8
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_support_tactician_s2"]
+script = ExtResource("1_node")
+id = &"entry_support_tactician_s2"
+display_name = "Tuned processing"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_support_tactician_active", &"entry_support_tactician_s1", &"entry_support_tactician_socket"])
+position = Vector2(151.0, -186.5)
+stat_bonus = Dictionary[StringName, int]({
+&"processing": 6
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_support_tactician_passive"]
+script = ExtResource("1_node")
+id = &"entry_support_tactician_passive"
+display_name = "Tactician Instinct"
+description = "A tactician's learned habit, made permanent."
+node_type = 2
+neighbours = Array[StringName]([&"entry_support_tactician_s1"])
+position = Vector2(224.6, -175.5)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &"pass_tactician_instinct"
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_support_tactician_active"]
+script = ExtResource("1_node")
+id = &"entry_support_tactician_active"
+display_name = "Tactician Technique"
+description = "Unlocks a skill this Symbot can slot."
+node_type = 3
+neighbours = Array[StringName]([&"entry_support_tactician_s2"])
+position = Vector2(172.1, -245.7)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &"skill_overclock_ally"
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_support_tactician_socket"]
+script = ExtResource("1_node")
+id = &"entry_support_tactician_socket"
+display_name = "Servo Socket"
+description = "Locked until a servo is installed."
+node_type = 5
+neighbours = Array[StringName]([&"entry_support_tactician_s2", &"ring_28"])
+position = Vector2(244.0, -244.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &"servo"
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_support_conductor"]
+script = ExtResource("1_node")
+id = &"entry_support_conductor"
+display_name = "Conductor Doorway"
+description = "Where a conductor Symbot begins its walk."
+node_type = 6
+neighbours = Array[StringName]([&"entry_support_conductor_s1"])
+position = Vector2(138.6, -57.4)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 4
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_support_conductor_s1"]
+script = ExtResource("1_node")
+id = &"entry_support_conductor_s1"
+display_name = "Tuned mobility"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_support_conductor", &"entry_support_conductor_passive", &"entry_support_conductor_s2"])
+position = Vector2(152.4, -63.1)
+stat_bonus = Dictionary[StringName, int]({
+&"mobility": 8
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_support_conductor_s2"]
+script = ExtResource("1_node")
+id = &"entry_support_conductor_s2"
+display_name = "Tuned processing"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"entry_support_conductor_active", &"entry_support_conductor_s1", &"entry_support_conductor_socket"])
+position = Vector2(210.9, -114.5)
+stat_bonus = Dictionary[StringName, int]({
+&"processing": 6
+})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_support_conductor_passive"]
+script = ExtResource("1_node")
+id = &"entry_support_conductor_passive"
+display_name = "Conductor Instinct"
+description = "A conductor's learned habit, made permanent."
+node_type = 2
+neighbours = Array[StringName]([&"entry_support_conductor_s1"])
+position = Vector2(274.6, -76.2)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &"pass_conductor_instinct"
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_support_conductor_active"]
+script = ExtResource("1_node")
+id = &"entry_support_conductor_active"
+display_name = "Conductor Technique"
+description = "Unlocks a skill this Symbot can slot."
+node_type = 3
+neighbours = Array[StringName]([&"entry_support_conductor_s2"])
+position = Vector2(253.0, -161.2)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &"skill_system_hex"
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="entry_support_conductor_socket"]
+script = ExtResource("1_node")
+id = &"entry_support_conductor_socket"
+display_name = "Ram Chip Socket"
+description = "Locked until a ram chip is installed."
+node_type = 5
+neighbours = Array[StringName]([&"entry_support_conductor_s2", &"ring_30"])
+position = Vector2(318.7, -132.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &"ram_chip"
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="key_glass_edge"]
+script = ExtResource("1_node")
+id = &"key_glass_edge"
+display_name = "Glass Edge"
+description = "Every hit lands harder. Every hit you take does too."
+node_type = 4
+neighbours = Array[StringName]([&"ring_04"])
+position = Vector2(459.6, 459.6)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"physical_power": 40,
+&"energy_power": 40,
+&"armor": -30,
+&"resistance": -30
+})
+passive_id = &"pass_glass_edge"
+keystone_drawback_id = &"draw_glass_edge"
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="key_immovable"]
+script = ExtResource("1_node")
+id = &"key_immovable"
+display_name = "Immovable"
+description = "Nothing moves you. You do not move quickly either."
+node_type = 4
+neighbours = Array[StringName]([&"ring_12"])
+position = Vector2(-459.6, 459.6)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"armor": 45,
+&"resistance": 45,
+&"mobility": -35
+})
+passive_id = &"pass_immovable"
+keystone_drawback_id = &"draw_immovable"
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="key_transfusion"]
+script = ExtResource("1_node")
+id = &"key_transfusion"
+display_name = "Transfusion"
+description = "Your repairs are far stronger, and they cost you structure."
+node_type = 4
+neighbours = Array[StringName]([&"ring_20"])
+position = Vector2(-459.6, -459.6)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"processing": 50,
+&"structure": -25
+})
+passive_id = &"pass_transfusion"
+keystone_drawback_id = &"draw_transfusion"
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="key_broadcast"]
+script = ExtResource("1_node")
+id = &"key_broadcast"
+display_name = "Broadcast"
+description = "Your buffs reach the whole squad, at reduced strength."
+node_type = 4
+neighbours = Array[StringName]([&"ring_28"])
+position = Vector2(459.6, -459.6)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"mobility": 30,
+&"processing": 25,
+&"energy_power": -20
+})
+passive_id = &"pass_broadcast"
+keystone_drawback_id = &"draw_broadcast"
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = false
+
+[sub_resource type="Resource" id="endless_00"]
+script = ExtResource("1_node")
+id = &"endless_00"
+display_name = "Deep Circuit"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"endless_01", &"endless_23", &"ring_00"])
+position = Vector2(832.0, 0.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"structure": 2,
+&"physical_power": 2,
+&"energy_power": 2,
+&"processing": 2
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = true
+
+[sub_resource type="Resource" id="endless_01"]
+script = ExtResource("1_node")
+id = &"endless_01"
+display_name = "Deep Circuit"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"endless_00", &"endless_02"])
+position = Vector2(803.7, 215.3)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"structure": 2,
+&"physical_power": 2,
+&"energy_power": 2,
+&"processing": 2
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = true
+
+[sub_resource type="Resource" id="endless_02"]
+script = ExtResource("1_node")
+id = &"endless_02"
+display_name = "Deep Circuit"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"endless_01", &"endless_03"])
+position = Vector2(720.5, 416.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"structure": 2,
+&"physical_power": 2,
+&"energy_power": 2,
+&"processing": 2
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = true
+
+[sub_resource type="Resource" id="endless_03"]
+script = ExtResource("1_node")
+id = &"endless_03"
+display_name = "Deep Circuit"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"endless_02", &"endless_04"])
+position = Vector2(588.3, 588.3)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"structure": 2,
+&"physical_power": 2,
+&"energy_power": 2,
+&"processing": 2
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = true
+
+[sub_resource type="Resource" id="endless_04"]
+script = ExtResource("1_node")
+id = &"endless_04"
+display_name = "Deep Circuit"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"endless_03", &"endless_05"])
+position = Vector2(416.0, 720.5)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"structure": 2,
+&"physical_power": 2,
+&"energy_power": 2,
+&"processing": 2
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = true
+
+[sub_resource type="Resource" id="endless_05"]
+script = ExtResource("1_node")
+id = &"endless_05"
+display_name = "Deep Circuit"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"endless_04", &"endless_06"])
+position = Vector2(215.3, 803.7)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"structure": 2,
+&"physical_power": 2,
+&"energy_power": 2,
+&"processing": 2
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = true
+
+[sub_resource type="Resource" id="endless_06"]
+script = ExtResource("1_node")
+id = &"endless_06"
+display_name = "Deep Circuit"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"endless_05", &"endless_07"])
+position = Vector2(0.0, 832.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"structure": 2,
+&"physical_power": 2,
+&"energy_power": 2,
+&"processing": 2
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = true
+
+[sub_resource type="Resource" id="endless_07"]
+script = ExtResource("1_node")
+id = &"endless_07"
+display_name = "Deep Circuit"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"endless_06", &"endless_08"])
+position = Vector2(-215.3, 803.7)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"structure": 2,
+&"physical_power": 2,
+&"energy_power": 2,
+&"processing": 2
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = true
+
+[sub_resource type="Resource" id="endless_08"]
+script = ExtResource("1_node")
+id = &"endless_08"
+display_name = "Deep Circuit"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"endless_07", &"endless_09"])
+position = Vector2(-416.0, 720.5)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"structure": 2,
+&"physical_power": 2,
+&"energy_power": 2,
+&"processing": 2
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = true
+
+[sub_resource type="Resource" id="endless_09"]
+script = ExtResource("1_node")
+id = &"endless_09"
+display_name = "Deep Circuit"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"endless_08", &"endless_10"])
+position = Vector2(-588.3, 588.3)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"structure": 2,
+&"physical_power": 2,
+&"energy_power": 2,
+&"processing": 2
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = true
+
+[sub_resource type="Resource" id="endless_10"]
+script = ExtResource("1_node")
+id = &"endless_10"
+display_name = "Deep Circuit"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"endless_09", &"endless_11"])
+position = Vector2(-720.5, 416.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"structure": 2,
+&"physical_power": 2,
+&"energy_power": 2,
+&"processing": 2
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = true
+
+[sub_resource type="Resource" id="endless_11"]
+script = ExtResource("1_node")
+id = &"endless_11"
+display_name = "Deep Circuit"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"endless_10", &"endless_12"])
+position = Vector2(-803.7, 215.3)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"structure": 2,
+&"physical_power": 2,
+&"energy_power": 2,
+&"processing": 2
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = true
+
+[sub_resource type="Resource" id="endless_12"]
+script = ExtResource("1_node")
+id = &"endless_12"
+display_name = "Deep Circuit"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"endless_11", &"endless_13"])
+position = Vector2(-832.0, 0.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"structure": 2,
+&"physical_power": 2,
+&"energy_power": 2,
+&"processing": 2
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = true
+
+[sub_resource type="Resource" id="endless_13"]
+script = ExtResource("1_node")
+id = &"endless_13"
+display_name = "Deep Circuit"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"endless_12", &"endless_14"])
+position = Vector2(-803.7, -215.3)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"structure": 2,
+&"physical_power": 2,
+&"energy_power": 2,
+&"processing": 2
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = true
+
+[sub_resource type="Resource" id="endless_14"]
+script = ExtResource("1_node")
+id = &"endless_14"
+display_name = "Deep Circuit"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"endless_13", &"endless_15"])
+position = Vector2(-720.5, -416.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"structure": 2,
+&"physical_power": 2,
+&"energy_power": 2,
+&"processing": 2
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = true
+
+[sub_resource type="Resource" id="endless_15"]
+script = ExtResource("1_node")
+id = &"endless_15"
+display_name = "Deep Circuit"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"endless_14", &"endless_16"])
+position = Vector2(-588.3, -588.3)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"structure": 2,
+&"physical_power": 2,
+&"energy_power": 2,
+&"processing": 2
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = true
+
+[sub_resource type="Resource" id="endless_16"]
+script = ExtResource("1_node")
+id = &"endless_16"
+display_name = "Deep Circuit"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"endless_15", &"endless_17"])
+position = Vector2(-416.0, -720.5)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"structure": 2,
+&"physical_power": 2,
+&"energy_power": 2,
+&"processing": 2
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = true
+
+[sub_resource type="Resource" id="endless_17"]
+script = ExtResource("1_node")
+id = &"endless_17"
+display_name = "Deep Circuit"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"endless_16", &"endless_18"])
+position = Vector2(-215.3, -803.7)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"structure": 2,
+&"physical_power": 2,
+&"energy_power": 2,
+&"processing": 2
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = true
+
+[sub_resource type="Resource" id="endless_18"]
+script = ExtResource("1_node")
+id = &"endless_18"
+display_name = "Deep Circuit"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"endless_17", &"endless_19"])
+position = Vector2(-0.0, -832.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"structure": 2,
+&"physical_power": 2,
+&"energy_power": 2,
+&"processing": 2
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = true
+
+[sub_resource type="Resource" id="endless_19"]
+script = ExtResource("1_node")
+id = &"endless_19"
+display_name = "Deep Circuit"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"endless_18", &"endless_20"])
+position = Vector2(215.3, -803.7)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"structure": 2,
+&"physical_power": 2,
+&"energy_power": 2,
+&"processing": 2
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = true
+
+[sub_resource type="Resource" id="endless_20"]
+script = ExtResource("1_node")
+id = &"endless_20"
+display_name = "Deep Circuit"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"endless_19", &"endless_21"])
+position = Vector2(416.0, -720.5)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"structure": 2,
+&"physical_power": 2,
+&"energy_power": 2,
+&"processing": 2
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = true
+
+[sub_resource type="Resource" id="endless_21"]
+script = ExtResource("1_node")
+id = &"endless_21"
+display_name = "Deep Circuit"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"endless_20", &"endless_22"])
+position = Vector2(588.3, -588.3)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"structure": 2,
+&"physical_power": 2,
+&"energy_power": 2,
+&"processing": 2
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = true
+
+[sub_resource type="Resource" id="endless_22"]
+script = ExtResource("1_node")
+id = &"endless_22"
+display_name = "Deep Circuit"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"endless_21", &"endless_23"])
+position = Vector2(720.5, -416.0)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"structure": 2,
+&"physical_power": 2,
+&"energy_power": 2,
+&"processing": 2
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = true
+
+[sub_resource type="Resource" id="endless_23"]
+script = ExtResource("1_node")
+id = &"endless_23"
+display_name = "Deep Circuit"
+description = ""
+node_type = 1
+neighbours = Array[StringName]([&"endless_00", &"endless_22"])
+position = Vector2(803.7, -215.3)
+stat_bonus = Dictionary[StringName, int]({})
+stat_percent = Dictionary[StringName, int]({
+&"structure": 2,
+&"physical_power": 2,
+&"energy_power": 2,
+&"processing": 2
+})
+passive_id = &""
+keystone_drawback_id = &""
+skill_id = &""
+socket_accepts = &""
+entry_role = 0
+is_endless_tier = true
+
+[resource]
+script = ExtResource("2_tree")
+nodes = Array[ExtResource("1_node")]([SubResource("ring_00"), SubResource("ring_01"), SubResource("ring_02"), SubResource("ring_03"), SubResource("ring_04"), SubResource("ring_05"), SubResource("ring_06"), SubResource("ring_07"), SubResource("ring_08"), SubResource("ring_09"), SubResource("ring_10"), SubResource("ring_11"), SubResource("ring_12"), SubResource("ring_13"), SubResource("ring_14"), SubResource("ring_15"), SubResource("ring_16"), SubResource("ring_17"), SubResource("ring_18"), SubResource("ring_19"), SubResource("ring_20"), SubResource("ring_21"), SubResource("ring_22"), SubResource("ring_23"), SubResource("ring_24"), SubResource("ring_25"), SubResource("ring_26"), SubResource("ring_27"), SubResource("ring_28"), SubResource("ring_29"), SubResource("ring_30"), SubResource("ring_31"), SubResource("entry_dps_scrapper"), SubResource("entry_dps_scrapper_s1"), SubResource("entry_dps_scrapper_s2"), SubResource("entry_dps_scrapper_passive"), SubResource("entry_dps_scrapper_active"), SubResource("entry_dps_scrapper_socket"), SubResource("entry_dps_striker"), SubResource("entry_dps_striker_s1"), SubResource("entry_dps_striker_s2"), SubResource("entry_dps_striker_passive"), SubResource("entry_dps_striker_active"), SubResource("entry_dps_striker_socket"), SubResource("entry_dps_gunner"), SubResource("entry_dps_gunner_s1"), SubResource("entry_dps_gunner_s2"), SubResource("entry_dps_gunner_passive"), SubResource("entry_dps_gunner_active"), SubResource("entry_dps_gunner_socket"), SubResource("entry_dps_duelist"), SubResource("entry_dps_duelist_s1"), SubResource("entry_dps_duelist_s2"), SubResource("entry_dps_duelist_passive"), SubResource("entry_dps_duelist_active"), SubResource("entry_dps_duelist_socket"), SubResource("entry_tank_guardian"), SubResource("entry_tank_guardian_s1"), SubResource("entry_tank_guardian_s2"), SubResource("entry_tank_guardian_passive"), SubResource("entry_tank_guardian_active"), SubResource("entry_tank_guardian_socket"), SubResource("entry_tank_breaker"), SubResource("entry_tank_breaker_s1"), SubResource("entry_tank_breaker_s2"), SubResource("entry_tank_breaker_passive"), SubResource("entry_tank_breaker_active"), SubResource("entry_tank_breaker_socket"), SubResource("entry_tank_warden"), SubResource("entry_tank_warden_s1"), SubResource("entry_tank_warden_s2"), SubResource("entry_tank_warden_passive"), SubResource("entry_tank_warden_active"), SubResource("entry_tank_warden_socket"), SubResource("entry_tank_juggernaut"), SubResource("entry_tank_juggernaut_s1"), SubResource("entry_tank_juggernaut_s2"), SubResource("entry_tank_juggernaut_passive"), SubResource("entry_tank_juggernaut_active"), SubResource("entry_tank_juggernaut_socket"), SubResource("entry_healer_mender"), SubResource("entry_healer_mender_s1"), SubResource("entry_healer_mender_s2"), SubResource("entry_healer_mender_passive"), SubResource("entry_healer_mender_active"), SubResource("entry_healer_mender_socket"), SubResource("entry_healer_nanite"), SubResource("entry_healer_nanite_s1"), SubResource("entry_healer_nanite_s2"), SubResource("entry_healer_nanite_passive"), SubResource("entry_healer_nanite_active"), SubResource("entry_healer_nanite_socket"), SubResource("entry_healer_chaplain"), SubResource("entry_healer_chaplain_s1"), SubResource("entry_healer_chaplain_s2"), SubResource("entry_healer_chaplain_passive"), SubResource("entry_healer_chaplain_active"), SubResource("entry_healer_chaplain_socket"), SubResource("entry_healer_reclaimer"), SubResource("entry_healer_reclaimer_s1"), SubResource("entry_healer_reclaimer_s2"), SubResource("entry_healer_reclaimer_passive"), SubResource("entry_healer_reclaimer_active"), SubResource("entry_healer_reclaimer_socket"), SubResource("entry_support_amplifier"), SubResource("entry_support_amplifier_s1"), SubResource("entry_support_amplifier_s2"), SubResource("entry_support_amplifier_passive"), SubResource("entry_support_amplifier_active"), SubResource("entry_support_amplifier_socket"), SubResource("entry_support_disruptor"), SubResource("entry_support_disruptor_s1"), SubResource("entry_support_disruptor_s2"), SubResource("entry_support_disruptor_passive"), SubResource("entry_support_disruptor_active"), SubResource("entry_support_disruptor_socket"), SubResource("entry_support_tactician"), SubResource("entry_support_tactician_s1"), SubResource("entry_support_tactician_s2"), SubResource("entry_support_tactician_passive"), SubResource("entry_support_tactician_active"), SubResource("entry_support_tactician_socket"), SubResource("entry_support_conductor"), SubResource("entry_support_conductor_s1"), SubResource("entry_support_conductor_s2"), SubResource("entry_support_conductor_passive"), SubResource("entry_support_conductor_active"), SubResource("entry_support_conductor_socket"), SubResource("key_glass_edge"), SubResource("key_immovable"), SubResource("key_transfusion"), SubResource("key_broadcast"), SubResource("endless_00"), SubResource("endless_01"), SubResource("endless_02"), SubResource("endless_03"), SubResource("endless_04"), SubResource("endless_05"), SubResource("endless_06"), SubResource("endless_07"), SubResource("endless_08"), SubResource("endless_09"), SubResource("endless_10"), SubResource("endless_11"), SubResource("endless_12"), SubResource("endless_13"), SubResource("endless_14"), SubResource("endless_15"), SubResource("endless_16"), SubResource("endless_17"), SubResource("endless_18"), SubResource("endless_19"), SubResource("endless_20"), SubResource("endless_21"), SubResource("endless_22"), SubResource("endless_23")])

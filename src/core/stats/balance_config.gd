@@ -263,3 +263,16 @@ extends Resource
 ## with regen can otherwise loop forever; without this the auto-battler and the
 ## offline expedition simulator both hang rather than resolve.
 @export var max_battle_rounds: int = 50
+
+# ---------------------------------------------------------------------------
+# v1 skill-tree tuning (design/v1/00-core-design.md §4). APPEND-ONLY.
+# ---------------------------------------------------------------------------
+
+## Scrap charged per allocated node when respeccing (§4.5). A free respec turns the tree
+## into a menu you re-pick per fight; a cost makes a build a commitment, which is what
+## makes it feel owned. Priced to be affordable but not casual.
+@export var respec_scrap_per_node: int = 150
+
+## Scrap charged to pull an install item back out of a socket (§4.4, owner's call:
+## "podem ser removidos, mas custa scrap").
+@export var item_removal_scrap_cost: int = 400

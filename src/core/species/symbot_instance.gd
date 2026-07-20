@@ -42,6 +42,12 @@ var part_levels: PackedInt32Array = PackedInt32Array([1, 1, 1, 1, 1])
 
 ## Allocated skill-tree node ids. Order is allocation order, which the respec cost model
 ## reads to refund most-recent-first.
+##
+## The species' ENTRY node is deliberately NOT stored here. It is granted at birth and
+## costs no point ([method SkillNodeDef.point_cost]), so storing it would make
+## [method unspent_points] charge the player for a node they never bought — every Symbot
+## would be one point short, for its whole life. [TreeAllocator] treats the entry as
+## always-allocated by reading it off the species instead.
 var allocated_nodes: Array[StringName] = []
 
 ## Items installed into socket nodes: { node_id : item_instance_id }.
