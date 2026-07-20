@@ -152,7 +152,7 @@ func _on_battle_finished(outcome: int) -> void:
 ## its chest three times would be the best Scrap source in the game.
 func _finish_run(cleared: bool) -> void:
 	_runner.settle(_result, cleared)
-	_runner.award(_result, ctx.wallet, ctx.progress)
+	_runner.award(_result, ctx.wallet, ctx.progress, ctx.roster.squad_symbots())
 	_runner = null
 	_stage = null
 	_units = []

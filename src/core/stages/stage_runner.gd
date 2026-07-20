@@ -21,6 +21,8 @@ class Result extends RefCounted:
 	var cleared: bool = false
 	var battles_won: int = 0
 	var scrap_earned: int = 0
+	var xp_each: int = 0
+	var levels_gained: int = 0
 	var chest_items: Array[StringName] = []
 	var chest_blueprint: StringName = &""
 	## One BattleEngine per fight, in order, so a caller can replay or inspect any of them.
@@ -130,6 +132,10 @@ func settle(result: Result, cleared: bool) -> Result:
 	result.cleared = cleared
 	result.scrap_earned = result.battles_won \
 		* UpgradeEconomy.battle_reward(_stage.stage_level, _cfg)
+	# XP is per battle won, like Scrap — a run abandoned halfway still paid for the fights
+	# that were actually fought (§6: defeat costs the chest and the time, not the session).
+	result.xp_each = result.battles_won * XpProgression.battle_xp(
+		_stage.enemy_level, _average_enemy_count(), _cfg)
 	if cleared:
 		result.scrap_earned += UpgradeEconomy.chest_reward(_stage.stage_level, _cfg)
 		result.chest_items = _stage.chest_item_ids.duplicate()
@@ -139,11 +145,25 @@ func settle(result: Result, cleared: bool) -> Result:
 
 ## Pay a result into the player's wallet and mark the stage cleared. Separate from settle()
 ## so a caller can show the reward screen before the numbers actually move.
-func award(result: Result, wallet: Wallet, progress: StageProgress) -> void:
+func award(result: Result, wallet: Wallet, progress: StageProgress,
+		squad: Array = []) -> void:
 	if result.scrap_earned > 0:
 		wallet.earn(Wallet.SCRAP, result.scrap_earned)
+	if result.xp_each > 0 and not squad.is_empty():
+		result.levels_gained = XpProgression.grant_squad(squad, result.xp_each, _cfg)
 	if result.cleared:
 		progress.mark_cleared(_stage.id)
+
+
+## Mean enemies per battle in this stage, so a three-enemy fight pays more than a lone one
+## without XP depending on which room the run happened to end in.
+func _average_enemy_count() -> int:
+	if _stage.battle_count() == 0:
+		return 1
+	var total := 0
+	for i in _stage.battle_count():
+		total += _stage.enemies_at(i).size()
+	return maxi(1, total / _stage.battle_count())
 
 
 func _build_player_units(squad: Array) -> Array:

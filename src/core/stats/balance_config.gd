@@ -299,3 +299,25 @@ extends Resource
 ## finishing beats farming the first fight forever — otherwise players optimise by
 ## replaying the easiest battle and the stage structure stops meaning anything.
 @export var scrap_chest_multiplier: int = 6
+
+# ---------------------------------------------------------------------------
+# v1 XP tuning (design/v1/00-core-design.md §2.2, §4.2). APPEND-ONLY.
+# ---------------------------------------------------------------------------
+
+## XP-to-next curve: base + linear*(L-1) + quadratic*(L-1)^2. Accelerating for the same
+## reason the Scrap curve is: a flat curve makes late levels arrive on their own, and the
+## decision of WHERE to fight stops mattering.
+##
+## Scaled so the Mk I LEVEL cap and the Mk I PART cap arrive at roughly the same number of
+## battles (~250). The first draft reached level 20 in ~116 battles while maxing parts took
+## ~258 — leaving a 140-battle stretch where the Symbot earned no levels and therefore no
+## skill points, with the tree frozen and nothing to spend on but parts.
+@export var xp_base: int = 170
+@export var xp_linear: int = 85
+@export var xp_quadratic: int = 13
+
+## XP per won battle, per enemy. Every Symbot in the squad earns the full amount rather
+## than splitting a pot — splitting would punish fielding four, and make the optimal play
+## a solo carry, which is the opposite of a squad game.
+@export var xp_reward_base: int = 20
+@export var xp_reward_per_enemy_level: int = 8
