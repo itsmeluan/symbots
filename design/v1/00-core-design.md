@@ -174,9 +174,16 @@ rather than needing a parallel system. What separates them mechanically:
 - **One ult slotted at a time.** The tree may grant several; the player picks one.
 - **Ults skip the basic-attack fallback.** When uncharged, the slot is simply unusable.
 
-Charge sources, rate and the exact meter live in `03-battle-system.md`. Open question
-carried to §9: whether charge persists across fights inside a dungeon run (structure
-already does) or resets per battle.
+**Charge persists across fights inside a dungeon run [owner]**, exactly as structure
+does (§3.6). A dungeon is therefore one continuous resource arc rather than a series of
+independent fights: clearing an early room cheaply banks charge for the boss room, and
+spending an ult on trash is a real cost. It also makes the two carried resources — falling
+structure and rising charge — pull in opposite directions as a run goes deeper, which is
+the tension a run should have.
+
+Charge resets between runs, like everything else outside the run.
+
+Charge sources, rate and the exact meter live in `03-battle-system.md`.
 
 ### 3.5 Status effects
 
@@ -337,9 +344,6 @@ game's hook is the Scrap-budget tension; selling infinite Scrap sells the hook i
 
 ## 9. Open items
 
-- **Ult charge**: does it persist across fights inside a dungeon run, the way structure
-  does, or reset per battle? Persisting rewards a clean early fight with an opening ult in
-  the boss room; resetting keeps each fight self-contained. → `03-battle-system.md`
 - Exact stat list and formulas → `02-stats-and-formulas.md`
 - Tree layout and node budget → `04-skill-tree.md`
 - The 8 slice species → `05-species.md`
