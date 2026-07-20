@@ -28,6 +28,7 @@ WorldLootDB="*res://src/autoloads/world_loot_db_autoload.gd"
 RngService="*res://src/autoloads/rng_service_autoload.gd"
 SaveLoad="*res://src/autoloads/save_load_autoload.gd"
 TBC="*res://src/autoloads/battle_controller_autoload.gd"
+_mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
 
 [display]
 
@@ -41,7 +42,7 @@ window/stretch/scale_mode="integer"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/gut/plugin.cfg")
+enabled=PackedStringArray("res://addons/godot_ai/plugin.cfg", "res://addons/gut/plugin.cfg")
 
 [importer_defaults]
 
