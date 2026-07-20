@@ -29,8 +29,21 @@ const ART_DIR := "res://assets/art/symbots/"
 
 var unit: BattleUnit = null
 
+const SpeciesDefScript := preload("res://src/core/species/species_def.gd")
+
+## Role → short tag shown on the nameplate, matching the prototype's role labels.
+const ROLE_TAGS := {
+	SpeciesDefScript.Role.DPS: "DPS",
+	SpeciesDefScript.Role.TANK: "TANK",
+	SpeciesDefScript.Role.HEALER: "HEAL",
+	SpeciesDefScript.Role.SUPPORT: "SUPP",
+}
+
 var _sprite: TextureRect
+var _nameplate: PanelContainer
 var _name_label: Label
+var _role_label: Label
+var _hp_label: Label
 var _structure_bar: ProgressBar
 var _shield_bar: ProgressBar
 var _charge_bar: ProgressBar
@@ -64,22 +77,55 @@ func _init() -> void:
 	_sprite.mouse_filter = Control.MOUSE_FILTER_IGNORE  # taps go to the panel, not the image
 	_root.add_child(_sprite)
 
-	_name_label = Label.new()
-	_name_label.add_theme_font_size_override("font_size", 10)
-	_root.add_child(_name_label)
+	# The nameplate — a framed dark card holding the name, role/level, bars and HP text, the
+	# way the prototype frames each combatant. Sits under the sprite.
+	_nameplate = PanelContainer.new()
+	var plate := StyleBoxFlat.new()
+	plate.bg_color = Color(UIPalette.INK, 0.85)
+	plate.border_color = UIPalette.LINE_SOFT
+	plate.set_border_width_all(1)
+	plate.set_corner_radius_all(3)
+	plate.set_content_margin_all(4)
+	_nameplate.add_theme_stylebox_override("panel", plate)
+	_root.add_child(_nameplate)
 
-	_structure_bar = _make_bar(Color(0.30, 0.78, 0.35))
-	_root.add_child(_structure_bar)
+	var inner := VBoxContainer.new()
+	inner.add_theme_constant_override("separation", 2)
+	_nameplate.add_child(inner)
+
+	# Name line: name (display font) on the left, role tag on the right.
+	var name_line := HBoxContainer.new()
+	inner.add_child(name_line)
+	_name_label = Label.new()
+	_name_label.theme_type_variation = &"Heading"
+	_name_label.add_theme_font_size_override("font_size", 12)
+	_name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_name_label.clip_text = true
+	name_line.add_child(_name_label)
+	_role_label = Label.new()
+	_role_label.add_theme_font_size_override("font_size", 9)
+	_role_label.add_theme_color_override("font_color", UIPalette.CYAN)
+	name_line.add_child(_role_label)
+
+	_structure_bar = _make_bar(UIPalette.GREEN)
+	inner.add_child(_structure_bar)
 
 	_shield_bar = _make_bar(Color(0.45, 0.70, 0.95))
-	_root.add_child(_shield_bar)
+	inner.add_child(_shield_bar)
 
-	_charge_bar = _make_bar(Color(0.95, 0.72, 0.20))
-	_root.add_child(_charge_bar)
+	_charge_bar = _make_bar(UIPalette.AMBER)
+	inner.add_child(_charge_bar)
+
+	# HP readout under the bars, mono for aligned numbers.
+	_hp_label = Label.new()
+	_hp_label.add_theme_font_size_override("font_size", 8)
+	_hp_label.add_theme_color_override("font_color", UIPalette.MUTED)
+	inner.add_child(_hp_label)
 
 	_status_label = Label.new()
 	_status_label.add_theme_font_size_override("font_size", 8)
-	_root.add_child(_status_label)
+	_status_label.add_theme_color_override("font_color", UIPalette.CORAL)
+	inner.add_child(_status_label)
 
 
 func _make_bar(colour: Color) -> ProgressBar:
@@ -123,6 +169,16 @@ func refresh() -> void:
 		return
 
 	_name_label.text = unit.display_name if unit.display_name != "" else String(unit.unit_id)
+	_role_label.text = ROLE_TAGS.get(unit.role, "")
+	_hp_label.text = "%d / %d" % [unit.current_structure, unit.max_structure]
+
+	# Ally structure reads green, enemy coral — the prototype's side colour, so at a glance
+	# the player knows whose bar is dropping.
+	var tone := UIPalette.GREEN if unit.side == BattleUnit.Side.PLAYER else UIPalette.CORAL
+	var fill := StyleBoxFlat.new()
+	fill.bg_color = tone
+	fill.set_corner_radius_all(2)
+	_structure_bar.add_theme_stylebox_override("fill", fill)
 
 	_structure_bar.max_value = maxi(1, unit.max_structure)
 	_structure_bar.value = unit.current_structure
