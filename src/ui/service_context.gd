@@ -63,6 +63,9 @@ var roster: PlayerRoster
 ## Scrap and Alloy (§5.1).
 var wallet: Wallet
 
+## Install items owned but not fitted (§4.4).
+var inventory_items: ItemInventory
+
 ## Which stages are cleared, and therefore which are open (§6).
 var progress: StageProgress
 

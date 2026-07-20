@@ -146,9 +146,14 @@ func settle(result: Result, cleared: bool) -> Result:
 ## Pay a result into the player's wallet and mark the stage cleared. Separate from settle()
 ## so a caller can show the reward screen before the numbers actually move.
 func award(result: Result, wallet: Wallet, progress: StageProgress,
-		squad: Array = []) -> void:
+		squad: Array = [], items: ItemInventory = null) -> void:
 	if result.scrap_earned > 0:
 		wallet.earn(Wallet.SCRAP, result.scrap_earned)
+	# The chest actually hands over its contents. Listing items in a Result that never
+	# reached an inventory made the chest a promise the game did not keep.
+	if items != null:
+		for item_id in result.chest_items:
+			items.add(item_id)
 	if result.xp_each > 0 and not squad.is_empty():
 		result.levels_gained = XpProgression.grant_squad(squad, result.xp_each, _cfg)
 	if result.cleared:

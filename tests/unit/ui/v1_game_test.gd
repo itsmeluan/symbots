@@ -164,15 +164,23 @@ func test_an_empty_squad_does_not_open_a_fight() -> void:
 		+ "fight the player cannot act in")
 
 
-func test_winning_pays_out_once_and_returns_to_the_map() -> void:
+func test_winning_pays_out_once_and_shows_the_reward() -> void:
 	# Paying at the RUN level, not per fight: a dungeon that paid its chest once per room
 	# would be the best Scrap source in the game.
 	_game._on_stage_chosen(_game.ctx.stages.get_stage(&"stage_01"))
 	_game._battle._on_auto_toggled(true)
 
-	assert_not_null(_game._map, "back on the map")
+	assert_not_null(_game._reward, "the payoff beat, not straight back to the map")
 	assert_null(_game._battle)
 	assert_gt(_game.ctx.wallet.scrap, 0, "and paid")
+
+
+func test_dismissing_the_reward_returns_to_the_map() -> void:
+	_game._on_stage_chosen(_game.ctx.stages.get_stage(&"stage_01"))
+	_game._battle._on_auto_toggled(true)
+	_game._reward._on_continue_pressed()
+	assert_not_null(_game._map)
+	assert_null(_game._reward)
 
 
 func test_a_won_stage_is_marked_cleared() -> void:

@@ -19,6 +19,7 @@ const StageSelectScreenScript := preload("res://src/ui/stage_select_screen.gd")
 const BattleScreenScript := preload("res://src/ui/battle/battle_screen.gd")
 const WorkshopScreenScript := preload("res://src/ui/workshop/workshop_screen_v1.gd")
 const SkillTreeScreenScript := preload("res://src/ui/tree/skill_tree_screen.gd")
+const RewardScreenScript := preload("res://src/ui/reward_screen.gd")
 const StageRunnerScript := preload("res://src/core/stages/stage_runner.gd")
 const BattleEngineScript := preload("res://src/core/battle_v1/battle_engine.gd")
 const V1StateProviderScript := preload("res://src/persistence/v1_state_provider.gd")
@@ -57,6 +58,7 @@ var _map: StageSelectScreen = null
 var _battle: BattleScreen = null
 var _workshop: WorkshopScreenV1 = null
 var _tree_screen: SkillTreeScreen = null
+var _reward: RewardScreen = null
 
 ## The run in progress: its runner, its stage, and where in the battle sequence we are.
 var _runner: StageRunner = null
@@ -78,7 +80,8 @@ func _ready() -> void:
 func attach_save(service: SaveLoadService) -> void:
 	save_service = service
 	save_service.register_provider(V1StateProviderScript.KEY,
-		V1StateProviderScript.new(ctx.roster, ctx.wallet, ctx.species, ctx.tree, ctx.log))
+		V1StateProviderScript.new(ctx.roster, ctx.wallet, ctx.species, ctx.tree, ctx.log,
+			ctx.inventory_items, load(ITEM_PATH)))
 
 
 ## Load the save, or hand a brand-new player their squad.
@@ -108,6 +111,7 @@ func build_context() -> ServiceContext:
 	c.balance = BalanceConfig.new()
 	c.roster = PlayerRoster.new()
 	c.wallet = Wallet.new()
+	c.inventory_items = ItemInventory.new()
 	c.progress = StageProgress.new()
 	c.species = load(SPECIES_PATH)
 	c.stages = load(STAGE_PATH)
@@ -222,12 +226,29 @@ func _on_battle_finished(outcome: int) -> void:
 ## its chest three times would be the best Scrap source in the game.
 func _finish_run(cleared: bool) -> void:
 	_runner.settle(_result, cleared)
-	_runner.award(_result, ctx.wallet, ctx.progress, ctx.roster.squad_symbots())
+	_runner.award(_result, ctx.wallet, ctx.progress, ctx.roster.squad_symbots(),
+		ctx.inventory_items)
 	save_now()
+
+	# The reward screen reads the settled result, so the stage reference has to survive
+	# until it is shown. Clearing the run state first would leave it with nothing to name.
+	var finished_stage := _stage
+	var finished_result = _result
 	_runner = null
 	_stage = null
 	_units = []
-	show_map()
+	show_reward(finished_result, finished_stage)
+
+
+## The payoff beat. The moment a run ends is the most motivating point in the loop, and
+## dropping the player straight back on the map spends it for nothing.
+func show_reward(result, stage: StageDef) -> void:
+	_clear_screens()
+	_reward = RewardScreenScript.new()
+	add_child(_reward)
+	_reward.setup(ctx)
+	_reward.show_result(result, stage)
+	_reward.dismissed.connect(Callable(self, "show_map"))
 
 
 ## Leaving the Workshop or the tree is the natural commit point for whatever was spent
@@ -263,3 +284,7 @@ func _clear_screens() -> void:
 		remove_child(_tree_screen)
 		_tree_screen.queue_free()
 		_tree_screen = null
+	if _reward != null:
+		remove_child(_reward)
+		_reward.queue_free()
+		_reward = null

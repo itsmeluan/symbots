@@ -25,15 +25,20 @@ const KEY := &"v1_state"
 
 var _roster: PlayerRoster = null
 var _wallet: Wallet = null
+var _items: ItemInventory = null
 var _species: SpeciesCatalog = null
 var _tree: SkillTree = null
+var _item_catalog: InstallItemCatalog = null
 var _log: LogSink = null
 
 
 func _init(roster: PlayerRoster, wallet: Wallet, species: SpeciesCatalog,
-		tree: SkillTree, log: LogSink = null) -> void:
+		tree: SkillTree, log: LogSink = null, items: ItemInventory = null,
+		item_catalog: InstallItemCatalog = null) -> void:
 	_roster = roster
 	_wallet = wallet
+	_items = items
+	_item_catalog = item_catalog
 	_species = species
 	_tree = tree
 	_log = log
@@ -51,6 +56,7 @@ func snapshot() -> Dictionary:
 		"symbots": owned,
 		"squad": _roster.squad.map(func(id): return String(id)) if _roster != null else [],
 		"wallet": _wallet.to_dict() if _wallet != null else {},
+		"items": _items.to_dict() if _items != null else {},
 	}
 
 
@@ -70,6 +76,10 @@ func restore(data: Dictionary) -> void:
 		var w := WalletScript.from_dict(data.get("wallet", {}))
 		_wallet.scrap = w.scrap
 		_wallet.alloy = w.alloy
+
+	if _items != null:
+		var restored := ItemInventory.from_dict(data.get("items", {}), _item_catalog)
+		_items.counts = restored.counts
 
 
 func _restore_symbot(raw) -> SymbotInstance:
