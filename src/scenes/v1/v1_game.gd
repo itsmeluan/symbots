@@ -20,6 +20,7 @@ const BattleScreenScript := preload("res://src/ui/battle/battle_screen.gd")
 const WorkshopScreenScript := preload("res://src/ui/workshop/workshop_screen_v1.gd")
 const SkillTreeScreenScript := preload("res://src/ui/tree/skill_tree_screen.gd")
 const RewardScreenScript := preload("res://src/ui/reward_screen.gd")
+const SquadScreenScript := preload("res://src/ui/squad_screen.gd")
 const StageRunnerScript := preload("res://src/core/stages/stage_runner.gd")
 const BattleEngineScript := preload("res://src/core/battle_v1/battle_engine.gd")
 const V1StateProviderScript := preload("res://src/persistence/v1_state_provider.gd")
@@ -59,6 +60,7 @@ var _battle: BattleScreen = null
 var _workshop: WorkshopScreenV1 = null
 var _tree_screen: SkillTreeScreen = null
 var _reward: RewardScreen = null
+var _squad: SquadScreen = null
 
 ## The run in progress: its runner, its stage, and where in the battle sequence we are.
 var _runner: StageRunner = null
@@ -151,6 +153,7 @@ func show_map() -> void:
 	_map.stage_chosen.connect(Callable(self, "_on_stage_chosen"))
 	_map.workshop_requested.connect(Callable(self, "show_workshop"))
 	_map.tree_requested.connect(Callable(self, "show_tree"))
+	_map.squad_requested.connect(Callable(self, "show_squad"))
 
 
 ## The Scrap sink. Reachable from the map because that is where the player lands after
@@ -172,6 +175,16 @@ func show_tree() -> void:
 	add_child(_tree_screen)
 	_tree_screen.setup(ctx)
 	_tree_screen.closed.connect(Callable(self, "_on_sub_screen_closed"))
+
+
+## Squad composition is the strategic layer that replaced build-from-parts, so it sits at
+## the same level as the Workshop and the tree rather than nested inside one of them.
+func show_squad() -> void:
+	_clear_screens()
+	_squad = SquadScreenScript.new()
+	add_child(_squad)
+	_squad.setup(ctx)
+	_squad.closed.connect(Callable(self, "_on_sub_screen_closed"))
 
 
 func _on_stage_chosen(stage: StageDef) -> void:
@@ -289,3 +302,7 @@ func _clear_screens() -> void:
 		remove_child(_reward)
 		_reward.queue_free()
 		_reward = null
+	if _squad != null:
+		remove_child(_squad)
+		_squad.queue_free()
+		_squad = null

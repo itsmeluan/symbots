@@ -25,6 +25,9 @@ signal workshop_requested
 ## Emitted when the player wants the skill tree.
 signal tree_requested
 
+## Emitted when the player wants to change who fights.
+signal squad_requested
+
 const MIN_ROW_HEIGHT := 60  ## comfortably past the 44pt touch minimum
 const CARD_SEPARATION := 6
 
@@ -74,6 +77,12 @@ func _build_layout() -> void:
 	workshop_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	workshop_button.pressed.connect(Callable(self, "_on_workshop_pressed"))
 	menu.add_child(workshop_button)
+	var squad_button := Button.new()
+	squad_button.text = "Squad"
+	squad_button.custom_minimum_size = Vector2(0, 44)
+	squad_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	squad_button.pressed.connect(Callable(self, "_on_squad_pressed"))
+	menu.add_child(squad_button)
 	var tree_button := Button.new()
 	tree_button.text = "Skill Tree"
 	tree_button.custom_minimum_size = Vector2(0, 44)
@@ -156,6 +165,10 @@ func _on_workshop_pressed() -> void:
 
 func _on_tree_pressed() -> void:
 	tree_requested.emit()
+
+
+func _on_squad_pressed() -> void:
+	squad_requested.emit()
 
 
 func _on_stage_pressed(stage: StageDef) -> void:
