@@ -704,11 +704,14 @@ is_endless_tier = false
 script = ExtResource("1_node")
 id = &"entry_dps_scrapper_socket"
 display_name = "Ram Chip Socket"
-description = "Locked until a ram chip is installed."
+description = "Locked until a ram chip is installed. A better one grants more."
 node_type = 5
 neighbours = Array[StringName]([&"entry_dps_scrapper_s2", &"ring_00"])
 position = Vector2(345.0, 0.0)
-stat_bonus = Dictionary[StringName, int]({})
+stat_bonus = Dictionary[StringName, int]({
+&"cooling": 10,
+&"recharge": 4
+})
 stat_percent = Dictionary[StringName, int]({})
 passive_id = &""
 keystone_drawback_id = &""
@@ -810,11 +813,14 @@ is_endless_tier = false
 script = ExtResource("1_node")
 id = &"entry_dps_striker_socket"
 display_name = "Processor Socket"
-description = "Locked until a processor is installed."
+description = "Locked until a processor is installed. A better one grants more."
 node_type = 5
 neighbours = Array[StringName]([&"entry_dps_striker_s2", &"ring_02"])
 position = Vector2(318.7, 132.0)
-stat_bonus = Dictionary[StringName, int]({})
+stat_bonus = Dictionary[StringName, int]({
+&"targeting": 12,
+&"processing": 5
+})
 stat_percent = Dictionary[StringName, int]({})
 passive_id = &""
 keystone_drawback_id = &""
@@ -916,11 +922,14 @@ is_endless_tier = false
 script = ExtResource("1_node")
 id = &"entry_dps_gunner_socket"
 display_name = "Capacitor Socket"
-description = "Locked until a capacitor is installed."
+description = "Locked until a capacitor is installed. A better one grants more."
 node_type = 5
 neighbours = Array[StringName]([&"entry_dps_gunner_s2", &"ring_04"])
 position = Vector2(244.0, 244.0)
-stat_bonus = Dictionary[StringName, int]({})
+stat_bonus = Dictionary[StringName, int]({
+&"energy_power": 12,
+&"energy_capacity": 5
+})
 stat_percent = Dictionary[StringName, int]({})
 passive_id = &""
 keystone_drawback_id = &""
@@ -1022,11 +1031,14 @@ is_endless_tier = false
 script = ExtResource("1_node")
 id = &"entry_dps_duelist_socket"
 display_name = "Heat Sink Socket"
-description = "Locked until a heat sink is installed."
+description = "Locked until a heat sink is installed. A better one grants more."
 node_type = 5
 neighbours = Array[StringName]([&"entry_dps_duelist_s2", &"ring_06"])
 position = Vector2(132.0, 318.7)
-stat_bonus = Dictionary[StringName, int]({})
+stat_bonus = Dictionary[StringName, int]({
+&"armor": 8,
+&"resistance": 8
+})
 stat_percent = Dictionary[StringName, int]({})
 passive_id = &""
 keystone_drawback_id = &""
@@ -1128,11 +1140,14 @@ is_endless_tier = false
 script = ExtResource("1_node")
 id = &"entry_tank_guardian_socket"
 display_name = "Servo Socket"
-description = "Locked until a servo is installed."
+description = "Locked until a servo is installed. A better one grants more."
 node_type = 5
 neighbours = Array[StringName]([&"entry_tank_guardian_s2", &"ring_08"])
 position = Vector2(0.0, 345.0)
-stat_bonus = Dictionary[StringName, int]({})
+stat_bonus = Dictionary[StringName, int]({
+&"mobility": 10,
+&"structure": 6
+})
 stat_percent = Dictionary[StringName, int]({})
 passive_id = &""
 keystone_drawback_id = &""
@@ -1234,11 +1249,14 @@ is_endless_tier = false
 script = ExtResource("1_node")
 id = &"entry_tank_breaker_socket"
 display_name = "Ram Chip Socket"
-description = "Locked until a ram chip is installed."
+description = "Locked until a ram chip is installed. A better one grants more."
 node_type = 5
 neighbours = Array[StringName]([&"entry_tank_breaker_s2", &"ring_10"])
 position = Vector2(-132.0, 318.7)
-stat_bonus = Dictionary[StringName, int]({})
+stat_bonus = Dictionary[StringName, int]({
+&"cooling": 10,
+&"recharge": 4
+})
 stat_percent = Dictionary[StringName, int]({})
 passive_id = &""
 keystone_drawback_id = &""
@@ -1340,11 +1358,14 @@ is_endless_tier = false
 script = ExtResource("1_node")
 id = &"entry_tank_warden_socket"
 display_name = "Processor Socket"
-description = "Locked until a processor is installed."
+description = "Locked until a processor is installed. A better one grants more."
 node_type = 5
 neighbours = Array[StringName]([&"entry_tank_warden_s2", &"ring_12"])
 position = Vector2(-244.0, 244.0)
-stat_bonus = Dictionary[StringName, int]({})
+stat_bonus = Dictionary[StringName, int]({
+&"targeting": 12,
+&"processing": 5
+})
 stat_percent = Dictionary[StringName, int]({})
 passive_id = &""
 keystone_drawback_id = &""
@@ -1446,11 +1467,14 @@ is_endless_tier = false
 script = ExtResource("1_node")
 id = &"entry_tank_juggernaut_socket"
 display_name = "Capacitor Socket"
-description = "Locked until a capacitor is installed."
+description = "Locked until a capacitor is installed. A better one grants more."
 node_type = 5
 neighbours = Array[StringName]([&"entry_tank_juggernaut_s2", &"ring_14"])
 position = Vector2(-318.7, 132.0)
-stat_bonus = Dictionary[StringName, int]({})
+stat_bonus = Dictionary[StringName, int]({
+&"energy_power": 12,
+&"energy_capacity": 5
+})
 stat_percent = Dictionary[StringName, int]({})
 passive_id = &""
 keystone_drawback_id = &""
@@ -1552,11 +1576,14 @@ is_endless_tier = false
 script = ExtResource("1_node")
 id = &"entry_healer_mender_socket"
 display_name = "Heat Sink Socket"
-description = "Locked until a heat sink is installed."
+description = "Locked until a heat sink is installed. A better one grants more."
 node_type = 5
 neighbours = Array[StringName]([&"entry_healer_mender_s2", &"ring_16"])
 position = Vector2(-345.0, 0.0)
-stat_bonus = Dictionary[StringName, int]({})
+stat_bonus = Dictionary[StringName, int]({
+&"armor": 8,
+&"resistance": 8
+})
 stat_percent = Dictionary[StringName, int]({})
 passive_id = &""
 keystone_drawback_id = &""
@@ -1658,11 +1685,14 @@ is_endless_tier = false
 script = ExtResource("1_node")
 id = &"entry_healer_nanite_socket"
 display_name = "Servo Socket"
-description = "Locked until a servo is installed."
+description = "Locked until a servo is installed. A better one grants more."
 node_type = 5
 neighbours = Array[StringName]([&"entry_healer_nanite_s2", &"ring_18"])
 position = Vector2(-318.7, -132.0)
-stat_bonus = Dictionary[StringName, int]({})
+stat_bonus = Dictionary[StringName, int]({
+&"mobility": 10,
+&"structure": 6
+})
 stat_percent = Dictionary[StringName, int]({})
 passive_id = &""
 keystone_drawback_id = &""
@@ -1764,11 +1794,14 @@ is_endless_tier = false
 script = ExtResource("1_node")
 id = &"entry_healer_chaplain_socket"
 display_name = "Ram Chip Socket"
-description = "Locked until a ram chip is installed."
+description = "Locked until a ram chip is installed. A better one grants more."
 node_type = 5
 neighbours = Array[StringName]([&"entry_healer_chaplain_s2", &"ring_20"])
 position = Vector2(-244.0, -244.0)
-stat_bonus = Dictionary[StringName, int]({})
+stat_bonus = Dictionary[StringName, int]({
+&"cooling": 10,
+&"recharge": 4
+})
 stat_percent = Dictionary[StringName, int]({})
 passive_id = &""
 keystone_drawback_id = &""
@@ -1870,11 +1903,14 @@ is_endless_tier = false
 script = ExtResource("1_node")
 id = &"entry_healer_reclaimer_socket"
 display_name = "Processor Socket"
-description = "Locked until a processor is installed."
+description = "Locked until a processor is installed. A better one grants more."
 node_type = 5
 neighbours = Array[StringName]([&"entry_healer_reclaimer_s2", &"ring_22"])
 position = Vector2(-132.0, -318.7)
-stat_bonus = Dictionary[StringName, int]({})
+stat_bonus = Dictionary[StringName, int]({
+&"targeting": 12,
+&"processing": 5
+})
 stat_percent = Dictionary[StringName, int]({})
 passive_id = &""
 keystone_drawback_id = &""
@@ -1976,11 +2012,14 @@ is_endless_tier = false
 script = ExtResource("1_node")
 id = &"entry_support_amplifier_socket"
 display_name = "Capacitor Socket"
-description = "Locked until a capacitor is installed."
+description = "Locked until a capacitor is installed. A better one grants more."
 node_type = 5
 neighbours = Array[StringName]([&"entry_support_amplifier_s2", &"ring_24"])
 position = Vector2(-0.0, -345.0)
-stat_bonus = Dictionary[StringName, int]({})
+stat_bonus = Dictionary[StringName, int]({
+&"energy_power": 12,
+&"energy_capacity": 5
+})
 stat_percent = Dictionary[StringName, int]({})
 passive_id = &""
 keystone_drawback_id = &""
@@ -2082,11 +2121,14 @@ is_endless_tier = false
 script = ExtResource("1_node")
 id = &"entry_support_disruptor_socket"
 display_name = "Heat Sink Socket"
-description = "Locked until a heat sink is installed."
+description = "Locked until a heat sink is installed. A better one grants more."
 node_type = 5
 neighbours = Array[StringName]([&"entry_support_disruptor_s2", &"ring_26"])
 position = Vector2(132.0, -318.7)
-stat_bonus = Dictionary[StringName, int]({})
+stat_bonus = Dictionary[StringName, int]({
+&"armor": 8,
+&"resistance": 8
+})
 stat_percent = Dictionary[StringName, int]({})
 passive_id = &""
 keystone_drawback_id = &""
@@ -2188,11 +2230,14 @@ is_endless_tier = false
 script = ExtResource("1_node")
 id = &"entry_support_tactician_socket"
 display_name = "Servo Socket"
-description = "Locked until a servo is installed."
+description = "Locked until a servo is installed. A better one grants more."
 node_type = 5
 neighbours = Array[StringName]([&"entry_support_tactician_s2", &"ring_28"])
 position = Vector2(244.0, -244.0)
-stat_bonus = Dictionary[StringName, int]({})
+stat_bonus = Dictionary[StringName, int]({
+&"mobility": 10,
+&"structure": 6
+})
 stat_percent = Dictionary[StringName, int]({})
 passive_id = &""
 keystone_drawback_id = &""
@@ -2294,11 +2339,14 @@ is_endless_tier = false
 script = ExtResource("1_node")
 id = &"entry_support_conductor_socket"
 display_name = "Ram Chip Socket"
-description = "Locked until a ram chip is installed."
+description = "Locked until a ram chip is installed. A better one grants more."
 node_type = 5
 neighbours = Array[StringName]([&"entry_support_conductor_s2", &"ring_30"])
 position = Vector2(318.7, -132.0)
-stat_bonus = Dictionary[StringName, int]({})
+stat_bonus = Dictionary[StringName, int]({
+&"cooling": 10,
+&"recharge": 4
+})
 stat_percent = Dictionary[StringName, int]({})
 passive_id = &""
 keystone_drawback_id = &""

@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="InstallItemCatalog" load_steps=23 format=3]
+
+[ext_resource type="Script" path="res://src/core/tree/install_item_def.gd" id="1_def"]
+[ext_resource type="Script" path="res://src/core/tree/install_item_catalog.gd" id="2_cat"]
+[ext_resource type="Resource" path="res://assets/data/items/item_ram_chip_t1.tres" id="3_i"]
+[ext_resource type="Resource" path="res://assets/data/items/item_ram_chip_t2.tres" id="4_i"]
+[ext_resource type="Resource" path="res://assets/data/items/item_ram_chip_t3.tres" id="5_i"]
+[ext_resource type="Resource" path="res://assets/data/items/item_ram_chip_t4.tres" id="6_i"]
+[ext_resource type="Resource" path="res://assets/data/items/item_processor_t1.tres" id="7_i"]
+[ext_resource type="Resource" path="res://assets/data/items/item_processor_t2.tres" id="8_i"]
+[ext_resource type="Resource" path="res://assets/data/items/item_processor_t3.tres" id="9_i"]
+[ext_resource type="Resource" path="res://assets/data/items/item_processor_t4.tres" id="10_i"]
+[ext_resource type="Resource" path="res://assets/data/items/item_capacitor_t1.tres" id="11_i"]
+[ext_resource type="Resource" path="res://assets/data/items/item_capacitor_t2.tres" id="12_i"]
+[ext_resource type="Resource" path="res://assets/data/items/item_capacitor_t3.tres" id="13_i"]
+[ext_resource type="Resource" path="res://assets/data/items/item_capacitor_t4.tres" id="14_i"]
+[ext_resource type="Resource" path="res://assets/data/items/item_heat_sink_t1.tres" id="15_i"]
+[ext_resource type="Resource" path="res://assets/data/items/item_heat_sink_t2.tres" id="16_i"]
+[ext_resource type="Resource" path="res://assets/data/items/item_heat_sink_t3.tres" id="17_i"]
+[ext_resource type="Resource" path="res://assets/data/items/item_heat_sink_t4.tres" id="18_i"]
+[ext_resource type="Resource" path="res://assets/data/items/item_servo_t1.tres" id="19_i"]
+[ext_resource type="Resource" path="res://assets/data/items/item_servo_t2.tres" id="20_i"]
+[ext_resource type="Resource" path="res://assets/data/items/item_servo_t3.tres" id="21_i"]
+[ext_resource type="Resource" path="res://assets/data/items/item_servo_t4.tres" id="22_i"]
+
+[resource]
+script = ExtResource("2_cat")
+entries = Array[ExtResource("1_def")]([ExtResource("3_i"), ExtResource("4_i"), ExtResource("5_i"), ExtResource("6_i"), ExtResource("7_i"), ExtResource("8_i"), ExtResource("9_i"), ExtResource("10_i"), ExtResource("11_i"), ExtResource("12_i"), ExtResource("13_i"), ExtResource("14_i"), ExtResource("15_i"), ExtResource("16_i"), ExtResource("17_i"), ExtResource("18_i"), ExtResource("19_i"), ExtResource("20_i"), ExtResource("21_i"), ExtResource("22_i")])

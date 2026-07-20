@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="InstallItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/tree/install_item_def.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"item_processor_t3"
+display_name = "Precision Core"
+description = "Reads a target more sharply than the frame it sits in deserves."
+category = 2
+tier = 3
+removal_scrap_cost = 900

@@ -203,19 +203,38 @@ static func respec(inst: SymbotInstance) -> int:
 ## Aggregate every stat bonus the allocated nodes contribute. Flat and percentage are kept
 ## apart because the stat pipeline applies them in that order, and folding them here would
 ## bake in an ordering the pipeline is supposed to own.
+## [param items] resolves fitted hardware so a SOCKET node's contribution can be scaled by
+## the tier of the chip in it — a socket that granted a fixed amount would be a one-time
+## unlock rather than an axis the player revisits with better parts (§4.4).
 static func aggregate_stats(tree: SkillTree, inst: SymbotInstance,
-		species: SpeciesDef) -> Dictionary:
+		species: SpeciesDef, items: Dictionary = {}) -> Dictionary:
 	var flat: Dictionary = {}
 	var percent: Dictionary = {}
 	for id in allocated_set(inst, species):
 		var node := tree.get_node_def(id)
 		if node == null:
 			continue
+		var scale := _socket_scale(node, inst, items)
 		for key in node.stat_bonus:
-			flat[key] = int(flat.get(key, 0)) + int(node.stat_bonus[key])
+			flat[key] = int(flat.get(key, 0)) + int(node.stat_bonus[key]) * scale / 100
 		for key in node.stat_percent:
-			percent[key] = int(percent.get(key, 0)) + int(node.stat_percent[key])
+			percent[key] = int(percent.get(key, 0)) + int(node.stat_percent[key]) * scale / 100
 	return {"flat": flat, "percent": percent}
+
+
+## Whole-percent multiplier for a node's authored values. 100 for everything except a
+## socket, which takes the fitted item's tier power. An unresolvable item scales to 100
+## rather than to 0 — the node was legitimately allocated, so refusing to pay out would
+## silently weaken a build the player already committed points to.
+static func _socket_scale(node: SkillNodeDef, inst: SymbotInstance,
+		items: Dictionary) -> int:
+	if node.node_type != SkillNodeDefScript.NodeType.SOCKET:
+		return 100
+	var fitted_id = inst.installed_items.get(node.id, null)
+	if fitted_id == null:
+		return 100
+	var item: InstallItemDef = items.get(fitted_id, null)
+	return item.power_percent() if item != null else 100
 
 
 ## Skills unlocked by allocated ACTIVE nodes, including ultimates.
