@@ -6,13 +6,14 @@
 script = ExtResource("1_stage")
 id = &"stage_07"
 display_name = "Cold Storage"
-description = "Two walls and something behind them."
+description = "Two walls and something colder behind them."
 mode = 1
 stage_level = 7
 requires = Array[StringName]([&"stage_06"])
 battles = Array[Dictionary]([{
-"enemies": Array[StringName]([&"boltshell", &"ironmaul", &"solderfly"])
+"enemies": Array[StringName]([&"boltshell", &"ironmaul", &"mosshollow"]),
+"marks": Array[int]([1, 2, 1])
 }])
-enemy_level = 8
+enemy_level = 11
 chest_item_ids = Array[StringName]([&"item_heat_sink_t2"])
 chest_blueprint_id = &""

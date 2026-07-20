@@ -11,8 +11,9 @@ mode = 1
 stage_level = 6
 requires = Array[StringName]([&"stage_05"])
 battles = Array[Dictionary]([{
-"enemies": Array[StringName]([&"coilsprite", &"voltfang", &"voltfang"])
+"enemies": Array[StringName]([&"coilsprite", &"voltfang", &"voltfang"]),
+"marks": Array[int]([1, 2, 1])
 }])
-enemy_level = 7
+enemy_level = 9
 chest_item_ids = Array[StringName]([&"item_ram_chip_t2"])
 chest_blueprint_id = &""

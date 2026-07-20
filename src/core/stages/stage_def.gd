@@ -32,8 +32,13 @@ enum Mode {
 ## start. A list rather than a single id so the map can converge as well as branch.
 @export var requires: Array[StringName] = []
 
-## Each entry is one battle: an array of enemy species ids, 1-4 of them (§3.1).
-## Shape: [ { "enemies": [StringName, ...] } ]
+## Each entry is one battle: an array of enemy species ids, 1-4 of them (§3.1), with an
+## optional parallel `marks` array giving each enemy's evolution (1-3).
+## Shape: [ { "enemies": [StringName, ...], "marks": [int, ...] } ]
+##
+## `marks` is optional and may be shorter than `enemies`: any missing entry defaults to
+## Mk I. This keeps early stages Mk I by simply omitting marks, and lets a later fight
+## field a Mk II captain among Mk I grunts by listing only the marks that differ.
 @export var battles: Array[Dictionary] = []
 
 ## Enemy level for this stage's units. Kept separate from `stage_level` so a bonus stage
@@ -59,6 +64,29 @@ func enemies_at(index: int) -> Array:
 	if index < 0 or index >= battles.size():
 		return []
 	return battles[index].get("enemies", [])
+
+
+## Evolution mark (1-3) for each enemy in battle [param index], padded to match the enemy
+## count. An enemy with no authored mark is Mk I — so an early stage that lists no marks
+## fields base forms, exactly as §6.2 requires.
+func marks_at(index: int) -> Array:
+	var enemies := enemies_at(index)
+	var authored: Array = battles[index].get("marks", []) if index >= 0 \
+		and index < battles.size() else []
+	var out: Array = []
+	for i in enemies.size():
+		out.append(clampi(int(authored[i]), 1, 3) if i < authored.size() else 1)
+	return out
+
+
+## The highest evolution mark any enemy in this whole stage reaches. The stage validator
+## reads this to keep final forms out of the early campaign (§6.2).
+func peak_mark() -> int:
+	var peak := 1
+	for i in battles.size():
+		for m in marks_at(i):
+			peak = maxi(peak, int(m))
+	return peak
 
 
 ## True when structure carries between this stage's battles (§3.6). Dungeons and raids run

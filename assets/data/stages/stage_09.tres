@@ -6,13 +6,14 @@
 script = ExtResource("1_stage")
 id = &"stage_09"
 display_name = "Deep Fabrication"
-description = "It rebuilds what you destroy."
+description = "It rebuilds what you destroy, and it is patient."
 mode = 1
 stage_level = 9
 requires = Array[StringName]([&"stage_08"])
 battles = Array[Dictionary]([{
-"enemies": Array[StringName]([&"nanoweave", &"ironmaul", &"ironmaul"])
+"enemies": Array[StringName]([&"candlestag", &"ironmaul", &"ironmaul"]),
+"marks": Array[int]([2, 2, 1])
 }])
-enemy_level = 10
+enemy_level = 16
 chest_item_ids = Array[StringName]([&"item_capacitor_t2"])
 chest_blueprint_id = &""

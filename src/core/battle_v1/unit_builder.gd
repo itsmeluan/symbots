@@ -135,13 +135,20 @@ static func build_side(instances: Array, catalog: SpeciesCatalog, tree: SkillTre
 ## Build an enemy from a species id at a given level. Enemies have no tree and no fitted
 ## hardware — their power comes from level and part levels alone, which keeps a stage's
 ## difficulty a single readable dial rather than a hidden build.
+##
+## [param mark] (1-3) selects the evolution — its sprite AND its part/level caps. It is set
+## BEFORE part levels are clamped, because a Mk I caps parts at 20 while a Mk III caps at
+## 60; clamping first would silently pin a Mk III enemy to Mk I stats. Enemy appearance is
+## how the player reads their progress (design §6.2), so which mark shows where is a
+## content decision the stage table makes, not a level side-effect.
 static func build_enemy(species: SpeciesDef, level: int, side: int, slot: int,
-		skills: Dictionary, index: int = 0) -> BattleUnit:
+		skills: Dictionary, index: int = 0, mark: int = 1) -> BattleUnit:
 	if species == null:
 		return null
 	var inst := SymbotInstanceScript.new(
 		StringName("enemy_%s_%d" % [species.id, index]), species.id)
-	inst.level = maxi(1, level)
+	inst.mark = clampi(mark, 1, SymbotInstanceScript.MAX_MARK)
+	inst.level = clampi(level, 1, inst.level_cap())
 	var part_level: int = clampi(level, 1, inst.part_level_cap())
 	for i in SymbotInstanceScript.PART_COUNT:
 		inst.part_levels[i] = part_level

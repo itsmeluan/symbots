@@ -343,3 +343,13 @@ extends Resource
 	&"item_ram_chip_t1", &"item_processor_t1", &"item_capacitor_t1",
 	&"item_heat_sink_t1", &"item_servo_t1", &"item_ram_chip_t2", &"item_servo_t2",
 ]
+
+# ---------------------------------------------------------------------------
+# v1 enemy-progression gates (design/v1/00-core-design.md §6.2). APPEND-ONLY.
+# ---------------------------------------------------------------------------
+
+## The earliest stage_level at which an enemy may be Mk II / Mk III. Enemy appearance is
+## the player's read on their own progress, so a final form in the opening stages spoils
+## the escalation. The stage validator reads these — content cannot break the rule.
+@export var mk2_min_stage_level: int = 6
+@export var mk3_min_stage_level: int = 10

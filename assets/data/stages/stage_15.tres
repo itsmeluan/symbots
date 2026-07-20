@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="StageDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/stages/stage_def.gd" id="1_stage"]
+
+[resource]
+script = ExtResource("1_stage")
+id = &"stage_15"
+display_name = "The Core Foreman"
+description = "Everything this place has become, in one room."
+mode = 2
+stage_level = 15
+requires = Array[StringName]([&"stage_14"])
+battles = Array[Dictionary]([{
+"enemies": Array[StringName]([&"rapierbill", &"ironmaul"]),
+"marks": Array[int]([2, 3])
+}, {
+"enemies": Array[StringName]([&"nanoweave", &"candlestag", &"splicewyrm"]),
+"marks": Array[int]([3, 2, 3])
+}, {
+"enemies": Array[StringName]([&"rapierbill", &"ironmaul", &"hexcircuit", &"splicewyrm"]),
+"marks": Array[int]([3, 3, 3, 3])
+}])
+enemy_level = 45
+chest_item_ids = Array[StringName]([&"item_servo_t4", &"item_processor_t4"])
+chest_blueprint_id = &"blueprint_rapierbill"

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="StageDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/stages/stage_def.gd" id="1_stage"]
+
+[resource]
+script = ExtResource("1_stage")
+id = &"stage_11"
+display_name = "The Overcircuit"
+description = "The machines here coordinate faster than you can."
+mode = 1
+stage_level = 11
+requires = Array[StringName]([&"stage_10"])
+battles = Array[Dictionary]([{
+"enemies": Array[StringName]([&"cogwatch", &"hexcircuit", &"splicewyrm"]),
+"marks": Array[int]([2, 2, 2])
+}])
+enemy_level = 24
+chest_item_ids = Array[StringName]([&"item_processor_t3"])
+chest_blueprint_id = &""

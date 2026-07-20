@@ -89,14 +89,15 @@ func build_battle(units: Array, index: int) -> BattleEngine:
 	var enemy_ids := _stage.enemies_at(index)
 	if enemy_ids.is_empty():
 		return null
+	var marks := _stage.marks_at(index)
 	var enemies: Array = []
 	for i in enemy_ids.size():
 		var species := _species.get_species(enemy_ids[i])
 		if species == null:
 			_warn(&"stage_enemy_unresolved", {"stage": String(_stage.id), "species": String(enemy_ids[i])})
 			continue
-		var unit := UnitBuilder.build_enemy(
-			species, _stage.enemy_level, BattleUnit.Side.ENEMY, enemies.size(), _skills, i)
+		var unit := UnitBuilder.build_enemy(species, _stage.enemy_level,
+			BattleUnit.Side.ENEMY, enemies.size(), _skills, i, int(marks[i]))
 		if unit != null:
 			enemies.append(unit)
 	if enemies.is_empty():

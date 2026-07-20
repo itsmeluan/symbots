@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="StageDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/stages/stage_def.gd" id="1_stage"]
+
+[resource]
+script = ExtResource("1_stage")
+id = &"stage_12"
+display_name = "Molten Yard"
+description = "It comes at you and does not stop coming."
+mode = 1
+stage_level = 12
+requires = Array[StringName]([&"stage_11"])
+battles = Array[Dictionary]([{
+"enemies": Array[StringName]([&"slaghorn", &"slaghorn", &"rapierbill"]),
+"marks": Array[int]([2, 2, 2])
+}])
+enemy_level = 28
+chest_item_ids = Array[StringName]([&"item_capacitor_t3"])
+chest_blueprint_id = &""

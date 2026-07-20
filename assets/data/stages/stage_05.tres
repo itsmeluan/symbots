@@ -11,12 +11,15 @@ mode = 2
 stage_level = 5
 requires = Array[StringName]([&"stage_04"])
 battles = Array[Dictionary]([{
-"enemies": Array[StringName]([&"rustcrawler", &"rustcrawler"])
+"enemies": Array[StringName]([&"rustcrawler", &"quillrack"]),
+"marks": Array[int]([1, 1])
 }, {
-"enemies": Array[StringName]([&"boltshell", &"voltfang"])
+"enemies": Array[StringName]([&"boltshell", &"slaghorn"]),
+"marks": Array[int]([1, 1])
 }, {
-"enemies": Array[StringName]([&"boltshell", &"solderfly", &"voltfang", &"rustcrawler"])
+"enemies": Array[StringName]([&"solderfly", &"coilsprite", &"quillrack", &"boltshell"]),
+"marks": Array[int]([1, 1, 1, 1])
 }])
-enemy_level = 5
+enemy_level = 6
 chest_item_ids = Array[StringName]([&"item_capacitor_t1", &"item_servo_t1"])
 chest_blueprint_id = &"blueprint_boltshell"

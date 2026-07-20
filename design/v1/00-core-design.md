@@ -344,6 +344,39 @@ Implementation: already the case. `StageDef.battles` holds species ids; `UnitBui
 builds enemies with no tree and no fitted hardware, so a stage's difficulty stays one
 readable dial (`enemy_level`).
 
+### 6.2 Enemy progression — the reveal schedule **[owner]**
+
+Because enemies ARE the species you collect (§6.1), **which species and which mark appears
+where is the player's read on how far they have come.** A Rustcrawler Mk I in stage 1; its
+Mk III not until the endgame. Seeing a final form early flattens the whole escalation.
+
+The campaign is 15 authored stages in three acts, then Endless:
+
+| Act | Stages | Marks | What arrives |
+|---|---|---|---|
+| 1 | 1–5 | Mk I only | the commons introduce themselves as base forms |
+| 2 | 6–10 | Mk I + Mk II | the rares arrive as Mk II; the FIRST Mk III is the stage-10 boss |
+| 3 | 11–15 | Mk II + Mk III | Mk III becomes common; the epics arrive; Mk III bosses |
+
+All 16 species appear as enemies across the arc, revealed roughly in rarity order
+(commons early, epics last). The first Mk III lands as a **dungeon boss**, not scattered
+trash — a wall, the way a final form should read.
+
+**[claude]** Mechanism: each enemy in `StageDef.battles` carries an optional mark (1–3),
+defaulting to Mk I when omitted, so an early stage is Mk I by simply not listing marks. A
+Mk III at a high `enemy_level` is genuinely stronger, not just a different sprite: a lower
+mark's part/level caps hold it back, so a Mk I at level 45 is pinned to its Mk I cap while
+a Mk III reaches full power (measured: 377 vs 677 structure at the same level).
+
+Two gates in `BalanceConfig` (`mk2_min_stage_level`, `mk3_min_stage_level`) fix the
+earliest stage a mark may appear, and the stage validator enforces them against the
+shipped table — the rule cannot be broken by a later content edit.
+
+Open for later: the new species are ENEMIES now but not yet COLLECTABLE — their blueprints
+drop from boss chests (fields authored: `blueprint_ironmaul`, `blueprint_hexcircuit`,
+`blueprint_rapierbill`), but blueprint crafting is not implemented. That is the collection
+loop, deferred.
+
 ---
 
 ## 7. Offline expeditions **[owner]**
@@ -388,5 +421,6 @@ game's hook is the Scrap-budget tension; selling infinite Scrap sells the hook i
 - Exact stat list and formulas → `02-stats-and-formulas.md`
 - Tree layout and node budget → `04-skill-tree.md`
 - The 8 slice species → `05-species.md`
-- Stage table and the species roster beyond the slice 8 → `06-content.md`
-  (enemy POLICY is settled in §6.1 — what remains is authoring more species)
+- Blueprint crafting (the collection loop) is unimplemented — the 8 new species are
+  enemies but not yet ownable. Boss chests already name blueprints (§6.2). → collection layer
+- Stage table beyond stage 15 → Endless is the current answer; more authored acts later

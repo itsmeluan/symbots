@@ -214,3 +214,75 @@ func test_multi_battle_stages_are_authored_as_dungeons() -> void:
 		if s.battle_count() > 1:
 			assert_true(s.carries_structure(),
 				"%s has %d battles but heals between them" % [s.id, s.battle_count()])
+
+
+# ---------------------------------------------------------------------------
+# Enemy mark progression (§6.2) — the reveal schedule is enforced, not just followed
+# ---------------------------------------------------------------------------
+
+func test_marks_default_to_one_and_pad_to_the_enemy_count() -> void:
+	# An early stage that lists no marks fields base forms; a partial marks list fills the
+	# rest with Mk I. Both are what keep the opening Mk I without per-enemy bookkeeping.
+	var s := _stage("probe")
+	s.battles = [{"enemies": [&"a", &"b", &"c"]}, {"enemies": [&"a", &"b"], "marks": [2]}]
+	assert_eq(s.marks_at(0), [1, 1, 1], "no marks -> all Mk I")
+	assert_eq(s.marks_at(1), [2, 1], "short marks list pads with Mk I")
+
+
+func test_no_early_stage_fields_a_final_evolution() -> void:
+	# THE rule. Enemy appearance is the player's read on their progress, so a Mk III in the
+	# opening stages spoils the whole escalation. A threshold in BalanceConfig gates it and
+	# this test enforces it against the shipped table — content cannot quietly break it.
+	var cfg := BalanceConfig.new()
+	for s in _catalog.entries:
+		if s.peak_mark() >= 3:
+			assert_gte(s.stage_level, cfg.mk3_min_stage_level,
+				"%s (level %d) fields a Mk III before the Mk III gate at level %d"
+					% [s.id, s.stage_level, cfg.mk3_min_stage_level])
+		if s.peak_mark() >= 2:
+			assert_gte(s.stage_level, cfg.mk2_min_stage_level,
+				"%s (level %d) fields a Mk II before the Mk II gate at level %d"
+					% [s.id, s.stage_level, cfg.mk2_min_stage_level])
+
+
+func test_the_first_mark_three_is_a_boss_moment_not_a_trickle() -> void:
+	# The design wants the first final form to LAND as a wall (§6.2), so it should show up
+	# in a dungeon (an act climax), not as a random trash enemy in a one-battle stage.
+	var first_mk3: StageDef = null
+	for s in _catalog.entries:
+		if s.peak_mark() >= 3:
+			first_mk3 = s
+			break
+	assert_not_null(first_mk3, "the campaign should reach Mk III somewhere")
+	assert_eq(first_mk3.mode, StageDefScript.Mode.DUNGEON,
+		"the first Mk III should be an act boss, not scattered trash")
+
+
+func test_marks_never_exceed_three() -> void:
+	for s in _catalog.entries:
+		for i in s.battle_count():
+			for m in s.marks_at(i):
+				assert_between(int(m), 1, 3, "%s has an out-of-range mark" % s.id)
+
+
+func test_the_whole_roster_appears_as_an_enemy_somewhere() -> void:
+	# Enemies are the species you collect (§6.1). Every species must be encounterable, or it
+	# is content the player can never see or (eventually) earn a blueprint for.
+	var species: SpeciesCatalog = load(SPECIES_CATALOG_PATH)
+	var seen: Dictionary = {}
+	for s in _catalog.entries:
+		for i in s.battle_count():
+			for e in s.enemies_at(i):
+				seen[e] = true
+	for entry in species.entries:
+		assert_true(seen.has(entry.id),
+			"%s never appears as an enemy — the player can never encounter it" % entry.id)
+
+
+func test_enemy_levels_climb_with_the_campaign() -> void:
+	# enemy_level drives how strong the fight is; a later stage that got easier would break
+	# the difficulty ramp the mark schedule rides on.
+	var last := 0
+	for s in _catalog.entries:
+		assert_gte(s.enemy_level, last, "%s drops the difficulty ramp" % s.id)
+		last = s.enemy_level

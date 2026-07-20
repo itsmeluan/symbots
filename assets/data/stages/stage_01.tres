@@ -11,7 +11,8 @@ mode = 1
 stage_level = 1
 requires = Array[StringName]([])
 battles = Array[Dictionary]([{
-"enemies": Array[StringName]([&"rustcrawler"])
+"enemies": Array[StringName]([&"rustcrawler"]),
+"marks": Array[int]([1])
 }])
 enemy_level = 1
 chest_item_ids = Array[StringName]([])

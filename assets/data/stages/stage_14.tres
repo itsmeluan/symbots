@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="StageDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/stages/stage_def.gd" id="1_stage"]
+
+[resource]
+script = ExtResource("1_stage")
+id = &"stage_14"
+display_name = "Signal Apex"
+description = "The disruptor, fully grown, and its whole network."
+mode = 1
+stage_level = 14
+requires = Array[StringName]([&"stage_13"])
+battles = Array[Dictionary]([{
+"enemies": Array[StringName]([&"hexcircuit", &"splicewyrm", &"cogwatch"]),
+"marks": Array[int]([3, 2, 2])
+}])
+enemy_level = 38
+chest_item_ids = Array[StringName]([&"item_ram_chip_t4"])
+chest_blueprint_id = &"blueprint_hexcircuit"

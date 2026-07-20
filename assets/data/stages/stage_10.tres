@@ -11,12 +11,15 @@ mode = 2
 stage_level = 10
 requires = Array[StringName]([&"stage_09"])
 battles = Array[Dictionary]([{
-"enemies": Array[StringName]([&"ironmaul", &"voltfang"])
+"enemies": Array[StringName]([&"ironmaul", &"voltfang"]),
+"marks": Array[int]([2, 2])
 }, {
-"enemies": Array[StringName]([&"nanoweave", &"hexcircuit", &"boltshell"])
+"enemies": Array[StringName]([&"nanoweave", &"hexcircuit", &"boltshell"]),
+"marks": Array[int]([2, 2, 2])
 }, {
-"enemies": Array[StringName]([&"ironmaul", &"ironmaul", &"nanoweave", &"hexcircuit"])
+"enemies": Array[StringName]([&"ironmaul", &"ironmaul", &"nanoweave", &"hexcircuit"]),
+"marks": Array[int]([3, 2, 2, 2])
 }])
-enemy_level = 12
+enemy_level = 20
 chest_item_ids = Array[StringName]([&"item_servo_t3", &"item_ram_chip_t3"])
-chest_blueprint_id = &"blueprint_hexcircuit"
+chest_blueprint_id = &"blueprint_ironmaul"
