@@ -49,3 +49,34 @@ var inventory  ## : PlayerInventory
 ## DropSystem with this. Screens never mutate it — read-only tuning data.
 var balance: BalanceConfig
 
+
+# ---------------------------------------------------------------------------
+# v1 services (design/v1/00-core-design.md). Added alongside the v0 fields rather
+# than replacing them: the v0 systems and their ~700 tests are still green, and
+# tearing them out is a destructive change that belongs to the owner, not to an
+# unattended loop. See §9 Open items.
+# ---------------------------------------------------------------------------
+
+## Everything the player owns, and the four they field (§2, §3.1).
+var roster: PlayerRoster
+
+## Scrap and Alloy (§5.1).
+var wallet: Wallet
+
+## Which stages are cleared, and therefore which are open (§6).
+var progress: StageProgress
+
+## Frozen content catalogs. Screens read; nothing mutates them.
+var species: SpeciesCatalog
+var stages: StageCatalog
+var tree: SkillTree
+
+## skill_id -> SkillDef, built once from the catalog (§3.4).
+var skills: Dictionary = {}
+
+## item_instance_id -> InstallItemDef, for socket resolution (§4.4).
+var items: Dictionary = {}
+
+## Seeded RNG vended by RngService (ADR-0006). A battle built from this replays
+## identically from the same seed.
+var rng: RandomNumberGenerator

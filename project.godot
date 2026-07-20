@@ -12,7 +12,7 @@ config_version=5
 
 config/name="Symbots"
 config/description="Creature-collection RPG — modular robot building, turn-based combat. Mac launch, iOS primary long-term target."
-run/main_scene="res://src/scenes/game.tscn"
+run/main_scene="res://src/scenes/v1/v1_game.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
 [autoload]

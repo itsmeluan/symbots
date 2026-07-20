@@ -276,6 +276,9 @@ func _refresh_banner(actor: BattleUnit) -> void:
 ## exists) and a stale button is a button that lies.
 func _rebuild_skill_bar(actor: BattleUnit) -> void:
 	for child in _skill_bar.get_children():
+		# Deferred free would leave last turn's buttons in the bar alongside this turn's
+		# for the rest of the frame — including ones that are no longer usable.
+		_skill_bar.remove_child(child)
 		child.queue_free()
 
 	if engine == null or engine.is_over() or actor == null \

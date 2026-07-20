@@ -344,6 +344,13 @@ game's hook is the Scrap-budget tension; selling infinite Scrap sells the hook i
 
 ## 9. Open items
 
+- **v0 removal is the owner's call, not the loop's.** The v1 root is now the main scene
+  and the game boots into the stage map. The v0 systems (overworld, workshop, encounter
+  zones, part DB, synergy, assembly) and their ~700 tests are still present and still
+  green. Deleting them is destructive and irreversible in a way adding code is not, so it
+  is deliberately left undone: the owner should decide whether to cut them, keep parts of
+  the Workshop for the v1 part-levelling screen, or mine them for pieces. Reverting to v0
+  meanwhile is one line in `project.godot`.
 - **Economy pacing needs a playtest pass.** The cost and reward curves in
   `BalanceConfig` have the right SHAPE — costs accelerate, income does not keep pace, so
   the §5.2 budget tension holds — and the shape is what the tests pin. The magnitudes are
