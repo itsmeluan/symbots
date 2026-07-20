@@ -15,6 +15,7 @@ extends Node
 
 const PlayerInventory := preload("res://src/persistence/player_inventory.gd")
 const PlayerStateProvider := preload("res://src/persistence/player_state_provider.gd")
+const CoreProgressionScript := preload("res://src/core/progression/core_progression.gd")
 
 const BALANCE_PATH := "res://assets/data/balance_config.tres"
 const PART_CATALOG_PATH := "res://assets/data/catalogs/part_catalog.tres"
@@ -66,7 +67,16 @@ func _run_boot() -> void:
 	if starters.is_empty():
 		_boot_fail(log, &"no_starter_parts")
 		return
-	var build := SymbotBuild.with_starters(starters, cfg, log, inventory)
+	# CoreProgression is constructed BEFORE the build and injected into it, because
+	# SymbotBuild consults it on every equip (the level gate) and for its level readout.
+	var progression := CoreProgressionScript.new(log)
+	var build := SymbotBuild.with_starters(starters, cfg, log, inventory, progression)
+	# Register the starter CORE so it has a record to accumulate into. Without this the
+	# first XP award would land on an unregistered core and only survive by the
+	# add_xp fallback — correct, but it would log a warning on every new game.
+	var starter_core: PartInstance = starters.get(PartDef.SlotType.CORE)
+	if starter_core != null:
+		progression.register_core(starter_core.instance_id)
 	var synergy := SynergySystem.new([], log)  # no authored tiers yet — empty registry
 
 	var screen_manager: ScreenManager = get_parent().get_node("ScreenManager")
@@ -74,7 +84,7 @@ func _run_boot() -> void:
 	ctx.screens = screen_manager
 	ctx.build = build
 	ctx.synergy = synergy
-	ctx.progression = null  # CoreProgression not built yet — SymbotBuild defaults to level 1
+	ctx.progression = progression
 	ctx.log = log
 	ctx.inventory = inventory
 	ctx.balance = cfg  # Battle screen constructs its per-fight DropSystem from this.
@@ -89,6 +99,7 @@ func _run_boot() -> void:
 	SaveLoad.setup(log)
 	SaveLoad.register_provider(PlayerStateProvider.KEY,
 		PlayerStateProvider.new(build, inventory, log))
+	SaveLoad.register_provider(&"core_progression", progression)
 	SaveLoad.connect_autosave_triggers()
 
 	# --- Step 6b: resume a previous session, if there is one ---

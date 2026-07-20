@@ -246,7 +246,7 @@ func _on_player_hit(damage: int, sub_target: StringName) -> void:
 
 
 func _on_battle_ended(outcome: int, _enemy_id: StringName, fired: Dictionary,
-		_xp: int, _bonus: int, _first_boss: bool, _level: int, _deployed: Array) -> void:
+		xp: int, bonus: int, first_boss: bool, _level: int, _deployed: Array) -> void:
 	_battle_over = true
 	_fired_events = fired.duplicate()
 	_attack_btn.disabled = true
@@ -255,6 +255,7 @@ func _on_battle_ended(outcome: int, _enemy_id: StringName, fired: Dictionary,
 		(_target_btns[sub] as Button).disabled = true
 
 	if outcome == OUTCOME_VICTORY:
+		_award_core_xp(xp, bonus, first_boss)
 		# Victory-gated, break-event-driven drops. DropSystem was built with ctx.inventory,
 		# so each PartInstance is appended to the session inventory as it resolves.
 		var drops := _drop_system.resolve_drops(
@@ -470,3 +471,29 @@ func _rarity_color(rarity: int) -> Color:
 		PartDef.Rarity.BOSS_GRADE: return Color(0.85, 0.40, 0.85)
 		PartDef.Rarity.PROTOTYPE: return Color(0.40, 0.85, 0.90)
 	return Color(0.72, 0.74, 0.78)
+
+
+## Award battle XP to the equipped CORE (Core Progression GDD Rule 3).
+##
+## The completion bonus rides every boss payload but only counts on the FIRST defeat —
+## Rule 3a's first-defeat guard. Without it a boss refight would pay the bonus again and
+## the level curve would be farmable by re-killing one enemy.
+##
+## MVP is a single deployed Symbot, so there is no bench share (CP-F2) to split: the
+## deployed core takes the full award. That branch arrives with a team roster.
+func _award_core_xp(xp: int, bonus: int, first_boss: bool) -> void:
+	if _ctx == null or _ctx.progression == null:
+		return
+	var core: PartInstance = _ctx.build.get_equipped(PartDef.SlotType.CORE)
+	if core == null:
+		return
+	var total := xp + (bonus if first_boss else 0)
+	if total <= 0:
+		return
+	var before := _ctx.progression.get_level(core.instance_id)
+	var after: int = _ctx.progression.add_xp(core.instance_id, total)
+	_round_lines.append("+%d XP" % total)
+	if after > before:
+		_round_lines.append("CORE LEVEL UP!  %d -> %d" % [before, after])
+	_ctx.log.info(&"core_xp_awarded",
+		{"xp": total, "level": after, "core": String(core.instance_id)})
