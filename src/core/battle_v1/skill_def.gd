@@ -64,6 +64,20 @@ enum EffectKind {
 ## Skills a TANK uses to hold aggro read better if flagged, so UI can mark them.
 @export var is_taunt_skill: bool = false
 
+## Ultimate (§3.4b). Ults come from the tree like every other active, so they reuse this
+## whole resource rather than needing a parallel type — only the gate differs. An ult is
+## charge-gated instead of cooldown-gated: it starts a battle unusable and fills through
+## the fight, which makes it a reward for surviving rather than an opening move.
+@export var is_ultimate: bool = false
+
+## Charge points needed before the ult can fire. Ignored when `is_ultimate` is false.
+@export var charge_cost: int = 100
+
+
+## True when this skill is gated by the charge meter rather than by a cooldown.
+func uses_charge() -> bool:
+	return is_ultimate
+
 
 ## True when this skill picks exactly one unit and therefore participates in the taunt
 ## rule. Multi-target and self-target skills do not.

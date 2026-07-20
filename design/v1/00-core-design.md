@@ -153,6 +153,31 @@ player slots is a build decision.
 
 Every Symbot also has a **basic attack** with no cooldown, so a turn is never wasted.
 
+### 3.4b Ultimate skills **[owner]**
+
+Every Symbot has an **ultimate**, and it comes from the **skill tree like everything
+else** — the tree is the single source of actives, passives, stats and buffs, and ults are
+not an exception carved out beside it. A Symbot's ult is therefore a *build decision*, not
+a species property: two Rustcrawlers that walked different paths field different ults.
+
+The ult occupies a **dedicated fourth slot**, separate from the 3 active slots. Making it
+compete with the actives would mean most players never slot one — a skill that costs a
+rotation slot to hold is a skill that stays in the tree.
+
+**[claude]** Ults are ACTIVE nodes with `is_ultimate` set, so they inherit the whole
+existing pipeline — reachability gating, point cost, cooldown, targeting, the taunt rule —
+rather than needing a parallel system. What separates them mechanically:
+
+- **Charge, not cooldown.** An ult starts a battle uncharged and fills through the fight.
+  A long cooldown would let a player open with the ult in every trivial fight; a charge
+  meter makes the ult a *reward for surviving*, which is what an ult should feel like.
+- **One ult slotted at a time.** The tree may grant several; the player picks one.
+- **Ults skip the basic-attack fallback.** When uncharged, the slot is simply unusable.
+
+Charge sources, rate and the exact meter live in `03-battle-system.md`. Open question
+carried to §9: whether charge persists across fights inside a dungeon run (structure
+already does) or resets per battle.
+
 ### 3.5 Status effects
 
 A complete set, because the owner asked for systems rich enough to carry a simple game:
@@ -201,6 +226,7 @@ the same player's two Rustcrawlers can be too.
 | **Stat** | flat or percentage stat increase. The connective tissue and the endgame sink |
 | **Passive** | a named permanent effect |
 | **Active** | grants a skill the Symbot can slot |
+| **Ultimate** | an Active with `is_ultimate` — charge-gated, own slot (see 3.4b) |
 | **Keystone** | a large effect with a real drawback — build-defining |
 | **Socket** | **locked until an item is installed** (see 4.4) |
 
@@ -311,6 +337,9 @@ game's hook is the Scrap-budget tension; selling infinite Scrap sells the hook i
 
 ## 9. Open items
 
+- **Ult charge**: does it persist across fights inside a dungeon run, the way structure
+  does, or reset per battle? Persisting rewards a clean early fight with an opening ult in
+  the boss room; resetting keeps each fight self-contained. → `03-battle-system.md`
 - Exact stat list and formulas → `02-stats-and-formulas.md`
 - Tree layout and node budget → `04-skill-tree.md`
 - The 8 slice species → `05-species.md`

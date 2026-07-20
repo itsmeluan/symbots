@@ -237,3 +237,29 @@ extends Resource
 ## No legal retune may invert a step; `DropSystem.get_scrap_yield` is the read seam
 ## and the DS-8 test asserts the three `<` comparisons programmatically.
 @export var scrap_yield_by_rarity: Array[int] = [0, 5, 20, 60, 35]
+
+# ---------------------------------------------------------------------------
+# v1 battle tuning (design/v1/00-core-design.md §3). APPEND-ONLY, same discipline
+# as every field above. Defaults let a bare BalanceConfig.new() drive the v1
+# battle unit tests via DI; the authored `.tres` is the production source.
+# ---------------------------------------------------------------------------
+
+## Crit chance is derived from the `targeting` stat rather than being its own stat,
+## so targeting stays worth investing in and the stat list does not grow. Chance in
+## whole percent = `targeting / crit_targeting_divisor`, capped below.
+@export var crit_targeting_divisor: int = 4
+
+## Ceiling on derived crit chance, whole percent. A cap exists so a late-game
+## targeting stack cannot reach guaranteed crits — at 100% the crit multiplier
+## stops being variance and just becomes a flat damage bonus, which removes the
+## reason crit is interesting.
+@export var crit_chance_cap_percent: int = 50
+
+## Damage multiplier on a crit. Passed to [method DamageFormula.compute_damage] as
+## `crit_mult`, pre-floor with the type multiplier (TR-df-002).
+@export var crit_damage_multiplier: float = 1.5
+
+## Hard cap on rounds before a battle is declared a draw. Two full teams of tanks
+## with regen can otherwise loop forever; without this the auto-battler and the
+## offline expedition simulator both hang rather than resolve.
+@export var max_battle_rounds: int = 50

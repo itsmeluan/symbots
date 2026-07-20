@@ -46,6 +46,44 @@ var cooldowns: Dictionary = {}
 ## Skill ids this unit can use, slot order. Index 0 is always the basic attack.
 var skills: Array[StringName] = []
 
+## The one ult this unit has slotted, or empty (§3.4b). Held separately from `skills`
+## because the ult has its own slot and its own gate — folding it into the rotation would
+## mean it competed with the actives, and a skill that costs a rotation slot to hold is a
+## skill most players never slot.
+var ultimate_skill: StringName = &""
+
+## Ult charge, filled through the fight. Starts at 0 every battle: an ult that opens the
+## fight is not an ult, it is a long-cooldown skill.
+var ultimate_charge: int = 0
+
+
+## Charge gained per action taken and per hit absorbed. Both, so a tank that never lands a
+## hit still reaches its ult — otherwise the role that survives longest charges slowest,
+## which is exactly backwards.
+const CHARGE_PER_ACTION := 10
+const CHARGE_PER_HIT_TAKEN := 5
+
+
+func has_ultimate() -> bool:
+	return ultimate_skill != &""
+
+
+## True when the ult is charged enough to fire. [param cost] comes from the SkillDef, so
+## a cheap ult and an expensive one share this one gate.
+func is_ultimate_ready(cost: int) -> bool:
+	return has_ultimate() and ultimate_charge >= cost
+
+
+func gain_charge(amount: int) -> void:
+	if has_ultimate() and amount > 0:
+		ultimate_charge += amount
+
+
+## Spend the meter. Charge is CONSUMED, not zeroed — overfill carries toward the next
+## cast, so a long fight is not silently wasting the charge a player earned.
+func spend_charge(cost: int) -> void:
+	ultimate_charge = maxi(0, ultimate_charge - cost)
+
 
 func is_alive() -> bool:
 	return current_structure > 0
