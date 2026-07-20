@@ -22,4 +22,4 @@ battles = Array[Dictionary]([{
 }])
 enemy_level = 6
 chest_item_ids = Array[StringName]([&"item_capacitor_t1", &"item_servo_t1"])
-chest_blueprint_id = &"blueprint_boltshell"
+chest_blueprint_id = &"boltshell"

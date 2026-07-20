@@ -27,6 +27,7 @@ var _continue_button: Button
 
 func setup(ctx: ServiceContext) -> void:
 	_ctx = ctx
+	_set_background("res://assets/art/battle/battle_arena_background.png", 0.78)
 	_build_layout()
 
 
@@ -38,24 +39,39 @@ func _on_exit_tree() -> void:
 func _build_layout() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
+	# Centred column with generous margins, over the dimmed arena — the prototype's victory
+	# layout: a big title, a framed ledger of what was won, and a primary continue button.
+	var margin := MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 20)
+	margin.add_theme_constant_override("margin_right", 20)
+	margin.add_theme_constant_override("margin_top", 40)
+	margin.add_theme_constant_override("margin_bottom", 24)
+	add_child(margin)
+
 	var root := VBoxContainer.new()
-	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.add_theme_constant_override("separation", 8)
-	add_child(root)
+	root.add_theme_constant_override("separation", 12)
+	root.alignment = BoxContainer.ALIGNMENT_CENTER
+	margin.add_child(root)
 
 	_title = Label.new()
+	_title.theme_type_variation = &"Heading"
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_title.add_theme_font_size_override("font_size", 20)
+	_title.add_theme_font_size_override("font_size", 52)
 	root.add_child(_title)
 
+	# The ledger — a framed panel holding the reward lines.
+	var ledger := PanelContainer.new()
+	ledger.add_theme_stylebox_override("panel", UIPalette.panel(UIPalette.LINE))
+	root.add_child(ledger)
 	_lines = VBoxContainer.new()
-	_lines.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_lines.add_theme_constant_override("separation", 4)
-	root.add_child(_lines)
+	_lines.add_theme_constant_override("separation", 6)
+	ledger.add_child(_lines)
 
 	_continue_button = Button.new()
-	_continue_button.text = "Continue"
-	_continue_button.custom_minimum_size = Vector2(0, MIN_BUTTON_HEIGHT)
+	_continue_button.theme_type_variation = &"Primary"
+	_continue_button.text = "RETURN TO MAP"
+	_continue_button.custom_minimum_size = Vector2(0, MIN_BUTTON_HEIGHT + 6)
 	_continue_button.pressed.connect(Callable(self, "_on_continue_pressed"))
 	root.add_child(_continue_button)
 
@@ -64,6 +80,8 @@ func _build_layout() -> void:
 ## needs the runner itself.
 func show_result(result, stage: StageDef) -> void:
 	_title.text = "VICTORY" if result.cleared else "DEFEAT"
+	_title.add_theme_color_override("font_color",
+		UIPalette.GREEN if result.cleared else UIPalette.CORAL)
 
 	for child in _lines.get_children():
 		_lines.remove_child(child)
@@ -82,20 +100,20 @@ func show_result(result, stage: StageDef) -> void:
 	if result.levels_gained > 0:
 		_add_line("Levels +%d across the squad" % result.levels_gained)
 
-	# A newly-learned blueprint is the headline of a boss clear — announce it above the loot.
+	# A newly-learned blueprint is the headline of a boss clear — announce it above the loot,
+	# in amber so it stands out as the prize it is.
 	if result.blueprint_was_new and result.chest_blueprint != &"":
-		_add_line("BLUEPRINT LEARNED: %s" % _species_name(result.chest_blueprint))
+		_add_line("BLUEPRINT LEARNED: %s" % _species_name(result.chest_blueprint), UIPalette.AMBER)
 
 	if result.chest_items.is_empty() and result.chest_blueprint == &"":
 		if not result.cleared:
 			# Naming what was missed is what makes the next attempt feel worth making.
 			_add_line("No chest — the stage was not cleared")
-	else:
+	elif not result.chest_items.is_empty():
+		# The blueprint has its own amber headline above; the chest list is just the loot.
 		_add_line("Chest:")
 		for item_id in result.chest_items:
 			_add_line("   %s" % _item_name(item_id))
-		if result.chest_blueprint != &"":
-			_add_line("   Blueprint: %s" % result.chest_blueprint)
 
 
 func _species_name(species_id: StringName) -> String:
@@ -112,10 +130,11 @@ func _item_name(item_id: StringName) -> String:
 	return item.display_name if item != null else String(item_id)
 
 
-func _add_line(text: String) -> void:
+func _add_line(text: String, colour: Color = UIPalette.TEXT) -> void:
 	var label := Label.new()
 	label.text = text
-	label.add_theme_font_size_override("font_size", 11)
+	label.add_theme_font_size_override("font_size", 12)
+	label.add_theme_color_override("font_color", colour)
 	_lines.add_child(label)
 
 

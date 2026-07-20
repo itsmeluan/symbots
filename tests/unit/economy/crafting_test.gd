@@ -243,3 +243,16 @@ func test_the_foundry_is_reachable_from_the_map_and_returns() -> void:
 	g._foundry._on_close_pressed()
 	assert_not_null(g._map)
 	assert_null(g._foundry)
+
+
+func test_every_boss_blueprint_is_a_real_craftable_species() -> void:
+	# The bug this pins: a chest_blueprint_id authored as "blueprint_boltshell" while the
+	# Foundry keys crafting on the species id "boltshell" means the boss teaches a recipe
+	# nothing can build. Every stage blueprint must resolve to a species, so learning it
+	# actually unlocks a craft.
+	var stages: StageCatalog = load("res://assets/data/catalogs/stage_catalog.tres")
+	for stage in stages.entries:
+		if stage.chest_blueprint_id != &"":
+			assert_not_null(_species.get_species(stage.chest_blueprint_id),
+				"%s drops blueprint %s, which is not a craftable species"
+					% [stage.id, stage.chest_blueprint_id])
