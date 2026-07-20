@@ -20,8 +20,16 @@ const MIN_TAP_HEIGHT := 44
 
 const BAR_HEIGHT := 6
 
+## Every sprite is drawn at this height so the roster reads at one scale on the field,
+## whatever the source PNG measured.
+const SPRITE_HEIGHT := 96
+
+## Where the art lives and how art_id() names it (SpeciesDef.art_id → "<id>_mk<n>").
+const ART_DIR := "res://assets/art/symbots/"
+
 var unit: BattleUnit = null
 
+var _sprite: TextureRect
 var _name_label: Label
 var _structure_bar: ProgressBar
 var _shield_bar: ProgressBar
@@ -43,6 +51,18 @@ func _init() -> void:
 	_root = VBoxContainer.new()
 	_root.add_theme_constant_override("separation", 1)
 	add_child(_root)
+
+	# The sprite sits above the name. A fixed display HEIGHT is what normalises the wildly
+	# varying source sizes (102-323px): every Symbot reads at the same scale on the field
+	# regardless of how big its PNG happened to be exported. expand_mode KEEP_SIZE +
+	# STRETCH_KEEP_ASPECT_CENTERED lets width follow the art while height stays fixed.
+	_sprite = TextureRect.new()
+	_sprite.custom_minimum_size = Vector2(0, SPRITE_HEIGHT)
+	_sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_sprite.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_sprite.mouse_filter = Control.MOUSE_FILTER_IGNORE  # taps go to the panel, not the image
+	_root.add_child(_sprite)
 
 	_name_label = Label.new()
 	_name_label.add_theme_font_size_override("font_size", 10)
@@ -76,7 +96,24 @@ func _make_bar(colour: Color) -> ProgressBar:
 ## Bind a unit and draw it. Call once per battle, then [method refresh] on every change.
 func bind(u: BattleUnit) -> void:
 	unit = u
+	_load_sprite()
 	refresh()
+
+
+## Load the unit's art once at bind time — the sprite never changes mid-battle, so pulling
+## it here keeps it out of refresh(), which runs on every state change.
+##
+## Enemies face LEFT, so an enemy sprite is flipped horizontally rather than kept as a
+## second mirrored file on disk — one source of truth per Symbot, and every future species
+## works with no manual mirror step. A missing texture leaves the slot blank rather than
+## erroring: a species whose art is not authored yet still fights, just without a portrait.
+func _load_sprite() -> void:
+	if unit == null or unit.species_id == &"":
+		_sprite.texture = null
+		return
+	var path := "%s%s_mk%d.png" % [ART_DIR, unit.species_id, clampi(unit.art_mark, 1, 3)]
+	_sprite.texture = load(path) if ResourceLoader.exists(path) else null
+	_sprite.flip_h = unit.side == BattleUnit.Side.ENEMY
 
 
 ## Redraw from the unit's current state. Safe to call every frame or once an hour — it

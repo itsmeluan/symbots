@@ -38,6 +38,8 @@ static func build(inst: SymbotInstance, species: SpeciesDef, tree: SkillTree,
 	var unit := BattleUnit.new()
 	unit.unit_id = inst.instance_id
 	unit.display_name = species.display_name
+	unit.species_id = species.id
+	unit.art_mark = clampi(inst.mark, 1, SymbotInstanceScript.MAX_MARK)
 	unit.side = side
 	unit.slot = slot
 	unit.role = species.role

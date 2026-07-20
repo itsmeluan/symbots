@@ -20,6 +20,12 @@ enum Side { PLAYER = 0, ENEMY = 1 }
 
 var unit_id: StringName = &""
 var display_name: String = ""
+
+## Which sprite to draw. Carried on the combat unit so the view can render art without
+## reaching back into the roster or the catalog — the snapshot holds everything the panel
+## needs. `art_mark` is 1-3; a Retrofit changes it.
+var species_id: StringName = &""
+var art_mark: int = 1
 ## Stored as int, not as `Side`. A `class_name` script's own enum resolves to a
 ## different type identity when read from outside the script, so a typed property
 ## rejects `BattleUnit.Side.ENEMY` from a caller. Same idiom as `role` below.
