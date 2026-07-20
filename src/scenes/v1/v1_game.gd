@@ -183,6 +183,18 @@ func _install_backdrop() -> void:
 	add_child(bg)
 
 
+## Route a bottom-dock destination to the right screen. One handler so every dock, on every
+## screen, agrees on where each tab goes.
+func _navigate_to(dest: StringName) -> void:
+	match dest:
+		&"map": show_map()
+		&"squad": show_squad()
+		&"workshop": show_workshop()
+		&"tree": show_tree()
+		&"foundry": show_foundry()
+		&"expeditions": show_expeditions()
+
+
 ## Add a screen and give it the full viewport BEFORE setup runs.
 ##
 ## Every screen goes through here. Adding a Control without sizing it leaves it at 0x0, and
@@ -198,6 +210,7 @@ func show_map() -> void:
 	_clear_screens()
 	_map = StageSelectScreenScript.new()
 	_present(_map)
+	_map.navigate.connect(Callable(self, "_navigate_to"))
 	_map.stage_chosen.connect(Callable(self, "_on_stage_chosen"))
 	_map.workshop_requested.connect(Callable(self, "show_workshop"))
 	_map.tree_requested.connect(Callable(self, "show_tree"))
@@ -212,6 +225,7 @@ func show_workshop() -> void:
 	_clear_screens()
 	_workshop = WorkshopScreenScript.new()
 	_present(_workshop)
+	_workshop.navigate.connect(Callable(self, "_navigate_to"))
 	_workshop.closed.connect(Callable(self, "_on_sub_screen_closed"))
 
 
@@ -222,6 +236,7 @@ func show_tree() -> void:
 	_clear_screens()
 	_tree_screen = SkillTreeScreenScript.new()
 	_present(_tree_screen)
+	_tree_screen.navigate.connect(Callable(self, "_navigate_to"))
 	_tree_screen.closed.connect(Callable(self, "_on_sub_screen_closed"))
 
 
@@ -231,6 +246,7 @@ func show_squad() -> void:
 	_clear_screens()
 	_squad = SquadScreenScript.new()
 	_present(_squad)
+	_squad.navigate.connect(Callable(self, "_navigate_to"))
 	_squad.closed.connect(Callable(self, "_on_sub_screen_closed"))
 
 
@@ -239,6 +255,7 @@ func show_foundry() -> void:
 	_clear_screens()
 	_foundry = FoundryScreenScript.new()
 	_present(_foundry)
+	_foundry.navigate.connect(Callable(self, "_navigate_to"))
 	_foundry.closed.connect(Callable(self, "_on_sub_screen_closed"))
 
 
@@ -248,6 +265,7 @@ func show_expeditions() -> void:
 	_clear_screens()
 	_expeditions = ExpeditionScreenScript.new()
 	_present(_expeditions)
+	_expeditions.navigate.connect(Callable(self, "_navigate_to"))
 	_expeditions.closed.connect(Callable(self, "_on_sub_screen_closed"))
 
 

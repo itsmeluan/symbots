@@ -16,10 +16,14 @@ const UpgradeEconomyScript := preload("res://src/core/economy/upgrade_economy.gd
 ## Emitted when the player wants to leave. The root decides where to (ADR-0004/0008).
 signal closed
 
+## Bottom-dock navigation; the game root routes it.
+signal navigate(dest: StringName)
+
 const MIN_ROW_HEIGHT := 48  ## past the 44pt touch minimum
 const PART_NAMES: Array[String] = ["Core", "Chassis", "Head", "Arms", "Legs"]
 
 var _ctx: ServiceContext = null
+var _screen_root: VBoxContainer
 var _selected: SymbotInstance = null
 
 var _scrap_label: Label
@@ -34,6 +38,7 @@ func setup(ctx: ServiceContext) -> void:
 	_ctx = ctx
 	_set_background("res://assets/art/workshop/bench_backdrop.png", 0.6)
 	_build_layout()
+	_attach_bottom_dock(_screen_root, &"workshop", func(d): navigate.emit(d))
 	if _ctx.wallet != null:
 		_connect_owned(_ctx.wallet.balance_changed, Callable(self, "_on_balance_changed"))
 	var squad := _ctx.roster.squad_symbots()
@@ -51,6 +56,7 @@ func _build_layout() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var root := VBoxContainer.new()
+	_screen_root = root
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.add_theme_constant_override("separation", 6)
 	add_child(root)

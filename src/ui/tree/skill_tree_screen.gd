@@ -15,9 +15,13 @@ const ItemFittingScript := preload("res://src/core/tree/item_fitting.gd")
 
 signal closed
 
+## Bottom-dock navigation; the game root routes it.
+signal navigate(dest: StringName)
+
 const MIN_BUTTON_HEIGHT := 44
 
 var _ctx: ServiceContext = null
+var _screen_root: VBoxContainer
 var _selected_symbot: SymbotInstance = null
 var _selected_node: StringName = &""
 
@@ -36,6 +40,7 @@ var _fit_row: HBoxContainer
 func setup(ctx: ServiceContext) -> void:
 	_ctx = ctx
 	_build_layout()
+	_attach_bottom_dock(_screen_root, &"tree", func(d): navigate.emit(d))
 	var squad := _ctx.roster.squad_symbots()
 	_selected_symbot = squad[0] if not squad.is_empty() else null
 	_view.bind(_ctx.tree, _entry_of(_selected_symbot))
@@ -52,6 +57,7 @@ func _build_layout() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var root := VBoxContainer.new()
+	_screen_root = root
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.add_theme_constant_override("separation", 4)
 	add_child(root)

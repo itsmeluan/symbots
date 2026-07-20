@@ -14,9 +14,13 @@ const CraftingServiceScript := preload("res://src/core/economy/crafting_service.
 
 signal closed
 
+## Bottom-dock navigation; the game root routes it.
+signal navigate(dest: StringName)
+
 const MIN_ROW_HEIGHT := 52
 
 var _ctx: ServiceContext = null
+var _screen_root: VBoxContainer
 var _craft_counter: int = 0
 
 var _alloy_label: Label
@@ -29,6 +33,7 @@ func setup(ctx: ServiceContext) -> void:
 	# even if the player crafts, releases, and crafts again.
 	_craft_counter = ctx.roster.symbots.size()
 	_build_layout()
+	_attach_bottom_dock(_screen_root, &"foundry", func(d): navigate.emit(d))
 	if _ctx.wallet != null:
 		_connect_owned(_ctx.wallet.balance_changed, Callable(self, "_on_balance_changed"))
 	refresh()
@@ -43,6 +48,7 @@ func _build_layout() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var root := VBoxContainer.new()
+	_screen_root = root
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.add_theme_constant_override("separation", 6)
 	add_child(root)

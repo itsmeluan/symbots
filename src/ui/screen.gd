@@ -40,6 +40,17 @@ func setup(ctx: ServiceContext) -> void:
 	pass
 
 
+## Append the shared bottom navigation to [param container] (the screen's root VBox),
+## lit on [param active], and route its taps through [param on_nav] — a Callable the screen
+## passes as `func(d): navigate.emit(d)`. The dock knows nothing about the screens; the
+## screen forwards, the game root routes.
+func _attach_bottom_dock(container: Node, active: StringName, on_nav: Callable) -> void:
+	var dock := BottomDock.new()
+	dock.navigate.connect(on_nav)
+	container.add_child(dock)
+	dock.set_active(active)
+
+
 ## Install a full-screen background image behind the screen's content, dimmed so the UI
 ## panels stay legible on top. A missing texture is a no-op — a screen without its art
 ## still works, just on the flat backdrop.

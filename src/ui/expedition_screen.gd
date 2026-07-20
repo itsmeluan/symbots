@@ -16,10 +16,14 @@ const ExpeditionBoardScript := preload("res://src/core/expeditions/expedition_bo
 
 signal closed
 
+## Bottom-dock navigation; the game root routes it.
+signal navigate(dest: StringName)
+
 const MIN_ROW_HEIGHT := 52
 const TICK_SECONDS := 1.0
 
 var _ctx: ServiceContext = null
+var _screen_root: VBoxContainer
 var _armed_duration: int = ExpeditionBoardScript.Duration.SHORT
 
 var _slots_box: VBoxContainer
@@ -32,6 +36,7 @@ var _tick: Timer
 func setup(ctx: ServiceContext) -> void:
 	_ctx = ctx
 	_build_layout()
+	_attach_bottom_dock(_screen_root, &"expeditions", func(d): navigate.emit(d))
 	if _ctx.expeditions != null:
 		_connect_owned(_ctx.expeditions.board_changed, Callable(self, "_on_board_changed"))
 	refresh()
@@ -46,6 +51,7 @@ func _build_layout() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var root := VBoxContainer.new()
+	_screen_root = root
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.add_theme_constant_override("separation", 6)
 	add_child(root)

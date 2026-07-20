@@ -25,6 +25,9 @@ signal workshop_requested
 ## Emitted when the player wants the skill tree.
 signal tree_requested
 
+## Bottom-dock navigation; the game root routes it.
+signal navigate(dest: StringName)
+
 ## Emitted when the player wants to change who fights.
 signal squad_requested
 
@@ -38,6 +41,7 @@ const MIN_ROW_HEIGHT := 60  ## comfortably past the 44pt touch minimum
 const CARD_SEPARATION := 6
 
 var _ctx: ServiceContext = null
+var _screen_root: VBoxContainer
 
 var _scrap_label: Label
 var _alloy_label: Label
@@ -48,6 +52,7 @@ func setup(ctx: ServiceContext) -> void:
 	_ctx = ctx
 	_set_background("res://assets/art/overworld/map_background.png", 0.6)
 	_build_layout()
+	_attach_bottom_dock(_screen_root, &"map", func(d): navigate.emit(d))
 	if _ctx.wallet != null:
 		_connect_owned(_ctx.wallet.balance_changed, Callable(self, "_on_balance_changed"))
 	refresh()
@@ -64,6 +69,7 @@ func _build_layout() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var root := VBoxContainer.new()
+	_screen_root = root
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.add_theme_constant_override("separation", 6)
 	add_child(root)
@@ -75,44 +81,6 @@ func _build_layout() -> void:
 	header.add_child(_scrap_label)
 	_alloy_label = Label.new()
 	header.add_child(_alloy_label)
-
-	var menu := HBoxContainer.new()
-	root.add_child(menu)
-	var workshop_button := Button.new()
-	workshop_button.text = "Workshop"
-	workshop_button.custom_minimum_size = Vector2(0, 44)
-	workshop_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	workshop_button.clip_text = true
-	workshop_button.pressed.connect(Callable(self, "_on_workshop_pressed"))
-	menu.add_child(workshop_button)
-	var squad_button := Button.new()
-	squad_button.text = "Squad"
-	squad_button.custom_minimum_size = Vector2(0, 44)
-	squad_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	squad_button.clip_text = true
-	squad_button.pressed.connect(Callable(self, "_on_squad_pressed"))
-	menu.add_child(squad_button)
-	var foundry_button := Button.new()
-	foundry_button.text = "Foundry"
-	foundry_button.custom_minimum_size = Vector2(0, 44)
-	foundry_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	foundry_button.clip_text = true
-	foundry_button.pressed.connect(Callable(self, "_on_foundry_pressed"))
-	menu.add_child(foundry_button)
-	var exped_button := Button.new()
-	exped_button.text = "Expeditions"
-	exped_button.custom_minimum_size = Vector2(0, 44)
-	exped_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	exped_button.clip_text = true
-	exped_button.pressed.connect(Callable(self, "_on_expeditions_pressed"))
-	menu.add_child(exped_button)
-	var tree_button := Button.new()
-	tree_button.text = "Skill Tree"
-	tree_button.custom_minimum_size = Vector2(0, 44)
-	tree_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	tree_button.clip_text = true
-	tree_button.pressed.connect(Callable(self, "_on_tree_pressed"))
-	menu.add_child(tree_button)
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL

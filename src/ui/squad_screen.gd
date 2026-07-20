@@ -11,6 +11,9 @@ const SpeciesDefScript := preload("res://src/core/species/species_def.gd")
 
 signal closed
 
+## Bottom-dock navigation; the game root routes it.
+signal navigate(dest: StringName)
+
 const MIN_ROW_HEIGHT := 52
 const ROLE_NAMES: Dictionary = {
 	SpeciesDefScript.Role.DPS: "DPS",
@@ -20,6 +23,7 @@ const ROLE_NAMES: Dictionary = {
 }
 
 var _ctx: ServiceContext = null
+var _screen_root: VBoxContainer
 
 ## Which slot the next bench tap fills. -1 means none is armed.
 var _armed_slot: int = -1
@@ -32,6 +36,7 @@ var _warning: Label
 func setup(ctx: ServiceContext) -> void:
 	_ctx = ctx
 	_build_layout()
+	_attach_bottom_dock(_screen_root, &"squad", func(d): navigate.emit(d))
 	refresh()
 
 
@@ -44,6 +49,7 @@ func _build_layout() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var root := VBoxContainer.new()
+	_screen_root = root
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.add_theme_constant_override("separation", 6)
 	add_child(root)
