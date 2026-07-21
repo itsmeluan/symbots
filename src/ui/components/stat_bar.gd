@@ -7,11 +7,16 @@
 class_name StatBar
 extends Control
 
+## The player tapped this stat's info button; carries the stat id and the button's screen
+## position so the screen can place the explanation tooltip.
+signal info_pressed(stat_id: StringName, at_global: Vector2)
+
 const GROW_TIME := 0.30
 const SETTLE_TIME := 0.28
-const BAR_H := 6.0
+const BAR_H := 5.0
 const BLUE := Color("4d9bff")
 
+var _stat_id: StringName = &""
 var _cap: float = 1.0
 var _amber: float = 0.0      ## settled fill fraction
 var _blue: float = 0.0       ## leading edge of the freshly-grown slice
@@ -20,6 +25,7 @@ var _tw: Tween
 
 var _icon: TextureRect
 var _name: Label
+var _info: Button
 var _value: Label
 
 
@@ -31,6 +37,7 @@ func _init() -> void:
 	row.add_theme_constant_override("separation", 5)
 	row.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
 	row.offset_bottom = 17
+	row.offset_right = -12  # keep the value clear of the screen edge / scrollbar
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(row)
 
@@ -43,26 +50,52 @@ func _init() -> void:
 	row.add_child(_icon)
 
 	_name = Label.new()
-	_name.theme_type_variation = &"Light"
-	_name.add_theme_font_size_override("font_size", 10)
-	_name.add_theme_color_override("font_color", UIPalette.MUTED)
-	_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_name.add_theme_font_size_override("font_size", 11)
+	_name.add_theme_color_override("font_color", Color("d4dde3"))  # brighter than muted
 	_name.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(_name)
 
+	# A discreet round "i" — taps ask the screen to explain what the stat influences.
+	_info = Button.new()
+	_info.text = "i"
+	_info.custom_minimum_size = Vector2(15, 15)
+	_info.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_info.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_info.add_theme_font_size_override("font_size", 10)
+	_style_info(_info)
+	_info.pressed.connect(func(): info_pressed.emit(_stat_id, _info.global_position + _info.size * 0.5))
+	row.add_child(_info)
+
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(spacer)
+
 	_value = Label.new()
-	_value.theme_type_variation = &"Light"
-	_value.add_theme_font_size_override("font_size", 11)
+	_value.add_theme_font_size_override("font_size", 12)
 	_value.add_theme_color_override("font_color", UIPalette.TEXT)
 	_value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_value.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(_value)
 
 
-## Bind identity (icon + name) once.
-func bind(icon: Texture2D, label: String) -> void:
+func _style_info(b: Button) -> void:
+	var box := StyleBoxFlat.new()
+	box.bg_color = Color(0, 0, 0, 0)
+	box.set_corner_radius_all(8)
+	box.border_color = UIPalette.MUTED
+	box.set_border_width_all(1)
+	b.add_theme_stylebox_override("normal", box)
+	b.add_theme_stylebox_override("hover", box)
+	b.add_theme_stylebox_override("pressed", box)
+	b.add_theme_stylebox_override("focus", UIPalette.empty())
+	b.add_theme_color_override("font_color", UIPalette.MUTED)
+
+
+## Bind identity (icon + name + stat id) once.
+func bind(icon: Texture2D, label: String, stat_id: StringName) -> void:
 	_icon.texture = icon
 	_name.text = label
+	_stat_id = stat_id
 
 
 ## Set the value and its cap. [param animate] plays the blue→amber grow when the value rose.

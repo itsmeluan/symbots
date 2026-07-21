@@ -57,9 +57,25 @@ var _dock: BottomDock
 var _mid: Control
 var _drawer: Control
 var _drawer_handle: Button
+var _catcher: Control
 var _parts_scroll: Control
 var _stats_scroll: Control
 var _stats_view: VBoxContainer
+
+## What each stat influences — shown in the discreet tooltip behind each stat's "i" button.
+const STAT_INFO := {
+	&"structure": "Vida: o dano que aguenta antes de cair.",
+	&"armor": "Reduz o dano físico recebido.",
+	&"resistance": "Reduz o dano de energia recebido.",
+	&"physical_power": "Aumenta o dano dos ataques físicos.",
+	&"energy_power": "Aumenta o dano dos ataques de energia.",
+	&"mobility": "Ordem de ação: quem age primeiro.",
+	&"targeting": "Chance de acerto crítico.",
+	&"processing": "Potência de efeitos e habilidades.",
+	&"cooling": "Controle de calor: evita superaquecer.",
+	&"energy_capacity": "Carga máxima para o ultimate.",
+	&"recharge": "Velocidade de recarga de energia.",
+}
 var _stat_bars: Dictionary = {}
 var _tab_parts: Button
 var _tab_stats: Button
@@ -68,8 +84,7 @@ var _drawer_open: bool = true
 var _drawer_t: float = 1.0     ## 0 = closed (art only), 1 = open
 var _drawer_tween: Tween
 
-const DRAWER_W := 168.0
-const HANDLE_W := 24.0
+const DRAWER_W := 186.0
 
 # Overlay: a tap tooltip (part names) and a modal card (the gen-up requirement).
 var _overlay_layer: Control
@@ -227,21 +242,19 @@ func _build_subheader() -> Control:
 	return row
 
 
-## The hero fills the centre and stands low on the floor; a sliding right drawer holds the
-## PARTS and STATS tabs and closes to a handle so only the art shows.
+## The hero fills the centre at full size; the drawer overlays it from the right (bleeding to
+## the screen edge). A small amber handle at the bottom-right toggles it; a tap on the art
+## closes it.
 func _build_mid() -> Control:
 	_mid = Control.new()
 	_mid.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_mid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_mid.clip_contents = true  # clip the drawer as it slides off the right edge
 
 	_hero = TextureRect.new()
 	_hero.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_hero.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_hero.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_hero.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	# Full width so it centres on screen; bottom-pinned so it stands low on the bench floor.
-	# offset_right is animated by the drawer so the art re-centres in the free space.
 	_hero.anchor_left = 0.0
 	_hero.anchor_right = 1.0
 	_hero.anchor_top = 1.0
@@ -250,60 +263,59 @@ func _build_mid() -> Control:
 	_hero.offset_bottom = 0
 	_mid.add_child(_hero)
 
+	# A tap anywhere on the art (outside the drawer) closes the drawer. Active only while open.
+	_catcher = Control.new()
+	_catcher.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_catcher.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_catcher.gui_input.connect(func(e):
+		if e is InputEventMouseButton and e.pressed and _drawer_open:
+			_toggle_drawer())
+	_mid.add_child(_catcher)
+
 	_mid.add_child(_build_drawer())
+	_mid.add_child(_build_handle())
 	_mid.resized.connect(_apply_drawer)
 	call_deferred("_apply_drawer")
 	return _mid
 
 
-## The sliding drawer: a handle on the left edge, then a panel with the PARTS/STATS tabs.
+## A 3D-look tab strip on top (the inactive tab darker and recessed), then a translucent panel
+## with the PARTS/STATS content. The whole thing slides and bleeds to the screen edge.
 func _build_drawer() -> Control:
 	_drawer = Control.new()
-	_drawer.anchor_top = 0.0
-	_drawer.anchor_bottom = 1.0
 	_drawer.anchor_left = 0.0
 	_drawer.anchor_right = 0.0
-
-	_drawer_handle = Button.new()
-	_drawer_handle.text = "▶"
-	_drawer_handle.anchor_top = 0.0
-	_drawer_handle.anchor_bottom = 1.0
-	_drawer_handle.offset_left = 0
-	_drawer_handle.offset_right = HANDLE_W
-	_drawer_handle.add_theme_font_size_override("font_size", 14)
-	_style_handle(_drawer_handle)
-	_drawer_handle.pressed.connect(_toggle_drawer)
-	_drawer.add_child(_drawer_handle)
-
-	var panel := PanelContainer.new()
-	panel.anchor_top = 0.0
-	panel.anchor_bottom = 1.0
-	panel.offset_left = HANDLE_W
-	panel.offset_right = HANDLE_W + DRAWER_W
-	var pbox := StyleBoxFlat.new()
-	pbox.bg_color = Color(UIPalette.PANEL, 0.96)
-	pbox.border_width_left = 2
-	pbox.border_color = UIPalette.CYAN
-	pbox.set_content_margin_all(8)
-	panel.add_theme_stylebox_override("panel", pbox)
-	_drawer.add_child(panel)
+	_drawer.anchor_top = 0.0
+	_drawer.anchor_bottom = 1.0
 
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 6)
-	panel.add_child(v)
+	v.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	v.add_theme_constant_override("separation", 0)
+	_drawer.add_child(v)
 
 	var tabs := HBoxContainer.new()
-	tabs.add_theme_constant_override("separation", 4)
+	tabs.add_theme_constant_override("separation", 3)
 	v.add_child(tabs)
 	_tab_parts = _make_tab("PARTS", &"parts")
 	_tab_stats = _make_tab("STATS", &"stats")
 	tabs.add_child(_tab_parts)
 	tabs.add_child(_tab_stats)
 
+	var panel := PanelContainer.new()
+	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var pbox := StyleBoxFlat.new()
+	pbox.bg_color = Color(UIPalette.PANEL, 0.8)  # translucent, no cyan left margin
+	pbox.set_content_margin(SIDE_LEFT, 8)
+	pbox.set_content_margin(SIDE_TOP, 8)
+	pbox.set_content_margin(SIDE_RIGHT, 2)
+	pbox.set_content_margin(SIDE_BOTTOM, 6)
+	panel.add_theme_stylebox_override("panel", pbox)
+	v.add_child(panel)
+
 	var content := Control.new()
 	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	v.add_child(content)
+	panel.add_child(content)
 	_parts_scroll = _build_parts_tab()
 	_stats_scroll = _build_stats_tab()
 	content.add_child(_parts_scroll)
@@ -312,26 +324,37 @@ func _build_drawer() -> Control:
 	return _drawer
 
 
+## The parts fill the panel and spread — no scroll (§5.2 decision stays on one screen).
 func _build_parts_tab() -> Control:
-	var scroll := ScrollContainer.new()
-	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_part_list = VBoxContainer.new()
-	_part_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_part_list.add_theme_constant_override("separation", 6)
-	scroll.add_child(_part_list)
-	return scroll
+	_part_list.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_part_list.add_theme_constant_override("separation", 2)
+	return _part_list
 
 
 func _build_stats_tab() -> Control:
 	var scroll := ScrollContainer.new()
 	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_thin_scrollbar(scroll)
 	_stats_view = VBoxContainer.new()
 	_stats_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_stats_view.add_theme_constant_override("separation", 5)
+	_stats_view.add_theme_constant_override("separation", 7)
 	scroll.add_child(_stats_view)
 	return scroll
+
+
+## Halve the scroll bar and let it hug the (screen) edge, so it no longer covers the values.
+func _thin_scrollbar(scroll: ScrollContainer) -> void:
+	var vsb := scroll.get_v_scroll_bar()
+	vsb.custom_minimum_size = Vector2(4, 0)
+	var grab := StyleBoxFlat.new()
+	grab.bg_color = UIPalette.LINE
+	grab.set_corner_radius_all(2)
+	vsb.add_theme_stylebox_override("grabber", grab)
+	vsb.add_theme_stylebox_override("grabber_highlight", grab)
+	vsb.add_theme_stylebox_override("grabber_pressed", grab)
+	vsb.add_theme_stylebox_override("scroll", UIPalette.empty())
 
 
 func _make_tab(label: String, id: StringName) -> Button:
@@ -345,33 +368,67 @@ func _make_tab(label: String, id: StringName) -> Button:
 	return b
 
 
-func _style_handle(button: Button) -> void:
-	var box := StyleBoxFlat.new()
-	box.bg_color = UIPalette.CYAN_DARK
-	box.set_corner_radius_all(3)
-	box.border_color = UIPalette.CYAN
-	box.set_border_width_all(1)
-	button.add_theme_stylebox_override("normal", box)
-	button.add_theme_stylebox_override("hover", box)
-	button.add_theme_stylebox_override("pressed", box)
-	button.add_theme_stylebox_override("focus", UIPalette.empty())
-	button.add_theme_color_override("font_color", UIPalette.CYAN)
+## The bottom-right toggle. Amber with a black chevron when the drawer is closed (inviting);
+## dimmed to the quiet look of an un-actionable Upgrade pill when it is open.
+func _build_handle() -> Button:
+	_drawer_handle = Button.new()
+	_drawer_handle.anchor_left = 1.0
+	_drawer_handle.anchor_right = 1.0
+	_drawer_handle.anchor_top = 1.0
+	_drawer_handle.anchor_bottom = 1.0
+	_drawer_handle.offset_left = -46
+	_drawer_handle.offset_top = -32
+	_drawer_handle.offset_right = -8
+	_drawer_handle.offset_bottom = -6
+	_drawer_handle.add_theme_font_size_override("font_size", 15)
+	_drawer_handle.pressed.connect(_toggle_drawer)
+	_style_handle()
+	return _drawer_handle
 
 
+func _style_handle() -> void:
+	var box := ChamferStyleBox.new()
+	box.chamfer = 5.0
+	box.set_content_margin(SIDE_LEFT, 4)
+	box.set_content_margin(SIDE_RIGHT, 4)
+	if _drawer_open:
+		box.bg_color = UIPalette.PANEL_2
+		box.border_color = UIPalette.LINE_SOFT
+		box.border_width = 1.0
+		_drawer_handle.text = "▶"
+		_drawer_handle.add_theme_color_override("font_color", UIPalette.DISABLED)
+	else:
+		box.bg_color = UIPalette.AMBER
+		_drawer_handle.text = "◀"
+		_drawer_handle.add_theme_color_override("font_color", UIPalette.INK)
+	_drawer_handle.add_theme_stylebox_override("normal", box)
+	_drawer_handle.add_theme_stylebox_override("hover", box)
+	_drawer_handle.add_theme_stylebox_override("pressed", box)
+	_drawer_handle.add_theme_stylebox_override("focus", UIPalette.empty())
+
+
+## 3D tabs: the active tab takes the panel's colour and stands proud; the hidden one is darker
+## and recessed. Sits above the panel, not inside it.
 func _style_drawer_tab(button: Button, active: bool) -> void:
 	var box := StyleBoxFlat.new()
-	box.bg_color = UIPalette.PANEL_2 if active else Color(0, 0, 0, 0)
-	box.set_corner_radius_all(3)
+	box.corner_radius_top_left = 8
+	box.corner_radius_top_right = 8
+	box.set_content_margin(SIDE_LEFT, 6)
+	box.set_content_margin(SIDE_RIGHT, 6)
 	if active:
-		box.border_width_bottom = 2
-		box.border_color = UIPalette.CYAN
-	box.set_content_margin_all(3)
+		box.bg_color = Color(UIPalette.PANEL, 0.8)     # matches the panel — reads as one surface
+		box.set_content_margin(SIDE_TOP, 9)
+		box.set_content_margin(SIDE_BOTTOM, 8)
+	else:
+		box.bg_color = Color(UIPalette.INK, 0.72)       # darker, sunk
+		box.set_content_margin(SIDE_TOP, 6)
+		box.set_content_margin(SIDE_BOTTOM, 5)
 	button.button_pressed = active
 	button.add_theme_stylebox_override("normal", box)
 	button.add_theme_stylebox_override("hover", box)
 	button.add_theme_stylebox_override("pressed", box)
 	button.add_theme_stylebox_override("focus", UIPalette.empty())
-	button.add_theme_color_override("font_color", UIPalette.CYAN if active else UIPalette.MUTED)
+	button.add_theme_color_override("font_color", UIPalette.CYAN if active else UIPalette.DISABLED)
 
 
 # --- drawer open/close + tab switching ---
@@ -386,7 +443,7 @@ func _set_active_tab(id: StringName) -> void:
 
 func _toggle_drawer() -> void:
 	_drawer_open = not _drawer_open
-	_drawer_handle.text = "▶" if _drawer_open else "◀"
+	_style_handle()
 	if _drawer_tween != null and _drawer_tween.is_valid():
 		_drawer_tween.kill()
 	var target := 1.0 if _drawer_open else 0.0
@@ -407,11 +464,14 @@ func _apply_drawer() -> void:
 	if _mid == null or _drawer == null:
 		return
 	var mw := _mid.size.x
-	var total := HANDLE_W + DRAWER_W
-	var x := lerpf(mw - HANDLE_W, mw - total, _drawer_t)
-	_drawer.offset_left = x
-	_drawer.offset_right = x + total
-	_hero.offset_right = -total * _drawer_t
+	var edge := mw + 12.0  # the screen's right edge in mid coordinates (content margin is 12)
+	# Open: the drawer's right sits on the screen edge. Closed: it slides fully off past it.
+	var right := lerpf(edge + DRAWER_W, edge, _drawer_t)
+	_drawer.offset_left = right - DRAWER_W
+	_drawer.offset_right = right
+	_drawer.offset_top = 0
+	_drawer.offset_bottom = 0
+	_catcher.mouse_filter = Control.MOUSE_FILTER_STOP if _drawer_t > 0.5 else Control.MOUSE_FILTER_IGNORE
 
 
 func _build_overlay_layer() -> void:
@@ -436,7 +496,9 @@ func _build_overlay_layer() -> void:
 	_tooltip.visible = false
 	_overlay_layer.add_child(_tooltip)
 	_tooltip_label = Label.new()
-	_tooltip_label.add_theme_font_size_override("font_size", 13)
+	_tooltip_label.add_theme_font_size_override("font_size", 12)
+	_tooltip_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_tooltip_label.custom_minimum_size = Vector2(168, 0)
 	_tooltip.add_child(_tooltip_label)
 
 	_overlay_layer.add_child(_build_modal_card())
@@ -574,7 +636,8 @@ func _rebuild_stats() -> void:
 		var bar := StatBar.new()
 		var icon_path := StatSummary.icon_path(stat)
 		bar.bind(load(icon_path) if ResourceLoader.exists(icon_path) else null,
-			StatSummary.LABELS.get(stat, String(stat)))
+			StatSummary.LABELS.get(stat, String(stat)), stat)
+		bar.info_pressed.connect(_on_stat_info)
 		_stats_view.add_child(bar)
 		_stat_bars[stat] = bar
 	_refresh_stats_values(false)
@@ -592,40 +655,52 @@ func _refresh_stats_values(animate: bool) -> void:
 		_stat_bars[stat].set_value(int(cur.get(stat, 0)), int(cap.get(stat, 1)), animate)
 
 
-const BADGE_SIZE := 36.0     ## 25% smaller than the first pass (48)
-const UPGRADE_W := 50.0      ## the Lv label and the button share this width
+const PART_ICON_SIZE := 26.0
+const UPGRADE_W := 50.0
 const SCRAP_ICON := "res://assets/art/icons/scrap.svg"
 
-## One part: a round-badged icon (tap = its name), its level, and a chamfered Upgrade button
-## carrying the Scrap glyph and price. The badge glyph is the only thing that names the part,
-## and only on tap. The Lv label and button share the button's width and sit so the button's
-## bottom lines up with the bottom of the badge.
+## One part: a thin blue icon (no badge), the part NAME in blue over its level, the stats it
+## grows, and the chamfered Upgrade pill. The five rows spread to fill the panel — no scroll.
 func _build_part_row(slot: int) -> Control:
-	var row := HBoxContainer.new()
+	var row := VBoxContainer.new()
 	row.custom_minimum_size = Vector2(0, MIN_ROW_HEIGHT)
-	row.add_theme_constant_override("separation", 6)
+	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	row.add_theme_constant_override("separation", 1)
 
-	row.add_child(_build_part_badge(slot))
-
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 1)
-	col.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(col)
-
-	# Top line: level on the left, the Upgrade pill on the right.
 	var top := HBoxContainer.new()
-	top.add_theme_constant_override("separation", 4)
-	col.add_child(top)
+	top.add_theme_constant_override("separation", 8)
+	top.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	row.add_child(top)
+
+	var icon := TextureRect.new()
+	icon.texture = load(PART_ICON_PATHS[slot]) if ResourceLoader.exists(PART_ICON_PATHS[slot]) else null
+	icon.custom_minimum_size = Vector2(PART_ICON_SIZE, PART_ICON_SIZE)
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.modulate = UIPalette.CYAN
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	top.add_child(icon)
+
+	var namecol := VBoxContainer.new()
+	namecol.add_theme_constant_override("separation", 0)
+	namecol.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	namecol.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	top.add_child(namecol)
+
+	# Part name — blue, a touch heavier than the level (Regular over Light).
+	var name_label := Label.new()
+	name_label.add_theme_font_size_override("font_size", 12)
+	name_label.add_theme_color_override("font_color", UIPalette.CYAN)
+	name_label.text = PART_NAMES[slot].to_upper()
+	namecol.add_child(name_label)
 
 	var level := Label.new()
 	level.theme_type_variation = &"Light"
 	level.add_theme_font_size_override("font_size", 10)
 	level.add_theme_color_override("font_color", UIPalette.TEXT)
 	level.text = "Lv. %d/%d" % [_selected.get_part_level(slot), _selected.part_level_cap()]
-	level.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	level.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	top.add_child(level)
+	namecol.add_child(level)
 
 	var refusal := UpgradeEconomyScript.can_upgrade(_selected, slot, _ctx.wallet, _ctx.balance)
 	var button := Button.new()
@@ -645,14 +720,14 @@ func _build_part_row(slot: int) -> Control:
 		button.pressed.connect(Callable(self, "_on_upgrade_pressed").bind(slot))
 	top.add_child(button)
 
-	# What the part boosts, per level — the stat values the drawer was missing.
+	# What the part boosts, per level.
 	var stats_line := Label.new()
 	stats_line.theme_type_variation = &"Light"
 	stats_line.add_theme_font_size_override("font_size", 9)
 	stats_line.add_theme_color_override("font_color", UIPalette.MUTED)
 	stats_line.clip_text = true
 	stats_line.text = _part_stats_text(slot)
-	col.add_child(stats_line)
+	row.add_child(stats_line)
 	return row
 
 
@@ -691,35 +766,6 @@ func _style_upgrade_button(button: Button, actionable: bool) -> void:
 	button.add_theme_stylebox_override("pressed", box)
 	button.add_theme_stylebox_override("disabled", box)
 	button.add_theme_stylebox_override("focus", UIPalette.empty())
-
-
-func _build_part_badge(slot: int) -> Control:
-	var badge := Panel.new()
-	badge.custom_minimum_size = Vector2(BADGE_SIZE, BADGE_SIZE)
-	badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	badge.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(UIPalette.INK, 0.65)
-	sb.set_corner_radius_all(int(BADGE_SIZE * 0.5))
-	sb.border_color = UIPalette.CYAN
-	sb.set_border_width_all(2)
-	badge.add_theme_stylebox_override("panel", sb)
-	badge.mouse_filter = Control.MOUSE_FILTER_STOP
-	badge.gui_input.connect(func(e): _on_part_icon_input(e, slot, badge))
-
-	var tex := TextureRect.new()
-	tex.texture = load(PART_ICON_PATHS[slot]) if ResourceLoader.exists(PART_ICON_PATHS[slot]) else null
-	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	tex.modulate = UIPalette.TEXT
-	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	tex.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	tex.offset_left = 6
-	tex.offset_top = 6
-	tex.offset_right = -6
-	tex.offset_bottom = -6
-	badge.add_child(tex)
-	return badge
 
 
 ## The button carries the Scrap glyph as its icon; its text is just the price (or the state).
@@ -798,9 +844,9 @@ func _index_of(symbot: SymbotInstance) -> int:
 # Input
 # ---------------------------------------------------------------------------
 
-func _on_part_icon_input(event: InputEvent, slot: int, badge: Control) -> void:
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		_show_tooltip(PART_NAMES[slot], badge.global_position + Vector2(badge.size.x + 6, 4))
+## The player tapped a stat's "i" — show a discreet tooltip explaining what it influences.
+func _on_stat_info(stat_id: StringName, at_global: Vector2) -> void:
+	_show_tooltip(String(STAT_INFO.get(stat_id, "")), at_global + Vector2(10, -8))
 
 
 ## Kept for external/programmatic selection (tests). Sets focus without animating the
