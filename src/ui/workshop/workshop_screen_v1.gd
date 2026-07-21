@@ -40,17 +40,13 @@ const PART_ICON_PATHS: Array[String] = [
 const ART_DIR := "res://assets/art/symbots/"
 
 var _ctx: ServiceContext = null
-var _screen_root: VBoxContainer
 var _selected: SymbotInstance = null
 
-var _scrap_label: Label
-var _alloy_label: Label
 var _nameplate: SymbotNameplate
 var _gen_button: Button
 var _hero: TextureRect
 var _part_list: VBoxContainer
 var _carousel: SymbotCarousel
-var _dock: BottomDock
 
 # The right drawer: a sliding panel with PARTS and STATS tabs, and a handle that opens/closes
 # it so the player can hide it and see just the art.
@@ -137,8 +133,6 @@ func setup(ctx: ServiceContext) -> void:
 	_ctx = ctx
 	_set_background("res://assets/art/workshop/bench_backdrop.png", 0.5)
 	_build_layout()
-	if _ctx.wallet != null:
-		_connect_owned(_ctx.wallet.balance_changed, Callable(self, "_on_balance_changed"))
 	_populate_carousel()
 	var squad := _ctx.roster.squad_symbots()
 	_selected = squad[0] if not squad.is_empty() else (
@@ -175,18 +169,14 @@ func _on_exit_tree() -> void:
 # ---------------------------------------------------------------------------
 
 func _build_layout() -> void:
-	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var insets := _safe_insets()
+	var content := build_chrome(_ctx, "WORKSHOP", &"workshop", func(d): navigate.emit(d))
+	content.add_child(_build_subheader())
+	content.add_child(_build_mid())
 
-	_screen_root = VBoxContainer.new()
-	_screen_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_screen_root.add_theme_constant_override("separation", 0)
-	add_child(_screen_root)
-
-	_screen_root.add_child(_build_header(insets.x))
-	_screen_root.add_child(_build_content())
-	_dock = _attach_bottom_dock(_screen_root, &"workshop", func(d): navigate.emit(d))
-	_dock.set_safe_bottom(insets.y)
+	_carousel = SymbotCarousel.new()
+	_carousel.custom_minimum_size = Vector2(0, 102)
+	_carousel.focused_changed.connect(_on_focus_changed)
+	content.add_child(_carousel)
 
 	_hint = SwipeHint.new()
 	add_child(_hint)
@@ -197,89 +187,6 @@ func _build_layout() -> void:
 	add_child(_repeat_timer)
 
 	_build_overlay_layer()
-
-
-## No background bar — the header sits straight on the backdrop. Only the phone's top safe
-## area is folded into the top padding. Screen name left; Scrap over Alloy right.
-func _build_header(safe_top: float) -> Control:
-	var bar := MarginContainer.new()
-	bar.add_theme_constant_override("margin_top", int(safe_top + 6))
-	bar.add_theme_constant_override("margin_bottom", 2)
-	bar.add_theme_constant_override("margin_left", 14)
-	bar.add_theme_constant_override("margin_right", 14)
-
-	var hb := HBoxContainer.new()
-	bar.add_child(hb)
-	var title := Label.new()
-	title.theme_type_variation = &"Heading"
-	title.text = "WORKSHOP"
-	title.add_theme_font_size_override("font_size", 18)
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	# Top-aligned so the title sits on the first currency line (Scrap), not centred against
-	# the two-row block.
-	title.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	hb.add_child(title)
-
-	var money := VBoxContainer.new()
-	money.add_theme_constant_override("separation", 1)
-	money.alignment = BoxContainer.ALIGNMENT_END
-	money.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	hb.add_child(money)
-	# Scrap uses the same scrap.svg the Upgrade button carries, so the two read as one icon.
-	# Alloy keeps its drawn hexagon glyph.
-	_scrap_label = _make_currency_row(money, _svg_icon(SCRAP_ICON, UIPalette.SCRAP, 13.0), UIPalette.SCRAP)
-	_alloy_label = _make_currency_row(money, IconGlyph.new(&"alloy", UIPalette.ALLOY, 13.0), UIPalette.ALLOY)
-	return bar
-
-
-func _make_currency_row(parent: VBoxContainer, icon: Control, colour: Color) -> Label:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 4)
-	row.alignment = BoxContainer.ALIGNMENT_END
-	parent.add_child(row)
-	row.add_child(icon)
-	var label := Label.new()
-	label.theme_type_variation = &"Light"
-	label.add_theme_font_size_override("font_size", 13)
-	label.add_theme_color_override("font_color", colour)
-	row.add_child(label)
-	return label
-
-
-## An SVG icon as a colour-tinted TextureRect, sized square.
-func _svg_icon(path: String, colour: Color, px: float) -> TextureRect:
-	var tex := TextureRect.new()
-	tex.texture = load(path) if ResourceLoader.exists(path) else null
-	tex.custom_minimum_size = Vector2(px, px)
-	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	tex.modulate = colour
-	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return tex
-
-
-## The padded content between header and dock: a gap, the nameplate + GEN ▲ line, the
-## parts/hero area, and the carousel.
-func _build_content() -> Control:
-	var mc := MarginContainer.new()
-	mc.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	mc.add_theme_constant_override("margin_left", 12)
-	mc.add_theme_constant_override("margin_right", 12)
-	mc.add_theme_constant_override("margin_top", 4)
-	mc.add_theme_constant_override("margin_bottom", 2)
-
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 6)
-	mc.add_child(col)
-
-	col.add_child(_build_subheader())
-	col.add_child(_build_mid())
-
-	_carousel = SymbotCarousel.new()
-	_carousel.custom_minimum_size = Vector2(0, 102)
-	_carousel.focused_changed.connect(_on_focus_changed)
-	col.add_child(_carousel)
-	return mc
 
 
 func _build_subheader() -> Control:
@@ -649,22 +556,10 @@ func _build_modal_card() -> CenterContainer:
 func refresh() -> void:
 	if _ctx == null:
 		return
-	_refresh_wallet()
+	refresh_chrome_wallet()
 	_refresh_hero_and_name()
 	_rebuild_parts()
 	_rebuild_stats()
-	_refresh_gen()
-
-
-func _refresh_wallet() -> void:
-	if _ctx.wallet == null:
-		return
-	_scrap_label.text = _fmt(_ctx.wallet.scrap)
-	_alloy_label.text = _fmt(_ctx.wallet.alloy)
-
-
-func _on_balance_changed(_currency: StringName, _amount: int) -> void:
-	_refresh_wallet()
 	_refresh_gen()
 
 
@@ -711,7 +606,7 @@ func _refresh_part_rows() -> void:
 		var actionable := refusal == UpgradeEconomyScript.Refusal.OK
 		button.disabled = not actionable
 		button.text = _upgrade_label(slot, refusal)
-		button.icon = load(SCRAP_ICON) if actionable and ResourceLoader.exists(SCRAP_ICON) else null
+		button.icon = load(CHROME_SCRAP_ICON) if actionable and ResourceLoader.exists(CHROME_SCRAP_ICON) else null
 		_style_upgrade_button(button, actionable)
 
 
@@ -756,7 +651,6 @@ func _refresh_stats_values(animate: bool) -> void:
 
 const PART_ICON_SIZE := 20.0
 const UPGRADE_W := 50.0
-const SCRAP_ICON := "res://assets/art/icons/scrap.svg"
 
 ## One part: a thin blue icon (no badge), the part NAME in blue over its level, the stats it
 ## grows, and the chamfered Upgrade pill. The five rows spread to fill the panel — no scroll.
@@ -1038,7 +932,7 @@ func _on_upgrade_pressed(slot: int) -> void:
 func _after_upgrade() -> void:
 	_refresh_part_rows()
 	_refresh_stats_values(true)
-	_refresh_wallet()
+	refresh_chrome_wallet()
 	_refresh_gen()
 
 
@@ -1170,19 +1064,6 @@ func _roman(n: int) -> String:
 		2: return "II"
 		3: return "III"
 	return str(n)
-
-
-## Group thousands with a dot, matching the prototype's currency readout (8.085).
-func _fmt(n: int) -> String:
-	var s := str(absi(n))
-	var out := ""
-	var count := 0
-	for i in range(s.length() - 1, -1, -1):
-		out = s[i] + out
-		count += 1
-		if count % 3 == 0 and i > 0:
-			out = "." + out
-	return ("-" if n < 0 else "") + out
 
 
 func _clear(container: Node) -> void:

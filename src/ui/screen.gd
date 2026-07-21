@@ -52,6 +52,142 @@ func _attach_bottom_dock(container: Node, active: StringName, on_nav: Callable) 
 	return dock
 
 
+## Shared chrome, built by [method build_chrome] — every meta screen wears the same one.
+const CHROME_SCRAP_ICON := "res://assets/art/icons/scrap.svg"
+var _chrome_scrap: Label
+var _chrome_alloy: Label
+var _chrome_dock: BottomDock
+var _chrome_ctx: ServiceContext = null
+
+
+## Build the shared screen frame and return the CONTENT box for the screen to fill.
+##
+## Every meta screen wears the same chrome: the screen's name at top left, Scrap over Alloy at
+## top right, the phone's safe areas folded into the top padding and the dock's bottom, and
+## one padding value down both sides. Screens used to each grow their own header, which is how
+## they drifted apart; building it here makes them consistent by construction.
+##
+## [param title] is the screen's name, [param active] the dock tab to light.
+func build_chrome(ctx: ServiceContext, title: String, active: StringName,
+		on_nav: Callable) -> VBoxContainer:
+	_chrome_ctx = ctx
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var insets := _safe_insets()
+
+	var root := VBoxContainer.new()
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	root.add_theme_constant_override("separation", 0)
+	add_child(root)
+
+	root.add_child(_build_chrome_header(title, insets.x))
+
+	var pad := MarginContainer.new()
+	pad.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	pad.add_theme_constant_override("margin_left", CONTENT_PAD)
+	pad.add_theme_constant_override("margin_right", CONTENT_PAD)
+	pad.add_theme_constant_override("margin_top", 4)
+	pad.add_theme_constant_override("margin_bottom", 2)
+	root.add_child(pad)
+
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 6)
+	pad.add_child(content)
+
+	_chrome_dock = _attach_bottom_dock(root, active, on_nav)
+	_chrome_dock.set_safe_bottom(insets.y)
+
+	if ctx != null and ctx.wallet != null:
+		_connect_owned(ctx.wallet.balance_changed, Callable(self, "_on_chrome_balance_changed"))
+	refresh_chrome_wallet()
+	return content
+
+
+## Horizontal padding between the screen edge and its content.
+const CONTENT_PAD := 12
+
+
+func _build_chrome_header(title: String, safe_top: float) -> Control:
+	var bar := MarginContainer.new()
+	bar.add_theme_constant_override("margin_top", int(safe_top + 6))
+	bar.add_theme_constant_override("margin_bottom", 2)
+	bar.add_theme_constant_override("margin_left", 14)
+	bar.add_theme_constant_override("margin_right", 14)
+
+	var row := HBoxContainer.new()
+	bar.add_child(row)
+
+	var name_label := Label.new()
+	name_label.theme_type_variation = &"Heading"
+	name_label.text = title
+	name_label.add_theme_font_size_override("font_size", 18)
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# Top-aligned so the title sits on the first currency line, not centred against both.
+	name_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	row.add_child(name_label)
+
+	var money := VBoxContainer.new()
+	money.add_theme_constant_override("separation", 1)
+	money.alignment = BoxContainer.ALIGNMENT_END
+	money.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	row.add_child(money)
+	_chrome_scrap = _chrome_currency_row(
+		money, _chrome_svg_icon(CHROME_SCRAP_ICON, UIPalette.SCRAP, 13.0), UIPalette.SCRAP)
+	_chrome_alloy = _chrome_currency_row(
+		money, IconGlyph.new(&"alloy", UIPalette.ALLOY, 13.0), UIPalette.ALLOY)
+	return bar
+
+
+func _chrome_currency_row(parent: VBoxContainer, icon: Control, colour: Color) -> Label:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 4)
+	row.alignment = BoxContainer.ALIGNMENT_END
+	parent.add_child(row)
+	row.add_child(icon)
+	var label := Label.new()
+	label.theme_type_variation = &"Light"
+	label.add_theme_font_size_override("font_size", 13)
+	label.add_theme_color_override("font_color", colour)
+	row.add_child(label)
+	return label
+
+
+## An SVG icon as a colour-tinted TextureRect, sized square.
+func _chrome_svg_icon(path: String, colour: Color, px: float) -> TextureRect:
+	var tex := TextureRect.new()
+	tex.texture = load(path) if ResourceLoader.exists(path) else null
+	tex.custom_minimum_size = Vector2(px, px)
+	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex.modulate = colour
+	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return tex
+
+
+func _on_chrome_balance_changed(_currency: StringName, _amount: int) -> void:
+	refresh_chrome_wallet()
+
+
+## Redraw the header's currency readouts. Safe to call before the chrome exists.
+func refresh_chrome_wallet() -> void:
+	if _chrome_scrap == null or _chrome_ctx == null or _chrome_ctx.wallet == null:
+		return
+	_chrome_scrap.text = fmt_thousands(_chrome_ctx.wallet.scrap)
+	_chrome_alloy.text = fmt_thousands(_chrome_ctx.wallet.alloy)
+
+
+## Group thousands with a dot, matching the prototype's currency readout (8.085).
+static func fmt_thousands(n: int) -> String:
+	var digits := str(absi(n))
+	var out := ""
+	var count := 0
+	for i in range(digits.length() - 1, -1, -1):
+		out = digits[i] + out
+		count += 1
+		if count % 3 == 0 and i > 0:
+			out = "." + out
+	return ("-" if n < 0 else "") + out
+
+
 ## Safe-area insets (top, bottom) in viewport units — the space a phone reserves for the
 ## notch/status bar and the home indicator. Zero on hardware without them (desktop), where a
 ## small floor keeps the layout from hugging the very edge. Screens pad their header top and
