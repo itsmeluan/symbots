@@ -896,6 +896,10 @@ func _upgrade_label(slot: int, refusal: int) -> String:
 ## GEN ▲ stays present but greyed until every part is capped; tapping it early opens the modal
 ## explaining the requirement rather than doing nothing.
 func _refresh_gen() -> void:
+	# At the final mark there is no next generation to point at, so the arrow would be a
+	# promise the game cannot keep.
+	var final_gen := _selected != null and _selected.mark >= SymbotInstanceScript.MAX_MARK
+	_gen_button.text = "MAX" if final_gen else "GEN ▲"
 	if _can_gen_up():
 		_gen_button.theme_type_variation = &"Primary"
 		_gen_button.remove_theme_color_override("font_color")

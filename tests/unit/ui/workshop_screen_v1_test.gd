@@ -271,6 +271,14 @@ func test_a_final_generation_symbot_says_so() -> void:
 	_shop.refresh()
 	assert_false(_shop._can_gen_up())
 	assert_true(_shop._gen_requirement_text().contains("Mk III"))
+	# The arrow would promise a generation that does not exist.
+	assert_eq(_shop._gen_button.text, "MAX", "the button reads MAX at the final mark")
+
+
+func test_the_gen_button_offers_the_next_generation_below_the_cap() -> void:
+	_selected().mark = 1
+	_shop.refresh()
+	assert_eq(_shop._gen_button.text, "GEN ▲")
 
 
 # ---------------------------------------------------------------------------
