@@ -152,3 +152,15 @@ func test_an_empty_bag_says_where_to_look_rather_than_showing_nothing() -> void:
 	_game.show_bag()
 	assert_gt(_game._bag._list.get_child_count(), 0,
 		"an empty panel would read as broken")
+
+
+func test_the_reward_screen_announces_a_core() -> void:
+	# Earned in a dungeon, spent in the Workshop — the summary is the only place the player
+	# is told it happened.
+	var result := _settle_clear(&"stage_05")
+	_game.show_reward(result, _game.ctx.stages.get_stage(&"stage_05"))
+	var text := ""
+	for line in _game._reward._lines.get_children():
+		if line is Label:
+			text += line.text
+	assert_true(text.contains("OVERCLOCK CORE"), "a Core earned and never mentioned is a Core lost")
