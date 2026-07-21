@@ -14,6 +14,9 @@ signal info_pressed(stat_id: StringName, at_global: Vector2)
 const GROW_TIME := 0.30
 const SETTLE_TIME := 0.28
 const BAR_H := 5.0
+## Space kept clear on the right for the scroll bar, so the bar's right gap matches the
+## panel's left padding. Tuned against a render.
+const RIGHT_PAD := 8.0
 const BLUE := Color("4d9bff")
 
 var _stat_id: StringName = &""
@@ -37,7 +40,7 @@ func _init() -> void:
 	row.add_theme_constant_override("separation", 5)
 	row.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
 	row.offset_bottom = 17
-	row.offset_right = -4  # keep the value clear of the scroll bar
+	row.offset_right = -RIGHT_PAD  # the value lines up with the bar's right end
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(row)
 
@@ -139,8 +142,12 @@ func _kill() -> void:
 
 
 func _draw() -> void:
-	var w := size.x
+	# The scroll bar lives just past this control's right edge, so the bar stops RIGHT_PAD
+	# short of it — that makes the gap on the right match the panel padding on the left.
+	var w := size.x - RIGHT_PAD
 	var y := size.y - BAR_H
+	if w <= 2.0:
+		return
 	# Track.
 	draw_rect(Rect2(0, y, w, BAR_H), Color(UIPalette.INK, 0.85))
 	draw_rect(Rect2(0, y, w, BAR_H), UIPalette.LINE_SOFT, false, 1.0)

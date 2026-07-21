@@ -87,6 +87,8 @@ var _drag_moved: float = 0.0
 var _hint: SwipeHint
 
 const DRAWER_W := 186.0
+## Padding inside the drawer panel, used on both sides so content reads centred.
+const PANEL_PAD := 8.0
 ## Clearance between the nameplate/GEN row and the top of the drawer.
 const DRAWER_TOP_GAP := 14.0
 ## How far past the area's bottom the drawer reaches, sitting it nearer the carousel.
@@ -357,11 +359,9 @@ func _build_drawer() -> Control:
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var pbox := StyleBoxFlat.new()
 	pbox.bg_color = Color(UIPalette.PANEL, 0.8)  # translucent, no cyan left margin
-	pbox.set_content_margin(SIDE_LEFT, 8)
+	pbox.set_content_margin(SIDE_LEFT, PANEL_PAD)
 	pbox.set_content_margin(SIDE_TOP, 8)
-	# 4 here + the 4px scroll bar = the same 8 the left side has, so the stat bars end the
-	# same distance from both edges and nothing sits on top of them.
-	pbox.set_content_margin(SIDE_RIGHT, 4)
+	pbox.set_content_margin(SIDE_RIGHT, PANEL_PAD)
 	pbox.set_content_margin(SIDE_BOTTOM, 6)
 	panel.add_theme_stylebox_override("panel", pbox)
 	v.add_child(panel)
@@ -389,6 +389,11 @@ func _build_parts_tab() -> Control:
 func _build_stats_tab() -> Control:
 	var scroll := ScrollContainer.new()
 	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# A ScrollContainer RESERVES its scroll bar out of the content width, so a bar left inside
+	# the panel padding would eat into the stat bars and sit against them. Stretching the
+	# scroll into the right padding puts the bar out in the margin instead: it hugs the screen
+	# edge, and the stat bars end the same distance from the right as they start from the left.
+	scroll.offset_right = PANEL_PAD
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_thin_scrollbar(scroll)
 	_stats_view = VBoxContainer.new()
