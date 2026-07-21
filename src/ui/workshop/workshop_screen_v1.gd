@@ -895,11 +895,36 @@ func _upgrade_label(slot: int, refusal: int) -> String:
 
 ## GEN ▲ stays present but greyed until every part is capped; tapping it early opens the modal
 ## explaining the requirement rather than doing nothing.
+## What the advance button is offering right now: another mark, another overclock level, or
+## nothing at all. Common Symbots have no overclock allowance, so for them Mk III really is
+## the end (Core Design §2.2).
+func _gen_mode() -> StringName:
+	if _selected == null:
+		return &"none"
+	if _selected.mark < SymbotInstanceScript.MAX_MARK:
+		return &"gen"
+	if _selected.overclock < _max_overclock():
+		return &"overclock"
+	return &"none"
+
+
+## The species' rarity allowance of overclock levels.
+func _max_overclock() -> int:
+	var species := _species_of(_selected)
+	return species.max_overclock() if species != null else 0
+
+
 func _refresh_gen() -> void:
-	# At the final mark there is no next generation to point at, so the arrow would be a
-	# promise the game cannot keep.
-	var final_gen := _selected != null and _selected.mark >= SymbotInstanceScript.MAX_MARK
-	_gen_button.text = "MAX" if final_gen else "GEN ▲"
+	var mode := _gen_mode()
+	match mode:
+		&"gen":
+			_gen_button.text = "GEN ▲"
+		&"overclock":
+			_gen_button.text = "OVERCLOCK"
+		_:
+			_gen_button.text = "MAX"
+	# The long word only fits the small pill at a smaller size.
+	_gen_button.add_theme_font_size_override("font_size", 11 if mode == &"overclock" else 15)
 	if _can_gen_up():
 		_gen_button.theme_type_variation = &"Primary"
 		_gen_button.remove_theme_color_override("font_color")
@@ -910,18 +935,44 @@ func _refresh_gen() -> void:
 		_gen_button.modulate = Color(1, 1, 1, 0.8)
 
 
+## Whether the button's offer can be taken right now.
 func _can_gen_up() -> bool:
-	return _selected != null and _selected.mark < SymbotInstanceScript.MAX_MARK \
-		and _selected.can_retrofit()
+	match _gen_mode():
+		&"gen":
+			return _selected.can_retrofit()
+		&"overclock":
+			return _selected.can_overclock(_max_overclock())
+	return false
 
 
 func _gen_requirement_text() -> String:
 	if _selected == null:
 		return ""
-	if _selected.mark >= SymbotInstanceScript.MAX_MARK:
-		return "This Symbot has reached Mk III — its final generation. There is no further to go."
-	return "Take all five parts to level %d, then this Symbot advances to Mk %s." % [
-		_selected.part_level_cap(), _roman(_selected.mark + 1)]
+	match _gen_mode():
+		&"gen":
+			return "Take all five parts to level %d, then this Symbot advances to Mk %s." % [
+				_selected.part_level_cap(), _roman(_selected.mark + 1)]
+		&"overclock":
+			# Overclock asks for the Symbot's OWN level too, not just its parts.
+			return ("Overclock needs this Symbot AND all five parts at level %d. "
+				+ "Each one raises the ceiling by a level.") % _selected.part_level_cap()
+	if _max_overclock() > 0:
+		return "Fully overclocked — Mk III with all %d overclock levels earned." % _max_overclock()
+	return "This Symbot has reached Mk III — its final generation. There is no further to go."
+
+
+## The readout under the requirement: how close the player is.
+func _gen_progress_text() -> String:
+	if _selected == null:
+		return ""
+	match _gen_mode():
+		&"gen":
+			return "PARTS MAXED   %d / %d" % [_parts_maxed(), SymbotInstanceScript.PART_COUNT]
+		&"overclock":
+			return "LEVEL %d / %d   ·   PARTS %d / %d" % [
+				_selected.level, _selected.level_cap(),
+				_parts_maxed(), SymbotInstanceScript.PART_COUNT]
+	return ""
 
 
 func _parts_maxed() -> int:
@@ -1030,14 +1081,20 @@ func _on_repeat_tick() -> void:
 
 
 func _on_gen_up_pressed() -> void:
-	if _can_gen_up():
-		if _selected.retrofit():
-			# The mark changed, so the sprite did too — the carousel would otherwise keep
-			# showing the old form until the screen was left and re-entered.
-			_populate_carousel(true)
-			refresh()
-	else:
+	if not _can_gen_up():
 		_show_gen_modal()
+		return
+	match _gen_mode():
+		&"gen":
+			if _selected.retrofit():
+				# The mark changed, so the sprite did too — the carousel would otherwise keep
+				# showing the old form until the screen was left and re-entered.
+				_populate_carousel(true)
+				refresh()
+		&"overclock":
+			# The sprite is unchanged; only the ceiling moves.
+			if _selected.overclock_up(_max_overclock()):
+				refresh()
 
 
 func _on_close_pressed() -> void:
@@ -1067,11 +1124,20 @@ func _show_gen_modal() -> void:
 	_tooltip_timer.stop()
 	_tooltip.visible = false
 	_scrim.visible = true
-	var final_gen := _selected != null and _selected.mark >= SymbotInstanceScript.MAX_MARK
-	_modal_title.text = "FINAL GENERATION" if final_gen else "GENERATION LOCKED"
+	var mode := _gen_mode()
+	match mode:
+		&"gen":
+			_modal_crest.text = "GEN ▲"
+			_modal_title.text = "GENERATION LOCKED"
+		&"overclock":
+			_modal_crest.text = "OC ▲"
+			_modal_title.text = "OVERCLOCK LOCKED"
+		_:
+			_modal_crest.text = "MAX"
+			_modal_title.text = "FULLY DEVELOPED" if _max_overclock() > 0 else "FINAL GENERATION"
 	_modal_body.text = _gen_requirement_text()
-	_modal_progress.visible = not final_gen
-	_modal_progress.text = "PARTS MAXED   %d / %d" % [_parts_maxed(), SymbotInstanceScript.PART_COUNT]
+	_modal_progress.text = _gen_progress_text()
+	_modal_progress.visible = _modal_progress.text != ""
 	_modal_center.visible = true
 	_overlay_layer.visible = true
 

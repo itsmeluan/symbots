@@ -97,6 +97,33 @@ func retrofit() -> bool:
 	return true
 
 
+## True when another overclock level has been earned: at the final mark, with the Symbot's own
+## level AND every part sitting on the current ceiling, and rarity headroom left.
+##
+## [param max_levels] is the species' allowance — [method SpeciesDef.max_overclock], which is
+## 0 for a Common. The ceiling checked is [method level_cap], which already includes overclock
+## levels taken so far, so each step asks the player to max out again at the NEW cap.
+func can_overclock(max_levels: int) -> bool:
+	if mark < MAX_MARK or overclock >= max_levels:
+		return false
+	var cap := level_cap()
+	if level < cap:
+		return false
+	for i in PART_COUNT:
+		if part_levels[i] < cap:
+			return false
+	return true
+
+
+## Take one overclock level. Like Retrofit nothing is reset — the ceiling moves and the XP
+## banked above the old cap cashes in against it (Core Design §2.2).
+func overclock_up(max_levels: int) -> bool:
+	if not can_overclock(max_levels):
+		return false
+	overclock += 1
+	return true
+
+
 func get_part_level(slot: int) -> int:
 	return part_levels[clampi(slot, 0, PART_COUNT - 1)]
 

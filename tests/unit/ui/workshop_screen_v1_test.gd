@@ -269,10 +269,73 @@ func test_genning_up_raises_the_cap_without_resetting_levels() -> void:
 func test_a_final_generation_symbot_says_so() -> void:
 	_selected().mark = SymbotInstanceScript.MAX_MARK
 	_shop.refresh()
+	assert_eq(_shop._max_overclock(), 0, "precondition: the starter squad is Common")
 	assert_false(_shop._can_gen_up())
 	assert_true(_shop._gen_requirement_text().contains("Mk III"))
 	# The arrow would promise a generation that does not exist.
 	assert_eq(_shop._gen_button.text, "MAX", "the button reads MAX at the final mark")
+
+
+# ---------------------------------------------------------------------------
+# Overclock — the rarity payoff past Mk III (Core Design §2.2)
+# ---------------------------------------------------------------------------
+
+func _instance_at(mark: int, level: int, part_level: int) -> SymbotInstance:
+	var inst: SymbotInstance = SymbotInstanceScript.new()
+	inst.mark = mark
+	inst.level = level
+	inst.part_levels = PackedInt32Array([part_level, part_level, part_level, part_level, part_level])
+	return inst
+
+
+func test_overclock_needs_the_final_mark_first() -> void:
+	assert_false(_instance_at(2, 40, 40).can_overclock(5), "a Mk II has to retrofit its way up")
+
+
+func test_overclock_needs_the_symbots_own_level_not_only_its_parts() -> void:
+	# This is what separates it from Retrofit, which only ever asked about parts.
+	assert_false(_instance_at(3, 59, 60).can_overclock(5))
+
+
+func test_overclock_raises_the_ceiling_by_one_and_must_be_earned_again() -> void:
+	var inst := _instance_at(3, 60, 60)
+	assert_true(inst.can_overclock(5))
+
+	assert_true(inst.overclock_up(5))
+
+	assert_eq(inst.level_cap(), 61, "the Symbot ceiling moved")
+	assert_eq(inst.part_level_cap(), 61, "and the part ceiling with it")
+	assert_false(inst.can_overclock(5), "the next level must be earned at the new cap")
+
+
+func test_a_common_never_overclocks() -> void:
+	# Rarity is the whole point: a Common reaches full standard power and stops there.
+	var inst := _instance_at(3, 60, 60)
+	assert_false(inst.can_overclock(0))
+	assert_false(inst.overclock_up(0))
+	assert_eq(inst.overclock, 0)
+
+
+func test_overclock_stops_at_the_rarity_allowance() -> void:
+	var inst := _instance_at(3, 60, 60)
+	inst.overclock = 5
+	assert_false(inst.can_overclock(5), "allowance spent")
+
+
+func test_a_rare_symbot_at_the_final_mark_is_offered_overclock() -> void:
+	# The starter squad is all Common, so bring a Rare one in to see the third button state.
+	var rare := _instance_at(SymbotInstanceScript.MAX_MARK, 1, 1)
+	rare.instance_id = &"test_rare"
+	rare.species_id = &"voltfang"
+	_game.ctx.roster.symbots.append(rare)
+
+	_shop._on_symbot_selected(rare)
+
+	assert_gt(_shop._max_overclock(), 0, "precondition: Voltfang is Rare")
+	assert_eq(_shop._gen_button.text, "OVERCLOCK", "not MAX — there is more to reach")
+	assert_false(_shop._can_gen_up(), "but not until level and parts are maxed")
+	assert_true(_shop._gen_requirement_text().contains("all five parts"),
+		"and tapping it names the requirement")
 
 
 func test_the_gen_button_offers_the_next_generation_below_the_cap() -> void:
