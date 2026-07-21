@@ -25,6 +25,8 @@ const AMBER_DARK := Color("5f4714")
 const CORAL := Color("ff6d4b")        ## enemy, danger, taunt
 const GREEN := Color("69d783")        ## ally HP, success
 const DISABLED := Color("65707a")
+const SCRAP := AMBER                   ## Scrap currency — the common upgrade sink
+const ALLOY := Color("7ec8ff")        ## Alloy currency — the rare blueprint metal (light blue)
 
 # --- Fonts -----------------------------------------------------------------
 const DISPLAY_FONT := "res://assets/fonts/Rajdhani-SemiBold.woff"   ## headings, names, buttons

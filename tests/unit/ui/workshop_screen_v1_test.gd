@@ -58,8 +58,8 @@ func test_the_workshop_opens_on_a_fielded_symbot() -> void:
 	assert_not_null(_selected(), "landing on an empty screen makes the player hunt")
 
 
-func test_the_roster_strip_lists_everything_owned() -> void:
-	assert_eq(_shop._roster_strip.get_child_count(), _game.ctx.roster.symbots.size())
+func test_the_carousel_lists_everything_owned() -> void:
+	assert_eq(_shop._carousel.item_count(), _game.ctx.roster.symbots.size())
 
 
 func test_all_five_parts_are_shown() -> void:
@@ -152,37 +152,37 @@ func _max_every_part() -> void:
 			UpgradeEconomyScript.upgrade(_selected(), slot, _game.ctx.wallet, _game.ctx.balance)
 
 
-func test_retrofit_is_unavailable_until_every_part_is_capped() -> void:
-	assert_true(_shop._retrofit_button.disabled)
-	assert_true(_shop._retrofit_button.text.contains("Retrofit at every part"),
-		"and it says what the requirement is")
+func test_gen_up_is_unavailable_until_every_part_is_capped() -> void:
+	assert_false(_shop._can_gen_up())
+	assert_true(_shop._gen_requirement_text().contains("all 5 parts"),
+		"and tapping it explains the requirement")
 
 
-func test_retrofit_unlocks_once_every_part_is_capped() -> void:
+func test_gen_up_unlocks_once_every_part_is_capped() -> void:
 	_max_every_part()
 	_shop.refresh()
-	assert_false(_shop._retrofit_button.disabled)
+	assert_true(_shop._can_gen_up())
 
 
-func test_retrofitting_raises_the_cap_without_resetting_levels() -> void:
+func test_genning_up_raises_the_cap_without_resetting_levels() -> void:
 	# §2.3: progression is always forward. Resetting part levels would make the reward for
 	# maxing five parts feel like a punishment.
 	_max_every_part()
 	var cap_before := _selected().part_level_cap()
 	_shop.refresh()
 
-	_shop._on_retrofit_pressed()
+	_shop._on_gen_up_pressed()
 
 	assert_eq(_selected().mark, 2)
 	assert_gt(_selected().part_level_cap(), cap_before)
-	assert_eq(_selected().get_part_level(0), cap_before, "levels survive the retrofit")
+	assert_eq(_selected().get_part_level(0), cap_before, "levels survive the gen-up")
 
 
-func test_a_fully_retrofitted_symbot_says_so() -> void:
+func test_a_final_generation_symbot_says_so() -> void:
 	_selected().mark = SymbotInstanceScript.MAX_MARK
 	_shop.refresh()
-	assert_true(_shop._retrofit_button.disabled)
-	assert_true(_shop._retrofit_button.text.contains("Mk III"))
+	assert_false(_shop._can_gen_up())
+	assert_true(_shop._gen_requirement_text().contains("Mk III"))
 
 
 # ---------------------------------------------------------------------------

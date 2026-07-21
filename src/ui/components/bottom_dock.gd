@@ -18,7 +18,7 @@ const HEIGHT := 56
 const TABS: Array = [
 	[&"map", "MAP"],
 	[&"squad", "SQUAD"],
-	[&"workshop", "SHOP"],
+	[&"workshop", "WORKSHOP"],
 	[&"tree", "TREE"],
 	[&"foundry", "FORGE"],
 	[&"expeditions", "SEND"],
@@ -81,4 +81,6 @@ func _style_tab(button: Button, active: bool) -> void:
 	button.add_theme_color_override("font_color",
 		UIPalette.CYAN if active else UIPalette.MUTED)
 	button.add_theme_color_override("font_hover_color", UIPalette.CYAN)
-	button.add_theme_font_size_override("font_size", 12)
+	# Small enough that the longest label ("WORKSHOP") fits its sixth of the row without
+	# clipping — the tabs are equal width, so the longest one sets the size.
+	button.add_theme_font_size_override("font_size", 10)
