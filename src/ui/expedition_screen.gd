@@ -46,6 +46,7 @@ func _on_exit_tree() -> void:
 
 
 func _build_layout() -> void:
+	_set_background("res://assets/art/workshop/bench_backdrop.png", 0.62)
 	var content := build_chrome(_ctx, "SEND", &"expeditions", func(d): navigate.emit(d))
 
 	_slots_box = VBoxContainer.new()
