@@ -255,7 +255,7 @@ func show_squad() -> void:
 
 
 ## The Alloy sink and the collection board. Sits beside the other build screens on the map.
-## The Bag — a read-only ledger of components, Cores and blueprints.
+## The Bag — a read-only ledger of components, Chipsets and blueprints.
 func show_bag() -> void:
 	_clear_screens()
 	_bag = BagScreenScript.new()

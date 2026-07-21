@@ -1,6 +1,6 @@
 ## BagScreen — everything the player owns that is not a Symbot (Core Design §5, §6.2).
 ##
-## Three things used to be invisible: Overclock Cores (spent in the Workshop), socket
+## Three things used to be invisible: Chipsets (spent in the Workshop), socket
 ## components (spent in the skill tree), and learned blueprints (spent in the Forge). Each was
 ## earned somewhere and consumed somewhere else, with no screen in between where the player
 ## could see what they were holding — so a drop felt like nothing and a plan was impossible.
@@ -63,7 +63,7 @@ func refresh() -> void:
 	empty = _add_blueprints() == 0 and empty
 	if empty:
 		_list.add_child(_hint_label(
-			"Nothing yet. Clear a dungeon for an Overclock Core, or a stage for components."))
+			"Nothing yet. Clear a dungeon for a Chipset, or a stage for components."))
 
 
 func _add_key_items() -> int:

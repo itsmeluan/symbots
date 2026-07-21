@@ -103,7 +103,7 @@ func show_result(result, stage: StageDef) -> void:
 	# The Core is the rarest thing a run can pay, and it is spent on a different screen —
 	# announcing it here is the only place the player learns they have one.
 	if result.cores_earned > 0:
-		_add_line("OVERCLOCK CORE  +%d" % result.cores_earned, UIPalette.AMBER)
+		_add_line("CHIPSET  +%d" % result.cores_earned, UIPalette.AMBER)
 
 	# A newly-learned blueprint is the headline of a boss clear — announce it above the loot,
 	# in amber so it stands out as the prize it is.

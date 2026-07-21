@@ -29,7 +29,7 @@ class Result extends RefCounted:
 	## True only when the blueprint in the chest was NEW to the player — so the reward screen
 	## announces "blueprint unlocked" once, not on every replay of a cleared boss.
 	var blueprint_was_new: bool = false
-	## Overclock Cores the clear paid out. Dungeons are the only faucet (Core Design §2.2):
+	## Chipsets the clear paid out. Dungeons are the only faucet (Core Design §2.2):
 	## the rarity ceiling has to be earned somewhere the player chooses to go back to.
 	var cores_earned: int = 0
 	## One BattleEngine per fight, in order, so a caller can replay or inspect any of them.
@@ -177,12 +177,12 @@ func award(result: Result, wallet: Wallet, progress: StageProgress,
 		result.blueprint_was_new = library.unlock(result.chest_blueprint)
 	if result.xp_each > 0 and not squad.is_empty():
 		result.levels_gained = XpProgression.grant_squad(squad, result.xp_each, _cfg)
-	# A cleared dungeon pays an Overclock Core, every time — it is the long-tail reason to
+	# A cleared dungeon pays a Chipset, every time — it is the long-tail reason to
 	# return to a boss the player has already beaten.
 	if result.cleared and _stage.carries_structure():
 		result.cores_earned = 1
 		if key_items != null:
-			key_items.add(KeyItems.OVERCLOCK_CORE)
+			key_items.add(KeyItems.CHIPSET)
 	if result.cleared:
 		progress.mark_cleared(_stage.id)
 

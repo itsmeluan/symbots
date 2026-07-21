@@ -67,7 +67,7 @@ var wallet: Wallet
 ## Install items owned but not fitted (§4.4).
 var inventory_items: ItemInventory
 
-## Named key items (Overclock Cores) — not socket components, so they are counted apart
+## Named key items (Chipsets) — not socket components, so they are counted apart
 ## from `inventory_items`, which validates ids against the socket catalog.
 var key_items: ItemInventory
 

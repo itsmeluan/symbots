@@ -2,7 +2,7 @@
 ##
 ## [InstallItemDef] deliberately covers only socket components, and the content CI enforces
 ## that every entry in that catalog fits some socket ("an item that fits no socket is a drop
-## that reads as progress and is not"). An Overclock Core fits no socket — it is spent on the
+## that reads as progress and is not"). A Chipset fits no socket — it is spent on the
 ## Symbot itself — so it lives here instead of polluting that invariant.
 ##
 ## Small and static on purpose: these are a handful of named, meaningful objects, not a
@@ -12,12 +12,16 @@ class_name KeyItems
 extends RefCounted
 
 ## Spent to take one Overclock level on a Rare-or-better Symbot (Core Design §2.2).
-const OVERCLOCK_CORE := &"key_overclock_core"
+##
+## Named Chipset, not Core: CORE is already a part slot on every Symbot, and a currency
+## sharing that word reads as "collect duplicate Symbots for their cores", which is not the
+## mechanic.
+const CHIPSET := &"key_chipset"
 
 const DEFS := {
-	OVERCLOCK_CORE: {
-		"name": "Overclock Core",
-		"description": "A core wound past its rated limit. Spends itself raising a Symbot's ceiling by one.",
+	CHIPSET: {
+		"name": "Chipset",
+		"description": "Overclocking silicon, spent whole. Raises one Symbot's ceiling by a level.",
 	},
 }
 
