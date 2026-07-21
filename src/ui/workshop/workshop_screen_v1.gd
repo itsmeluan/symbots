@@ -87,6 +87,10 @@ var _drag_moved: float = 0.0
 var _hint: SwipeHint
 
 const DRAWER_W := 186.0
+## Clearance between the nameplate/GEN row and the top of the drawer.
+const DRAWER_TOP_GAP := 14.0
+## How far past the area's bottom the drawer reaches, sitting it nearer the carousel.
+const DRAWER_BOTTOM_DROP := 8.0
 
 # Overlay: a tap tooltip (part names) and a modal card (the gen-up requirement).
 var _overlay_layer: Control
@@ -489,8 +493,8 @@ func _apply_drawer() -> void:
 	var right := lerpf(edge + DRAWER_W, edge, _drawer_t)
 	_drawer.offset_left = right - DRAWER_W
 	_drawer.offset_right = right
-	_drawer.offset_top = 0
-	_drawer.offset_bottom = 0
+	_drawer.offset_top = DRAWER_TOP_GAP
+	_drawer.offset_bottom = DRAWER_BOTTOM_DROP
 	# The sprite slides left with the drawer, so it stays fully visible beside it.
 	_hero.offset_right = -DRAWER_W * _drawer_t
 
@@ -711,24 +715,36 @@ func _build_part_row(slot: int) -> Control:
 	top.add_child(icon)
 
 	var namecol := VBoxContainer.new()
-	namecol.add_theme_constant_override("separation", 0)
+	namecol.add_theme_constant_override("separation", 1)
 	namecol.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	namecol.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	top.add_child(namecol)
 
-	# Part name — blue, a touch heavier than the level (Regular over Light).
+	# Line one: the part name with its level beside it.
+	var title := HBoxContainer.new()
+	title.add_theme_constant_override("separation", 6)
+	namecol.add_child(title)
+
 	var name_label := Label.new()
 	name_label.add_theme_font_size_override("font_size", 12)
 	name_label.add_theme_color_override("font_color", UIPalette.CYAN)
 	name_label.text = PART_NAMES[slot].to_upper()
-	namecol.add_child(name_label)
+	title.add_child(name_label)
 
 	var level := Label.new()
 	level.theme_type_variation = &"Light"
 	level.add_theme_font_size_override("font_size", 10)
 	level.add_theme_color_override("font_color", UIPalette.TEXT)
 	level.text = "Lv. %d/%d" % [_selected.get_part_level(slot), _selected.part_level_cap()]
-	namecol.add_child(level)
+	level.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	title.add_child(level)
+
+	# Line two: what the part grows. Scrolls itself when the Upgrade button squeezes it.
+	var stats := MarqueeLabel.new()
+	stats.style(9, UIPalette.MUTED, &"Light")
+	stats.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stats.set_text(_part_stats_text(slot))
+	namecol.add_child(stats)
 
 	var refusal := UpgradeEconomyScript.can_upgrade(_selected, slot, _ctx.wallet, _ctx.balance)
 	var button := Button.new()
@@ -748,14 +764,12 @@ func _build_part_row(slot: int) -> Control:
 		button.pressed.connect(Callable(self, "_on_upgrade_pressed").bind(slot))
 	top.add_child(button)
 
-	# What the part boosts, per level.
-	var stats_line := Label.new()
-	stats_line.theme_type_variation = &"Light"
-	stats_line.add_theme_font_size_override("font_size", 9)
-	stats_line.add_theme_color_override("font_color", UIPalette.MUTED)
-	stats_line.clip_text = true
-	stats_line.text = _part_stats_text(slot)
-	row.add_child(stats_line)
+	# A hairline between blocks — just enough to group each part, not enough to notice.
+	if slot < SymbotInstanceScript.PART_COUNT - 1:
+		var rule := ColorRect.new()
+		rule.color = Color(UIPalette.LINE, 0.22)
+		rule.custom_minimum_size = Vector2(0, 1)
+		row.add_child(rule)
 	return row
 
 
