@@ -37,7 +37,7 @@ func _init() -> void:
 	row.add_theme_constant_override("separation", 5)
 	row.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
 	row.offset_bottom = 17
-	row.offset_right = -12  # keep the value clear of the screen edge / scrollbar
+	row.offset_right = -4  # keep the value clear of the scroll bar
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(row)
 

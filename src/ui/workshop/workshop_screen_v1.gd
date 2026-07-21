@@ -56,7 +56,6 @@ var _dock: BottomDock
 # it so the player can hide it and see just the art.
 var _mid: Control
 var _drawer: Control
-var _drawer_handle: Button
 var _catcher: Control
 var _parts_scroll: Control
 var _stats_scroll: Control
@@ -64,25 +63,28 @@ var _stats_view: VBoxContainer
 
 ## What each stat influences — shown in the discreet tooltip behind each stat's "i" button.
 const STAT_INFO := {
-	&"structure": "Vida: o dano que aguenta antes de cair.",
-	&"armor": "Reduz o dano físico recebido.",
-	&"resistance": "Reduz o dano de energia recebido.",
-	&"physical_power": "Aumenta o dano dos ataques físicos.",
-	&"energy_power": "Aumenta o dano dos ataques de energia.",
-	&"mobility": "Ordem de ação: quem age primeiro.",
-	&"targeting": "Chance de acerto crítico.",
-	&"processing": "Potência de efeitos e habilidades.",
-	&"cooling": "Controle de calor: evita superaquecer.",
-	&"energy_capacity": "Carga máxima para o ultimate.",
-	&"recharge": "Velocidade de recarga de energia.",
+	&"structure": "Health — the damage it can take before it falls.",
+	&"armor": "Reduces incoming physical damage.",
+	&"resistance": "Reduces incoming energy damage.",
+	&"physical_power": "Raises the damage of physical attacks.",
+	&"energy_power": "Raises the damage of energy attacks.",
+	&"mobility": "Turn order — who acts first.",
+	&"targeting": "Critical hit chance.",
+	&"processing": "Strength of effects and abilities.",
+	&"cooling": "Heat control — keeps it from overheating.",
+	&"energy_capacity": "Maximum charge for the ultimate.",
+	&"recharge": "How fast energy recharges.",
 }
 var _stat_bars: Dictionary = {}
 var _tab_parts: Button
 var _tab_stats: Button
 var _active_tab: StringName = &"parts"
-var _drawer_open: bool = true
-var _drawer_t: float = 1.0     ## 0 = closed (art only), 1 = open
+var _drawer_open: bool = false
+var _drawer_t: float = 0.0     ## 0 = closed (art only), 1 = open
 var _drawer_tween: Tween
+var _dragging: bool = false
+var _drag_moved: float = 0.0
+var _hint: SwipeHint
 
 const DRAWER_W := 186.0
 
@@ -112,6 +114,21 @@ func setup(ctx: ServiceContext) -> void:
 	if _selected != null:
 		_carousel.focus(_index_of(_selected))
 	refresh()
+	# The drawer has no button — teach the gesture once, faintly, on every entry.
+	_hint.play("Drag left for more info")
+
+
+## Any touch retires the nudge — it has done its job the moment the player engages.
+func _input(event: InputEvent) -> void:
+	if _hint == null:
+		return
+	if (event is InputEventScreenTouch or event is InputEventMouseButton) and event.pressed:
+		_dismiss_hint()
+
+
+func _dismiss_hint() -> void:
+	if _hint != null:
+		_hint.dismiss()
 
 
 func _on_exit_tree() -> void:
@@ -137,6 +154,9 @@ func _build_layout() -> void:
 	_screen_root.add_child(_build_content())
 	_dock = _attach_bottom_dock(_screen_root, &"workshop", func(d): navigate.emit(d))
 	_dock.set_safe_bottom(insets.y)
+
+	_hint = SwipeHint.new()
+	add_child(_hint)
 
 	_build_overlay_layer()
 
@@ -263,20 +283,48 @@ func _build_mid() -> Control:
 	_hero.offset_bottom = 0
 	_mid.add_child(_hero)
 
-	# A tap anywhere on the art (outside the drawer) closes the drawer. Active only while open.
+	# Dragging the art left pulls the drawer out, 1:1 with the finger; a tap closes it.
 	_catcher = Control.new()
 	_catcher.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_catcher.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_catcher.gui_input.connect(func(e):
-		if e is InputEventMouseButton and e.pressed and _drawer_open:
-			_toggle_drawer())
+	_catcher.mouse_filter = Control.MOUSE_FILTER_STOP
+	_catcher.gui_input.connect(_on_art_input)
 	_mid.add_child(_catcher)
 
 	_mid.add_child(_build_drawer())
-	_mid.add_child(_build_handle())
 	_mid.resized.connect(_apply_drawer)
 	call_deferred("_apply_drawer")
 	return _mid
+
+
+## The drawer is opened by dragging the Symbot left — no button. The drawer and the sprite
+## both follow the finger, so the gesture feels like pulling the panel out rather than
+## triggering an animation.
+func _on_art_input(event: InputEvent) -> void:
+	_dismiss_hint()
+	if event is InputEventScreenTouch or (event is InputEventMouseButton \
+			and event.button_index == MOUSE_BUTTON_LEFT):
+		if event.pressed:
+			_dragging = true
+			_drag_moved = 0.0
+			_kill_drawer_tween()
+		elif _dragging:
+			_dragging = false
+			_release_drag()
+	elif _dragging and (event is InputEventScreenDrag or event is InputEventMouseMotion):
+		# Dragging left (negative x) opens.
+		_drawer_t = clampf(_drawer_t - event.relative.x / DRAWER_W, 0.0, 1.0)
+		_drag_moved += absf(event.relative.x)
+		_apply_drawer()
+
+
+## A flick settles to whichever side it is closer to; a tap (no travel) just closes an open
+## drawer.
+func _release_drag() -> void:
+	if _drag_moved < 8.0:
+		if _drawer_open:
+			_animate_drawer(false)
+		return
+	_animate_drawer(_drawer_t > 0.5)
 
 
 ## A 3D-look tab strip on top (the inactive tab darker and recessed), then a translucent panel
@@ -307,7 +355,9 @@ func _build_drawer() -> Control:
 	pbox.bg_color = Color(UIPalette.PANEL, 0.8)  # translucent, no cyan left margin
 	pbox.set_content_margin(SIDE_LEFT, 8)
 	pbox.set_content_margin(SIDE_TOP, 8)
-	pbox.set_content_margin(SIDE_RIGHT, 2)
+	# 4 here + the 4px scroll bar = the same 8 the left side has, so the stat bars end the
+	# same distance from both edges and nothing sits on top of them.
+	pbox.set_content_margin(SIDE_RIGHT, 4)
 	pbox.set_content_margin(SIDE_BOTTOM, 6)
 	panel.add_theme_stylebox_override("panel", pbox)
 	v.add_child(panel)
@@ -368,45 +418,6 @@ func _make_tab(label: String, id: StringName) -> Button:
 	return b
 
 
-## The bottom-right toggle. Amber with a black chevron when the drawer is closed (inviting);
-## dimmed to the quiet look of an un-actionable Upgrade pill when it is open.
-func _build_handle() -> Button:
-	_drawer_handle = Button.new()
-	_drawer_handle.anchor_left = 1.0
-	_drawer_handle.anchor_right = 1.0
-	_drawer_handle.anchor_top = 1.0
-	_drawer_handle.anchor_bottom = 1.0
-	_drawer_handle.offset_left = -46
-	_drawer_handle.offset_top = -32
-	_drawer_handle.offset_right = -8
-	_drawer_handle.offset_bottom = -6
-	_drawer_handle.add_theme_font_size_override("font_size", 15)
-	_drawer_handle.pressed.connect(_toggle_drawer)
-	_style_handle()
-	return _drawer_handle
-
-
-func _style_handle() -> void:
-	var box := ChamferStyleBox.new()
-	box.chamfer = 5.0
-	box.set_content_margin(SIDE_LEFT, 4)
-	box.set_content_margin(SIDE_RIGHT, 4)
-	if _drawer_open:
-		box.bg_color = UIPalette.PANEL_2
-		box.border_color = UIPalette.LINE_SOFT
-		box.border_width = 1.0
-		_drawer_handle.text = "▶"
-		_drawer_handle.add_theme_color_override("font_color", UIPalette.DISABLED)
-	else:
-		box.bg_color = UIPalette.AMBER
-		_drawer_handle.text = "◀"
-		_drawer_handle.add_theme_color_override("font_color", UIPalette.INK)
-	_drawer_handle.add_theme_stylebox_override("normal", box)
-	_drawer_handle.add_theme_stylebox_override("hover", box)
-	_drawer_handle.add_theme_stylebox_override("pressed", box)
-	_drawer_handle.add_theme_stylebox_override("focus", UIPalette.empty())
-
-
 ## 3D tabs: the active tab takes the panel's colour and stands proud; the hidden one is darker
 ## and recessed. Sits above the panel, not inside it.
 func _style_drawer_tab(button: Button, active: bool) -> void:
@@ -442,17 +453,26 @@ func _set_active_tab(id: StringName) -> void:
 
 
 func _toggle_drawer() -> void:
-	_drawer_open = not _drawer_open
-	_style_handle()
-	if _drawer_tween != null and _drawer_tween.is_valid():
-		_drawer_tween.kill()
-	var target := 1.0 if _drawer_open else 0.0
+	_animate_drawer(not _drawer_open)
+
+
+## Settle the drawer to fully open or fully closed.
+func _animate_drawer(open: bool) -> void:
+	_drawer_open = open
+	_kill_drawer_tween()
+	var target := 1.0 if open else 0.0
 	if not is_inside_tree():
 		_set_drawer_t(target)
 		return
 	_drawer_tween = create_tween()
 	_drawer_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	_drawer_tween.tween_method(_set_drawer_t, _drawer_t, target, 0.25)
+	_drawer_tween.tween_method(_set_drawer_t, _drawer_t, target, 0.20)
+
+
+func _kill_drawer_tween() -> void:
+	if _drawer_tween != null and _drawer_tween.is_valid():
+		_drawer_tween.kill()
+	_drawer_tween = null
 
 
 func _set_drawer_t(v: float) -> void:
@@ -471,7 +491,8 @@ func _apply_drawer() -> void:
 	_drawer.offset_right = right
 	_drawer.offset_top = 0
 	_drawer.offset_bottom = 0
-	_catcher.mouse_filter = Control.MOUSE_FILTER_STOP if _drawer_t > 0.5 else Control.MOUSE_FILTER_IGNORE
+	# The sprite slides left with the drawer, so it stays fully visible beside it.
+	_hero.offset_right = -DRAWER_W * _drawer_t
 
 
 func _build_overlay_layer() -> void:
@@ -608,7 +629,10 @@ func _on_balance_changed(_currency: StringName, _amount: int) -> void:
 
 func _refresh_hero_and_name() -> void:
 	var species: SpeciesDef = _species_of(_selected)
-	_nameplate.set_symbot(species, _selected)
+	var xp := 0
+	if _selected != null and _ctx.balance != null:
+		xp = XpProgression.percent_to_next(_selected, _ctx.balance)
+	_nameplate.set_symbot(species, _selected, xp)
 	_hero.texture = _sprite_for(_selected)
 
 
@@ -643,16 +667,20 @@ func _rebuild_stats() -> void:
 	_refresh_stats_values(false)
 
 
-## Push current/cap values into the existing bars. [param animate] plays the blue→amber grow
-## on any stat that rose — used after an upgrade.
+## Push values into the existing bars. Every bar is scaled against the LARGEST stat on this
+## Symbot, so the biggest number always has the longest bar and the rest read in proportion —
+## scaling each stat against its own ceiling made a 5 look fuller than an 80.
+## [param animate] plays the blue→amber grow on any stat that rose, used after an upgrade.
 func _refresh_stats_values(animate: bool) -> void:
 	if _selected == null:
 		return
 	var species := _species_of(_selected)
 	var cur := StatSummary.current(_selected, species)
-	var cap := StatSummary.at_cap(_selected, species)
+	var top := 1
 	for stat in _stat_bars:
-		_stat_bars[stat].set_value(int(cur.get(stat, 0)), int(cap.get(stat, 1)), animate)
+		top = maxi(top, int(cur.get(stat, 0)))
+	for stat in _stat_bars:
+		_stat_bars[stat].set_value(int(cur.get(stat, 0)), top, animate)
 
 
 const PART_ICON_SIZE := 26.0

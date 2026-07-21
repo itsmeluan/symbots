@@ -30,6 +30,7 @@ const CHAMFER := 10.0
 var _name_label: Label
 var _role_icon: IconGlyph
 var _sub_label: Label
+var _xp_bar: ProgressBar
 
 
 func _init() -> void:
@@ -68,6 +69,22 @@ func _init() -> void:
 	_sub_label.add_theme_color_override("font_color", UIPalette.CYAN)
 	sub.add_child(_sub_label)
 
+	# Experience toward the next level — a thin bar under the identity line.
+	_xp_bar = ProgressBar.new()
+	_xp_bar.custom_minimum_size = Vector2(0, 4)
+	_xp_bar.show_percentage = false
+	_xp_bar.max_value = 100
+	_xp_bar.value = 0
+	var track := StyleBoxFlat.new()
+	track.bg_color = Color(UIPalette.INK, 0.9)
+	track.set_corner_radius_all(2)
+	var fill := StyleBoxFlat.new()
+	fill.bg_color = UIPalette.CYAN
+	fill.set_corner_radius_all(2)
+	_xp_bar.add_theme_stylebox_override("background", track)
+	_xp_bar.add_theme_stylebox_override("fill", fill)
+	col.add_child(_xp_bar)
+
 
 func _draw() -> void:
 	var w := size.x
@@ -83,8 +100,10 @@ func _draw() -> void:
 	draw_polyline(outline, UIPalette.LINE, 1.5, true)
 
 
-## Bind the card to a Symbot. [param species] gives name and role, [param inst] the marks.
-func set_symbot(species: SpeciesDef, inst) -> void:
+## Bind the card to a Symbot. [param species] gives name and role, [param inst] the marks,
+## and [param xp_percent] (0-100) fills the experience bar toward the next level.
+func set_symbot(species: SpeciesDef, inst, xp_percent: int = 0) -> void:
+	_xp_bar.value = clampi(xp_percent, 0, 100)
 	if species == null or inst == null:
 		_name_label.text = ""
 		_sub_label.text = ""

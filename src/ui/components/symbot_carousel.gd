@@ -69,8 +69,10 @@ func _draw() -> void:
 		return
 	var cx := size.x * 0.5
 	var cy := size.y * 0.5
-	var focus_h := size.y * 0.94
-	var side_h := size.y * 0.52
+	# The focused sprite is the only fully opaque one, so it barely needs a size boost — a
+	# small one keeps it clearly in front without dwarfing its neighbours.
+	var focus_h := size.y * 0.76
+	var side_h := size.y * 0.60
 
 	# Farthest-first so the focused sprite draws on top of its neighbours.
 	var order: Array = []
