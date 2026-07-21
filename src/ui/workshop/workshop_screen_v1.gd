@@ -835,8 +835,15 @@ func _can_gen_up() -> bool:
 		&"gen":
 			return _selected.can_retrofit()
 		&"overclock":
-			return _selected.can_overclock(_max_overclock())
+			# Two gates: the Symbot has earned it, and the player holds a Core to spend.
+			return _selected.can_overclock(_max_overclock()) and _has_overclock_core()
 	return false
+
+
+## Overclock is paid for with a Core, not with Scrap — the one sink Scrap cannot reach.
+func _has_overclock_core() -> bool:
+	return _ctx != null and _ctx.key_items != null \
+		and _ctx.key_items.count(KeyItems.OVERCLOCK_CORE) > 0
 
 
 func _gen_requirement_text() -> String:
@@ -847,9 +854,10 @@ func _gen_requirement_text() -> String:
 			return "Take all five parts to level %d, then this Symbot advances to Mk %s." % [
 				_selected.part_level_cap(), _roman(_selected.mark + 1)]
 		&"overclock":
-			# Overclock asks for the Symbot's OWN level too, not just its parts.
-			return ("Overclock needs this Symbot AND all five parts at level %d. "
-				+ "Each one raises the ceiling by a level.") % _selected.part_level_cap()
+			# Overclock asks for the Symbot's OWN level too, not just its parts — and a Core.
+			return ("Overclock needs this Symbot AND all five parts at level %d, "
+				+ "plus one Overclock Core. Each one raises the ceiling by a level.") \
+				% _selected.part_level_cap()
 	if _max_overclock() > 0:
 		return "Fully overclocked — Mk III with all %d overclock levels earned." % _max_overclock()
 	return "This Symbot has reached Mk III — its final generation. There is no further to go."
@@ -863,9 +871,10 @@ func _gen_progress_text() -> String:
 		&"gen":
 			return "PARTS MAXED   %d / %d" % [_parts_maxed(), SymbotInstanceScript.PART_COUNT]
 		&"overclock":
-			return "LEVEL %d / %d   ·   PARTS %d / %d" % [
+			var cores := _ctx.key_items.count(KeyItems.OVERCLOCK_CORE) if _ctx.key_items else 0
+			return "LEVEL %d / %d   ·   PARTS %d / %d   ·   CORES %d" % [
 				_selected.level, _selected.level_cap(),
-				_parts_maxed(), SymbotInstanceScript.PART_COUNT]
+				_parts_maxed(), SymbotInstanceScript.PART_COUNT, cores]
 	return ""
 
 
@@ -986,8 +995,10 @@ func _on_gen_up_pressed() -> void:
 				_populate_carousel(true)
 				refresh()
 		&"overclock":
-			# The sprite is unchanged; only the ceiling moves.
+			# Spend the Core only if the level actually lands. The sprite is unchanged; only
+			# the ceiling moves.
 			if _selected.overclock_up(_max_overclock()):
+				_ctx.key_items.take(KeyItems.OVERCLOCK_CORE)
 				refresh()
 
 

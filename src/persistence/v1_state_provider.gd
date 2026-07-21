@@ -28,6 +28,7 @@ var _wallet: Wallet = null
 var _items: ItemInventory = null
 var _expeditions: ExpeditionBoard = null
 var _library: BlueprintLibrary = null
+var _key_items: ItemInventory = null
 var _species: SpeciesCatalog = null
 var _tree: SkillTree = null
 var _item_catalog: InstallItemCatalog = null
@@ -39,7 +40,7 @@ func _init(roster: PlayerRoster, wallet: Wallet, species: SpeciesCatalog,
 		tree: SkillTree, log: LogSink = null, items: ItemInventory = null,
 		item_catalog: InstallItemCatalog = null,
 		expeditions: ExpeditionBoard = null, progress: StageProgress = null,
-		library: BlueprintLibrary = null) -> void:
+		library: BlueprintLibrary = null, key_items: ItemInventory = null) -> void:
 	_roster = roster
 	_wallet = wallet
 	_items = items
@@ -47,6 +48,7 @@ func _init(roster: PlayerRoster, wallet: Wallet, species: SpeciesCatalog,
 	_expeditions = expeditions
 	_progress = progress
 	_library = library
+	_key_items = key_items
 	_species = species
 	_tree = tree
 	_log = log
@@ -68,6 +70,7 @@ func snapshot() -> Dictionary:
 		"expeditions": _expeditions.to_dict() if _expeditions != null else {},
 		"progress": _progress_dict(),
 		"blueprints": _library.to_dict() if _library != null else {},
+		"key_items": _key_items.to_dict() if _key_items != null else {},
 	}
 
 
@@ -91,6 +94,12 @@ func restore(data: Dictionary) -> void:
 	if _items != null:
 		var restored := ItemInventory.from_dict(data.get("items", {}), _item_catalog)
 		_items.counts = restored.counts
+
+	# Key items validate against their own registry, not the socket catalog.
+	if _key_items != null:
+		var keys := ItemInventory.from_dict(data.get("key_items", {}))
+		KeyItems.sanitise(keys)
+		_key_items.counts = keys.counts
 
 	# Expeditions restore AFTER the roster, so entries naming a Symbot that no longer
 	# loaded can be dropped — an uncollectable expedition would hold a slot forever.

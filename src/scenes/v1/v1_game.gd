@@ -27,6 +27,7 @@ const SkillTreeScreenScript := preload("res://src/ui/tree/skill_tree_screen.gd")
 const RewardScreenScript := preload("res://src/ui/reward_screen.gd")
 const SquadScreenScript := preload("res://src/ui/squad_screen.gd")
 const FoundryScreenScript := preload("res://src/ui/foundry_screen.gd")
+const BagScreenScript := preload("res://src/ui/bag_screen.gd")
 const ExpeditionScreenScript := preload("res://src/ui/expedition_screen.gd")
 const StageRunnerScript := preload("res://src/core/stages/stage_runner.gd")
 const BattleEngineScript := preload("res://src/core/battle_v1/battle_engine.gd")
@@ -70,6 +71,7 @@ var _reward: RewardScreen = null
 var _squad: SquadScreen = null
 var _foundry: FoundryScreen = null
 var _expeditions: ExpeditionScreen = null
+var _bag: BagScreen = null
 
 ## The run in progress: its runner, its stage, and where in the battle sequence we are.
 var _runner: StageRunner = null
@@ -99,7 +101,7 @@ func attach_save(service: SaveLoadService) -> void:
 	save_service.register_provider(V1StateProviderScript.KEY,
 		V1StateProviderScript.new(ctx.roster, ctx.wallet, ctx.species, ctx.tree, ctx.log,
 			ctx.inventory_items, ctx.item_catalog, ctx.expeditions, ctx.progress,
-			ctx.blueprints))
+			ctx.blueprints, ctx.key_items))
 
 
 ## Load the save, then make sure the player actually has Symbots.
@@ -140,6 +142,7 @@ func build_context() -> ServiceContext:
 	c.roster = PlayerRoster.new()
 	c.wallet = Wallet.new()
 	c.inventory_items = ItemInventory.new()
+	c.key_items = ItemInventory.new()
 	c.blueprints = BlueprintLibrary.new()
 	c.expeditions = ExpeditionBoard.new()
 	c.progress = StageProgress.new()
@@ -193,6 +196,7 @@ func _navigate_to(dest: StringName) -> void:
 		&"tree": show_tree()
 		&"foundry": show_foundry()
 		&"expeditions": show_expeditions()
+		&"bag": show_bag()
 
 
 ## Add a screen and give it the full viewport BEFORE setup runs.
@@ -251,6 +255,14 @@ func show_squad() -> void:
 
 
 ## The Alloy sink and the collection board. Sits beside the other build screens on the map.
+## The Bag — a read-only ledger of components, Cores and blueprints.
+func show_bag() -> void:
+	_clear_screens()
+	_bag = BagScreenScript.new()
+	_present(_bag)
+	_bag.navigate.connect(Callable(self, "_navigate_to"))
+
+
 func show_foundry() -> void:
 	_clear_screens()
 	_foundry = FoundryScreenScript.new()
@@ -322,7 +334,7 @@ func _on_battle_finished(outcome: int) -> void:
 func _finish_run(cleared: bool) -> void:
 	_runner.settle(_result, cleared)
 	_runner.award(_result, ctx.wallet, ctx.progress, ctx.roster.squad_symbots(),
-		ctx.inventory_items, ctx.blueprints)
+		ctx.inventory_items, ctx.blueprints, ctx.key_items)
 	save_now()
 
 	# The reward screen reads the settled result, so the stage reference has to survive
@@ -374,6 +386,10 @@ func _clear_screens() -> void:
 		remove_child(_workshop)
 		_workshop.queue_free()
 		_workshop = null
+	if _bag != null:
+		remove_child(_bag)
+		_bag.queue_free()
+		_bag = null
 	if _tree_screen != null:
 		remove_child(_tree_screen)
 		_tree_screen.queue_free()

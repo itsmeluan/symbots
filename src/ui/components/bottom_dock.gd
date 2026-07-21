@@ -1,8 +1,8 @@
 ## BottomDock — persistent bottom navigation across the meta screens (v1 UI prototype).
 ##
 ## Replaces the crowded five-button top row with the prototype's dock: one tab per
-## destination, the current one lit cyan. The prototype ships four tabs; this game has six
-## meta destinations, so the dock holds six — still comfortable at 360px (60px each).
+## destination, the current one lit cyan. The prototype ships four tabs; this game has seven
+## meta destinations, so the dock holds seven (about 51px each at the 360 base width).
 ##
 ## Emits [signal navigate] with a destination id; the screen forwards it and the game root
 ## routes it. The dock knows nothing about the screens, only their names.
@@ -22,6 +22,7 @@ const TABS: Array = [
 	[&"tree", "TREE"],
 	[&"foundry", "FORGE"],
 	[&"expeditions", "SEND"],
+	[&"bag", "BAG"],
 ]
 
 var _active: StringName = &"map"
@@ -90,6 +91,6 @@ func _style_tab(button: Button, active: bool) -> void:
 	button.add_theme_color_override("font_color",
 		UIPalette.CYAN if active else UIPalette.MUTED)
 	button.add_theme_color_override("font_hover_color", UIPalette.CYAN)
-	# Small enough that the longest label ("WORKSHOP") fits its sixth of the row without
+	# Small enough that the longest label ("WORKSHOP") fits its seventh of the row without
 	# clipping — the tabs are equal width, so the longest one sets the size.
-	button.add_theme_font_size_override("font_size", 10)
+	button.add_theme_font_size_override("font_size", 9)
