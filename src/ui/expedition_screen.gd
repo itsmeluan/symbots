@@ -23,7 +23,6 @@ const MIN_ROW_HEIGHT := 52
 const TICK_SECONDS := 1.0
 
 var _ctx: ServiceContext = null
-var _screen_root: VBoxContainer
 var _armed_duration: int = ExpeditionBoardScript.Duration.SHORT
 
 var _slots_box: VBoxContainer
@@ -36,7 +35,6 @@ var _tick: Timer
 func setup(ctx: ServiceContext) -> void:
 	_ctx = ctx
 	_build_layout()
-	_attach_bottom_dock(_screen_root, &"expeditions", func(d): navigate.emit(d))
 	if _ctx.expeditions != null:
 		_connect_owned(_ctx.expeditions.board_changed, Callable(self, "_on_board_changed"))
 	refresh()
@@ -48,35 +46,15 @@ func _on_exit_tree() -> void:
 
 
 func _build_layout() -> void:
-	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-
-	var root := VBoxContainer.new()
-	_screen_root = root
-	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.add_theme_constant_override("separation", 6)
-	add_child(root)
-
-	var header := HBoxContainer.new()
-	root.add_child(header)
-	var back := Button.new()
-	back.text = "< Map"
-	back.custom_minimum_size = Vector2(0, MIN_ROW_HEIGHT)
-	back.pressed.connect(Callable(self, "_on_close_pressed"))
-	header.add_child(back)
-	var title := Label.new()
-	title.text = "Expeditions"
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 13)
-	header.add_child(title)
+	var content := build_chrome(_ctx, "SEND", &"expeditions", func(d): navigate.emit(d))
 
 	_slots_box = VBoxContainer.new()
 	_slots_box.add_theme_constant_override("separation", 4)
-	root.add_child(_slots_box)
+	content.add_child(_slots_box)
 
 	# Duration selector — the run length the next Send uses.
 	_duration_row = HBoxContainer.new()
-	root.add_child(_duration_row)
+	content.add_child(_duration_row)
 	for d in [ExpeditionBoardScript.Duration.SHORT, ExpeditionBoardScript.Duration.MEDIUM,
 			ExpeditionBoardScript.Duration.LONG]:
 		var b := Button.new()
@@ -91,17 +69,17 @@ func _build_layout() -> void:
 	var bench_title := Label.new()
 	bench_title.text = "Bench — tap Send to dispatch"
 	bench_title.add_theme_font_size_override("font_size", 9)
-	root.add_child(bench_title)
+	content.add_child(bench_title)
 
 	_bench_hint = Label.new()
 	_bench_hint.add_theme_font_size_override("font_size", 9)
 	_bench_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	root.add_child(_bench_hint)
+	content.add_child(_bench_hint)
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	root.add_child(scroll)
+	content.add_child(scroll)
 	_bench_box = VBoxContainer.new()
 	_bench_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_bench_box.add_theme_constant_override("separation", 4)

@@ -23,7 +23,6 @@ const ROLE_NAMES: Dictionary = {
 }
 
 var _ctx: ServiceContext = null
-var _screen_root: VBoxContainer
 
 ## Which slot the next bench tap fills. -1 means none is armed.
 var _armed_slot: int = -1
@@ -36,7 +35,6 @@ var _warning: Label
 func setup(ctx: ServiceContext) -> void:
 	_ctx = ctx
 	_build_layout()
-	_attach_bottom_dock(_screen_root, &"squad", func(d): navigate.emit(d))
 	refresh()
 
 
@@ -46,33 +44,21 @@ func _on_exit_tree() -> void:
 
 
 func _build_layout() -> void:
-	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-
-	var root := VBoxContainer.new()
-	_screen_root = root
-	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.add_theme_constant_override("separation", 6)
-	add_child(root)
-
-	var back := Button.new()
-	back.text = "< Map"
-	back.custom_minimum_size = Vector2(0, 44)
-	back.pressed.connect(Callable(self, "_on_close_pressed"))
-	root.add_child(back)
+	var content := build_chrome(_ctx, "SQUAD", &"squad", func(d): navigate.emit(d))
 
 	_slot_row = HBoxContainer.new()
 	_slot_row.custom_minimum_size = Vector2(0, MIN_ROW_HEIGHT + 12)
-	root.add_child(_slot_row)
+	content.add_child(_slot_row)
 
 	_warning = Label.new()
 	_warning.add_theme_font_size_override("font_size", 9)
 	_warning.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	root.add_child(_warning)
+	content.add_child(_warning)
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	root.add_child(scroll)
+	content.add_child(scroll)
 
 	_bench = VBoxContainer.new()
 	_bench.size_flags_horizontal = Control.SIZE_EXPAND_FILL

@@ -21,7 +21,6 @@ signal navigate(dest: StringName)
 const MIN_BUTTON_HEIGHT := 44
 
 var _ctx: ServiceContext = null
-var _screen_root: VBoxContainer
 var _selected_symbot: SymbotInstance = null
 var _selected_node: StringName = &""
 
@@ -40,7 +39,6 @@ var _fit_row: HBoxContainer
 func setup(ctx: ServiceContext) -> void:
 	_ctx = ctx
 	_build_layout()
-	_attach_bottom_dock(_screen_root, &"tree", func(d): navigate.emit(d))
 	var squad := _ctx.roster.squad_symbots()
 	_selected_symbot = squad[0] if not squad.is_empty() else null
 	_view.bind(_ctx.tree, _entry_of(_selected_symbot))
@@ -54,30 +52,17 @@ func _on_exit_tree() -> void:
 
 
 func _build_layout() -> void:
-	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var content := build_chrome(_ctx, "TREE", &"tree", func(d): navigate.emit(d))
 
-	var root := VBoxContainer.new()
-	_screen_root = root
-	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.add_theme_constant_override("separation", 4)
-	add_child(root)
-
-	var header := HBoxContainer.new()
-	root.add_child(header)
-	var back := Button.new()
-	back.text = "< Map"
-	back.custom_minimum_size = Vector2(0, MIN_BUTTON_HEIGHT)
-	back.pressed.connect(Callable(self, "_on_close_pressed"))
-	header.add_child(back)
 	_points_label = Label.new()
-	_points_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_points_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	header.add_child(_points_label)
+	_points_label.add_theme_font_size_override("font_size", 11)
+	_points_label.add_theme_color_override("font_color", UIPalette.CYAN)
+	content.add_child(_points_label)
 
 	var roster_scroll := ScrollContainer.new()
 	roster_scroll.custom_minimum_size = Vector2(0, MIN_BUTTON_HEIGHT + 8)
 	roster_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	root.add_child(roster_scroll)
+	content.add_child(roster_scroll)
 	_roster_strip = HBoxContainer.new()
 	roster_scroll.add_child(_roster_strip)
 
@@ -85,31 +70,31 @@ func _build_layout() -> void:
 	_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_view.node_tapped.connect(Callable(self, "_on_node_tapped"))
-	root.add_child(_view)
+	content.add_child(_view)
 
 	_node_title = Label.new()
 	_node_title.add_theme_font_size_override("font_size", 12)
-	root.add_child(_node_title)
+	content.add_child(_node_title)
 
 	_node_detail = Label.new()
 	_node_detail.add_theme_font_size_override("font_size", 9)
 	_node_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_node_detail.custom_minimum_size = Vector2(0, 30)
-	root.add_child(_node_detail)
+	content.add_child(_node_detail)
 
 	_allocate_button = Button.new()
 	_allocate_button.custom_minimum_size = Vector2(0, MIN_BUTTON_HEIGHT)
 	_allocate_button.pressed.connect(Callable(self, "_on_allocate_pressed"))
-	root.add_child(_allocate_button)
+	content.add_child(_allocate_button)
 
 	_fit_row = HBoxContainer.new()
 	_fit_row.custom_minimum_size = Vector2(0, MIN_BUTTON_HEIGHT)
-	root.add_child(_fit_row)
+	content.add_child(_fit_row)
 
 	_respec_button = Button.new()
 	_respec_button.custom_minimum_size = Vector2(0, MIN_BUTTON_HEIGHT)
 	_respec_button.pressed.connect(Callable(self, "_on_respec_pressed"))
-	root.add_child(_respec_button)
+	content.add_child(_respec_button)
 
 
 func refresh() -> void:

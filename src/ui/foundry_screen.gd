@@ -20,10 +20,8 @@ signal navigate(dest: StringName)
 const MIN_ROW_HEIGHT := 52
 
 var _ctx: ServiceContext = null
-var _screen_root: VBoxContainer
 var _craft_counter: int = 0
 
-var _alloy_label: Label
 var _list: VBoxContainer
 
 
@@ -33,9 +31,6 @@ func setup(ctx: ServiceContext) -> void:
 	# even if the player crafts, releases, and crafts again.
 	_craft_counter = ctx.roster.symbots.size()
 	_build_layout()
-	_attach_bottom_dock(_screen_root, &"foundry", func(d): navigate.emit(d))
-	if _ctx.wallet != null:
-		_connect_owned(_ctx.wallet.balance_changed, Callable(self, "_on_balance_changed"))
 	refresh()
 
 
@@ -45,37 +40,12 @@ func _on_exit_tree() -> void:
 
 
 func _build_layout() -> void:
-	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-
-	var root := VBoxContainer.new()
-	_screen_root = root
-	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.add_theme_constant_override("separation", 6)
-	add_child(root)
-
-	var header := HBoxContainer.new()
-	root.add_child(header)
-	var back := Button.new()
-	back.text = "< Map"
-	back.custom_minimum_size = Vector2(0, MIN_ROW_HEIGHT)
-	back.pressed.connect(Callable(self, "_on_close_pressed"))
-	header.add_child(back)
-	var title := Label.new()
-	title.text = "Foundry"
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 13)
-	header.add_child(title)
-	_alloy_label = Label.new()
-	_alloy_label.custom_minimum_size = Vector2(90, 0)
-	_alloy_label.clip_text = true
-	_alloy_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	header.add_child(_alloy_label)
+	var content := build_chrome(_ctx, "FORGE", &"foundry", func(d): navigate.emit(d))
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	root.add_child(scroll)
+	content.add_child(scroll)
 	_list = VBoxContainer.new()
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list.add_theme_constant_override("separation", 4)
@@ -85,7 +55,7 @@ func _build_layout() -> void:
 func refresh() -> void:
 	if _ctx == null:
 		return
-	_refresh_alloy()
+	refresh_chrome_wallet()
 	for child in _list.get_children():
 		_list.remove_child(child)
 		child.queue_free()
@@ -100,15 +70,6 @@ func refresh() -> void:
 		return String(a.id) < String(b.id))
 	for species in all:
 		_list.add_child(_build_row(species))
-
-
-func _refresh_alloy() -> void:
-	if _ctx.wallet != null:
-		_alloy_label.text = "Alloy %d" % _ctx.wallet.alloy
-
-
-func _on_balance_changed(_currency: StringName, _amount: int) -> void:
-	_refresh_alloy()
 
 
 func _build_row(species: SpeciesDef) -> Control:

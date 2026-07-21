@@ -134,8 +134,9 @@ func test_a_cleared_stage_stays_replayable() -> void:
 
 
 func test_the_map_shows_the_wallet_and_follows_it() -> void:
+	# The header is shared chrome now (Screen.build_chrome), so the readout lives on the base.
 	_game.ctx.wallet.earn(Wallet.SCRAP, 777)
-	assert_true(_game._map._scrap_label.text.contains("777"),
+	assert_true(_game._map._chrome_scrap.text.contains("777"),
 		"the header renders from the signal, not from a poll")
 
 

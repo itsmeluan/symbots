@@ -41,10 +41,6 @@ const MIN_ROW_HEIGHT := 60  ## comfortably past the 44pt touch minimum
 const CARD_SEPARATION := 6
 
 var _ctx: ServiceContext = null
-var _screen_root: VBoxContainer
-
-var _scrap_label: Label
-var _alloy_label: Label
 var _list: VBoxContainer
 
 
@@ -52,9 +48,6 @@ func setup(ctx: ServiceContext) -> void:
 	_ctx = ctx
 	_set_background("res://assets/art/overworld/map_background.png", 0.6)
 	_build_layout()
-	_attach_bottom_dock(_screen_root, &"map", func(d): navigate.emit(d))
-	if _ctx.wallet != null:
-		_connect_owned(_ctx.wallet.balance_changed, Callable(self, "_on_balance_changed"))
 	refresh()
 
 
@@ -66,26 +59,12 @@ func _on_exit_tree() -> void:
 
 
 func _build_layout() -> void:
-	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-
-	var root := VBoxContainer.new()
-	_screen_root = root
-	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.add_theme_constant_override("separation", 6)
-	add_child(root)
-
-	var header := HBoxContainer.new()
-	root.add_child(header)
-	_scrap_label = Label.new()
-	_scrap_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header.add_child(_scrap_label)
-	_alloy_label = Label.new()
-	header.add_child(_alloy_label)
+	var content := build_chrome(_ctx, "MAP", &"map", func(d): navigate.emit(d))
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	root.add_child(scroll)
+	content.add_child(scroll)
 
 	_list = VBoxContainer.new()
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -96,7 +75,7 @@ func _build_layout() -> void:
 ## Redraw the whole map. Cheap enough at ten stages that incremental updates would be
 ## complexity with no payoff, and a full rebuild cannot leave a stale row behind.
 func refresh() -> void:
-	_refresh_wallet()
+	refresh_chrome_wallet()
 	for child in _list.get_children():
 		# remove_child BEFORE queue_free: queue_free is DEFERRED, so a rebuild that only
 		# queued would leave the old rows in the tree for the rest of the frame — the list
@@ -108,17 +87,6 @@ func refresh() -> void:
 	for stage in _ctx.stages.entries:
 		if stage != null:
 			_list.add_child(_build_card(stage))
-
-
-func _refresh_wallet() -> void:
-	if _ctx == null or _ctx.wallet == null:
-		return
-	_scrap_label.text = "Scrap %d" % _ctx.wallet.scrap
-	_alloy_label.text = "Alloy %d" % _ctx.wallet.alloy
-
-
-func _on_balance_changed(_currency: StringName, _amount: int) -> void:
-	_refresh_wallet()
 
 
 func _build_card(stage: StageDef) -> Control:
