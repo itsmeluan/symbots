@@ -359,3 +359,46 @@ func test_the_workshop_is_reachable_from_the_map_and_returns_to_it() -> void:
 	_game._workshop._on_close_pressed()
 	assert_not_null(_game._map)
 	assert_null(_game._workshop)
+
+
+# ---------------------------------------------------------------------------
+# What a part reports it is giving you
+# ---------------------------------------------------------------------------
+
+func test_a_parts_stat_line_grows_as_the_part_is_levelled() -> void:
+	# Regression: the line printed the authored per-level RATE, which is a constant. A
+	# level-1 part and a level-60 part both read "+3 STRUCTURE", so 59 paid upgrades looked
+	# like they had bought nothing. The stats were applied all along — the readout was frozen.
+	var inst := _selected()
+	inst.part_levels[1] = 10
+	var at_ten := _shop._part_stats_text(1)
+
+	inst.part_levels[1] = 40
+	var at_forty := _shop._part_stats_text(1)
+
+	assert_ne(at_ten, at_forty,
+		"the same part at level 10 and level 40 must not report the same contribution")
+
+
+func test_a_parts_stat_line_reports_its_real_contribution() -> void:
+	# The number on the row has to be the number in the stats, or the screen is quoting a
+	# figure the battle will not honour.
+	var inst := _selected()
+	inst.part_levels[1] = 21
+	var species: SpeciesDef = _game.ctx.species.get_species(inst.species_id)
+	var contribution := StatSummary.part_contribution(inst, species, 1)
+	assert_false(contribution.is_empty(), "precondition: slot 1 grows something")
+
+	var text := _shop._part_stats_text(1)
+	for stat in contribution:
+		assert_true(text.contains("+%d" % int(contribution[stat])),
+			"row must show the %s it actually contributes (%d)" % [stat, contribution[stat]])
+
+
+func test_a_level_one_part_advertises_what_upgrading_buys() -> void:
+	# A level-1 part contributes nothing above the baseline, so there is no total to show.
+	# Showing an empty line would read as "this part does nothing" rather than "not yet".
+	var inst := _selected()
+	inst.part_levels[1] = 1
+	assert_true(_shop._part_stats_text(1).contains("/LV"),
+		"falls back to the per-level rate")

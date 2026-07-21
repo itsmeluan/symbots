@@ -20,6 +20,14 @@ const LABELS := {
 	&"targeting": "TARGET", &"processing": "PROCESS", &"cooling": "COOLING",
 	&"energy_capacity": "E.CAP", &"recharge": "RECHARGE"}
 
+## Abbreviations for the part rows, where a levelled contribution can be four digits and
+## the full label no longer fits beside it. The stats drawer keeps LABELS — it has the width.
+const SHORT_LABELS := {
+	&"structure": "STR", &"armor": "ARM", &"resistance": "RES",
+	&"physical_power": "P.PWR", &"energy_power": "E.PWR", &"mobility": "MOB",
+	&"targeting": "TGT", &"processing": "PRC", &"cooling": "COOL",
+	&"energy_capacity": "E.CAP", &"recharge": "RCHG"}
+
 const ICON_DIR := "res://assets/art/icons/stat_%s.png"
 
 

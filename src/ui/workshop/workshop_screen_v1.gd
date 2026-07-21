@@ -730,16 +730,40 @@ func _build_part_row(slot: int) -> Control:
 	return row
 
 
-## The stats a part grows, per level: "+3 STRUCTURE  +1 ARMOR". Shown small under the level.
+## What this part is contributing RIGHT NOW: "+177 STRUCTURE  +59 ARMOR".
+##
+## This used to print `part_growth` — the authored per-level rate — which is a constant. The
+## row read "+3 STRUCTURE" on a level-1 part and "+3 STRUCTURE" on a level-60 one, so 59
+## upgrades looked like they had bought nothing. The stats were always being applied; only
+## the readout was frozen.
+##
+## A level-1 part contributes nothing over the species baseline (growth counts levels ABOVE
+## the first), so there is no total to show yet — it falls back to the per-level rate, which
+## is the number that actually answers "what does upgrading this buy me".
 func _part_stats_text(slot: int) -> String:
 	var species := _species_of(_selected)
 	if species == null or not species.part_growth.has(slot):
 		return ""
+	var contribution := StatSummary.part_contribution(_selected, species, slot)
+	if contribution.is_empty():
+		return _part_rate_text(species, slot)
+	var parts: Array = []
+	for stat in StatSummary.ORDER:
+		if contribution.has(stat):
+			parts.append("+%d %s" % [
+				int(contribution[stat]), StatSummary.SHORT_LABELS.get(stat, String(stat))])
+	return "  ".join(parts)
+
+
+## The authored per-level rate, shown only while the part is still at level 1 and therefore
+## has no accumulated contribution to report.
+func _part_rate_text(species: SpeciesDef, slot: int) -> String:
 	var growth: Dictionary = species.part_growth[slot]
 	var parts: Array = []
 	for stat in StatSummary.ORDER:
 		if growth.has(stat):
-			parts.append("+%d %s" % [int(growth[stat]), StatSummary.LABELS.get(stat, String(stat))])
+			parts.append("+%d/LV %s" % [
+				int(growth[stat]), StatSummary.SHORT_LABELS.get(stat, String(stat))])
 	return "  ".join(parts)
 
 
