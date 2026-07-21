@@ -20,7 +20,7 @@ cleanup() {
 trap cleanup EXIT
 
 printf '%s\n' \
-  'source,source_size,canvas_size,idle_gif,idle_spritesheet,attack_gif,attack_spritesheet,status' \
+  'source,source_size,canvas_size,idle_gif,idle_spritesheet,attack_gif,attack_spritesheet,damage_gif,damage_spritesheet,status' \
   > "$manifest_tmp"
 
 checked=0
@@ -41,7 +41,7 @@ EOF
   canvas_w=''
   canvas_h=''
 
-  for mode in idle attack; do
+  for mode in idle attack damage; do
     gif_path="$sprite_dir/$mode/${sprite_name}-${mode}.gif"
     sheet_path="$sprite_dir/$mode/${sprite_name}-${mode}-spritesheet.png"
     frames_dir="$sprite_dir/$mode/frames"
@@ -108,6 +108,8 @@ EOF
   idle_sheet_rel="$relative_dir/$sprite_name/idle/${sprite_name}-idle-spritesheet.png"
   attack_rel="$relative_dir/$sprite_name/attack/${sprite_name}-attack.gif"
   attack_sheet_rel="$relative_dir/$sprite_name/attack/${sprite_name}-attack-spritesheet.png"
+  damage_rel="$relative_dir/$sprite_name/damage/${sprite_name}-damage.gif"
+  damage_sheet_rel="$relative_dir/$sprite_name/damage/${sprite_name}-damage-spritesheet.png"
 
   if [ "$sprite_failed" -eq 0 ]; then
     status=PASS
@@ -116,9 +118,10 @@ EOF
     failures=$((failures + 1))
   fi
 
-  printf '"%s","%sx%s","%sx%s","%s","%s","%s","%s","%s"\n' \
+  printf '"%s","%sx%s","%sx%s","%s","%s","%s","%s","%s","%s","%s"\n' \
     "$relative_path" "$source_w" "$source_h" "$canvas_w" "$canvas_h" \
-    "$idle_rel" "$idle_sheet_rel" "$attack_rel" "$attack_sheet_rel" "$status" \
+    "$idle_rel" "$idle_sheet_rel" "$attack_rel" "$attack_sheet_rel" \
+    "$damage_rel" "$damage_sheet_rel" "$status" \
     >> "$manifest_tmp"
   checked=$((checked + 1))
 done < <(find "$source_root" -type f -iname '*.png' -print0 | sort -z)
