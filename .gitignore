@@ -143,3 +143,6 @@ $RECYCLE.BIN/
 *.msp
 *.lnk
 prototypes/*/node_modules/
+
+# Third-party tooling addons — binaries, never versioned (a 113 MB blob blocked a push once)
+addons/ziva_agent/
