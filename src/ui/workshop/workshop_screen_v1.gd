@@ -28,7 +28,6 @@ signal closed
 signal navigate(dest: StringName)
 
 const MIN_ROW_HEIGHT := 48  ## past the 44pt touch minimum
-const PART_ROW_HEIGHT := 56
 const PART_NAMES: Array[String] = ["Core", "Chassis", "Head", "Arms", "Legs"]
 const PART_ICON_PATHS: Array[String] = [
 	"res://assets/art/icons/slot_core.svg",
