@@ -214,13 +214,19 @@ func test_the_foundry_lists_the_whole_roster_including_locked() -> void:
 func test_a_locked_species_shows_how_to_unlock_it_not_a_dead_button() -> void:
 	var g := _game()
 	g.show_foundry()
-	var text := ""
-	for row in g._foundry._list.get_children():
-		for child in row.get_children():
-			if child is Label:
-				text += child.text
-	assert_true(text.contains("blueprint not found"),
+	# Rows are panelled now, so gather every Label in the subtree rather than the top level.
+	var text := _all_label_text(g._foundry._list)
+	assert_true(text.contains("Blueprint not found"),
 		"a locked species names its state rather than sitting blank")
+
+
+func _all_label_text(node: Node) -> String:
+	var text := ""
+	for child in node.get_children():
+		if child is Label:
+			text += child.text
+		text += _all_label_text(child)
+	return text
 
 
 func test_crafting_through_the_foundry_adds_the_symbot() -> void:

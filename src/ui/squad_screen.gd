@@ -113,15 +113,35 @@ func _build_bench_row(symbot: SymbotInstance) -> Control:
 	button.custom_minimum_size = Vector2(0, MIN_ROW_HEIGHT)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	button.text = "%s%-5s %s  Mk%d L%d" % [
-		"* " if fielded else "  ",
-		ROLE_NAMES.get(species.role, "") if species != null else "",
-		species.display_name if species != null else String(symbot.species_id),
-		symbot.mark, symbot.level]
+	button.text = "%s\n%s · MK %s · LV.%d%s" % [
+		(species.display_name if species != null else String(symbot.species_id)).to_upper(),
+		ROLE_NAMES.get(species.role, "—") if species != null else "—",
+		_roman(symbot.mark), symbot.level,
+		"   ·   FIELDED" if fielded else ""]
+	_style_bench(button, fielded)
 	# Enabled even when already fielded: tapping a fielded Symbot into another slot is how
 	# the player reorders, and the roster moves rather than duplicates.
 	button.pressed.connect(Callable(self, "_on_bench_pressed").bind(symbot))
 	return button
+
+
+## Cyan while it fights, quiet on the bench — the column reads as who is in and who is out.
+func _style_bench(button: Button, fielded: bool) -> void:
+	var box := UIPalette.row(UIPalette.CYAN if fielded else UIPalette.LINE, not fielded)
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		button.add_theme_stylebox_override(state, box)
+	button.add_theme_stylebox_override("focus", UIPalette.empty())
+	button.add_theme_color_override("font_color",
+		UIPalette.TEXT if fielded else UIPalette.MUTED)
+	button.add_theme_font_size_override("font_size", 12)
+
+
+func _roman(n: int) -> String:
+	match n:
+		1: return "I"
+		2: return "II"
+		3: return "III"
+	return str(n)
 
 
 ## Warn about a composition that will not work, without blocking it. The design does not

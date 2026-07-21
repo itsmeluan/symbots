@@ -97,10 +97,10 @@ func _build_card(stage: StageDef) -> Control:
 	button.custom_minimum_size = Vector2(0, MIN_ROW_HEIGHT)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	button.text = _card_text(stage, cleared)
 	button.disabled = not available
 	button.tooltip_text = stage.description
+	_style_card(button, available, cleared)
 
 	if available:
 		button.pressed.connect(Callable(self, "_on_stage_pressed").bind(stage))
@@ -109,14 +109,40 @@ func _build_card(stage: StageDef) -> Control:
 	return button
 
 
+## Two lines: the stage's name, then what it is and what it wants. The left bar carries the
+## state, so scanning the column reads as a progress track rather than a list of names.
 func _card_text(stage: StageDef, cleared: bool) -> String:
-	var marker := "[cleared] " if cleared else ""
-	var kind := ""
+	var kind := "%d fight" % stage.battle_count()
+	if stage.battle_count() != 1:
+		kind = "%d fights" % stage.battle_count()
 	match stage.mode:
-		StageDefScript.Mode.DUNGEON: kind = "  DUNGEON x%d" % stage.battle_count()
-		StageDefScript.Mode.RAID: kind = "  RAID"
-		StageDefScript.Mode.ENDLESS: kind = "  ENDLESS"
-	return "%s%d. %s%s" % [marker, stage.stage_level, stage.display_name, kind]
+		StageDefScript.Mode.DUNGEON: kind = "DUNGEON · %s · Core" % kind
+		StageDefScript.Mode.RAID: kind = "RAID · %s" % kind
+		StageDefScript.Mode.ENDLESS: kind = "ENDLESS"
+	var mark := "CLEARED · " if cleared else ""
+	return "%02d   %s\n%sLv %d · %s" % [
+		stage.stage_level, stage.display_name.to_upper(), mark, stage.enemy_level, kind]
+
+
+## Amber once beaten, cyan when it is the next thing to do, dim when it is still out of reach.
+func _style_card(button: Button, available: bool, cleared: bool) -> void:
+	var accent := UIPalette.LINE
+	var text := UIPalette.DISABLED
+	if cleared:
+		accent = UIPalette.AMBER
+		text = UIPalette.TEXT
+	elif available:
+		accent = UIPalette.CYAN
+		text = UIPalette.TEXT
+	var box := UIPalette.row(accent, not available)
+	button.add_theme_stylebox_override("normal", box)
+	button.add_theme_stylebox_override("hover", box)
+	button.add_theme_stylebox_override("pressed", box)
+	button.add_theme_stylebox_override("disabled", box)
+	button.add_theme_stylebox_override("focus", UIPalette.empty())
+	button.add_theme_color_override("font_color", text)
+	button.add_theme_color_override("font_disabled_color", text)
+	button.add_theme_font_size_override("font_size", 12)
 
 
 func _on_workshop_pressed() -> void:

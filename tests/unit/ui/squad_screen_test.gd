@@ -61,7 +61,7 @@ func test_each_symbot_shows_its_role() -> void:
 
 
 func test_a_fielded_symbot_is_marked_on_the_bench() -> void:
-	assert_true(_bench_button(0).text.begins_with("*"),
+	assert_true(_bench_button(0).text.contains("FIELDED"),
 		"otherwise the player cannot tell who is already in")
 
 

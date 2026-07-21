@@ -73,10 +73,15 @@ func refresh() -> void:
 
 
 func _build_row(species: SpeciesDef) -> Control:
+	var known := _ctx.blueprints.has_blueprint(species.id)
+	# Alloy-blue once the recipe is known, quiet while it is still out there to be found.
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel",
+		UIPalette.row(UIPalette.ALLOY if known else UIPalette.LINE, not known))
 	var row := HBoxContainer.new()
 	row.custom_minimum_size = Vector2(0, MIN_ROW_HEIGHT)
+	panel.add_child(row)
 
-	var known := _ctx.blueprints.has_blueprint(species.id)
 	var owned := _count_owned(species.id)
 
 	var label := Label.new()
@@ -84,13 +89,15 @@ func _build_row(species: SpeciesDef) -> Control:
 	# Clip a long line rather than letting it widen the row past the screen edge, which
 	# would push the Craft button off the right — the same overflow the skill bar hit.
 	label.clip_text = true
+	label.add_theme_font_size_override("font_size", 12)
 	if known:
-		label.text = "%s%s" % [species.display_name, ("  (owned x%d)" % owned) if owned else ""]
+		label.text = "%s\n%s" % [species.display_name.to_upper(),
+			("OWNED x%d" % owned) if owned else "Not built yet"]
 	else:
 		# Not a name-and-blank: the row names how to unlock it, which is the whole point of
 		# showing a locked species at all.
-		label.text = "%s — blueprint not found" % species.display_name
-		label.modulate = Color(0.55, 0.55, 0.6)
+		label.text = "%s\nBlueprint not found" % species.display_name.to_upper()
+		label.add_theme_color_override("font_color", UIPalette.DISABLED)
 	row.add_child(label)
 
 	var button := Button.new()
@@ -101,9 +108,13 @@ func _build_row(species: SpeciesDef) -> Control:
 	button.text = _button_text(species, refusal)
 	button.disabled = refusal != CraftingServiceScript.Refusal.OK
 	if refusal == CraftingServiceScript.Refusal.OK:
+		button.theme_type_variation = &"Primary"
 		button.pressed.connect(Callable(self, "_on_craft_pressed").bind(species.id))
+	button.add_theme_font_size_override("font_size", 11)
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	button.custom_minimum_size = Vector2(104, 34)
 	row.add_child(button)
-	return row
+	return panel
 
 
 ## The button says WHY it cannot be pressed, because "locked" and "cannot afford" mean

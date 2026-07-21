@@ -162,12 +162,18 @@ func _build_active_slot(index: int) -> Control:
 
 
 func _build_empty_slot() -> Control:
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", UIPalette.row(UIPalette.LINE, true))
 	var label := Label.new()
-	label.text = "— empty slot —"
-	label.custom_minimum_size = Vector2(0, MIN_ROW_HEIGHT)
+	label.theme_type_variation = &"Light"
+	label.text = "EMPTY SLOT"
+	label.add_theme_font_size_override("font_size", 11)
+	label.add_theme_color_override("font_color", UIPalette.DISABLED)
+	label.custom_minimum_size = Vector2(0, MIN_ROW_HEIGHT - 14)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.modulate = Color(0.6, 0.6, 0.65)
-	return label
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	panel.add_child(label)
+	return panel
 
 
 # ---------------------------------------------------------------------------

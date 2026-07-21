@@ -77,6 +77,22 @@ static func panel(accent: Color = LINE, fill: Color = PANEL) -> StyleBoxFlat:
 	return box
 
 
+## A list row: dark translucent fill with a coloured bar down its left edge. The v1 list
+## idiom — the bar carries the row's state (cyan available, amber earned, grey locked) so a
+## glance down a column reads as a column of states, not a wall of text.
+static func row(accent: Color, dim: bool = false) -> StyleBoxFlat:
+	var box := StyleBoxFlat.new()
+	box.bg_color = Color(PANEL, 0.55 if dim else 0.82)
+	box.border_width_left = 3
+	box.border_color = Color(accent, 0.45) if dim else accent
+	box.set_corner_radius_all(3)
+	box.set_content_margin(SIDE_LEFT, 10)
+	box.set_content_margin(SIDE_RIGHT, 10)
+	box.set_content_margin(SIDE_TOP, 7)
+	box.set_content_margin(SIDE_BOTTOM, 7)
+	return box
+
+
 ## A darker inset panel, for lists and wells.
 static func well() -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
