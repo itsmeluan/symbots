@@ -692,7 +692,7 @@ func _refresh_stats_values(animate: bool) -> void:
 		_stat_bars[stat].set_value(int(cur.get(stat, 0)), top, animate)
 
 
-const PART_ICON_SIZE := 26.0
+const PART_ICON_SIZE := 20.0
 const UPGRADE_W := 50.0
 const SCRAP_ICON := "res://assets/art/icons/scrap.svg"
 
@@ -730,18 +730,24 @@ func _build_part_row(slot: int) -> Control:
 	title.add_theme_constant_override("separation", 6)
 	namecol.add_child(title)
 
+	# Same size and weight as the stat names in the STATS tab, so the two tabs read alike.
 	var name_label := Label.new()
-	name_label.add_theme_font_size_override("font_size", 12)
-	name_label.add_theme_color_override("font_color", UIPalette.CYAN)
+	name_label.add_theme_font_size_override("font_size", 11)
+	name_label.add_theme_color_override("font_color", UIPalette.TEXT)
 	name_label.text = PART_NAMES[slot].to_upper()
+	# Clipping lets the name give way as the level number grows, instead of the row overflowing
+	# and shoving the Upgrade pill past the panel's right margin.
+	name_label.clip_text = true
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.add_child(name_label)
 
 	var level := Label.new()
 	level.theme_type_variation = &"Light"
 	level.add_theme_font_size_override("font_size", 10)
-	level.add_theme_color_override("font_color", UIPalette.TEXT)
+	level.add_theme_color_override("font_color", UIPalette.MUTED)
 	level.text = "Lv. %d/%d" % [_selected.get_part_level(slot), _selected.part_level_cap()]
 	level.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	level.size_flags_horizontal = Control.SIZE_SHRINK_END
 	title.add_child(level)
 
 	# Line two: what the part grows. Scrolls itself when the Upgrade button squeezes it.
