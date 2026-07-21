@@ -60,17 +60,27 @@ func refresh() -> void:
 	for child in _list.get_children():
 		_list.remove_child(child)
 		child.queue_free()
-	# Whole roster, so locked species are visible as targets. Known ones sort to the top so
-	# the actionable rows are not buried under the ones you cannot build yet.
+	# Whole roster, so locked species are visible as targets — but ordered by what the player
+	# can act on RIGHT NOW: buildable first, then known-but-unaffordable, then locked. Sorting
+	# only by "known" still buried the one row worth tapping under recipes you cannot pay for.
 	var all := _ctx.species.entries.duplicate()
 	all.sort_custom(func(a, b):
-		var ka := _ctx.blueprints.has_blueprint(a.id)
-		var kb := _ctx.blueprints.has_blueprint(b.id)
-		if ka != kb:
-			return ka
+		var ra := _craft_rank(a)
+		var rb := _craft_rank(b)
+		if ra != rb:
+			return ra < rb
 		return String(a.id) < String(b.id))
 	for species in all:
 		_list.add_child(_build_row(species))
+
+
+## 0 buildable now, 1 recipe known but not affordable, 2 still locked.
+func _craft_rank(species: SpeciesDef) -> int:
+	if not _ctx.blueprints.has_blueprint(species.id):
+		return 2
+	var refusal := CraftingServiceScript.can_craft(species.id, _ctx.species,
+		_ctx.blueprints, _ctx.wallet)
+	return 0 if refusal == CraftingServiceScript.Refusal.OK else 1
 
 
 func _build_row(species: SpeciesDef) -> Control:

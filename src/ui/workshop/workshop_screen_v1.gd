@@ -871,7 +871,10 @@ func _gen_progress_text() -> String:
 			return "PARTS MAXED   %d / %d" % [_parts_maxed(), SymbotInstanceScript.PART_COUNT]
 		&"overclock":
 			var cores := _ctx.key_items.count(KeyItems.CHIPSET) if _ctx.key_items else 0
-			return "LEVEL %d / %d   ·   PARTS %d / %d   ·   CHIPSETS %d" % [
+			# Show the ceiling it BUYS, not just the one it has — the payoff is the number
+			# that moves, and it is invisible until you have already spent.
+			return "CEILING %d \u2192 %d   \u00b7   LEVEL %d/%d   \u00b7   PARTS %d/%d   \u00b7   CHIPSETS %d" % [
+				_selected.level_cap(), _selected.level_cap() + 1,
 				_selected.level, _selected.level_cap(),
 				_parts_maxed(), SymbotInstanceScript.PART_COUNT, cores]
 	return ""
