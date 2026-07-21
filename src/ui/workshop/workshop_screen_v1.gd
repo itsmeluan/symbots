@@ -209,11 +209,13 @@ func _build_mid() -> Control:
 	_hero.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	# Centred on screen but biased right of the parts column and low, so it reads as standing
 	# on the bench floor rather than hovering over the buttons.
-	_hero.anchor_left = 0.20
-	_hero.anchor_right = 0.96
-	_hero.anchor_top = 0.34
+	# Full width so KEEP_ASPECT_CENTERED puts the sprite on the exact screen centre; biased low
+	# so it stands on the bench floor. The parts column is narrow enough to clear it.
+	_hero.anchor_left = 0.0
+	_hero.anchor_right = 1.0
+	_hero.anchor_top = 0.42
 	_hero.anchor_bottom = 1.0
-	_hero.offset_bottom = -4
+	_hero.offset_bottom = -2
 	mid.add_child(_hero)
 
 	# The parts column: a fixed narrow rect pinned top-left, so its rows never stretch across
@@ -226,8 +228,8 @@ func _build_mid() -> Control:
 	_part_list.anchor_bottom = 0.0
 	_part_list.offset_left = 0
 	_part_list.offset_top = 0
-	_part_list.offset_right = 148
-	_part_list.offset_bottom = 340
+	_part_list.offset_right = 96
+	_part_list.offset_bottom = 320
 	mid.add_child(_part_list)
 	return mid
 
@@ -375,49 +377,85 @@ func _rebuild_parts() -> void:
 		_part_list.add_child(_build_part_row(slot))
 
 
-## One part: a round-badged icon (tap = its name), its level, and a small Upgrade button with
-## the Scrap price. The badge glyph is the only thing that names the part, and only on tap.
+const BADGE_SIZE := 36.0     ## 25% smaller than the first pass (48)
+const UPGRADE_W := 50.0      ## the Lv label and the button share this width
+const SCRAP_ICON := "res://assets/art/icons/scrap.svg"
+
+## One part: a round-badged icon (tap = its name), its level, and a chamfered Upgrade button
+## carrying the Scrap glyph and price. The badge glyph is the only thing that names the part,
+## and only on tap. The Lv label and button share the button's width and sit so the button's
+## bottom lines up with the bottom of the badge.
 func _build_part_row(slot: int) -> Control:
 	var row := HBoxContainer.new()
-	row.custom_minimum_size = Vector2(0, PART_ROW_HEIGHT)
-	row.add_theme_constant_override("separation", 8)
+	row.custom_minimum_size = Vector2(0, MIN_ROW_HEIGHT)
+	row.add_theme_constant_override("separation", 6)
 
 	row.add_child(_build_part_badge(slot))
 
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 2)
+	col.custom_minimum_size = Vector2(UPGRADE_W, 0)
 	col.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	col.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	row.add_child(col)
 
 	var level := Label.new()
-	level.add_theme_font_size_override("font_size", 11)
+	level.add_theme_font_size_override("font_size", 8)
 	level.add_theme_color_override("font_color", UIPalette.TEXT)
 	level.text = "Lv. %d/%d" % [_selected.get_part_level(slot), _selected.part_level_cap()]
 	col.add_child(level)
 
 	var refusal := UpgradeEconomyScript.can_upgrade(_selected, slot, _ctx.wallet, _ctx.balance)
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(78, 38)
+	button.custom_minimum_size = Vector2(UPGRADE_W, 22)
 	button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	button.clip_text = true
 	button.add_theme_font_size_override("font_size", 10)
+	button.add_theme_constant_override("icon_max_width", 12)
+	button.add_theme_constant_override("h_separation", 2)
 	button.disabled = refusal != UpgradeEconomyScript.Refusal.OK
 	button.text = _upgrade_label(slot, refusal)
+	_style_upgrade_button(button, refusal == UpgradeEconomyScript.Refusal.OK)
 	if refusal == UpgradeEconomyScript.Refusal.OK:
-		button.theme_type_variation = &"Primary"
+		button.icon = load(SCRAP_ICON) if ResourceLoader.exists(SCRAP_ICON) else null
+		button.add_theme_color_override("icon_normal_color", UIPalette.INK)
 		button.pressed.connect(Callable(self, "_on_upgrade_pressed").bind(slot))
 	col.add_child(button)
 	return row
 
 
+## The chamfered "tech tag" shape of the nameplate, at button scale: amber when actionable,
+## grey when capped/unaffordable.
+func _style_upgrade_button(button: Button, actionable: bool) -> void:
+	var box := ChamferStyleBox.new()
+	box.chamfer = 5.0
+	box.set_content_margin(SIDE_LEFT, 5)
+	box.set_content_margin(SIDE_RIGHT, 5)
+	box.set_content_margin(SIDE_TOP, 3)
+	box.set_content_margin(SIDE_BOTTOM, 3)
+	if actionable:
+		box.bg_color = UIPalette.AMBER
+		button.add_theme_color_override("font_color", UIPalette.INK)
+	else:
+		box.bg_color = UIPalette.PANEL_2
+		box.border_color = UIPalette.LINE_SOFT
+		box.border_width = 1.0
+		button.add_theme_color_override("font_color", UIPalette.DISABLED)
+	button.add_theme_stylebox_override("normal", box)
+	button.add_theme_stylebox_override("hover", box)
+	button.add_theme_stylebox_override("pressed", box)
+	button.add_theme_stylebox_override("disabled", box)
+	button.add_theme_stylebox_override("focus", UIPalette.empty())
+
+
 func _build_part_badge(slot: int) -> Control:
 	var badge := Panel.new()
-	badge.custom_minimum_size = Vector2(48, 48)
+	badge.custom_minimum_size = Vector2(BADGE_SIZE, BADGE_SIZE)
 	badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	badge.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(UIPalette.INK, 0.65)
-	sb.set_corner_radius_all(24)
+	sb.set_corner_radius_all(int(BADGE_SIZE * 0.5))
 	sb.border_color = UIPalette.CYAN
 	sb.set_border_width_all(2)
 	badge.add_theme_stylebox_override("panel", sb)
@@ -431,23 +469,24 @@ func _build_part_badge(slot: int) -> Control:
 	tex.modulate = UIPalette.TEXT
 	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tex.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	tex.offset_left = 9
-	tex.offset_top = 9
-	tex.offset_right = -9
-	tex.offset_bottom = -9
+	tex.offset_left = 6
+	tex.offset_top = 6
+	tex.offset_right = -6
+	tex.offset_bottom = -6
 	badge.add_child(tex)
 	return badge
 
 
-## The button says WHY it cannot be pressed. "Capped" and "cannot afford" send the player to
-## different places — one means go gen-up, the other means go fight.
+## The button carries the Scrap glyph as its icon; its text is just the price (or the state).
+## "Capped" and "cannot afford" send the player to different places — one means go gen-up, the
+## other means go fight.
 func _upgrade_label(slot: int, refusal: int) -> String:
 	match refusal:
 		UpgradeEconomyScript.Refusal.AT_MARK_CAP:
 			return "Capped"
 		UpgradeEconomyScript.Refusal.NO_SUCH_PART:
 			return "—"
-	return "Upgrade\n%d" % UpgradeEconomyScript.level_cost(_selected.get_part_level(slot), _ctx.balance)
+	return "%d" % UpgradeEconomyScript.level_cost(_selected.get_part_level(slot), _ctx.balance)
 
 
 ## GEN ▲ stays present but greyed until every part is capped; tapping it early opens the modal

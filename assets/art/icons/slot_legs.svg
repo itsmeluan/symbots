@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" color="#B9C9D1" fill="none" role="img" aria-labelledby="title desc">
   <title id="title">Symbot legs</title>
   <desc id="desc">Paired articulated mechanical legs with angular knee joints and planted feet.</desc>
-  <g stroke="currentColor" stroke-width="3.75" stroke-linecap="square" stroke-linejoin="miter">
+  <g stroke="currentColor" stroke-width="1.875" stroke-linecap="square" stroke-linejoin="miter">
     <path d="M7 3.5h7l1.5 4v7L13 17H8l-2-3V7l1-3.5Z"/>
     <path d="M8 17h5l1 4.5-2 6H4l1.5-3H8v-7.5Z"/>
     <path d="M25 3.5h-7l-1.5 4v7L19 17h5l2-3V7l-1-3.5Z"/>

@@ -53,6 +53,7 @@ func _init() -> void:
 	_name_label = Label.new()
 	_name_label.theme_type_variation = &"Heading"
 	_name_label.add_theme_font_size_override("font_size", 19)
+	_name_label.add_theme_color_override("font_color", UIPalette.AMBER)
 	_name_label.clip_text = true
 	col.add_child(_name_label)
 
