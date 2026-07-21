@@ -29,9 +29,14 @@ const SCRAP := AMBER                   ## Scrap currency — the common upgrade 
 const ALLOY := Color("7ec8ff")        ## Alloy currency — the rare blueprint metal (light blue)
 
 # --- Fonts -----------------------------------------------------------------
-const DISPLAY_FONT := "res://assets/fonts/Rajdhani-SemiBold.woff"   ## headings, names, buttons
-const DISPLAY_BOLD := "res://assets/fonts/Rajdhani-Bold.woff"
-const MONO_FONT := "res://assets/fonts/IBMPlexMono-Regular.woff"    ## body, numbers
+# One family everywhere (Rajdhani), weight by size: small text light, large text bold.
+const DISPLAY_BOLD := "res://assets/fonts/Rajdhani-Bold.woff"       ## titles, names
+const DISPLAY_FONT := "res://assets/fonts/Rajdhani-SemiBold.woff"   ## buttons, emphasis
+const DISPLAY_MEDIUM := "res://assets/fonts/Rajdhani-Medium.woff"   ## body
+const DISPLAY_REGULAR := "res://assets/fonts/Rajdhani-Regular.woff" ## body
+const DISPLAY_LIGHT := "res://assets/fonts/Rajdhani-Light.woff"     ## small numbers, captions
+# Kept for any lingering references; the theme no longer uses them.
+const MONO_FONT := "res://assets/fonts/IBMPlexMono-Regular.woff"
 const MONO_BOLD := "res://assets/fonts/IBMPlexMono-SemiBold.woff"
 
 
@@ -39,8 +44,20 @@ static func display_font() -> FontFile:
 	return load(DISPLAY_FONT)
 
 
+static func bold_font() -> FontFile:
+	return load(DISPLAY_BOLD)
+
+
+static func regular_font() -> FontFile:
+	return load(DISPLAY_REGULAR)
+
+
+static func light_font() -> FontFile:
+	return load(DISPLAY_LIGHT)
+
+
 static func mono_font() -> FontFile:
-	return load(MONO_FONT)
+	return load(DISPLAY_REGULAR)
 
 
 # --- StyleBox factories ----------------------------------------------------

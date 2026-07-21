@@ -15,12 +15,12 @@ extends RefCounted
 static func build() -> Theme:
 	var t := Theme.new()
 	var display := UIPalette.display_font()
-	var mono := UIPalette.mono_font()
 
-	t.default_font = mono
+	# One family (Rajdhani) everywhere; body is Regular.
+	t.default_font = UIPalette.regular_font()
 	t.default_font_size = 13
 
-	_style_label(t, mono, display)
+	_style_label(t)
 	_style_button(t, display)
 	_style_check_button(t, display)
 	_style_panel(t)
@@ -29,16 +29,20 @@ static func build() -> Theme:
 	return t
 
 
-static func _style_label(t: Theme, mono: FontFile, _display: FontFile) -> void:
-	t.set_type_variation(&"Heading", &"Label")
-	# Base labels: mono, primary text.
-	t.set_font(&"font", &"Label", mono)
+static func _style_label(t: Theme) -> void:
+	# Base labels: Rajdhani Regular, primary text.
+	t.set_font(&"font", &"Label", UIPalette.regular_font())
 	t.set_color(&"font_color", &"Label", UIPalette.TEXT)
-	# A "Heading" variation in the display font — screens set `theme_type_variation` to use
-	# it for titles and Symbot names.
-	t.set_font(&"font", &"Heading", UIPalette.display_font())
+	# "Heading" — the bold weight, for titles and Symbot names.
+	t.set_type_variation(&"Heading", &"Label")
+	t.set_font(&"font", &"Heading", UIPalette.bold_font())
 	t.set_color(&"font_color", &"Heading", UIPalette.TEXT)
 	t.set_font_size(&"font_size", &"Heading", 20)
+	# "Light" — the thin weight, for small numbers and captions (Lv, stat values).
+	t.set_type_variation(&"Light", &"Label")
+	t.set_font(&"font", &"Light", UIPalette.light_font())
+	t.set_color(&"font_color", &"Light", UIPalette.TEXT)
+	t.set_font_size(&"font_size", &"Light", 11)
 
 
 static func _style_button(t: Theme, display: FontFile) -> void:

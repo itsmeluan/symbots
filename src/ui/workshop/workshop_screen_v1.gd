@@ -52,6 +52,25 @@ var _part_list: VBoxContainer
 var _carousel: SymbotCarousel
 var _dock: BottomDock
 
+# The right drawer: a sliding panel with PARTS and STATS tabs, and a handle that opens/closes
+# it so the player can hide it and see just the art.
+var _mid: Control
+var _drawer: Control
+var _drawer_handle: Button
+var _parts_scroll: Control
+var _stats_scroll: Control
+var _stats_view: VBoxContainer
+var _stat_bars: Dictionary = {}
+var _tab_parts: Button
+var _tab_stats: Button
+var _active_tab: StringName = &"parts"
+var _drawer_open: bool = true
+var _drawer_t: float = 1.0     ## 0 = closed (art only), 1 = open
+var _drawer_tween: Tween
+
+const DRAWER_W := 168.0
+const HANDLE_W := 24.0
+
 # Overlay: a tap tooltip (part names) and a modal card (the gen-up requirement).
 var _overlay_layer: Control
 var _scrim: ColorRect
@@ -147,7 +166,8 @@ func _make_currency_row(parent: VBoxContainer, icon: Control, colour: Color) -> 
 	parent.add_child(row)
 	row.add_child(icon)
 	var label := Label.new()
-	label.add_theme_font_size_override("font_size", 12)
+	label.theme_type_variation = &"Light"
+	label.add_theme_font_size_override("font_size", 13)
 	label.add_theme_color_override("font_color", colour)
 	row.add_child(label)
 	return label
@@ -207,45 +227,191 @@ func _build_subheader() -> Control:
 	return row
 
 
-## Parts float top-left; the hero fills the rest and sits low, so it reads as standing on the
-## bench floor of the backdrop rather than hovering mid-air.
+## The hero fills the centre and stands low on the floor; a sliding right drawer holds the
+## PARTS and STATS tabs and closes to a handle so only the art shows.
 func _build_mid() -> Control:
-	var mid := Control.new()
-	mid.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	mid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_mid = Control.new()
+	_mid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_mid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_mid.clip_contents = true  # clip the drawer as it slides off the right edge
 
 	_hero = TextureRect.new()
 	_hero.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_hero.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_hero.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_hero.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	# Centred on screen but biased right of the parts column and low, so it reads as standing
-	# on the bench floor rather than hovering over the buttons.
-	# Full width so KEEP_ASPECT_CENTERED puts the sprite on the exact screen centre. Pinned to
-	# the BOTTOM of the area with a fixed height rather than centred in a band, so it sits low
-	# on the bench floor at a stable size instead of floating mid-air.
+	# Full width so it centres on screen; bottom-pinned so it stands low on the bench floor.
+	# offset_right is animated by the drawer so the art re-centres in the free space.
 	_hero.anchor_left = 0.0
 	_hero.anchor_right = 1.0
 	_hero.anchor_top = 1.0
 	_hero.anchor_bottom = 1.0
-	_hero.offset_top = -150
-	_hero.offset_bottom = 28
-	mid.add_child(_hero)
+	_hero.offset_top = -122
+	_hero.offset_bottom = 0
+	_mid.add_child(_hero)
 
-	# The parts column: a fixed narrow rect pinned top-left, so its rows never stretch across
-	# the sprite. A plain-Control parent means the VBox honours these offsets directly.
+	_mid.add_child(_build_drawer())
+	_mid.resized.connect(_apply_drawer)
+	call_deferred("_apply_drawer")
+	return _mid
+
+
+## The sliding drawer: a handle on the left edge, then a panel with the PARTS/STATS tabs.
+func _build_drawer() -> Control:
+	_drawer = Control.new()
+	_drawer.anchor_top = 0.0
+	_drawer.anchor_bottom = 1.0
+	_drawer.anchor_left = 0.0
+	_drawer.anchor_right = 0.0
+
+	_drawer_handle = Button.new()
+	_drawer_handle.text = "▶"
+	_drawer_handle.anchor_top = 0.0
+	_drawer_handle.anchor_bottom = 1.0
+	_drawer_handle.offset_left = 0
+	_drawer_handle.offset_right = HANDLE_W
+	_drawer_handle.add_theme_font_size_override("font_size", 14)
+	_style_handle(_drawer_handle)
+	_drawer_handle.pressed.connect(_toggle_drawer)
+	_drawer.add_child(_drawer_handle)
+
+	var panel := PanelContainer.new()
+	panel.anchor_top = 0.0
+	panel.anchor_bottom = 1.0
+	panel.offset_left = HANDLE_W
+	panel.offset_right = HANDLE_W + DRAWER_W
+	var pbox := StyleBoxFlat.new()
+	pbox.bg_color = Color(UIPalette.PANEL, 0.96)
+	pbox.border_width_left = 2
+	pbox.border_color = UIPalette.CYAN
+	pbox.set_content_margin_all(8)
+	panel.add_theme_stylebox_override("panel", pbox)
+	_drawer.add_child(panel)
+
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 6)
+	panel.add_child(v)
+
+	var tabs := HBoxContainer.new()
+	tabs.add_theme_constant_override("separation", 4)
+	v.add_child(tabs)
+	_tab_parts = _make_tab("PARTS", &"parts")
+	_tab_stats = _make_tab("STATS", &"stats")
+	tabs.add_child(_tab_parts)
+	tabs.add_child(_tab_stats)
+
+	var content := Control.new()
+	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	v.add_child(content)
+	_parts_scroll = _build_parts_tab()
+	_stats_scroll = _build_stats_tab()
+	content.add_child(_parts_scroll)
+	content.add_child(_stats_scroll)
+	_set_active_tab(&"parts")
+	return _drawer
+
+
+func _build_parts_tab() -> Control:
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_part_list = VBoxContainer.new()
+	_part_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_part_list.add_theme_constant_override("separation", 6)
-	_part_list.anchor_left = 0.0
-	_part_list.anchor_top = 0.0
-	_part_list.anchor_right = 0.0
-	_part_list.anchor_bottom = 0.0
-	_part_list.offset_left = 0
-	_part_list.offset_top = 0
-	_part_list.offset_right = 96
-	_part_list.offset_bottom = 320
-	mid.add_child(_part_list)
-	return mid
+	scroll.add_child(_part_list)
+	return scroll
+
+
+func _build_stats_tab() -> Control:
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_stats_view = VBoxContainer.new()
+	_stats_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_stats_view.add_theme_constant_override("separation", 5)
+	scroll.add_child(_stats_view)
+	return scroll
+
+
+func _make_tab(label: String, id: StringName) -> Button:
+	var b := Button.new()
+	b.text = label
+	b.toggle_mode = true
+	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	b.custom_minimum_size = Vector2(0, 30)
+	b.add_theme_font_size_override("font_size", 12)
+	b.pressed.connect(func(): _set_active_tab(id))
+	return b
+
+
+func _style_handle(button: Button) -> void:
+	var box := StyleBoxFlat.new()
+	box.bg_color = UIPalette.CYAN_DARK
+	box.set_corner_radius_all(3)
+	box.border_color = UIPalette.CYAN
+	box.set_border_width_all(1)
+	button.add_theme_stylebox_override("normal", box)
+	button.add_theme_stylebox_override("hover", box)
+	button.add_theme_stylebox_override("pressed", box)
+	button.add_theme_stylebox_override("focus", UIPalette.empty())
+	button.add_theme_color_override("font_color", UIPalette.CYAN)
+
+
+func _style_drawer_tab(button: Button, active: bool) -> void:
+	var box := StyleBoxFlat.new()
+	box.bg_color = UIPalette.PANEL_2 if active else Color(0, 0, 0, 0)
+	box.set_corner_radius_all(3)
+	if active:
+		box.border_width_bottom = 2
+		box.border_color = UIPalette.CYAN
+	box.set_content_margin_all(3)
+	button.button_pressed = active
+	button.add_theme_stylebox_override("normal", box)
+	button.add_theme_stylebox_override("hover", box)
+	button.add_theme_stylebox_override("pressed", box)
+	button.add_theme_stylebox_override("focus", UIPalette.empty())
+	button.add_theme_color_override("font_color", UIPalette.CYAN if active else UIPalette.MUTED)
+
+
+# --- drawer open/close + tab switching ---
+
+func _set_active_tab(id: StringName) -> void:
+	_active_tab = id
+	_parts_scroll.visible = id == &"parts"
+	_stats_scroll.visible = id == &"stats"
+	_style_drawer_tab(_tab_parts, id == &"parts")
+	_style_drawer_tab(_tab_stats, id == &"stats")
+
+
+func _toggle_drawer() -> void:
+	_drawer_open = not _drawer_open
+	_drawer_handle.text = "▶" if _drawer_open else "◀"
+	if _drawer_tween != null and _drawer_tween.is_valid():
+		_drawer_tween.kill()
+	var target := 1.0 if _drawer_open else 0.0
+	if not is_inside_tree():
+		_set_drawer_t(target)
+		return
+	_drawer_tween = create_tween()
+	_drawer_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_drawer_tween.tween_method(_set_drawer_t, _drawer_t, target, 0.25)
+
+
+func _set_drawer_t(v: float) -> void:
+	_drawer_t = v
+	_apply_drawer()
+
+
+func _apply_drawer() -> void:
+	if _mid == null or _drawer == null:
+		return
+	var mw := _mid.size.x
+	var total := HANDLE_W + DRAWER_W
+	var x := lerpf(mw - HANDLE_W, mw - total, _drawer_t)
+	_drawer.offset_left = x
+	_drawer.offset_right = x + total
+	_hero.offset_right = -total * _drawer_t
 
 
 func _build_overlay_layer() -> void:
@@ -362,6 +528,7 @@ func refresh() -> void:
 	_refresh_wallet()
 	_refresh_hero_and_name()
 	_rebuild_parts()
+	_rebuild_stats()
 	_refresh_gen()
 
 
@@ -391,6 +558,40 @@ func _rebuild_parts() -> void:
 		_part_list.add_child(_build_part_row(slot))
 
 
+## Rebuild the STATS tab's bars for the selected Symbot. Only stats the species actually uses
+## (non-zero at cap) get a bar. Called on a Symbot change; upgrades reuse the bars so the
+## grow animation can play.
+func _rebuild_stats() -> void:
+	_clear(_stats_view)
+	_stat_bars.clear()
+	if _selected == null:
+		return
+	var species := _species_of(_selected)
+	var cap_stats := StatSummary.at_cap(_selected, species)
+	for stat in StatSummary.ORDER:
+		if int(cap_stats.get(stat, 0)) <= 0:
+			continue
+		var bar := StatBar.new()
+		var icon_path := StatSummary.icon_path(stat)
+		bar.bind(load(icon_path) if ResourceLoader.exists(icon_path) else null,
+			StatSummary.LABELS.get(stat, String(stat)))
+		_stats_view.add_child(bar)
+		_stat_bars[stat] = bar
+	_refresh_stats_values(false)
+
+
+## Push current/cap values into the existing bars. [param animate] plays the blue→amber grow
+## on any stat that rose — used after an upgrade.
+func _refresh_stats_values(animate: bool) -> void:
+	if _selected == null:
+		return
+	var species := _species_of(_selected)
+	var cur := StatSummary.current(_selected, species)
+	var cap := StatSummary.at_cap(_selected, species)
+	for stat in _stat_bars:
+		_stat_bars[stat].set_value(int(cur.get(stat, 0)), int(cap.get(stat, 1)), animate)
+
+
 const BADGE_SIZE := 36.0     ## 25% smaller than the first pass (48)
 const UPGRADE_W := 50.0      ## the Lv label and the button share this width
 const SCRAP_ICON := "res://assets/art/icons/scrap.svg"
@@ -407,22 +608,30 @@ func _build_part_row(slot: int) -> Control:
 	row.add_child(_build_part_badge(slot))
 
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 2)
-	col.custom_minimum_size = Vector2(UPGRADE_W, 0)
+	col.add_theme_constant_override("separation", 1)
 	col.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	col.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(col)
 
+	# Top line: level on the left, the Upgrade pill on the right.
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 4)
+	col.add_child(top)
+
 	var level := Label.new()
-	level.add_theme_font_size_override("font_size", 8)
+	level.theme_type_variation = &"Light"
+	level.add_theme_font_size_override("font_size", 10)
 	level.add_theme_color_override("font_color", UIPalette.TEXT)
 	level.text = "Lv. %d/%d" % [_selected.get_part_level(slot), _selected.part_level_cap()]
-	col.add_child(level)
+	level.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	level.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	top.add_child(level)
 
 	var refusal := UpgradeEconomyScript.can_upgrade(_selected, slot, _ctx.wallet, _ctx.balance)
 	var button := Button.new()
 	button.custom_minimum_size = Vector2(UPGRADE_W, 22)
-	button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	button.size_flags_horizontal = Control.SIZE_SHRINK_END
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.clip_text = true
 	button.add_theme_font_size_override("font_size", 10)
 	button.add_theme_constant_override("icon_max_width", 12)
@@ -434,8 +643,30 @@ func _build_part_row(slot: int) -> Control:
 		button.icon = load(SCRAP_ICON) if ResourceLoader.exists(SCRAP_ICON) else null
 		button.add_theme_color_override("icon_normal_color", UIPalette.INK)
 		button.pressed.connect(Callable(self, "_on_upgrade_pressed").bind(slot))
-	col.add_child(button)
+	top.add_child(button)
+
+	# What the part boosts, per level — the stat values the drawer was missing.
+	var stats_line := Label.new()
+	stats_line.theme_type_variation = &"Light"
+	stats_line.add_theme_font_size_override("font_size", 9)
+	stats_line.add_theme_color_override("font_color", UIPalette.MUTED)
+	stats_line.clip_text = true
+	stats_line.text = _part_stats_text(slot)
+	col.add_child(stats_line)
 	return row
+
+
+## The stats a part grows, per level: "+3 STRUCTURE  +1 ARMOR". Shown small under the level.
+func _part_stats_text(slot: int) -> String:
+	var species := _species_of(_selected)
+	if species == null or not species.part_growth.has(slot):
+		return ""
+	var growth: Dictionary = species.part_growth[slot]
+	var parts: Array = []
+	for stat in StatSummary.ORDER:
+		if growth.has(stat):
+			parts.append("+%d %s" % [int(growth[stat]), StatSummary.LABELS.get(stat, String(stat))])
+	return "  ".join(parts)
 
 
 ## The chamfered "tech tag" shape of the nameplate, at button scale: amber when actionable,
@@ -583,7 +814,13 @@ func _on_upgrade_pressed(slot: int) -> void:
 	# The economy is the authority and re-checks. A price quoted a moment ago can be stale if
 	# the wallet moved — better a no-op than a charge the player did not agree to.
 	UpgradeEconomyScript.upgrade(_selected, slot, _ctx.wallet, _ctx.balance)
-	refresh()
+	# Targeted redraw rather than a full refresh(): rebuilding the stat bars would discard the
+	# grow animation. The parts rebuild (levels/affordability changed), and the existing bars
+	# animate the stats that rose.
+	_rebuild_parts()
+	_refresh_stats_values(true)
+	_refresh_wallet()
+	_refresh_gen()
 
 
 func _on_gen_up_pressed() -> void:
