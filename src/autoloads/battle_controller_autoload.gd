@@ -85,11 +85,9 @@ signal forced_switch_required()
 ## Forwarded from BattleController. See source for full doc.
 signal overheat_triggered(combatant_id: StringName, self_damage: int)
 
-## Forwarded from BattleController. STUB — Part-Break integration pending.
 signal break_region_updated(enemy_id: StringName, region_id: StringName, new_hp: int,
 	max_hp: int, is_broken: bool)
 
-## Forwarded from BattleController. STUB — Part-Break integration pending.
 signal enrage_changed(enemy_id: StringName, broken_count: int, enrage_pct: float)
 
 # ---------------------------------------------------------------------------

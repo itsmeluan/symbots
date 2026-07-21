@@ -1,7 +1,7 @@
 ## V1Game — the v1 root: composes services, grants a new player their squad, and moves
 ## between the stage map and battle (Core Design §6; ADR-0004).
 ##
-## Deliberately a SEPARATE root from `game.tscn` rather than a rewrite of it. The v0 root
+## Deliberately a SEPARATE root from the retired v0 boot chain rather than a rewrite of it.
 ## still drives the overworld, workshop and encounter flow, and ~700 tests still cover
 ## those systems. Ripping them out is a destructive change that belongs to the owner, not
 ## to an unattended loop — so this is additive, and switching between the two is one line

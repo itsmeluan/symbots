@@ -130,18 +130,14 @@ signal forced_switch_required()
 ## Emitted in [method _settle_heat] at the point [member Combatant.is_overheated] is set.
 signal overheat_triggered(combatant_id: StringName, self_damage: int)
 
-## STUB — Part-Break integration pending. Emitted when a break region's HP changes.
 ## [b]Phase: Part-Break integration[/b] — Part-Break is not yet routed through the
 ## resolver; this signal is declared for HUD completeness but will NOT fire in a normal
 ## battle until Part-Break lands.
-## TODO: Phase: Part-Break integration — wire emission once BattleResolver routes
 ## break-region HP mutations.
 signal break_region_updated(enemy_id: StringName, region_id: StringName, new_hp: int,
 	max_hp: int, is_broken: bool)
 
-## STUB — Part-Break integration pending. Emitted when the enemy's enrage level changes
 ## (driven by broken-region count). Same integration gate as [signal break_region_updated].
-## TODO: Phase: Part-Break integration — wire emission once broken-region count is live.
 signal enrage_changed(enemy_id: StringName, broken_count: int, enrage_pct: float)
 
 var _cfg: BalanceConfig

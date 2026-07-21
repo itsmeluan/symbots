@@ -4,7 +4,7 @@
 ## Workshop) extends Screen and implements setup(ctx).
 ##
 ## CONTRACT:
-##   1. ScreenManager calls add_child(screen) THEN setup(ctx) — _ready/@onready
+##   1. The game root calls add_child(screen) THEN setup(ctx) — _ready/@onready
 ##      run during add_child, so node references are valid by the time setup() fires.
 ##   2. setup() is called ONCE, before the screen is shown. Override it to cache
 ##      dependencies and subscribe signals via _connect_owned().
@@ -33,7 +33,7 @@ extends Control
 var _owned_connections: Array[Dictionary] = []
 
 
-## Override in subclasses. Called ONCE by ScreenManager after add_child(), before
+## Override in subclasses. Called ONCE by the game root after add_child(), before
 ## the screen is shown. Cache deps and subscribe signals here using _connect_owned().
 ## Do NOT connect signals in _ready() — use setup() so teardown is guaranteed.
 func setup(ctx: ServiceContext) -> void:

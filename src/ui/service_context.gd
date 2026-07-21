@@ -1,6 +1,6 @@
 ## ServiceContext — dependency bundle injected into every Screen at instantiation (ADR-0008 §1).
 ##
-## Assembled ONCE by BootScreen at step 4b. ScreenManager holds it and passes it to
+## Assembled ONCE by V1Game at boot and passed to
 ## every screen's setup(ctx) call. Because it is a RefCounted, it is kept alive as long
 ## as any screen holds a reference — it is NOT freed until all screens that received it
 ## are freed.
@@ -17,10 +17,11 @@
 class_name ServiceContext
 extends RefCounted
 
-## The ScreenManager. Screens call screens.goto_*() / enter_battle() / open_workshop()
+## Retired with the v0 boot chain — V1Game routes screens itself. Kept as an untyped slot
+## so the field name survives for any caller still reading it.
 ## to request transitions — they never perform transitions themselves.
 ## (screen_transitions contract, ADR-0004/0008)
-var screens: ScreenManager
+var screens = null
 
 ## The active SymbotBuild. Read-only from screens — equip mutations go through
 ## Workshop logic, never directly from a view (inline_stat_composition forbidden).
