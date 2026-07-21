@@ -1,0 +1,78 @@
+[gd_scene format=3 uid="uid://bqjcis22t2xpv"]
+
+[ext_resource type="Script" path="res://src/scenes/overworld_screen.gd" id="1_overworld"]
+[ext_resource type="Theme" uid="uid://b4kr08j0ufus0" path="res://assets/ui/theme/symbots_theme.tres" id="2_theme"]
+[ext_resource type="TileSet" uid="uid://bdxux8pf6dlul" path="res://assets/art/overworld/cainos_tileset.tres" id="3_tileset"]
+
+[node name="OverworldScreen" type="Control" unique_id=732205248]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_overworld")
+
+[node name="WorldView" type="SubViewportContainer" parent="." unique_id=1817409758]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+stretch = true
+
+[node name="WorldViewport" type="SubViewport" parent="WorldView" unique_id=337880687]
+unique_name_in_owner = true
+handle_input_locally = false
+canvas_item_default_texture_filter = 0
+size = Vector2i(360, 640)
+render_target_update_mode = 4
+
+[node name="Terrain" type="TileMapLayer" parent="WorldView/WorldViewport" unique_id=1013973588]
+unique_name_in_owner = true
+tile_set = ExtResource("3_tileset")
+
+[node name="Decals" type="TileMapLayer" parent="WorldView/WorldViewport" unique_id=76538608]
+unique_name_in_owner = true
+tile_set = ExtResource("3_tileset")
+
+[node name="Obstacles" type="TileMapLayer" parent="WorldView/WorldViewport" unique_id=1755662062]
+unique_name_in_owner = true
+tile_set = ExtResource("3_tileset")
+
+[node name="Markers" type="Node2D" parent="WorldView/WorldViewport" unique_id=62175122]
+unique_name_in_owner = true
+
+[node name="Player" type="AnimatedSprite2D" parent="WorldView/WorldViewport" unique_id=334978350]
+unique_name_in_owner = true
+
+[node name="Camera" type="Camera2D" parent="WorldView/WorldViewport" unique_id=737097852]
+unique_name_in_owner = true
+
+[node name="Title" type="Label" parent="." unique_id=1601956739]
+unique_name_in_owner = true
+layout_mode = 1
+offset_left = 6.0
+offset_top = 4.0
+offset_right = 300.0
+offset_bottom = 18.0
+theme_type_variation = &"DimLabel"
+text = "WASD / setas / toque"
+
+[node name="WorkshopBtn" type="Button" parent="." unique_id=805039773]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 24)
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -78.0
+offset_top = 4.0
+offset_right = -6.0
+offset_bottom = 28.0
+grow_horizontal = 0
+text = "WORKSHOP"
