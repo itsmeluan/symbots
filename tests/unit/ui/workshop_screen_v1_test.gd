@@ -130,6 +130,56 @@ func test_earning_scrap_enables_the_buttons_without_a_manual_redraw() -> void:
 	assert_eq(enabled, SymbotInstanceScript.PART_COUNT)
 
 
+# ---------------------------------------------------------------------------
+# Hold-to-repeat on the Upgrade pill
+# ---------------------------------------------------------------------------
+
+func test_holding_the_upgrade_button_keeps_levelling() -> void:
+	_game.ctx.wallet.earn(Wallet.SCRAP, 1_000_000)
+	_shop.refresh()
+
+	_shop._on_upgrade_hold_start(0)
+	var after_press := _selected().get_part_level(0)
+	_shop._on_repeat_tick()
+	_shop._on_repeat_tick()
+
+	assert_eq(_selected().get_part_level(0), after_press + 2, "each tick adds one level")
+
+
+func test_holding_arms_the_repeat_only_while_there_is_more_to_buy() -> void:
+	_game.ctx.wallet.earn(Wallet.SCRAP, 1_000_000)
+	_shop.refresh()
+	_shop._on_upgrade_hold_start(0)
+	assert_eq(_shop._repeat_slot, 0, "armed while levels remain")
+
+
+func test_a_press_with_exactly_one_level_of_scrap_does_not_arm_the_repeat() -> void:
+	# The press spends the lot; there is nothing left to repeat, so the timer must stay down.
+	var cost := UpgradeEconomyScript.level_cost(_selected().get_part_level(0), _game.ctx.balance)
+	_game.ctx.wallet.earn(Wallet.SCRAP, cost)
+	_shop.refresh()
+
+	_shop._on_upgrade_hold_start(0)
+
+	assert_eq(_game.ctx.wallet.scrap, 0)
+	assert_eq(_shop._repeat_slot, -1, "nothing left to repeat")
+
+
+func test_the_repeat_stops_rather_than_overspending() -> void:
+	# The safety property: a finger left on the button can never charge Scrap that is not there.
+	_game.ctx.wallet.earn(Wallet.SCRAP, 1_000_000)
+	_shop.refresh()
+	_shop._on_upgrade_hold_start(0)
+	_game.ctx.wallet.spend(Wallet.SCRAP, _game.ctx.wallet.scrap)  # drain mid-hold
+	var level_before := _selected().get_part_level(0)
+
+	_shop._on_repeat_tick()
+
+	assert_eq(_selected().get_part_level(0), level_before, "no level bought on an empty wallet")
+	assert_eq(_game.ctx.wallet.scrap, 0)
+	assert_eq(_shop._repeat_slot, -1, "and the repeat disarms itself")
+
+
 func test_a_capped_part_says_capped_rather_than_going_quietly_grey() -> void:
 	# "Capped" and "cannot afford" send the player to different places — one means go
 	# retrofit, the other means go fight.

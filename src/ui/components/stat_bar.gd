@@ -108,7 +108,10 @@ func set_value(value: int, cap: int, animate: bool) -> void:
 	var target := clampf(float(value) / _cap, 0.0, 1.0)
 	if animate and is_inside_tree() and target > _amber + 0.002:
 		_kill()
-		var from := _amber
+		# Continue from the current blue edge, not from the settled amber: while the Upgrade
+		# button is held the tween is restarted every tick, and starting over from amber each
+		# time would make the bar jump backwards on every level.
+		var from := maxf(_amber, _blue)
 		_blue = from
 		_mix = 0.0
 		_tw = create_tween()

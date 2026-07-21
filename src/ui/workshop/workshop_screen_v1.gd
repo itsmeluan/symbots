@@ -86,6 +86,22 @@ var _dragging: bool = false
 var _drag_moved: float = 0.0
 var _hint: SwipeHint
 
+# Per-slot widgets, so an upgrade can refresh a row IN PLACE. Rebuilding the rows would free
+# the very button the player is holding down, killing the auto-repeat mid-press.
+var _part_level_labels: Array = []
+var _part_buttons: Array = []
+
+# Hold-to-repeat on the Upgrade pill: one level lands on press, then it keeps levelling while
+# held — pausing first so a single tap is still a single level, and accelerating so a long
+# hold gets somewhere.
+const HOLD_DELAY := 0.35
+const HOLD_INTERVAL := 0.09
+const HOLD_FAST_AFTER := 8
+const HOLD_FAST_INTERVAL := 0.045
+var _repeat_timer: Timer
+var _repeat_slot: int = -1
+var _repeat_ticks: int = 0
+
 const DRAWER_W := 186.0
 ## Padding inside the drawer panel, used on both sides so content reads centred.
 const PANEL_PAD := 8.0
@@ -139,6 +155,7 @@ func _dismiss_hint() -> void:
 
 func _on_exit_tree() -> void:
 	super._on_exit_tree()
+	_stop_repeat()
 	_ctx = null
 	_selected = null
 
@@ -163,6 +180,11 @@ func _build_layout() -> void:
 
 	_hint = SwipeHint.new()
 	add_child(_hint)
+
+	_repeat_timer = Timer.new()
+	_repeat_timer.one_shot = true
+	_repeat_timer.timeout.connect(_on_repeat_tick)
+	add_child(_repeat_timer)
 
 	_build_overlay_layer()
 
@@ -646,11 +668,38 @@ func _refresh_hero_and_name() -> void:
 
 
 func _rebuild_parts() -> void:
+	_stop_repeat()
 	_clear(_part_list)
+	_part_level_labels.clear()
+	_part_buttons.clear()
+	_part_level_labels.resize(SymbotInstanceScript.PART_COUNT)
+	_part_buttons.resize(SymbotInstanceScript.PART_COUNT)
 	if _selected == null:
 		return
 	for slot in SymbotInstanceScript.PART_COUNT:
 		_part_list.add_child(_build_part_row(slot))
+	_refresh_part_rows()
+
+
+## Update every row's level and Upgrade pill WITHOUT rebuilding them. Spending Scrap changes
+## what the other parts can afford, so all five refresh together.
+func _refresh_part_rows() -> void:
+	if _selected == null:
+		return
+	for slot in SymbotInstanceScript.PART_COUNT:
+		var label: Label = _part_level_labels[slot]
+		if label != null:
+			label.text = "Lv. %d/%d" % [_selected.get_part_level(slot), _selected.part_level_cap()]
+		var button: Button = _part_buttons[slot]
+		if button == null:
+			continue
+		var refusal := UpgradeEconomyScript.can_upgrade(
+			_selected, slot, _ctx.wallet, _ctx.balance)
+		var actionable := refusal == UpgradeEconomyScript.Refusal.OK
+		button.disabled = not actionable
+		button.text = _upgrade_label(slot, refusal)
+		button.icon = load(SCRAP_ICON) if actionable and ResourceLoader.exists(SCRAP_ICON) else null
+		_style_upgrade_button(button, actionable)
 
 
 ## Rebuild the STATS tab's bars for the selected Symbot. Only stats the species actually uses
@@ -745,10 +794,10 @@ func _build_part_row(slot: int) -> Control:
 	level.theme_type_variation = &"Light"
 	level.add_theme_font_size_override("font_size", 10)
 	level.add_theme_color_override("font_color", UIPalette.MUTED)
-	level.text = "Lv. %d/%d" % [_selected.get_part_level(slot), _selected.part_level_cap()]
 	level.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	level.size_flags_horizontal = Control.SIZE_SHRINK_END
 	title.add_child(level)
+	_part_level_labels[slot] = level
 
 	# Line two: what the part grows. Scrolls itself when the Upgrade button squeezes it.
 	var stats := MarqueeLabel.new()
@@ -757,7 +806,6 @@ func _build_part_row(slot: int) -> Control:
 	stats.set_text(_part_stats_text(slot))
 	namecol.add_child(stats)
 
-	var refusal := UpgradeEconomyScript.can_upgrade(_selected, slot, _ctx.wallet, _ctx.balance)
 	var button := Button.new()
 	button.custom_minimum_size = Vector2(UPGRADE_W, 22)
 	button.size_flags_horizontal = Control.SIZE_SHRINK_END
@@ -766,14 +814,13 @@ func _build_part_row(slot: int) -> Control:
 	button.add_theme_font_size_override("font_size", 10)
 	button.add_theme_constant_override("icon_max_width", 12)
 	button.add_theme_constant_override("h_separation", 2)
-	button.disabled = refusal != UpgradeEconomyScript.Refusal.OK
-	button.text = _upgrade_label(slot, refusal)
-	_style_upgrade_button(button, refusal == UpgradeEconomyScript.Refusal.OK)
-	if refusal == UpgradeEconomyScript.Refusal.OK:
-		button.icon = load(SCRAP_ICON) if ResourceLoader.exists(SCRAP_ICON) else null
-		button.add_theme_color_override("icon_normal_color", UIPalette.INK)
-		button.pressed.connect(Callable(self, "_on_upgrade_pressed").bind(slot))
+	button.add_theme_color_override("icon_normal_color", UIPalette.INK)
+	# Press/release rather than `pressed`, so holding can keep levelling. Wired unconditionally
+	# — `disabled` is what gates it, and that flips as Scrap comes and goes.
+	button.button_down.connect(_on_upgrade_hold_start.bind(slot))
+	button.button_up.connect(_on_upgrade_hold_end)
 	top.add_child(button)
+	_part_buttons[slot] = button
 
 	# A hairline between blocks — just enough to group each part, not enough to notice.
 	if slot < SymbotInstanceScript.PART_COUNT - 1:
@@ -909,17 +956,58 @@ func _on_symbot_selected(symbot: SymbotInstance) -> void:
 	refresh()
 
 
+## One level. The economy is the authority and re-checks: a price quoted a moment ago can be
+## stale if the wallet moved, and a no-op beats a charge the player did not agree to.
 func _on_upgrade_pressed(slot: int) -> void:
-	# The economy is the authority and re-checks. A price quoted a moment ago can be stale if
-	# the wallet moved — better a no-op than a charge the player did not agree to.
-	UpgradeEconomyScript.upgrade(_selected, slot, _ctx.wallet, _ctx.balance)
-	# Targeted redraw rather than a full refresh(): rebuilding the stat bars would discard the
-	# grow animation. The parts rebuild (levels/affordability changed), and the existing bars
-	# animate the stats that rose.
-	_rebuild_parts()
+	if UpgradeEconomyScript.upgrade(_selected, slot, _ctx.wallet, _ctx.balance) > 0:
+		_after_upgrade()
+
+
+## Everything an upgrade touches, refreshed in place — rebuilding would free the held button
+## and discard the stat bars' grow animation.
+func _after_upgrade() -> void:
+	_refresh_part_rows()
 	_refresh_stats_values(true)
 	_refresh_wallet()
 	_refresh_gen()
+
+
+## Press: level once immediately, then arm the repeat so a held finger keeps going.
+func _on_upgrade_hold_start(slot: int) -> void:
+	_dismiss_hint()
+	_on_upgrade_pressed(slot)
+	if _selected == null:
+		return
+	if UpgradeEconomyScript.can_upgrade(_selected, slot, _ctx.wallet, _ctx.balance) \
+			!= UpgradeEconomyScript.Refusal.OK:
+		return  # capped or out of Scrap — nothing to repeat
+	_repeat_slot = slot
+	_repeat_ticks = 0
+	_repeat_timer.start(HOLD_DELAY)
+
+
+func _on_upgrade_hold_end() -> void:
+	_stop_repeat()
+
+
+func _stop_repeat() -> void:
+	_repeat_slot = -1
+	if _repeat_timer != null:
+		_repeat_timer.stop()
+
+
+## Each repeat tick levels once more and stops the moment the economy refuses, so a held
+## finger can never overspend or push a part past its cap.
+func _on_repeat_tick() -> void:
+	if _repeat_slot < 0 or _selected == null or _ctx == null:
+		return
+	if UpgradeEconomyScript.upgrade(_selected, _repeat_slot, _ctx.wallet, _ctx.balance) <= 0:
+		_stop_repeat()
+		return
+	_after_upgrade()
+	_repeat_ticks += 1
+	_repeat_timer.start(
+		HOLD_FAST_INTERVAL if _repeat_ticks >= HOLD_FAST_AFTER else HOLD_INTERVAL)
 
 
 func _on_gen_up_pressed() -> void:
