@@ -41,12 +41,21 @@ func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
 
-## Give the carousel one texture per Symbot, in roster order. Focus resets to the first.
-func set_items(textures: Array) -> void:
+## Give the carousel one texture per Symbot, in roster order.
+##
+## [param keep_focus] re-seats the same index afterwards — used when a Symbot's art changes
+## under it (a gen-up swaps the mark sprite) and yanking the player back to the first slot
+## would be wrong.
+func set_items(textures: Array, keep_focus: bool = false) -> void:
+	var previous := focused_index()
 	_textures = textures
-	_last_focus = -1
-	_scroll = 0.0
-	_last_focus = 0
+	if keep_focus:
+		_last_focus = clampi(previous, 0, maxi(0, _textures.size() - 1))
+		_scroll = float(_last_focus)
+	else:
+		_last_focus = -1
+		_scroll = 0.0
+		_last_focus = 0
 	queue_redraw()
 
 

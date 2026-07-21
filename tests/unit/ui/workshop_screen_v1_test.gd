@@ -131,6 +131,43 @@ func test_earning_scrap_enables_the_buttons_without_a_manual_redraw() -> void:
 
 
 # ---------------------------------------------------------------------------
+# Evolved Symbots must LOOK evolved
+# ---------------------------------------------------------------------------
+
+func test_a_later_mark_gets_a_bigger_hero_sprite() -> void:
+	# The sprite is fitted to a band, so a fixed band would flatten every mark to one size.
+	# The art cannot carry the progression either — Coilsprite's Mk I canvas (317x323) is
+	# larger than its Mk III (209x209) — so the screen guarantees it from the mark.
+	_selected().mark = 1
+	_shop.refresh()
+	var band_1 := absf(_shop._hero.offset_top)
+	_selected().mark = 2
+	_shop.refresh()
+	var band_2 := absf(_shop._hero.offset_top)
+	_selected().mark = 3
+	_shop.refresh()
+	var band_3 := absf(_shop._hero.offset_top)
+
+	assert_gt(band_2, band_1, "Mk II looms larger than Mk I")
+	assert_gt(band_3, band_2, "and Mk III larger still")
+
+
+func test_genning_up_updates_the_carousel_sprite() -> void:
+	# The strip was built once at setup, so it kept showing the old form until the player
+	# left the screen and came back.
+	_max_every_part()
+	_shop.refresh()
+	var index := _shop._index_of(_selected())
+	var before: Texture2D = _shop._carousel._textures[index]
+
+	_shop._on_gen_up_pressed()
+
+	assert_eq(_selected().mark, 2, "precondition: it genned up")
+	assert_ne(_shop._carousel._textures[index], before,
+		"the carousel shows the new mark without leaving the screen")
+
+
+# ---------------------------------------------------------------------------
 # Hold-to-repeat on the Upgrade pill
 # ---------------------------------------------------------------------------
 

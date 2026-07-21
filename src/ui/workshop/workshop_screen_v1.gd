@@ -102,6 +102,16 @@ var _repeat_timer: Timer
 var _repeat_slot: int = -1
 var _repeat_ticks: int = 0
 
+## Height of the band the hero sprite is fitted into at Mk I, and the multiplier per mark.
+##
+## The sprite is drawn KEEP_ASPECT_CENTERED, which scales whatever art it is given to fill the
+## band — so a fixed band flattens every mark to one size no matter how big the source art is.
+## The art cannot be trusted to carry the progression either: most species grow across marks,
+## but Coilsprite's Mk I canvas (317x323) is larger than its Mk III (209x209). Driving the band
+## from the mark guarantees an evolved Symbot always looms larger than the form it came from.
+const HERO_BAND := 122.0
+const MARK_ZOOM: Array[float] = [1.0, 1.32, 1.68]
+
 const DRAWER_W := 186.0
 ## Padding inside the drawer panel, used on both sides so content reads centred.
 const PANEL_PAD := 8.0
@@ -665,6 +675,9 @@ func _refresh_hero_and_name() -> void:
 		xp = XpProgression.percent_to_next(_selected, _ctx.balance)
 	_nameplate.set_symbot(species, _selected, xp)
 	_hero.texture = _sprite_for(_selected)
+	# Taller band for a later mark — see MARK_ZOOM.
+	var mark := clampi(_selected.mark if _selected != null else 1, 1, MARK_ZOOM.size())
+	_hero.offset_top = -HERO_BAND * MARK_ZOOM[mark - 1]
 
 
 func _rebuild_parts() -> void:
@@ -922,11 +935,13 @@ func _parts_maxed() -> int:
 # Carousel
 # ---------------------------------------------------------------------------
 
-func _populate_carousel() -> void:
+## Rebuild the strip's textures. [param keep_focus] holds the current slot — used after a
+## gen-up, which swaps the focused Symbot's sprite for its next mark.
+func _populate_carousel(keep_focus: bool = false) -> void:
 	var textures: Array = []
 	for symbot in _ctx.roster.symbots:
 		textures.append(_sprite_for(symbot))
-	_carousel.set_items(textures)
+	_carousel.set_items(textures, keep_focus)
 
 
 func _on_focus_changed(index: int) -> void:
@@ -1013,6 +1028,9 @@ func _on_repeat_tick() -> void:
 func _on_gen_up_pressed() -> void:
 	if _can_gen_up():
 		if _selected.retrofit():
+			# The mark changed, so the sprite did too — the carousel would otherwise keep
+			# showing the old form until the screen was left and re-entered.
+			_populate_carousel(true)
 			refresh()
 	else:
 		_show_gen_modal()

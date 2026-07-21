@@ -20,7 +20,7 @@ cleanup() {
 trap cleanup EXIT
 
 printf '%s\n' \
-  'source,source_size,canvas_size,idle_gif,idle_spritesheet,attack_gif,attack_spritesheet,damage_gif,damage_spritesheet,status' \
+  'source,source_size,canvas_size,idle_gif,idle_spritesheet,attack_gif,attack_spritesheet,damage_gif,damage_spritesheet,destroyed_gif,destroyed_spritesheet,destroyed_png,status' \
   > "$manifest_tmp"
 
 checked=0
@@ -41,7 +41,7 @@ EOF
   canvas_w=''
   canvas_h=''
 
-  for mode in idle attack damage; do
+  for mode in idle attack damage destroyed; do
     gif_path="$sprite_dir/$mode/${sprite_name}-${mode}.gif"
     sheet_path="$sprite_dir/$mode/${sprite_name}-${mode}-spritesheet.png"
     frames_dir="$sprite_dir/$mode/frames"
@@ -102,7 +102,49 @@ EOF
       echo "SOURCE_DIFF|$relative_path|$mode|$metric" >&2
       sprite_failed=1
     fi
+
+    if [ "$mode" = "destroyed" ]; then
+      if strings "$gif_path" | grep -q 'NETSCAPE2.0'; then
+        echo "DESTROYED_GIF_LOOPS|$relative_path" >&2
+        sprite_failed=1
+      fi
+
+      metric=$(magick compare -metric AE \
+        "$frames_dir/frame-05.png" "$frames_dir/frame-06.png" null: 2>&1 || true)
+      if [ "$metric" != "0 (0)" ]; then
+        echo "DESTROYED_FINAL_MOTION|$relative_path|$metric" >&2
+        sprite_failed=1
+      fi
+
+      saturation_max=$(magick "$frames_dir/frame-06.png" \
+        -colorspace HSL -channel G -separate -format '%[fx:maxima]' info:)
+      if ! awk -v value="$saturation_max" 'BEGIN { exit !(value <= 0.000001) }'; then
+        echo "DESTROYED_NOT_GRAYSCALE|$relative_path|saturation=$saturation_max" >&2
+        sprite_failed=1
+      fi
+    fi
   done
+
+  destroyed_png_path="$sprite_dir/destroyed/${sprite_name}-destroyed.png"
+  destroyed_final_frame="$sprite_dir/destroyed/frames/frame-06.png"
+  if [ ! -f "$destroyed_png_path" ]; then
+    echo "MISSING_DESTROYED_PNG|$relative_path" >&2
+    sprite_failed=1
+  else
+    metric=$(magick compare -metric AE \
+      "$destroyed_final_frame" "$destroyed_png_path" null: 2>&1 || true)
+    if [ "$metric" != "0 (0)" ]; then
+      echo "DESTROYED_PNG_DIFF|$relative_path|$metric" >&2
+      sprite_failed=1
+    fi
+
+    saturation_max=$(magick "$destroyed_png_path" \
+      -colorspace HSL -channel G -separate -format '%[fx:maxima]' info:)
+    if ! awk -v value="$saturation_max" 'BEGIN { exit !(value <= 0.000001) }'; then
+      echo "DESTROYED_PNG_NOT_GRAYSCALE|$relative_path|saturation=$saturation_max" >&2
+      sprite_failed=1
+    fi
+  fi
 
   idle_rel="$relative_dir/$sprite_name/idle/${sprite_name}-idle.gif"
   idle_sheet_rel="$relative_dir/$sprite_name/idle/${sprite_name}-idle-spritesheet.png"
@@ -110,6 +152,9 @@ EOF
   attack_sheet_rel="$relative_dir/$sprite_name/attack/${sprite_name}-attack-spritesheet.png"
   damage_rel="$relative_dir/$sprite_name/damage/${sprite_name}-damage.gif"
   damage_sheet_rel="$relative_dir/$sprite_name/damage/${sprite_name}-damage-spritesheet.png"
+  destroyed_rel="$relative_dir/$sprite_name/destroyed/${sprite_name}-destroyed.gif"
+  destroyed_sheet_rel="$relative_dir/$sprite_name/destroyed/${sprite_name}-destroyed-spritesheet.png"
+  destroyed_png_rel="$relative_dir/$sprite_name/destroyed/${sprite_name}-destroyed.png"
 
   if [ "$sprite_failed" -eq 0 ]; then
     status=PASS
@@ -118,10 +163,11 @@ EOF
     failures=$((failures + 1))
   fi
 
-  printf '"%s","%sx%s","%sx%s","%s","%s","%s","%s","%s","%s","%s"\n' \
+  printf '"%s","%sx%s","%sx%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n' \
     "$relative_path" "$source_w" "$source_h" "$canvas_w" "$canvas_h" \
     "$idle_rel" "$idle_sheet_rel" "$attack_rel" "$attack_sheet_rel" \
-    "$damage_rel" "$damage_sheet_rel" "$status" \
+    "$damage_rel" "$damage_sheet_rel" "$destroyed_rel" "$destroyed_sheet_rel" \
+    "$destroyed_png_rel" "$status" \
     >> "$manifest_tmp"
   checked=$((checked + 1))
 done < <(find "$source_root" -type f -iname '*.png' -print0 | sort -z)
