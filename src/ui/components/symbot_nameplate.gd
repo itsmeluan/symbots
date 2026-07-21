@@ -26,6 +26,13 @@ const ROLE_NAMES := {
 }
 
 const CHAMFER := 10.0
+## A hairline XP bar — it reads as a progress rule, not a gauge.
+const XP_BAR_H := 2.0
+## Breathing room inserted ABOVE the XP bar. A label carries descent padding that a bare bar
+## does not, so equal container separation still leaves the identity line hugging the bar.
+## Measured from a render: the gap above the line was 16px and below it 3px, so this closes
+## the 13px difference and leaves the line equidistant.
+const XP_TOP_PAD := 6.25
 
 var _name_label: Label
 var _role_icon: IconGlyph
@@ -69,18 +76,24 @@ func _init() -> void:
 	_sub_label.add_theme_color_override("font_color", UIPalette.CYAN)
 	sub.add_child(_sub_label)
 
-	# Experience toward the next level — a thin bar under the identity line.
+	var gap := Control.new()
+	gap.custom_minimum_size = Vector2(0, XP_TOP_PAD)
+	gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(gap)
+
+	# Experience toward the next level — a hairline bar under the identity line.
 	_xp_bar = ProgressBar.new()
-	_xp_bar.custom_minimum_size = Vector2(0, 4)
+	_xp_bar.custom_minimum_size = Vector2(0, XP_BAR_H)
+	_xp_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_xp_bar.show_percentage = false
 	_xp_bar.max_value = 100
 	_xp_bar.value = 0
 	var track := StyleBoxFlat.new()
 	track.bg_color = Color(UIPalette.INK, 0.9)
-	track.set_corner_radius_all(2)
+	track.set_corner_radius_all(1)
 	var fill := StyleBoxFlat.new()
 	fill.bg_color = UIPalette.CYAN
-	fill.set_corner_radius_all(2)
+	fill.set_corner_radius_all(1)
 	_xp_bar.add_theme_stylebox_override("background", track)
 	_xp_bar.add_theme_stylebox_override("fill", fill)
 	col.add_child(_xp_bar)
