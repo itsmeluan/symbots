@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cbyexc8oqpk8y"
-path="res://.godot/imported/rustclaw-attack-gif-check.png-4ed7be4a25b6c8160d4657beca4bcfae.ctex"
+path="res://.godot/imported/rustclaw-attack-gif-check.png-2f64c61720a981e129c14877b69bfccb.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://output/rustclaw-attack/rustclaw-attack-gif-check.png"
-dest_files=["res://.godot/imported/rustclaw-attack-gif-check.png-4ed7be4a25b6c8160d4657beca4bcfae.ctex"]
+source_file="res://output/rustclaw-attack/work/rustclaw-attack-gif-check.png"
+dest_files=["res://.godot/imported/rustclaw-attack-gif-check.png-2f64c61720a981e129c14877b69bfccb.ctex"]
 
 [params]
 

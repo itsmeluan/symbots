@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://j1pskgsftui"
-path="res://.godot/imported/rustclaw-source-8x.png-b70dcd3d74756aa7f71984b133d72a9c.ctex"
+uid="uid://dghpfri5ntgjp"
+path="res://.godot/imported/frame-05.png-fcf59cd14264ed2fb6c761ee3400cb7f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://output/rustclaw-attack/work/rustclaw-source-8x.png"
-dest_files=["res://.godot/imported/rustclaw-source-8x.png-b70dcd3d74756aa7f71984b133d72a9c.ctex"]
+source_file="res://output/rustclaw-idle/frame-05.png"
+dest_files=["res://.godot/imported/frame-05.png-fcf59cd14264ed2fb6c761ee3400cb7f.ctex"]
 
 [params]
 

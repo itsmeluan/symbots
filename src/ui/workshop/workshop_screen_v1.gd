@@ -218,13 +218,15 @@ func _build_mid() -> Control:
 	_hero.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	# Centred on screen but biased right of the parts column and low, so it reads as standing
 	# on the bench floor rather than hovering over the buttons.
-	# Full width so KEEP_ASPECT_CENTERED puts the sprite on the exact screen centre; biased low
-	# so it stands on the bench floor. The parts column is narrow enough to clear it.
+	# Full width so KEEP_ASPECT_CENTERED puts the sprite on the exact screen centre. Pinned to
+	# the BOTTOM of the area with a fixed height rather than centred in a band, so it sits low
+	# on the bench floor at a stable size instead of floating mid-air.
 	_hero.anchor_left = 0.0
 	_hero.anchor_right = 1.0
-	_hero.anchor_top = 0.42
+	_hero.anchor_top = 1.0
 	_hero.anchor_bottom = 1.0
-	_hero.offset_bottom = -2
+	_hero.offset_top = -146
+	_hero.offset_bottom = 52
 	mid.add_child(_hero)
 
 	# The parts column: a fixed narrow rect pinned top-left, so its rows never stretch across

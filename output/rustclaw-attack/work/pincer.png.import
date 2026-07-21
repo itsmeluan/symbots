@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://3se36c04w8mj"
-path="res://.godot/imported/pincer.png-b6e89193fd1fd0e185e237fe5d4bf986.ctex"
+path="res://.godot/imported/pincer.png-f6e865a463bb786635a298a2c33a1667.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://output/rustclaw-attack/pincer.png"
-dest_files=["res://.godot/imported/pincer.png-b6e89193fd1fd0e185e237fe5d4bf986.ctex"]
+source_file="res://output/rustclaw-attack/work/pincer.png"
+dest_files=["res://.godot/imported/pincer.png-f6e865a463bb786635a298a2c33a1667.ctex"]
 
 [params]
 
