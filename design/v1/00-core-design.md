@@ -60,9 +60,20 @@ changes what it does with that level.
 | Prototype | +50% | 4 | strongest, effects compound | 15 |
 
 **Overclock** is the rarity payoff. Past the shared level cap, a rare-or-better Symbot
-keeps levelling into overclock levels, which behave like ordinary levels except they
-exceed the cap: they grant further skill-tree points (reaching tree depths a common
-Symbot cannot) and raise part levels beyond the normal ceiling.
+can take overclock levels, which raise the ceiling: they grant further skill-tree points
+(reaching tree depths a common Symbot cannot) and raise part levels beyond the normal cap.
+
+Each one is **earned, then bought**. At Mk III, with the Symbot's OWN level and all five
+parts on the current ceiling, the Workshop offers OVERCLOCK; taking it spends one
+**Chipset** and raises the Symbot and part ceilings by exactly one. The next must be earned
+again at the new cap, up to the rarity allowance.
+
+**Chipsets** are the currency Scrap cannot buy. A cleared dungeon pays one, every time —
+which is what keeps a beaten boss worth returning to. They are named Chipset rather than
+Core because CORE is already a part slot on every Symbot.
+
+Nothing is reset by an overclock, and XP banked above the old cap cashes in the moment the
+ceiling moves.
 
 The design intent: a common Symbot is never obsolete — it reaches full standard power —
 but a Prototype has a ceiling above it that only long investment reaches.
