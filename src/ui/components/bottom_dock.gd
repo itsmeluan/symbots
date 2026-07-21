@@ -26,23 +26,32 @@ const TABS: Array = [
 
 var _active: StringName = &"map"
 var _row: HBoxContainer
+var _box: StyleBoxFlat
 
 
 func _init() -> void:
 	custom_minimum_size = Vector2(0, HEIGHT)
 	# The dock has its own dark bar with a cyan top edge, distinct from the content panels.
-	var box := StyleBoxFlat.new()
-	box.bg_color = UIPalette.INK
-	box.border_color = UIPalette.LINE
-	box.border_width_top = 1
-	box.set_content_margin_all(4)
-	add_theme_stylebox_override("panel", box)
+	_box = StyleBoxFlat.new()
+	_box.bg_color = UIPalette.INK
+	_box.border_color = UIPalette.LINE
+	_box.border_width_top = 1
+	_box.set_content_margin_all(4)
+	add_theme_stylebox_override("panel", _box)
 
 	_row = HBoxContainer.new()
 	_row.add_theme_constant_override("separation", 3)
 	add_child(_row)
 	for tab in TABS:
 		_row.add_child(_build_tab(tab[0], tab[1]))
+
+
+## Reserve room below the tabs for the phone's home indicator, so a tap on a tab never lands
+## on the OS gesture area. The bar's fill still bleeds to the screen edge; only the tabs move
+## up. [param px] is in viewport units (0 on a device with no home indicator, e.g. desktop).
+func set_safe_bottom(px: float) -> void:
+	_box.set_content_margin(SIDE_BOTTOM, 4.0 + px)
+	custom_minimum_size = Vector2(0, HEIGHT + px)
 
 
 ## Light the tab for [param dest] and dim the rest. Call from a screen's setup so the dock

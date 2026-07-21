@@ -17,6 +17,14 @@ const ROLE_GLYPHS := {
 	SpeciesDefScript.Role.SUPPORT: &"role_supp",
 }
 
+## Role enum → the short word shown beside its icon.
+const ROLE_NAMES := {
+	SpeciesDefScript.Role.DPS: "DPS",
+	SpeciesDefScript.Role.TANK: "TANK",
+	SpeciesDefScript.Role.HEALER: "HEAL",
+	SpeciesDefScript.Role.SUPPORT: "SUPPORT",
+}
+
 const CHAMFER := 10.0
 
 var _name_label: Label
@@ -82,7 +90,9 @@ func set_symbot(species: SpeciesDef, inst) -> void:
 		return
 	_name_label.text = species.display_name.to_upper()
 	_role_icon.glyph = ROLE_GLYPHS.get(species.role, &"role_supp")
-	_sub_label.text = "MK %s · LV.%d" % [_roman(inst.mark), inst.level]
+	# Order: icon, role name, generation, level.
+	_sub_label.text = "%s · MK %s · LV.%d" % [
+		ROLE_NAMES.get(species.role, "—"), _roman(inst.mark), inst.level]
 	queue_redraw()
 
 

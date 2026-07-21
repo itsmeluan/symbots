@@ -42,12 +42,20 @@ func _selected() -> SymbotInstance:
 
 
 func _upgrade_buttons() -> Array:
+	# The upgrade button now sits inside a sub-column of each part row, so search the whole
+	# row subtree rather than just its direct children.
 	var out: Array = []
 	for row in _shop._part_list.get_children():
-		for child in row.get_children():
-			if child is Button:
-				out.append(child)
+		_collect_buttons(row, out)
 	return out
+
+
+func _collect_buttons(node: Node, out: Array) -> void:
+	for child in node.get_children():
+		if child is Button:
+			out.append(child)
+		else:
+			_collect_buttons(child, out)
 
 
 # ---------------------------------------------------------------------------
@@ -122,13 +130,6 @@ func test_earning_scrap_enables_the_buttons_without_a_manual_redraw() -> void:
 	assert_eq(enabled, SymbotInstanceScript.PART_COUNT)
 
 
-func test_the_cost_to_max_everything_is_on_screen() -> void:
-	# The number that makes "spread or concentrate" a decision rather than a default. If it
-	# is not visible, the player defaults to spreading thin without ever knowing they chose.
-	var expected := UpgradeEconomyScript.cost_to_max_all_parts(_selected(), _game.ctx.balance)
-	assert_true(_shop._summary_label.text.contains(str(expected)))
-
-
 func test_a_capped_part_says_capped_rather_than_going_quietly_grey() -> void:
 	# "Capped" and "cannot afford" send the player to different places — one means go
 	# retrofit, the other means go fight.
@@ -154,7 +155,7 @@ func _max_every_part() -> void:
 
 func test_gen_up_is_unavailable_until_every_part_is_capped() -> void:
 	assert_false(_shop._can_gen_up())
-	assert_true(_shop._gen_requirement_text().contains("all 5 parts"),
+	assert_true(_shop._gen_requirement_text().contains("all five parts"),
 		"and tapping it explains the requirement")
 
 

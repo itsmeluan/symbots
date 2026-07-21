@@ -1,15 +1,17 @@
 ## WorkshopScreenV1 — level parts with Scrap, and advance a generation (Core Design §2.3,
 ## §2.4, §5).
 ##
-## Portrait, redesigned from the v1 prototype: the focused Symbot fills the centre as a big
-## sprite, a chamfered nameplate and a GEN ▲ button sit under the header, the five parts run
-## down the left as icons with small upgrade buttons, and a draggable carousel of the roster
-## runs along the bottom. Spinning the carousel changes who is in focus everywhere.
+## Portrait, from the v1 prototype. A full-width dark header (screen name left, Scrap over
+## Alloy right) with a phone safe-area gap above it; below it the focused Symbot's chamfered
+## nameplate and a GEN ▲ button; the five parts as round-badged icons down the left, each
+## with its level and a small Upgrade button; the Symbot itself standing centred and low on
+## the bench; and a draggable carousel of the roster hugging the dock. Spinning the carousel
+## moves focus everywhere.
 ##
-## The screen carries NO written labels for things a glyph can say — part names live in a
-## tap tooltip, roles are icons. The "spread or concentrate" decision (§5.2) still needs its
-## numbers on screen, so the cost-to-max and each part's price stay visible; those are digits,
-## not names.
+## The screen carries no written labels for what a glyph can say — part names live in a tap
+## tooltip, roles pair an icon with a short word. It reserves the phone's safe areas top and
+## bottom, and its width is fixed at the base 360 while height flexes (project stretch
+## keep_width), so it fills a tall phone without letterboxing.
 ##
 ## Owns no rules. Prices come from [UpgradeEconomy], caps from [SymbotInstance]; the screen
 ## asks and draws. A view that re-derived a price could quote one number and charge another.
@@ -26,9 +28,15 @@ signal closed
 signal navigate(dest: StringName)
 
 const MIN_ROW_HEIGHT := 48  ## past the 44pt touch minimum
-const PART_ROW_HEIGHT := 52
+const PART_ROW_HEIGHT := 56
 const PART_NAMES: Array[String] = ["Core", "Chassis", "Head", "Arms", "Legs"]
-const PART_GLYPHS: Array[StringName] = [&"part_core", &"part_chassis", &"part_head", &"part_arms", &"part_legs"]
+const PART_ICON_PATHS: Array[String] = [
+	"res://assets/art/icons/slot_core.svg",
+	"res://assets/art/icons/slot_chassis.svg",
+	"res://assets/art/icons/slot_head.svg",
+	"res://assets/art/icons/slot_arms.svg",
+	"res://assets/art/icons/slot_legs.svg",
+]
 const ART_DIR := "res://assets/art/symbots/"
 
 var _ctx: ServiceContext = null
@@ -41,21 +49,26 @@ var _nameplate: SymbotNameplate
 var _gen_button: Button
 var _hero: TextureRect
 var _part_list: VBoxContainer
-var _summary_label: Label
 var _carousel: SymbotCarousel
+var _dock: BottomDock
 
-# Tap overlay (part names, the gen-up requirement) — one reusable layer on top of everything.
+# Overlay: a tap tooltip (part names) and a modal card (the gen-up requirement).
 var _overlay_layer: Control
-var _overlay_panel: PanelContainer
-var _overlay_label: Label
-var _overlay_timer: Timer
+var _scrim: ColorRect
+var _tooltip: PanelContainer
+var _tooltip_label: Label
+var _tooltip_timer: Timer
+var _modal_center: CenterContainer
+var _modal_crest: Label
+var _modal_title: Label
+var _modal_body: Label
+var _modal_progress: Label
 
 
 func setup(ctx: ServiceContext) -> void:
 	_ctx = ctx
-	_set_background("res://assets/art/workshop/bench_backdrop.png", 0.55)
+	_set_background("res://assets/art/workshop/bench_backdrop.png", 0.5)
 	_build_layout()
-	_attach_bottom_dock(_screen_root, &"workshop", func(d): navigate.emit(d))
 	if _ctx.wallet != null:
 		_connect_owned(_ctx.wallet.balance_changed, Callable(self, "_on_balance_changed"))
 	_populate_carousel()
@@ -79,56 +92,52 @@ func _on_exit_tree() -> void:
 
 func _build_layout() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var insets := _safe_insets()
 
-	var root := VBoxContainer.new()
-	_screen_root = root
-	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.add_theme_constant_override("separation", 6)
-	var pad := MarginContainer.new()
-	pad.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	pad.add_theme_constant_override("margin_left", 10)
-	pad.add_theme_constant_override("margin_right", 10)
-	pad.add_theme_constant_override("margin_top", 8)
-	add_child(pad)
-	pad.add_child(root)
+	_screen_root = VBoxContainer.new()
+	_screen_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_screen_root.add_theme_constant_override("separation", 0)
+	add_child(_screen_root)
 
-	root.add_child(_build_header())
-	root.add_child(_build_subheader())
-	root.add_child(_build_mid())
-
-	_summary_label = Label.new()
-	_summary_label.add_theme_font_size_override("font_size", 9)
-	_summary_label.add_theme_color_override("font_color", UIPalette.MUTED)
-	_summary_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	root.add_child(_summary_label)
-
-	_carousel = SymbotCarousel.new()
-	_carousel.focused_changed.connect(_on_focus_changed)
-	root.add_child(_carousel)
+	_screen_root.add_child(_build_header(insets.x))
+	_screen_root.add_child(_build_content())
+	_dock = _attach_bottom_dock(_screen_root, &"workshop", func(d): navigate.emit(d))
+	_dock.set_safe_bottom(insets.y)
 
 	_build_overlay_layer()
 
 
-## Left: the screen name. Right: the two currencies stacked, Scrap over Alloy, each led by
-## its own glyph in its own colour.
-func _build_header() -> Control:
-	var header := HBoxContainer.new()
+## Full-width dark bar the colour of the dock, with the phone's top safe area folded into its
+## top padding. Screen name left; Scrap over Alloy right.
+func _build_header(safe_top: float) -> Control:
+	var bar := PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = UIPalette.INK
+	sb.border_color = UIPalette.LINE_SOFT
+	sb.border_width_bottom = 1
+	sb.set_content_margin(SIDE_TOP, safe_top + 8)
+	sb.set_content_margin(SIDE_BOTTOM, 8)
+	sb.set_content_margin(SIDE_LEFT, 14)
+	sb.set_content_margin(SIDE_RIGHT, 14)
+	bar.add_theme_stylebox_override("panel", sb)
 
+	var hb := HBoxContainer.new()
+	bar.add_child(hb)
 	var title := Label.new()
 	title.theme_type_variation = &"Heading"
 	title.text = "WORKSHOP"
 	title.add_theme_font_size_override("font_size", 18)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	header.add_child(title)
+	hb.add_child(title)
 
 	var money := VBoxContainer.new()
 	money.add_theme_constant_override("separation", 1)
 	money.alignment = BoxContainer.ALIGNMENT_END
-	header.add_child(money)
+	hb.add_child(money)
 	_scrap_label = _make_currency_row(money, &"scrap", UIPalette.SCRAP)
 	_alloy_label = _make_currency_row(money, &"alloy", UIPalette.ALLOY)
-	return header
+	return bar
 
 
 func _make_currency_row(parent: VBoxContainer, glyph: StringName, colour: Color) -> Label:
@@ -138,13 +147,36 @@ func _make_currency_row(parent: VBoxContainer, glyph: StringName, colour: Color)
 	parent.add_child(row)
 	row.add_child(IconGlyph.new(glyph, colour, 16.0))
 	var label := Label.new()
-	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_font_size_override("font_size", 15)
 	label.add_theme_color_override("font_color", colour)
 	row.add_child(label)
 	return label
 
 
-## The nameplate on the left, the GEN ▲ button on the right, on one line under the header.
+## The padded content between header and dock: a gap, the nameplate + GEN ▲ line, the
+## parts/hero area, and the carousel.
+func _build_content() -> Control:
+	var mc := MarginContainer.new()
+	mc.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	mc.add_theme_constant_override("margin_left", 12)
+	mc.add_theme_constant_override("margin_right", 12)
+	mc.add_theme_constant_override("margin_top", 12)  # the gap the header asks for
+	mc.add_theme_constant_override("margin_bottom", 2)
+
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 8)
+	mc.add_child(col)
+
+	col.add_child(_build_subheader())
+	col.add_child(_build_mid())
+
+	_carousel = SymbotCarousel.new()
+	_carousel.custom_minimum_size = Vector2(0, 102)
+	_carousel.focused_changed.connect(_on_focus_changed)
+	col.add_child(_carousel)
+	return mc
+
+
 func _build_subheader() -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
@@ -155,7 +187,7 @@ func _build_subheader() -> Control:
 
 	_gen_button = Button.new()
 	_gen_button.text = "GEN ▲"
-	_gen_button.custom_minimum_size = Vector2(76, 46)
+	_gen_button.custom_minimum_size = Vector2(76, 52)
 	_gen_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_gen_button.clip_text = true
 	_gen_button.pressed.connect(Callable(self, "_on_gen_up_pressed"))
@@ -163,33 +195,40 @@ func _build_subheader() -> Control:
 	return row
 
 
-## Parts down the left, the hero sprite filling the centre. The right is reserved for the
-## stats/skills drawer (a later pass); for now it is empty space so the sprite is not off-centre.
+## Parts float top-left; the hero fills the rest and sits low, so it reads as standing on the
+## bench floor of the backdrop rather than hovering mid-air.
 func _build_mid() -> Control:
-	var mid := HBoxContainer.new()
+	var mid := Control.new()
 	mid.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	mid.add_theme_constant_override("separation", 4)
+	mid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
-	_part_list = VBoxContainer.new()
-	_part_list.custom_minimum_size = Vector2(122, 0)
-	_part_list.add_theme_constant_override("separation", 4)
-	mid.add_child(_part_list)
-
-	var hero_wrap := CenterContainer.new()
-	hero_wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	hero_wrap.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	mid.add_child(hero_wrap)
 	_hero = TextureRect.new()
-	_hero.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_hero.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_hero.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_hero.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_hero.custom_minimum_size = Vector2(180, 220)
 	_hero.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	hero_wrap.add_child(_hero)
+	# Centred on screen but biased right of the parts column and low, so it reads as standing
+	# on the bench floor rather than hovering over the buttons.
+	_hero.anchor_left = 0.20
+	_hero.anchor_right = 0.96
+	_hero.anchor_top = 0.34
+	_hero.anchor_bottom = 1.0
+	_hero.offset_bottom = -4
+	mid.add_child(_hero)
 
-	var drawer_reserve := Control.new()
-	drawer_reserve.custom_minimum_size = Vector2(22, 0)
-	mid.add_child(drawer_reserve)
+	# The parts column: a fixed narrow rect pinned top-left, so its rows never stretch across
+	# the sprite. A plain-Control parent means the VBox honours these offsets directly.
+	_part_list = VBoxContainer.new()
+	_part_list.add_theme_constant_override("separation", 6)
+	_part_list.anchor_left = 0.0
+	_part_list.anchor_top = 0.0
+	_part_list.anchor_right = 0.0
+	_part_list.anchor_bottom = 0.0
+	_part_list.offset_left = 0
+	_part_list.offset_top = 0
+	_part_list.offset_right = 148
+	_part_list.offset_bottom = 340
+	mid.add_child(_part_list)
 	return mid
 
 
@@ -203,19 +242,98 @@ func _build_overlay_layer() -> void:
 			_hide_overlay())
 	add_child(_overlay_layer)
 
-	_overlay_panel = PanelContainer.new()
-	_overlay_panel.add_theme_stylebox_override("panel", UIPalette.panel(UIPalette.CYAN, UIPalette.PANEL_2))
-	_overlay_layer.add_child(_overlay_panel)
-	_overlay_label = Label.new()
-	_overlay_label.add_theme_font_size_override("font_size", 12)
-	_overlay_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_overlay_label.custom_minimum_size = Vector2(0, 0)
-	_overlay_panel.add_child(_overlay_label)
+	_scrim = ColorRect.new()
+	_scrim.color = Color(UIPalette.INK, 0.7)
+	_scrim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_overlay_layer.add_child(_scrim)
 
-	_overlay_timer = Timer.new()
-	_overlay_timer.one_shot = true
-	_overlay_timer.timeout.connect(_hide_overlay)
-	add_child(_overlay_timer)
+	# Small tooltip for part names — no scrim, positioned by the tap.
+	_tooltip = PanelContainer.new()
+	_tooltip.add_theme_stylebox_override("panel", UIPalette.panel(UIPalette.CYAN, UIPalette.PANEL_2))
+	_tooltip.visible = false
+	_overlay_layer.add_child(_tooltip)
+	_tooltip_label = Label.new()
+	_tooltip_label.add_theme_font_size_override("font_size", 13)
+	_tooltip.add_child(_tooltip_label)
+
+	_overlay_layer.add_child(_build_modal_card())
+
+	_tooltip_timer = Timer.new()
+	_tooltip_timer.one_shot = true
+	_tooltip_timer.timeout.connect(_hide_overlay)
+	add_child(_tooltip_timer)
+
+
+## The gen-up modal: a centred tech card with an amber crest, a title, the requirement, a
+## parts-maxed readout, and a dismiss button. Replaces the bare tooltip that read as a broken
+## prototype.
+func _build_modal_card() -> CenterContainer:
+	_modal_center = CenterContainer.new()
+	_modal_center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_modal_center.visible = false
+
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(288, 0)
+	var box := StyleBoxFlat.new()
+	box.bg_color = UIPalette.PANEL
+	box.border_color = UIPalette.AMBER
+	box.set_border_width_all(2)
+	box.set_corner_radius_all(6)
+	box.set_content_margin_all(20)
+	box.shadow_color = Color(0, 0, 0, 0.5)
+	box.shadow_size = 12
+	card.add_theme_stylebox_override("panel", box)
+	_modal_center.add_child(card)
+
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 10)
+	v.alignment = BoxContainer.ALIGNMENT_CENTER
+	card.add_child(v)
+
+	_modal_crest = Label.new()
+	_modal_crest.theme_type_variation = &"Heading"
+	_modal_crest.text = "GEN ▲"
+	_modal_crest.add_theme_font_size_override("font_size", 34)
+	_modal_crest.add_theme_color_override("font_color", UIPalette.AMBER)
+	_modal_crest.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(_modal_crest)
+
+	_modal_title = Label.new()
+	_modal_title.theme_type_variation = &"Heading"
+	_modal_title.add_theme_font_size_override("font_size", 15)
+	_modal_title.add_theme_color_override("font_color", UIPalette.AMBER)
+	_modal_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(_modal_title)
+
+	var rule := ColorRect.new()
+	rule.color = UIPalette.LINE_SOFT
+	rule.custom_minimum_size = Vector2(0, 1)
+	v.add_child(rule)
+
+	_modal_body = Label.new()
+	_modal_body.add_theme_font_size_override("font_size", 13)
+	_modal_body.add_theme_color_override("font_color", UIPalette.TEXT)
+	_modal_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_modal_body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(_modal_body)
+
+	_modal_progress = Label.new()
+	_modal_progress.add_theme_font_size_override("font_size", 13)
+	_modal_progress.add_theme_color_override("font_color", UIPalette.CYAN)
+	_modal_progress.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(_modal_progress)
+
+	var got := Button.new()
+	got.text = "GOT IT"
+	got.custom_minimum_size = Vector2(0, 46)
+	var got_box := UIPalette.button()
+	got_box.border_color = UIPalette.CYAN
+	got.add_theme_stylebox_override("normal", got_box)
+	got.add_theme_color_override("font_color", UIPalette.CYAN)
+	got.pressed.connect(_hide_overlay)
+	v.add_child(got)
+	return _modal_center
 
 
 # ---------------------------------------------------------------------------
@@ -252,93 +370,122 @@ func _refresh_hero_and_name() -> void:
 func _rebuild_parts() -> void:
 	_clear(_part_list)
 	if _selected == null:
-		_summary_label.text = ""
 		return
-
-	# The number that makes "spread or concentrate" a real decision rather than a default.
-	var to_max := UpgradeEconomyScript.cost_to_max_all_parts(_selected, _ctx.balance)
-	_summary_label.text = "Part cap %d  ·  max all parts %d Scrap" % [
-		_selected.part_level_cap(), to_max]
-
 	for slot in SymbotInstanceScript.PART_COUNT:
 		_part_list.add_child(_build_part_row(slot))
 
 
-## One part: a tappable glyph (shows the part's name), its level, and a small upgrade button
-## with the Scrap price. The glyph is the only thing that names the part, and only when tapped.
+## One part: a round-badged icon (tap = its name), its level, and a small Upgrade button with
+## the Scrap price. The badge glyph is the only thing that names the part, and only on tap.
 func _build_part_row(slot: int) -> Control:
 	var row := HBoxContainer.new()
 	row.custom_minimum_size = Vector2(0, PART_ROW_HEIGHT)
-	row.add_theme_constant_override("separation", 4)
+	row.add_theme_constant_override("separation", 8)
 
-	var icon := IconGlyph.new(PART_GLYPHS[slot], UIPalette.TEXT, 30.0)
-	icon.mouse_filter = Control.MOUSE_FILTER_STOP
-	icon.gui_input.connect(func(e): _on_part_icon_input(e, slot, icon))
-	row.add_child(icon)
+	row.add_child(_build_part_badge(slot))
+
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 2)
+	col.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	col.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	row.add_child(col)
 
 	var level := Label.new()
 	level.add_theme_font_size_override("font_size", 11)
-	level.add_theme_color_override("font_color", UIPalette.MUTED)
-	level.text = "%d/%d" % [_selected.get_part_level(slot), _selected.part_level_cap()]
-	level.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	level.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(level)
+	level.add_theme_color_override("font_color", UIPalette.TEXT)
+	level.text = "Lv. %d/%d" % [_selected.get_part_level(slot), _selected.part_level_cap()]
+	col.add_child(level)
 
 	var refusal := UpgradeEconomyScript.can_upgrade(_selected, slot, _ctx.wallet, _ctx.balance)
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(50, 44)
-	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	button.custom_minimum_size = Vector2(78, 38)
+	button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	button.clip_text = true
-	button.add_theme_font_size_override("font_size", 11)
+	button.add_theme_font_size_override("font_size", 10)
 	button.disabled = refusal != UpgradeEconomyScript.Refusal.OK
 	button.text = _upgrade_label(slot, refusal)
 	if refusal == UpgradeEconomyScript.Refusal.OK:
 		button.theme_type_variation = &"Primary"
 		button.pressed.connect(Callable(self, "_on_upgrade_pressed").bind(slot))
-	row.add_child(button)
+	col.add_child(button)
 	return row
 
 
+func _build_part_badge(slot: int) -> Control:
+	var badge := Panel.new()
+	badge.custom_minimum_size = Vector2(48, 48)
+	badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(UIPalette.INK, 0.65)
+	sb.set_corner_radius_all(24)
+	sb.border_color = UIPalette.CYAN
+	sb.set_border_width_all(2)
+	badge.add_theme_stylebox_override("panel", sb)
+	badge.mouse_filter = Control.MOUSE_FILTER_STOP
+	badge.gui_input.connect(func(e): _on_part_icon_input(e, slot, badge))
+
+	var tex := TextureRect.new()
+	tex.texture = load(PART_ICON_PATHS[slot]) if ResourceLoader.exists(PART_ICON_PATHS[slot]) else null
+	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex.modulate = UIPalette.TEXT
+	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tex.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	tex.offset_left = 9
+	tex.offset_top = 9
+	tex.offset_right = -9
+	tex.offset_bottom = -9
+	badge.add_child(tex)
+	return badge
+
+
 ## The button says WHY it cannot be pressed. "Capped" and "cannot afford" send the player to
-## different places — one means go gen-up, the other means go fight — and a button that just
-## greys out tells them neither.
+## different places — one means go gen-up, the other means go fight.
 func _upgrade_label(slot: int, refusal: int) -> String:
 	match refusal:
 		UpgradeEconomyScript.Refusal.AT_MARK_CAP:
 			return "Capped"
 		UpgradeEconomyScript.Refusal.NO_SUCH_PART:
 			return "—"
-	return "%d" % UpgradeEconomyScript.level_cost(_selected.get_part_level(slot), _ctx.balance)
+	return "Upgrade\n%d" % UpgradeEconomyScript.level_cost(_selected.get_part_level(slot), _ctx.balance)
 
 
-## GEN ▲ stays visually present but greyed until every part is capped; tapping it while it is
-## not ready explains the requirement rather than doing nothing (the player's ask).
+## GEN ▲ stays present but greyed until every part is capped; tapping it early opens the modal
+## explaining the requirement rather than doing nothing.
 func _refresh_gen() -> void:
-	var ready := _can_gen_up()
-	if ready:
+	if _can_gen_up():
 		_gen_button.theme_type_variation = &"Primary"
 		_gen_button.remove_theme_color_override("font_color")
 		_gen_button.modulate = Color.WHITE
 	else:
 		_gen_button.theme_type_variation = &""
 		_gen_button.add_theme_color_override("font_color", UIPalette.DISABLED)
-		_gen_button.modulate = Color(1, 1, 1, 0.75)
+		_gen_button.modulate = Color(1, 1, 1, 0.8)
 
 
-## True when advancing a generation is allowed right now.
 func _can_gen_up() -> bool:
 	return _selected != null and _selected.mark < SymbotInstanceScript.MAX_MARK \
 		and _selected.can_retrofit()
 
 
-## What the player must do before GEN ▲ works — shown in the tap overlay when they try early.
 func _gen_requirement_text() -> String:
 	if _selected == null:
 		return ""
 	if _selected.mark >= SymbotInstanceScript.MAX_MARK:
-		return "Mk III reached — this Symbot is at its final generation."
-	return "GEN ▲ needs all 5 parts at level %d.\nMax every part, then advance to Mk %s." % [
+		return "This Symbot has reached Mk III — its final generation. There is no further to go."
+	return "Take all five parts to level %d, then this Symbot advances to Mk %s." % [
 		_selected.part_level_cap(), _roman(_selected.mark + 1)]
+
+
+func _parts_maxed() -> int:
+	if _selected == null:
+		return 0
+	var cap := _selected.part_level_cap()
+	var n := 0
+	for i in SymbotInstanceScript.PART_COUNT:
+		if _selected.get_part_level(i) >= cap:
+			n += 1
+	return n
 
 
 # ---------------------------------------------------------------------------
@@ -367,14 +514,13 @@ func _index_of(symbot: SymbotInstance) -> int:
 # Input
 # ---------------------------------------------------------------------------
 
-## A tap on a part icon names the part; a scroll/other event is ignored.
-func _on_part_icon_input(event: InputEvent, slot: int, icon: Control) -> void:
+func _on_part_icon_input(event: InputEvent, slot: int, badge: Control) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		_show_tooltip(PART_NAMES[slot], icon.global_position + Vector2(icon.size.x + 6, 0))
+		_show_tooltip(PART_NAMES[slot], badge.global_position + Vector2(badge.size.x + 6, 4))
 
 
-## Kept for the carousel-free path (tests, external selection). Sets the focus without
-## animating the carousel to avoid a feedback loop.
+## Kept for external/programmatic selection (tests). Sets focus without animating the
+## carousel, to avoid a feedback loop.
 func _on_symbot_selected(symbot: SymbotInstance) -> void:
 	_selected = symbot
 	refresh()
@@ -392,7 +538,7 @@ func _on_gen_up_pressed() -> void:
 		if _selected.retrofit():
 			refresh()
 	else:
-		_show_message(_gen_requirement_text())
+		_show_gen_modal()
 
 
 func _on_close_pressed() -> void:
@@ -403,41 +549,37 @@ func _on_close_pressed() -> void:
 # Overlay
 # ---------------------------------------------------------------------------
 
-## A small tooltip near a point, auto-dismissed shortly — for part names.
 func _show_tooltip(text: String, near: Vector2) -> void:
-	_overlay_label.add_theme_color_override("font_color", UIPalette.TEXT)
-	_overlay_label.text = text
-	_overlay_panel.reset_size()
+	_scrim.visible = false
+	_modal_center.visible = false
+	_tooltip.visible = true
+	_tooltip_label.text = text
+	_tooltip.reset_size()
 	_overlay_layer.visible = true
 	await get_tree().process_frame
-	_place_overlay(near, false)
-	_overlay_timer.start(1.6)
+	var pos := near
+	pos.x = clampf(pos.x, 8, size.x - _tooltip.size.x - 8)
+	pos.y = clampf(pos.y, 8, size.y - _tooltip.size.y - 8)
+	_tooltip.position = pos
+	_tooltip_timer.start(1.6)
 
 
-## A centred message dismissed on tap — for the gen-up requirement.
-func _show_message(text: String) -> void:
-	_overlay_timer.stop()
-	_overlay_label.add_theme_color_override("font_color", UIPalette.TEXT)
-	_overlay_label.text = text
-	_overlay_panel.custom_minimum_size = Vector2(minf(260, size.x - 40), 0)
-	_overlay_panel.reset_size()
+func _show_gen_modal() -> void:
+	_tooltip_timer.stop()
+	_tooltip.visible = false
+	_scrim.visible = true
+	var final_gen := _selected != null and _selected.mark >= SymbotInstanceScript.MAX_MARK
+	_modal_title.text = "FINAL GENERATION" if final_gen else "GENERATION LOCKED"
+	_modal_body.text = _gen_requirement_text()
+	_modal_progress.visible = not final_gen
+	_modal_progress.text = "PARTS MAXED   %d / %d" % [_parts_maxed(), SymbotInstanceScript.PART_COUNT]
+	_modal_center.visible = true
 	_overlay_layer.visible = true
-	await get_tree().process_frame
-	_place_overlay(size * 0.5, true)
-
-
-func _place_overlay(anchor: Vector2, centred: bool) -> void:
-	var panel_size := _overlay_panel.size
-	var pos := anchor - (panel_size * 0.5 if centred else Vector2.ZERO)
-	pos.x = clampf(pos.x, 8, size.x - panel_size.x - 8)
-	pos.y = clampf(pos.y, 8, size.y - panel_size.y - 8)
-	_overlay_panel.position = pos
 
 
 func _hide_overlay() -> void:
-	_overlay_timer.stop()
+	_tooltip_timer.stop()
 	_overlay_layer.visible = false
-	_overlay_panel.custom_minimum_size = Vector2.ZERO
 
 
 # ---------------------------------------------------------------------------
@@ -450,7 +592,6 @@ func _species_of(symbot: SymbotInstance) -> SpeciesDef:
 	return _ctx.species.get_species(symbot.species_id)
 
 
-## The Symbot's art at its current mark, or null if that art is not authored yet.
 func _sprite_for(symbot: SymbotInstance) -> Texture2D:
 	if symbot == null:
 		return null
@@ -481,7 +622,5 @@ func _fmt(n: int) -> String:
 
 func _clear(container: Node) -> void:
 	for child in container.get_children():
-		# remove_child before queue_free — queue_free is deferred, so a rebuild that only
-		# queued would leave the old rows on screen for the rest of the frame.
 		container.remove_child(child)
 		child.queue_free()

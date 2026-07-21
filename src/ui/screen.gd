@@ -44,11 +44,28 @@ func setup(ctx: ServiceContext) -> void:
 ## lit on [param active], and route its taps through [param on_nav] — a Callable the screen
 ## passes as `func(d): navigate.emit(d)`. The dock knows nothing about the screens; the
 ## screen forwards, the game root routes.
-func _attach_bottom_dock(container: Node, active: StringName, on_nav: Callable) -> void:
+func _attach_bottom_dock(container: Node, active: StringName, on_nav: Callable) -> BottomDock:
 	var dock := BottomDock.new()
 	dock.navigate.connect(on_nav)
 	container.add_child(dock)
 	dock.set_active(active)
+	return dock
+
+
+## Safe-area insets (top, bottom) in viewport units — the space a phone reserves for the
+## notch/status bar and the home indicator. Zero on hardware without them (desktop), where a
+## small floor keeps the layout from hugging the very edge. Screens pad their header top and
+## their dock bottom by these so nothing lands under an OS gesture area.
+func _safe_insets() -> Vector2:
+	var win := Vector2(DisplayServer.window_get_size())
+	var vp := get_viewport_rect().size
+	if win.x <= 0.0 or vp.x <= 0.0:
+		return Vector2(6, 6)
+	var scale := vp.x / win.x  # physical px → viewport units
+	var safe := DisplayServer.get_display_safe_area()
+	var top := maxf(6.0, float(safe.position.y) * scale)
+	var bottom := maxf(6.0, (win.y - float(safe.position.y + safe.size.y)) * scale)
+	return Vector2(top, bottom)
 
 
 ## Install a full-screen background image behind the screen's content, dimmed so the UI
