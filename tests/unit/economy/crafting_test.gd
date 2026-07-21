@@ -244,6 +244,7 @@ func test_crafting_through_the_foundry_adds_the_symbot() -> void:
 
 func test_the_foundry_is_reachable_from_the_map_and_returns() -> void:
 	var g := _game()
+	g.show_map()  # the game opens on Home now
 	g._map._on_foundry_pressed()
 	assert_not_null(g._foundry)
 	g._foundry._on_close_pressed()

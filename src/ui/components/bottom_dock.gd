@@ -2,7 +2,7 @@
 ##
 ## Replaces the crowded five-button top row with the prototype's dock: one tab per
 ## destination, the current one lit cyan. The prototype ships four tabs; this game has seven
-## meta destinations, so the dock holds seven (about 51px each at the 360 base width).
+## meta destinations, so the dock holds eight (about 45px each at the 360 base width).
 ##
 ## Emits [signal navigate] with a destination id; the screen forwards it and the game root
 ## routes it. The dock knows nothing about the screens, only their names.
@@ -16,6 +16,7 @@ const HEIGHT := 56
 ## dest id -> short label. Order is left-to-right. Kept short because six tabs share one
 ## row; the label is a reminder, not a sentence.
 const TABS: Array = [
+	[&"home", "HOME"],
 	[&"map", "MAP"],
 	[&"squad", "SQUAD"],
 	[&"workshop", "WORKSHOP"],
@@ -25,7 +26,7 @@ const TABS: Array = [
 	[&"bag", "BAG"],
 ]
 
-var _active: StringName = &"map"
+var _active: StringName = &"home"
 var _row: HBoxContainer
 var _box: StyleBoxFlat
 
@@ -37,11 +38,14 @@ func _init() -> void:
 	_box.bg_color = UIPalette.INK
 	_box.border_color = UIPalette.LINE
 	_box.border_width_top = 1
-	_box.set_content_margin_all(4)
+	_box.set_content_margin(SIDE_TOP, 4)
+	_box.set_content_margin(SIDE_BOTTOM, 4)
+	_box.set_content_margin(SIDE_LEFT, 1)
+	_box.set_content_margin(SIDE_RIGHT, 1)
 	add_theme_stylebox_override("panel", _box)
 
 	_row = HBoxContainer.new()
-	_row.add_theme_constant_override("separation", 3)
+	_row.add_theme_constant_override("separation", 0)
 	add_child(_row)
 	for tab in TABS:
 		_row.add_child(_build_tab(tab[0], tab[1]))
@@ -83,7 +87,7 @@ func _style_tab(button: Button, active: bool) -> void:
 	if active:
 		flat.border_width_top = 2
 		flat.border_color = UIPalette.CYAN
-	flat.set_content_margin_all(2)
+	flat.set_content_margin_all(1)
 	button.add_theme_stylebox_override("normal", flat)
 	button.add_theme_stylebox_override("hover", flat)
 	button.add_theme_stylebox_override("pressed", flat)
@@ -93,4 +97,4 @@ func _style_tab(button: Button, active: bool) -> void:
 	button.add_theme_color_override("font_hover_color", UIPalette.CYAN)
 	# Small enough that the longest label ("WORKSHOP") fits its seventh of the row without
 	# clipping — the tabs are equal width, so the longest one sets the size.
-	button.add_theme_font_size_override("font_size", 9)
+	button.add_theme_font_size_override("font_size", 8)

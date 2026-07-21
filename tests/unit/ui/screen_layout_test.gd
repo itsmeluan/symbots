@@ -88,11 +88,18 @@ func test_the_viewport_keeps_its_portrait_shape() -> void:
 # ---------------------------------------------------------------------------
 
 func test_the_stage_map_fills_the_viewport() -> void:
+	_game.show_map()
 	await _settle()
 	_assert_fills(_game._map, "stage map")
 
 
+func test_home_fills_the_viewport() -> void:
+	await _settle()
+	_assert_fills(_game._home, "home")
+
+
 func test_the_stage_list_has_room_to_show_cards() -> void:
+	_game.show_map()
 	# The exact failure in the screenshot: ten cards existed, the ScrollContainer around
 	# them was 0px tall, and the player saw an empty grey panel.
 	await _settle()
@@ -102,6 +109,7 @@ func test_the_stage_list_has_room_to_show_cards() -> void:
 
 
 func test_a_stage_card_is_wide_enough_to_read() -> void:
+	_game.show_map()
 	await _settle()
 	var card: Control = _game._map._list.get_child(0)
 	assert_gt(card.size.x, _viewport_size().x * 0.5, "cards are squeezed to nothing")

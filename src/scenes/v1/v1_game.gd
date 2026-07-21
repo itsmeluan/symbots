@@ -28,6 +28,7 @@ const RewardScreenScript := preload("res://src/ui/reward_screen.gd")
 const SquadScreenScript := preload("res://src/ui/squad_screen.gd")
 const FoundryScreenScript := preload("res://src/ui/foundry_screen.gd")
 const BagScreenScript := preload("res://src/ui/bag_screen.gd")
+const HomeScreenScript := preload("res://src/ui/home_screen.gd")
 const ExpeditionScreenScript := preload("res://src/ui/expedition_screen.gd")
 const StageRunnerScript := preload("res://src/core/stages/stage_runner.gd")
 const BattleEngineScript := preload("res://src/core/battle_v1/battle_engine.gd")
@@ -72,6 +73,7 @@ var _squad: SquadScreen = null
 var _foundry: FoundryScreen = null
 var _expeditions: ExpeditionScreen = null
 var _bag: BagScreen = null
+var _home: HomeScreen = null
 
 ## The run in progress: its runner, its stage, and where in the battle sequence we are.
 var _runner: StageRunner = null
@@ -91,7 +93,7 @@ func _ready() -> void:
 	ctx = build_context()
 	attach_save(SaveLoadService.new(ctx.log, save_backend))
 	load_or_start_new()
-	show_map()
+	show_home()
 
 
 ## Register the v1 provider against [param service]. Split from _ready so a test can
@@ -197,6 +199,7 @@ func _navigate_to(dest: StringName) -> void:
 		&"foundry": show_foundry()
 		&"expeditions": show_expeditions()
 		&"bag": show_bag()
+		&"home": show_home()
 
 
 ## Add a screen and give it the full viewport BEFORE setup runs.
@@ -255,6 +258,14 @@ func show_squad() -> void:
 
 
 ## The Alloy sink and the collection board. Sits beside the other build screens on the map.
+## Home — where the game opens: the squad's lead Symbot and the player's badge.
+func show_home() -> void:
+	_clear_screens()
+	_home = HomeScreenScript.new()
+	_present(_home)
+	_home.navigate.connect(Callable(self, "_navigate_to"))
+
+
 ## The Bag — a read-only ledger of components, Chipsets and blueprints.
 func show_bag() -> void:
 	_clear_screens()
@@ -390,6 +401,10 @@ func _clear_screens() -> void:
 		remove_child(_bag)
 		_bag.queue_free()
 		_bag = null
+	if _home != null:
+		remove_child(_home)
+		_home.queue_free()
+		_home = null
 	if _tree_screen != null:
 		remove_child(_tree_screen)
 		_tree_screen.queue_free()

@@ -92,17 +92,26 @@ func test_a_missing_starting_species_is_skipped_rather_than_fielding_a_ghost() -
 # The map
 # ---------------------------------------------------------------------------
 
-func test_the_map_is_up_after_boot() -> void:
-	assert_not_null(_game._map)
+func test_home_is_up_after_boot() -> void:
+	# Home answers "who are you and who is with you" before the map asks "where do you fight".
+	assert_not_null(_game._home)
 	assert_null(_game._battle, "and no battle is open")
 
 
+func test_the_map_is_one_tap_away() -> void:
+	_game._navigate_to(&"map")
+	assert_not_null(_game._map)
+	assert_null(_game._home, "the previous screen steps aside")
+
+
 func test_the_map_draws_every_stage_including_locked_ones() -> void:
+	_game.show_map()
 	# A map that only shows what you can play teaches nothing about where you are going.
 	assert_eq(_game._map._list.get_child_count(), _game.ctx.stages.entries.size())
 
 
 func test_locked_stages_are_shown_but_not_enterable() -> void:
+	_game.show_map()
 	var enabled := 0
 	var disabled := 0
 	for card in _game._map._list.get_children():
@@ -116,6 +125,7 @@ func test_locked_stages_are_shown_but_not_enterable() -> void:
 
 
 func test_clearing_a_stage_opens_the_next_row_on_the_map() -> void:
+	_game.show_map()
 	_game.ctx.progress.mark_cleared(&"stage_01")
 	_game._map.refresh()
 	var enabled := 0
@@ -126,6 +136,7 @@ func test_clearing_a_stage_opens_the_next_row_on_the_map() -> void:
 
 
 func test_a_cleared_stage_stays_replayable() -> void:
+	_game.show_map()
 	# Replaying for Scrap is the grind the economy assumes (§5.2); locking a stage after
 	# one win would remove the loop's floor.
 	_game.ctx.progress.mark_cleared(&"stage_01")
@@ -134,6 +145,7 @@ func test_a_cleared_stage_stays_replayable() -> void:
 
 
 func test_the_map_shows_the_wallet_and_follows_it() -> void:
+	_game.show_map()
 	# The header is shared chrome now (Screen.build_chrome), so the readout lives on the base.
 	_game.ctx.wallet.earn(Wallet.SCRAP, 777)
 	assert_true(_game._map._chrome_scrap.text.contains("777"),
