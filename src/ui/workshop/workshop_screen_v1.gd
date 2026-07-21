@@ -107,19 +107,14 @@ func _build_layout() -> void:
 	_build_overlay_layer()
 
 
-## Full-width dark bar the colour of the dock, with the phone's top safe area folded into its
-## top padding. Screen name left; Scrap over Alloy right.
+## No background bar — the header sits straight on the backdrop. Only the phone's top safe
+## area is folded into the top padding. Screen name left; Scrap over Alloy right.
 func _build_header(safe_top: float) -> Control:
-	var bar := PanelContainer.new()
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = UIPalette.INK
-	sb.border_color = UIPalette.LINE_SOFT
-	sb.border_width_bottom = 1
-	sb.set_content_margin(SIDE_TOP, safe_top + 8)
-	sb.set_content_margin(SIDE_BOTTOM, 8)
-	sb.set_content_margin(SIDE_LEFT, 14)
-	sb.set_content_margin(SIDE_RIGHT, 14)
-	bar.add_theme_stylebox_override("panel", sb)
+	var bar := MarginContainer.new()
+	bar.add_theme_constant_override("margin_top", int(safe_top + 8))
+	bar.add_theme_constant_override("margin_bottom", 6)
+	bar.add_theme_constant_override("margin_left", 14)
+	bar.add_theme_constant_override("margin_right", 14)
 
 	var hb := HBoxContainer.new()
 	bar.add_child(hb)
@@ -135,22 +130,36 @@ func _build_header(safe_top: float) -> Control:
 	money.add_theme_constant_override("separation", 1)
 	money.alignment = BoxContainer.ALIGNMENT_END
 	hb.add_child(money)
-	_scrap_label = _make_currency_row(money, &"scrap", UIPalette.SCRAP)
-	_alloy_label = _make_currency_row(money, &"alloy", UIPalette.ALLOY)
+	# Scrap uses the same scrap.svg the Upgrade button carries, so the two read as one icon.
+	# Alloy keeps its drawn hexagon glyph.
+	_scrap_label = _make_currency_row(money, _svg_icon(SCRAP_ICON, UIPalette.SCRAP, 16.0), UIPalette.SCRAP)
+	_alloy_label = _make_currency_row(money, IconGlyph.new(&"alloy", UIPalette.ALLOY, 16.0), UIPalette.ALLOY)
 	return bar
 
 
-func _make_currency_row(parent: VBoxContainer, glyph: StringName, colour: Color) -> Label:
+func _make_currency_row(parent: VBoxContainer, icon: Control, colour: Color) -> Label:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 4)
 	row.alignment = BoxContainer.ALIGNMENT_END
 	parent.add_child(row)
-	row.add_child(IconGlyph.new(glyph, colour, 16.0))
+	row.add_child(icon)
 	var label := Label.new()
 	label.add_theme_font_size_override("font_size", 15)
 	label.add_theme_color_override("font_color", colour)
 	row.add_child(label)
 	return label
+
+
+## An SVG icon as a colour-tinted TextureRect, sized square.
+func _svg_icon(path: String, colour: Color, px: float) -> TextureRect:
+	var tex := TextureRect.new()
+	tex.texture = load(path) if ResourceLoader.exists(path) else null
+	tex.custom_minimum_size = Vector2(px, px)
+	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex.modulate = colour
+	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return tex
 
 
 ## The padded content between header and dock: a gap, the nameplate + GEN ▲ line, the
