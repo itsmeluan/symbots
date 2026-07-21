@@ -39,11 +39,6 @@ func setup(ctx: ServiceContext) -> void:
 	_hero.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_hero.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_hero.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_hero.anchor_left = 0.0
-	_hero.anchor_right = 1.0
-	_hero.anchor_top = 0.18
-	_hero.anchor_bottom = 1.0
-	_hero.offset_bottom = -8
 	stage.add_child(_hero)
 
 	refresh()
@@ -121,6 +116,8 @@ func refresh() -> void:
 		_roman(lead.mark), lead.level, squad.size()]
 	var path := "%s%s_mk%d.png" % [ART_DIR, lead.species_id, clampi(lead.mark, 1, 3)]
 	_hero.texture = load(path) if ResourceLoader.exists(path) else null
+	# Same band as the Workshop, so the same Symbot is the same size on both screens.
+	fit_hero(_hero, lead.mark)
 
 
 func _roman(n: int) -> String:

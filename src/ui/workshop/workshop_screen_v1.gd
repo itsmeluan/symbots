@@ -97,16 +97,6 @@ var _repeat_timer: Timer
 var _repeat_slot: int = -1
 var _repeat_ticks: int = 0
 
-## Height of the band the hero sprite is fitted into at Mk I, and the multiplier per mark.
-##
-## The sprite is drawn KEEP_ASPECT_CENTERED, which scales whatever art it is given to fill the
-## band — so a fixed band flattens every mark to one size no matter how big the source art is.
-## The art cannot be trusted to carry the progression either: most species grow across marks,
-## but Coilsprite's Mk I canvas (317x323) is larger than its Mk III (209x209). Driving the band
-## from the mark guarantees an evolved Symbot always looms larger than the form it came from.
-const HERO_BAND := 122.0
-const MARK_ZOOM: Array[float] = [1.0, 1.32, 1.68]
-
 const DRAWER_W := 186.0
 ## Padding inside the drawer panel, used on both sides so content reads centred.
 const PANEL_PAD := 8.0
@@ -527,6 +517,7 @@ func _build_modal_card() -> CenterContainer:
 	_modal_body.add_theme_font_size_override("font_size", 13)
 	_modal_body.add_theme_color_override("font_color", UIPalette.TEXT)
 	_modal_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_modal_body.custom_minimum_size = Vector2(0, 0)
 	_modal_body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(_modal_body)
 
@@ -534,6 +525,10 @@ func _build_modal_card() -> CenterContainer:
 	_modal_progress.add_theme_font_size_override("font_size", 13)
 	_modal_progress.add_theme_color_override("font_color", UIPalette.CYAN)
 	_modal_progress.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	# Wrap instead of stretching the card: a long single line was pushing the modal wider
+	# than the phone.
+	_modal_progress.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_modal_progress.custom_minimum_size = Vector2(0, 0)
 	v.add_child(_modal_progress)
 
 	var got := Button.new()
@@ -569,9 +564,7 @@ func _refresh_hero_and_name() -> void:
 		xp = XpProgression.percent_to_next(_selected, _ctx.balance)
 	_nameplate.set_symbot(species, _selected, xp)
 	_hero.texture = _sprite_for(_selected)
-	# Taller band for a later mark — see MARK_ZOOM.
-	var mark := clampi(_selected.mark if _selected != null else 1, 1, MARK_ZOOM.size())
-	_hero.offset_top = -HERO_BAND * MARK_ZOOM[mark - 1]
+	fit_hero(_hero, _selected.mark if _selected != null else 1)
 
 
 func _rebuild_parts() -> void:
@@ -873,7 +866,8 @@ func _gen_progress_text() -> String:
 			var cores := _ctx.key_items.count(KeyItems.CHIPSET) if _ctx.key_items else 0
 			# Show the ceiling it BUYS, not just the one it has — the payoff is the number
 			# that moves, and it is invisible until you have already spent.
-			return "CEILING %d \u2192 %d   \u00b7   LEVEL %d/%d   \u00b7   PARTS %d/%d   \u00b7   CHIPSETS %d" % [
+			# Deliberately two short lines: one long line forced the card wider than the phone.
+			return "CEILING %d \u2192 %d\nLEVEL %d/%d  \u00b7  PARTS %d/%d  \u00b7  CHIPSETS %d" % [
 				_selected.level_cap(), _selected.level_cap() + 1,
 				_selected.level, _selected.level_cap(),
 				_parts_maxed(), SymbotInstanceScript.PART_COUNT, cores]
@@ -1035,12 +1029,16 @@ func _show_gen_modal() -> void:
 	match mode:
 		&"gen":
 			_modal_crest.text = "GEN ▲"
+			_modal_crest.add_theme_font_size_override("font_size", 34)
 			_modal_title.text = "GENERATION LOCKED"
 		&"overclock":
-			_modal_crest.text = "OC ▲"
+			# The whole word, sized to fit the card rather than abbreviated to "OC".
+			_modal_crest.text = "OVERCLOCK"
+			_modal_crest.add_theme_font_size_override("font_size", 26)
 			_modal_title.text = "OVERCLOCK LOCKED"
 		_:
 			_modal_crest.text = "MAX"
+			_modal_crest.add_theme_font_size_override("font_size", 34)
 			_modal_title.text = "FULLY DEVELOPED" if _max_overclock() > 0 else "FINAL GENERATION"
 	_modal_body.text = _gen_requirement_text()
 	_modal_progress.text = _gen_progress_text()

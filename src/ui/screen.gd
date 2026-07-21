@@ -105,6 +105,24 @@ func build_chrome(ctx: ServiceContext, title: String, active: StringName,
 ## Horizontal padding between the screen edge and its content.
 const CONTENT_PAD := 12
 
+## How tall a Symbot portrait is drawn at Mk I, and the multiplier per mark.
+##
+## Shared so every screen that shows a Symbot draws it at the same scale — Home and the
+## Workshop each owning their own number is how the same creature ended up two sizes.
+const HERO_BAND := 122.0
+const MARK_ZOOM: Array[float] = [1.0, 1.32, 1.68]
+
+
+## Bottom-pin a portrait TextureRect and size its band from [param mark], so a later mark
+## looms larger (see MARK_ZOOM).
+func fit_hero(hero: TextureRect, mark: int) -> void:
+	hero.anchor_left = 0.0
+	hero.anchor_right = 1.0
+	hero.anchor_top = 1.0
+	hero.anchor_bottom = 1.0
+	hero.offset_bottom = 0
+	hero.offset_top = -HERO_BAND * MARK_ZOOM[clampi(mark, 1, MARK_ZOOM.size()) - 1]
+
 
 func _build_chrome_header(title: String, safe_top: float) -> Control:
 	var bar := MarginContainer.new()
