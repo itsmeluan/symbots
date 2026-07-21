@@ -111,8 +111,8 @@ func _build_layout() -> void:
 ## area is folded into the top padding. Screen name left; Scrap over Alloy right.
 func _build_header(safe_top: float) -> Control:
 	var bar := MarginContainer.new()
-	bar.add_theme_constant_override("margin_top", int(safe_top + 8))
-	bar.add_theme_constant_override("margin_bottom", 6)
+	bar.add_theme_constant_override("margin_top", int(safe_top + 6))
+	bar.add_theme_constant_override("margin_bottom", 2)
 	bar.add_theme_constant_override("margin_left", 14)
 	bar.add_theme_constant_override("margin_right", 14)
 
@@ -123,17 +123,20 @@ func _build_header(safe_top: float) -> Control:
 	title.text = "WORKSHOP"
 	title.add_theme_font_size_override("font_size", 18)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	# Top-aligned so the title sits on the first currency line (Scrap), not centred against
+	# the two-row block.
+	title.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	hb.add_child(title)
 
 	var money := VBoxContainer.new()
 	money.add_theme_constant_override("separation", 1)
 	money.alignment = BoxContainer.ALIGNMENT_END
+	money.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	hb.add_child(money)
 	# Scrap uses the same scrap.svg the Upgrade button carries, so the two read as one icon.
 	# Alloy keeps its drawn hexagon glyph.
-	_scrap_label = _make_currency_row(money, _svg_icon(SCRAP_ICON, UIPalette.SCRAP, 16.0), UIPalette.SCRAP)
-	_alloy_label = _make_currency_row(money, IconGlyph.new(&"alloy", UIPalette.ALLOY, 16.0), UIPalette.ALLOY)
+	_scrap_label = _make_currency_row(money, _svg_icon(SCRAP_ICON, UIPalette.SCRAP, 13.0), UIPalette.SCRAP)
+	_alloy_label = _make_currency_row(money, IconGlyph.new(&"alloy", UIPalette.ALLOY, 13.0), UIPalette.ALLOY)
 	return bar
 
 
@@ -144,7 +147,7 @@ func _make_currency_row(parent: VBoxContainer, icon: Control, colour: Color) -> 
 	parent.add_child(row)
 	row.add_child(icon)
 	var label := Label.new()
-	label.add_theme_font_size_override("font_size", 15)
+	label.add_theme_font_size_override("font_size", 12)
 	label.add_theme_color_override("font_color", colour)
 	row.add_child(label)
 	return label
@@ -169,11 +172,11 @@ func _build_content() -> Control:
 	mc.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	mc.add_theme_constant_override("margin_left", 12)
 	mc.add_theme_constant_override("margin_right", 12)
-	mc.add_theme_constant_override("margin_top", 12)  # the gap the header asks for
+	mc.add_theme_constant_override("margin_top", 4)
 	mc.add_theme_constant_override("margin_bottom", 2)
 
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 8)
+	col.add_theme_constant_override("separation", 6)
 	mc.add_child(col)
 
 	col.add_child(_build_subheader())
@@ -225,8 +228,8 @@ func _build_mid() -> Control:
 	_hero.anchor_right = 1.0
 	_hero.anchor_top = 1.0
 	_hero.anchor_bottom = 1.0
-	_hero.offset_top = -146
-	_hero.offset_bottom = 52
+	_hero.offset_top = -150
+	_hero.offset_bottom = 28
 	mid.add_child(_hero)
 
 	# The parts column: a fixed narrow rect pinned top-left, so its rows never stretch across
