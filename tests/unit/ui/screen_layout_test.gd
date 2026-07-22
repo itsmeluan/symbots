@@ -103,16 +103,39 @@ func test_the_stage_list_has_room_to_show_cards() -> void:
 	# The exact failure in the screenshot: ten cards existed, the ScrollContainer around
 	# them was 0px tall, and the player saw an empty grey panel.
 	await _settle()
-	assert_eq(_game._map._list.get_child_count(), _game.ctx.stages.entries.size())
+	assert_eq(_game._map._cards.size(), _game.ctx.stages.entries.size())
 	assert_gt(_tallest_expanding(_game._map), 100.0,
 		"the scrolling region collapsed — cards exist but nothing can be seen")
 
 
 func test_a_stage_card_is_wide_enough_to_read() -> void:
+	# Cards no longer span the screen — they sit BESIDE the timeline, so the bar to clear is
+	# "wide enough for the longest stage name", not "half the viewport".
 	_game.show_map()
 	await _settle()
-	var card: Control = _game._map._list.get_child(0)
-	assert_gt(card.size.x, _viewport_size().x * 0.5, "cards are squeezed to nothing")
+	var card: Control = _game._map._cards[0]
+	assert_gte(card.size.x, StageSelectScreen.CARD_W, "cards are squeezed to nothing")
+
+
+func test_stage_cards_alternate_sides_without_crossing_the_timeline() -> void:
+	# The dashed spine and the node circles live at the centre; a card that ran across it
+	# would bury the very thing the card belongs to.
+	_game.show_map()
+	await _settle()
+	var map := _game._map
+	var centre: float = map._track.size.x * 0.5
+	var left := 0
+	var right := 0
+	for i in map._cards.size():
+		var card: Button = map._cards[i]
+		if card.position.x > centre:
+			right += 1
+			assert_gte(card.position.x, centre, "a right card crosses the spine")
+		else:
+			left += 1
+			assert_lte(card.position.x + card.size.x, centre, "a left card crosses the spine")
+	assert_gt(left, 0, "no cards on the left")
+	assert_gt(right, 0, "no cards on the right")
 
 
 func test_the_workshop_fills_the_viewport() -> void:

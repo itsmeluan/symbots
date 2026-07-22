@@ -107,19 +107,18 @@ func test_the_map_is_one_tap_away() -> void:
 func test_the_map_draws_every_stage_including_locked_ones() -> void:
 	_game.show_map()
 	# A map that only shows what you can play teaches nothing about where you are going.
-	assert_eq(_game._map._list.get_child_count(), _game.ctx.stages.entries.size())
+	assert_eq(_game._map._cards.size(), _game.ctx.stages.entries.size())
 
 
 func test_locked_stages_are_shown_but_not_enterable() -> void:
 	_game.show_map()
 	var enabled := 0
 	var disabled := 0
-	for card in _game._map._list.get_children():
-		if card is Button:
-			if card.disabled:
-				disabled += 1
-			else:
-				enabled += 1
+	for card in _game._map._cards:
+		if card.disabled:
+			disabled += 1
+		else:
+			enabled += 1
 	assert_eq(enabled, 1, "exactly the one open stage on a fresh save")
 	assert_gt(disabled, 0, "the rest are visible and locked")
 
@@ -129,8 +128,8 @@ func test_clearing_a_stage_opens_the_next_row_on_the_map() -> void:
 	_game.ctx.progress.mark_cleared(&"stage_01")
 	_game._map.refresh()
 	var enabled := 0
-	for card in _game._map._list.get_children():
-		if card is Button and not card.disabled:
+	for card in _game._map._cards:
+		if not card.disabled:
 			enabled += 1
 	assert_eq(enabled, 2, "the cleared stage stays replayable and the next one opens")
 
@@ -141,7 +140,8 @@ func test_a_cleared_stage_stays_replayable() -> void:
 	# one win would remove the loop's floor.
 	_game.ctx.progress.mark_cleared(&"stage_01")
 	_game._map.refresh()
-	assert_false((_game._map._list.get_child(0) as Button).disabled)
+	# _cards is in STAGE order — index 0 is the first stage, drawn at the BOTTOM of the climb.
+	assert_false(_game._map._cards[0].disabled)
 
 
 func test_the_map_shows_the_wallet_and_follows_it() -> void:
@@ -226,3 +226,20 @@ func test_a_battle_opened_from_the_map_knows_its_stage() -> void:
 	_game._on_stage_chosen(stage)
 	assert_not_null(_game._battle)
 	assert_eq(_game._battle.stage, stage)
+
+
+func test_the_sheet_never_says_one_fights() -> void:
+	_game.show_map()
+	var stage: StageDef = _game.ctx.stages.get_stage(&"stage_01")
+	assert_eq(stage.battle_count(), 1, "precondition: stage_01 is a single fight")
+	assert_eq(_game._map._fight_count(stage), "1 FIGHT")
+
+
+func test_the_sheet_fits_between_the_map_and_the_dock() -> void:
+	# The sheet's height is a fixed budget rather than derived from its contents; if the
+	# contents ever outgrow it, DEPLOY is the thing that falls off the bottom.
+	_game.show_map()
+	var map := _game._map
+	map._on_stage_pressed(_game.ctx.stages.get_stage(&"stage_01"))
+	assert_lte(map._sheet.get_combined_minimum_size().y, StageSelectScreen.SHEET_HEIGHT,
+		"the sheet's contents no longer fit its fixed height")

@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-21T21:44:08-03:00",
+  "generationMode": "built-in image_gen, one independent generation per scene",
+  "creativeProductionBoardId": "dd5d9511-a7b1-44bf-8eaf-9ac746792e6a",
+  "format": {
+    "mimeType": "image/png",
+    "width": 1080,
+    "height": 1920,
+    "aspectRatio": "9:16",
+    "colorSpace": "sRGB"
+  },
+  "commonPrompt": "Portrait semi-realistic painterly industrial sci-fi battle backdrop for a 2D turn-based mobile game. Horizon about 30% down; continuous unobstructed walkable ground from 32% to 82% in centered one-point perspective; calm evenly lit standing lanes centered at 24% and 76% width; subtle central floor divider; top 7% empty sky or haze; bottom 18% plain darker floor; environmental detail confined above the horizon; overall mid-to-dark and desaturated. No characters, robots, creatures, people, animals, text, numbers, logos, watermarks, UI, frames, borders, vignettes, or foreground objects.",
+  "outputs": [
+    {
+      "stage": 1,
+      "title": "Scrapyard Verge",
+      "file": "bg_stage_01.png",
+      "scenePrompt": "Open compacted scrap-metal yard; crushed-machinery towers and a dead crane on the skyline; overcast dusk, rust and ochre.",
+      "bytes": 2162050,
+      "sha256": "2f1e0f8abe1ab301fd11e8f981ef5e1cd172a38dc9b2916c09cc478c41b6b8e3"
+    },
+    {
+      "stage": 2,
+      "title": "Rusted Gantry",
+      "file": "bg_stage_02.png",
+      "scenePrompt": "Wide rust-streaked steel gantry deck; collapsed lattice catwalks above the horizon; sodium-orange light and deep distant shadows.",
+      "bytes": 2446172,
+      "sha256": "f8847f0c8e464a10931c7926fdbbfe4ebdb7b28721f2db783f5775a05d389ec1"
+    },
+    {
+      "stage": 3,
+      "title": "Coolant Run",
+      "file": "bg_stage_03.png",
+      "scenePrompt": "Dry poured-concrete floor; enormous coolant pipes crossing the sky behind; pale cyan mist and cold blue-grey.",
+      "bytes": 2189933,
+      "sha256": "0522132539d6b1be08897069b6a7b5d27c0966dad521438756ea57b144d72420"
+    },
+    {
+      "stage": 4,
+      "title": "Fabrication Floor",
+      "file": "bg_stage_04.png",
+      "scenePrompt": "Polished factory floor with restrained lane markings; idle assembly arms and conveyors along the back wall; sterile white-green worklight.",
+      "bytes": 2148638,
+      "sha256": "441b2170c7d3ebc8e39fdf712c846d5a98fe3ad1e27c861cbbb486baaf27a338"
+    },
+    {
+      "stage": 5,
+      "title": "The Stack",
+      "file": "bg_stage_05.png",
+      "scenePrompt": "Flat top of a vast stacked structure; lower tiers falling away beyond the horizon; high-altitude haze and cool grey-violet.",
+      "bytes": 2231804,
+      "sha256": "3a4fb81aa0c69436b008c4f7e0282ff214ade2bc52698de14e10d452beb3dd6c"
+    },
+    {
+      "stage": 6,
+      "title": "Signal Yard",
+      "file": "bg_stage_06.png",
+      "scenePrompt": "Packed gravel and subtle flush cable trenches; antenna masts and dishes on the skyline; overcast muted green-grey.",
+      "bytes": 3113217,
+      "sha256": "107e217f1d8b79acd4805eb5e72dc3e1713afa46d5969ef434e2c680bd5f9a4a"
+    },
+    {
+      "stage": 7,
+      "title": "Broken Relay",
+      "file": "bg_stage_07.png",
+      "scenePrompt": "Cracked ceramic platform; toppled relay tower and torn cabling behind; distant blue arcs and storm light.",
+      "bytes": 2242270,
+      "sha256": "25dd35674291b4675cd50ae16722c79f967413cf14b52bfb29e13f2094d79b1f"
+    },
+    {
+      "stage": 8,
+      "title": "Cold Storage",
+      "file": "bg_stage_08.png",
+      "scenePrompt": "Frosted metal decking with edge ice; frozen-container racks receding into fog; near-monochrome pale blue.",
+      "bytes": 2213971,
+      "sha256": "a258c9ab4ebadd330356463ad5ebdb16be286b18535e406e5a28bb9d0101f7cd"
+    },
+    {
+      "stage": 9,
+      "title": "Deep Fabrication",
+      "file": "bg_stage_09.png",
+      "scenePrompt": "Oil-stained subterranean machine-hall floor; vast dormant machinery behind; amber emergency light and heavy dark.",
+      "bytes": 1926853,
+      "sha256": "f4bb6229bdde208b5382d1bc8ca3716c0416163472e83f41e75b1946dca2cc4e"
+    },
+    {
+      "stage": 10,
+      "title": "The Foreman",
+      "file": "bg_stage_10.png",
+      "scenePrompt": "Raised continuous inspection platform; dead screen bank and throne-like control rig behind; hard red key light.",
+      "bytes": 2516359,
+      "sha256": "aa093105ac746aaecfa74f93687971a23c8908ee7725e0ea776d7661f3e73b46"
+    },
+    {
+      "stage": 11,
+      "title": "The Overcircuit",
+      "file": "bg_stage_11.png",
+      "scenePrompt": "Dark continuous floor with faint circuit tracery; colossal branching circuit structure above the horizon; electric violet on near-black.",
+      "bytes": 1639694,
+      "sha256": "f054d5f66a1f2c2c296074c46a0507a66a2a625d505ea2176ce81b568858b313"
+    },
+    {
+      "stage": 12,
+      "title": "Molten Yard",
+      "file": "bg_stage_12.png",
+      "scenePrompt": "Dark basalt casting floor with orange cooling channels at the outer edges; foundry ladles, furnace mouths, rim light and smoke behind.",
+      "bytes": 2272334,
+      "sha256": "0e439af1be518de63f3c8035ab7d614b0e776d8cc7e526b8e8d48bbb79b1d6ca"
+    },
+    {
+      "stage": 13,
+      "title": "Signal Apex",
+      "file": "bg_stage_13.png",
+      "scenePrompt": "Windswept transmission-spire platform; cloud deck beyond the horizon and dish arrays behind; cold dawn and thin pale gold.",
+      "bytes": 2039847,
+      "sha256": "5fbc853aa3678fca87d9bf3bc778dd7f7c7807931fcff0ff7fe18cfc8e65c0e3"
+    },
+    {
+      "stage": 14,
+      "title": "The Reclamation",
+      "file": "bg_stage_14.png",
+      "scenePrompt": "Cracked concrete pad with dead grey vegetation restricted to edges; half-buried machinery and collapsed dome behind; ashen desaturated green.",
+      "bytes": 2439721,
+      "sha256": "96a50ec4024a2f8ac32da454287b5b9c085d2ccfad670f9fb0dae0091850e062"
+    },
+    {
+      "stage": 15,
+      "title": "The Core Foreman",
+      "file": "bg_stage_15.png",
+      "scenePrompt": "Black mirrored floor with subtle concentric inlaid rings; immense ribbed cathedral-like dormant core chamber behind; deep cyan on black with a single hard key.",
+      "bytes": 1759174,
+      "sha256": "4dc49941c8d82895392f3a03aff1ed82afed0e2718f24f1af4cbdff453c6d289"
+    }
+  ]
+}
