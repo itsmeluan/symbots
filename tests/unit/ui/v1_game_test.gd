@@ -216,3 +216,13 @@ func test_a_dungeon_runs_its_rooms_without_returning_to_the_map() -> void:
 
 	assert_gt(_game._result.battles_won, 1,
 		"the run continued into room two rather than settling after the first fight")
+
+
+func test_a_battle_opened_from_the_map_knows_its_stage() -> void:
+	# The wiring that actually matters: the stage must reach the screen BEFORE setup() runs,
+	# because setup() is where the battlefield art is chosen. Assigning it afterwards would
+	# leave every fight on the default background with nothing failing.
+	var stage: StageDef = _game.ctx.stages.get_stage(&"stage_01")
+	_game._on_stage_chosen(stage)
+	assert_not_null(_game._battle)
+	assert_eq(_game._battle.stage, stage)

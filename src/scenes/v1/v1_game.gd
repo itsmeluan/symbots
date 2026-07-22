@@ -309,6 +309,9 @@ func _on_stage_chosen(stage: StageDef) -> void:
 
 	_clear_screens()
 	_battle = BattleScreenScript.new()
+	# Assigned before _present, because _present calls setup() and that is where the
+	# battlefield art is chosen.
+	_battle.stage = stage
 	_present(_battle)
 	_battle.battle_finished.connect(Callable(self, "_on_battle_finished"))
 	_start_next_battle()

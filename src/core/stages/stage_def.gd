@@ -54,6 +54,18 @@ enum Mode {
 ## repeating.
 @export var chest_blueprint_id: StringName = &""
 
+## This stage's battlefield art, or empty to use the shared default.
+##
+## A PATH rather than an exported [Texture2D]: a Texture2D reference would be resolved when
+## the stage catalog loads, pulling all fifteen 1080x1920 backdrops into memory at boot
+## (~8 MB each decompressed) against a 512 MB ceiling. As a path the art is loaded when the
+## fight starts and released with the screen.
+##
+## The floor geometry a usable backdrop must satisfy is specified in
+## `design/v1/battle-background-prompts.md` — art with a low horizon leaves the rear rank
+## standing in open sky.
+@export_file("*.png") var background_path: String = ""
+
 
 func battle_count() -> int:
 	return battles.size()

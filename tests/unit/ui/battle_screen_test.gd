@@ -263,3 +263,40 @@ func test_a_destroyed_unit_is_dimmed_rather_than_removed() -> void:
 
 	assert_true(_screen._enemy_panels[0].visible, "still on screen")
 	assert_lt(_screen._enemy_panels[0].modulate.r, 1.0, "but visibly out of the fight")
+
+
+# ---------------------------------------------------------------------------
+# Which battlefield gets drawn
+# ---------------------------------------------------------------------------
+
+func _screen_for(stage: StageDef) -> BattleScreen:
+	var s: BattleScreen = autofree(BattleScreenScript.new())
+	s.stage = stage
+	return s
+
+
+func test_a_stage_without_its_own_art_uses_the_shared_battlefield() -> void:
+	# Most stages ship no background of their own, so the fallback is the normal path, not
+	# an error path.
+	var stage := StageDef.new()
+	stage.id = &"stage_test"
+	assert_eq(_screen_for(stage)._background_path(),
+		BattleScreenScript.DEFAULT_BACKGROUND)
+
+
+func test_a_stage_with_its_own_art_uses_it() -> void:
+	var stage := StageDef.new()
+	stage.id = &"stage_test"
+	stage.background_path = BattleScreenScript.DEFAULT_BACKGROUND
+	assert_eq(_screen_for(stage)._background_path(),
+		BattleScreenScript.DEFAULT_BACKGROUND)
+
+
+func test_a_stage_naming_missing_art_still_gets_a_battlefield() -> void:
+	# There is no stage validator, so a typo'd path reaches the player. Falling back beats
+	# fighting on a black screen.
+	var stage := StageDef.new()
+	stage.id = &"stage_test"
+	stage.background_path = "res://assets/art/battle/does_not_exist.png"
+	assert_eq(_screen_for(stage)._background_path(),
+		BattleScreenScript.DEFAULT_BACKGROUND)

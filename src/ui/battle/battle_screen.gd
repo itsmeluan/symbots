@@ -23,7 +23,14 @@ signal battle_finished(outcome: int)
 const SQUAD_SIZE := 4
 const MIN_BUTTON_HEIGHT := 44  ## touch minimum, technical-preferences.md
 
+## Shared battlefield used by any stage that has not been given its own art.
+const DEFAULT_BACKGROUND := "res://assets/art/battle/battle_arena_background.png"
+
 var engine: BattleEngine = null
+
+## The stage being fought, set before [method setup] so the screen can draw its battlefield.
+## Null is legal — the screen falls back to the shared art rather than rendering on black.
+var stage: StageDef = null
 
 var _ctx: ServiceContext = null
 var _skills: Dictionary = {}
@@ -49,8 +56,22 @@ var _auto_enabled: bool = false
 
 func setup(ctx: ServiceContext) -> void:
 	_ctx = ctx
-	_set_background("res://assets/art/battle/battle_arena_background.png", 0.62)
+	_set_background(_background_path(), 0.62)
 	_build_layout()
+
+
+## This stage's battlefield, or the shared one.
+##
+## Falls back on a MISSING file as well as on an empty field: there is no stage validator, so
+## a typo in `background_path` would otherwise ship as a battle fought on a black screen.
+func _background_path() -> String:
+	if stage == null or stage.background_path.is_empty():
+		return DEFAULT_BACKGROUND
+	if not ResourceLoader.exists(stage.background_path):
+		push_warning("Stage '%s' names a missing background '%s' — using the default."
+			% [stage.id, stage.background_path])
+		return DEFAULT_BACKGROUND
+	return stage.background_path
 
 
 ## Start a battle. Separate from [method setup] because a screen is set up once but may
