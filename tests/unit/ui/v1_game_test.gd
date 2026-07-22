@@ -235,11 +235,27 @@ func test_the_sheet_never_says_one_fights() -> void:
 	assert_eq(_game._map._fight_count(stage), "1 FIGHT")
 
 
-func test_the_sheet_fits_between_the_map_and_the_dock() -> void:
+func test_the_sheet_fits_every_stage_not_just_one() -> void:
 	# The sheet's height is a fixed budget rather than derived from its contents; if the
-	# contents ever outgrow it, DEPLOY is the thing that falls off the bottom.
+	# contents outgrow it, DEPLOY is the thing that falls off the bottom.
+	#
+	# EVERY stage, because `max_lines_visible` caps the description rather than reserving the
+	# space — so a one-line stage measures shorter than a two-line one, and a budget checked
+	# against a single stage passes while another clips.
 	_game.show_map()
 	var map := _game._map
-	map._on_stage_pressed(_game.ctx.stages.get_stage(&"stage_01"))
-	assert_lte(map._sheet.get_combined_minimum_size().y, StageSelectScreen.SHEET_HEIGHT,
-		"the sheet's contents no longer fit its fixed height")
+	for stage in _game.ctx.stages.entries:
+		if stage == null:
+			continue
+		map._on_stage_pressed(stage)
+		assert_lte(map._sheet.get_combined_minimum_size().y, StageSelectScreen.SHEET_HEIGHT,
+			"'%s' does not fit the sheet's fixed height" % stage.display_name)
+
+
+func test_the_map_still_scrolls_with_its_bar_hidden() -> void:
+	# Hiding the scrollbar must not be done by DISABLING the axis — that would freeze the
+	# track wherever it opened, with fourteen stages unreachable.
+	_game.show_map()
+	var scroll: ScrollContainer = _game._map._scroll
+	assert_eq(scroll.vertical_scroll_mode, ScrollContainer.SCROLL_MODE_SHOW_NEVER)
+	assert_ne(scroll.vertical_scroll_mode, ScrollContainer.SCROLL_MODE_DISABLED)

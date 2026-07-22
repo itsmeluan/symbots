@@ -43,8 +43,9 @@ signal foundry_requested
 ## Emitted when the player wants offline expeditions.
 signal expeditions_requested
 
-## Vertical distance between two nodes on the timeline.
-const NODE_SPACING := 128.0
+## Vertical distance between two nodes on the timeline. Just over the card height, so the
+## column reads as one connected track rather than as separated rows.
+const NODE_SPACING := 86.0
 
 ## Empty track above the last node and below the first, so either end can still be scrolled
 ## to the middle of the screen. Without it the first stage can only ever sit at the bottom.
@@ -65,10 +66,17 @@ const MIN_ROW_HEIGHT := 60  ## comfortably past the 44pt touch minimum
 ## character per line and reported a height taller than the screen. The description is capped
 ## at two lines (see _build_sheet) so this budget always holds.
 ##
-## The sheet therefore looks slightly roomy under a one-line description: the second line is
-## reserved whether or not it is used. That is deliberate — a sheet that changed height as the
-## player browsed stages would make DEPLOY move under their thumb.
-const SHEET_HEIGHT := 220.0
+## Sized for the TALLEST stage (measured: 172px, stage_01's two-line description), not for a
+## typical one. `max_lines_visible` is a ceiling rather than a reservation, so a one-line
+## description genuinely needs less room — a budget fitted to one stage clips another. The
+## sheet therefore looks a little roomy on short descriptions, which is the price of DEPLOY
+## never moving under the player's thumb as they browse.
+const SHEET_HEIGHT := 178.0
+
+## Inset from the screen edges, and the gap left between the sheet and the dock, so the sheet
+## reads as a card floating over the map rather than as a slab welded to the bottom.
+const SHEET_INSET := 10.0
+const SHEET_DOCK_GAP := 10.0
 
 var _ctx: ServiceContext = null
 
@@ -118,6 +126,10 @@ func _build_layout() -> void:
 	_scroll = ScrollContainer.new()
 	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	# SHOW_NEVER, not DISABLED: the track still scrolls by drag, the bar just stops being
+	# painted over the map. DISABLED would strand the player at whatever the entry scroll
+	# position happened to be.
+	_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
 	content.add_child(_scroll)
 
 	# Nodes are positioned absolutely inside the track: the timeline is a picture with a
@@ -161,30 +173,33 @@ func _build_sheet() -> void:
 	_sheet.anchor_right = 1.0
 	_sheet.anchor_top = 1.0
 	_sheet.anchor_bottom = 1.0
-	_sheet.offset_left = 0.0
-	_sheet.offset_right = 0.0
+	_sheet.offset_left = SHEET_INSET
+	_sheet.offset_right = -SHEET_INSET
 	# Sits ABOVE the dock so navigation stays reachable while a stage is selected.
-	_sheet.offset_bottom = -(BottomDock.HEIGHT + _safe_insets().y)
+	_sheet.offset_bottom = -(BottomDock.HEIGHT + _safe_insets().y + SHEET_DOCK_GAP)
 	_sheet.offset_top = _sheet.offset_bottom - SHEET_HEIGHT
-	var box := UIPalette.panel(UIPalette.CYAN, UIPalette.INK)
-	box.set_content_margin_all(14)
+	var box := StyleBoxFlat.new()
+	# Fully opaque: at 0.96 the stage card behind the sheet read through it and the two sets
+	# of text collided.
+	box.bg_color = UIPalette.INK
+	box.border_color = Color(UIPalette.CYAN, 0.7)
+	box.set_border_width_all(1)
+	box.set_corner_radius_all(8)
+	box.set_content_margin_all(12)
 	_sheet.add_theme_stylebox_override("panel", box)
 	add_child(_sheet)
 
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 6)
+	v.add_theme_constant_override("separation", 5)
 	_sheet.add_child(v)
 
-	var eyebrow := Label.new()
-	eyebrow.text = "SELECTED STAGE"
-	eyebrow.add_theme_font_size_override("font_size", 9)
-	eyebrow.add_theme_color_override("font_color", UIPalette.MUTED)
-	v.add_child(eyebrow)
-
+	# No "SELECTED STAGE" eyebrow: the sheet only ever appears because the player just
+	# selected a stage, so the label spent a line restating the gesture that opened it.
 	_sheet_name = Label.new()
 	_sheet_name.theme_type_variation = &"Heading"
-	_sheet_name.add_theme_font_size_override("font_size", 22)
+	_sheet_name.add_theme_font_size_override("font_size", 17)
 	_sheet_name.add_theme_color_override("font_color", UIPalette.TEXT)
+	_sheet_name.clip_text = true
 	v.add_child(_sheet_name)
 
 	_sheet_chips = HBoxContainer.new()
@@ -192,7 +207,7 @@ func _build_sheet() -> void:
 	v.add_child(_sheet_chips)
 
 	_sheet_body = Label.new()
-	_sheet_body.add_theme_font_size_override("font_size", 11)
+	_sheet_body.add_theme_font_size_override("font_size", 10)
 	_sheet_body.add_theme_color_override("font_color", UIPalette.MUTED)
 	_sheet_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	# Two lines, then ellipsis: a long description must not be able to push DEPLOY off the
@@ -202,13 +217,13 @@ func _build_sheet() -> void:
 	v.add_child(_sheet_body)
 
 	_sheet_reward = Label.new()
-	_sheet_reward.add_theme_font_size_override("font_size", 11)
+	_sheet_reward.add_theme_font_size_override("font_size", 10)
 	_sheet_reward.add_theme_color_override("font_color", UIPalette.AMBER)
 	v.add_child(_sheet_reward)
 
 	_deploy = Button.new()
 	_deploy.text = "▶  DEPLOY SQUAD"
-	_deploy.custom_minimum_size = Vector2(0, 48)
+	_deploy.custom_minimum_size = Vector2(0, 42)
 	var deploy_box := StyleBoxFlat.new()
 	deploy_box.bg_color = UIPalette.AMBER
 	deploy_box.set_corner_radius_all(4)
@@ -217,6 +232,7 @@ func _build_sheet() -> void:
 	_deploy.add_theme_stylebox_override("pressed", deploy_box)
 	_deploy.add_theme_stylebox_override("focus", UIPalette.empty())
 	_deploy.add_theme_color_override("font_color", UIPalette.INK)
+	_deploy.add_theme_font_size_override("font_size", 14)
 	_connect_owned(_deploy.pressed, Callable(self, "_on_deploy_pressed"))
 	v.add_child(_deploy)
 
