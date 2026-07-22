@@ -78,26 +78,27 @@ func begin_battle(p_engine: BattleEngine, skill_table: Dictionary) -> void:
 
 ## Height of the band the figures stand in. Fixed rather than expanding: the empty scene
 ## above it is the battlefield, and the action controls below it must always be on screen.
-const ARENA_HEIGHT := 200.0
+const ARENA_HEIGHT := 392.0
 
-## Sprite height by formation rank. The back rank is drawn smaller so it reads as further
-## away — the only depth cue a flat 2D field has.
-const FRONT_SPRITE_H := 68.0
-const BACK_SPRITE_H := 55.0
-
-## Width of a figure's tap target and shadow.
-const SLOT_WIDTH := 88.0
+## Width of a figure's tap target.
+const SLOT_WIDTH := 108.0
 
 ## Where each squad slot stands, as fractions of the arena, for the LEFT side; the right
-## side is mirrored (1 - x). Slots 0-1 are the front rank, 2-3 the back, and the back rank
-## is nudged outward so no figure hides directly behind another.
+## side is mirrored (1 - x).
 ##
-## [x, feet_y, is_front]
+## Every slot on a side shares ONE x, so a side is a single vertical line — no figure ever
+## stands in front of another and nothing is occluded. Depth is carried by the y step plus a
+## per-row sprite height: the row nearest the bottom is nearest the camera and is drawn
+## largest. This requires battlefield art with a deep receding floor (see
+## design/v1/battle-background-prompts.md) — on a shallow floor the top row floats.
+##
+## [x, feet_y, sprite_height]
+const COLUMN_X := 0.24
 const FORMATION: Array = [
-	[0.38, 1.00, true],
-	[0.16, 1.00, true],
-	[0.30, 0.62, false],
-	[0.13, 0.62, false],
+	[COLUMN_X, 0.990, 94.0],
+	[COLUMN_X, 0.735, 88.0],
+	[COLUMN_X, 0.480, 82.0],
+	[COLUMN_X, 0.230, 76.0],
 ]
 
 
@@ -175,7 +176,7 @@ func _layout_arena() -> void:
 
 
 func _place(panel: UnitPanel, spot: Array, w: float, h: float, mirrored: bool) -> void:
-	var sprite_h: float = FRONT_SPRITE_H if spot[2] else BACK_SPRITE_H
+	var sprite_h: float = float(spot[2])
 	panel.set_display_height(sprite_h)
 	var panel_h: float = sprite_h + 10.0  # the hairline bars under the feet
 	panel.size = Vector2(SLOT_WIDTH, panel_h)

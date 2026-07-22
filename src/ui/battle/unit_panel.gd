@@ -200,27 +200,23 @@ func set_ult_cost(cost: int) -> void:
 	_ult_cost = maxi(1, cost)
 
 
-## The shadow that seats the figure on the ground, plus the turn/target ring.
+## The turn/target ring, drawn at the FEET rather than as a box around the unit: a rectangle
+## reads as a card, which is the thing this screen stopped being.
 ##
-## The ring is drawn at the FEET rather than as a box around the unit: a rectangle reads as
-## a card, which is the thing this screen just stopped being.
+## Nothing else is painted here. A drop shadow was tried and cut — the battlefield art has
+## its own baked lighting, so a generic ellipse under every figure fought with it instead of
+## seating the figure in it.
 func _draw_ground() -> void:
+	if not (is_active_turn or is_targetable):
+		return
 	var w := _ground.size.x
 	var h := _ground.size.y
 	if w <= 0.0 or h <= 0.0:
 		return
-	var centre := Vector2(w * 0.5, h - 3.0)
-	var radius := w * 0.34
-
-	# Squash the circle into an ellipse so it lies on the ground rather than standing up.
-	_ground.draw_set_transform(centre, 0.0, Vector2(1.0, 0.32))
-	_ground.draw_circle(Vector2.ZERO, radius, Color(0.0, 0.0, 0.0, 0.38))
-	if is_active_turn:
-		_ground.draw_arc(Vector2.ZERO, radius * 1.12, 0.0, TAU, 28,
-			Color(1.0, 0.85, 0.3), 4.0)
-	elif is_targetable:
-		_ground.draw_arc(Vector2.ZERO, radius * 1.12, 0.0, TAU, 28,
-			Color(0.95, 0.35, 0.35), 4.0)
+	var colour := Color(1.0, 0.85, 0.3) if is_active_turn else Color(0.95, 0.35, 0.35)
+	# Squashed into an ellipse so the ring lies on the ground rather than standing up.
+	_ground.draw_set_transform(Vector2(w * 0.5, h - 3.0), 0.0, Vector2(1.0, 0.32))
+	_ground.draw_arc(Vector2.ZERO, w * 0.38, 0.0, TAU, 28, colour, 4.0)
 	_ground.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
