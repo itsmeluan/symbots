@@ -1,17 +1,29 @@
-# Battle background art — spec and prompts
+# Battle background art — spec and handoff prompt
 
 Fifteen battlefields, one per stage. These are **backdrops**, not illustrations: four Symbot
 sprites stand in a vertical line on each side, and the art has to hold them.
 
-## Why the current one fails
+## Attempt 1 failed on style, not geometry
 
-`battle_arena_background.png` puts its horizon at ~50% of the image height. The battle layout
-needs feet planted as high as 32%, so the two rear units float in open sky and over water. The
-floor is the whole job — the scenery is decoration.
+The first set (generated 2026-07-21) is in the repo and works structurally — the floor is where
+it needs to be and the units stand on it. It was rejected because it does not look like the
+game: the prompt asked for *"semi-realistic painterly industrial sci-fi, muted and desaturated,
+low contrast"*, which is the opposite of the sprites in every respect.
 
-## Geometry every image must obey
+| Attempt 1 asked for | The game actually is |
+|---|---|
+| painterly semi-realism | **cel-shaded TV anime** |
+| muted, desaturated | **saturated, full colour** |
+| low contrast | high contrast, clear light |
+| soft edges | **defined outlines** |
+| realistic detail | simplified, flat-shaded shapes |
 
-Measured from the live layout (viewport 360×640, arena band y=116–508):
+The geometry section below is **kept unchanged** — it was verified against the running game.
+Only the style vocabulary is replaced.
+
+## Geometry — do not change this
+
+Derived from the live layout: viewport 360×640, arena band y=116–508.
 
 | What | Where, as a fraction of image height |
 |---|---|
@@ -28,83 +40,113 @@ stay visually calm.
 
 ---
 
-## THE PROMPT
+# HANDOFF PROMPT
 
-Paste this block, then append one scene line from the list below.
-
-> Portrait digital painting, 1080×1920 (9:16), for use as a **battle backdrop in a 2D
-> turn-based mobile game**. Semi-realistic industrial sci-fi, painterly, slightly desaturated.
->
-> **Composition is the priority — follow it exactly:**
->
-> - The **horizon sits 30% down from the top**. Everything below it is a continuous, walkable
->   **ground plane in strong one-point perspective**, receding to a vanishing point at the
->   horizon's centre. Floor seams, panel joints and edge lines converge toward that point.
-> - The ground plane must be **unbroken and unobstructed from 32% to 82% of the image height**.
->   No walls, pits, water, railings, crates or machinery interrupting it in that range.
-> - Two **standing lanes** must stay visually calm and evenly lit: one centred at **24% of the
->   width**, one at **76%**, each about **30% of the width** across. Flat readable ground only —
->   no busy props, no high-contrast detail, no strong cast shadows in those two lanes.
-> - A **vertical dividing feature runs down the centre** at 50% width — a floor seam, a drainage
->   channel, a strip of different material, a line of embedded lights. Subtle, not a wall. It
->   separates the two sides without blocking sightlines.
-> - The **top 7%** is empty sky or haze. The **bottom 18%** is plain darker floor.
-> - Upper third (above the horizon): the scenery that gives the place its identity — structures,
->   sky, distant silhouettes. Detail lives HERE, not on the floor.
->
-> **Values and colour:** overall mid-to-dark and desaturated. Bright saturated pixel-art
-> creatures will be composited on top of the two lanes and must pop against them. Avoid bright
-> floors, avoid busy texture, avoid strong colour in the lanes.
->
-> **Must not contain:** any character, robot, creature, person or animal; text, numbers, logos,
-> watermarks; UI, frames, borders, vignettes; foreground objects in front of the camera.
->
-> Scene:
-
-### The fifteen scenes
-
-Append one of these to the prompt above.
-
-1. **Scrapyard Verge** — an open yard of compacted scrap metal underfoot; towers of crushed
-   machinery and a dead crane on the skyline; overcast dusk, rust and ochre.
-2. **Rusted Gantry** — a wide steel gantry deck, plates streaked with rust; a lattice of
-   collapsed catwalks above the horizon; sodium-orange light, deep shadows.
-3. **Coolant Run** — a poured concrete channel floor, dry; enormous coolant pipes crossing the
-   sky behind; pale cyan mist, cold blue-grey.
-4. **Fabrication Floor** — polished factory floor with painted lane markings; idle assembly
-   arms and conveyor lines along the back wall; sterile white-green worklight.
-5. **The Stack** — the flat top of a vast stacked structure; lower tiers falling away beyond
-   the horizon; wind-blown haze, high altitude, cool grey-violet.
-6. **Signal Yard** — packed gravel and cable trenches; a forest of antenna masts and dishes on
-   the skyline; overcast, muted green-grey.
-7. **Broken Relay** — a cracked ceramic platform; a toppled relay tower and torn cabling behind;
-   sparking blue arcs in the distance, storm light.
-8. **Cold Storage** — frosted metal decking with ice creeping in from the edges; racked frozen
-   containers receding into fog; near-monochrome pale blue.
-9. **Deep Fabrication** — a subterranean machine hall floor, oil-stained; vast dormant machinery
-   climbing out of view behind; amber emergency lighting, heavy dark.
-10. **The Foreman** — a raised inspection platform, heavy steel grating; a supervisory bank of
-    dead screens and a throne-like control rig behind; hard red key light.
-11. **The Overcircuit** — a floor of exposed circuit tracery glowing faintly; a colossal
-    branching circuit structure filling the sky behind; electric violet on near-black.
-12. **Molten Yard** — dark basalt casting floor with cooling channels of orange glow at the
-    edges; foundry ladles and furnace mouths behind; hot orange rim light, smoke.
-13. **Signal Apex** — a windswept platform at the top of a transmission spire; cloud deck below
-    the horizon, dish arrays behind; cold dawn, thin pale gold.
-14. **The Reclamation** — a cracked concrete pad reclaimed by dead grey vegetation; half-buried
-    machinery and a collapsed dome behind; ashen overcast, desaturated green.
-15. **The Core Foreman** — a black mirrored floor with concentric inlaid rings; an immense
-    dormant core chamber behind, ribbed and cathedral-like; deep cyan on black, single hard key.
+Paste everything below into a Claude session connected to this repo.
 
 ---
 
-## Delivering the files
+You are generating replacement battlefield backdrops for **Symbots**, a portrait mobile
+turn-based squad battler built in Godot. The repo is connected — read from it before you start.
 
-Save as `assets/art/battle/bg_stage_01.png` … `bg_stage_15.png` (PNG, 1080×1920).
+## First, look at what the art has to match
 
-**Not yet wired.** `StageDef` has no background field — every stage currently loads the one
-shared `battle_arena_background.png`. Adding the field and the per-stage lookup is a small
-code change, worth doing once the first images exist so they can be checked in place.
+Open three or four sprites from `assets/art/symbots/` — for example `coilsprite_mk3.png`,
+`ironmaul_mk1.png`, `solderfly_mk3.png`. **These define the target style.** Look at the outline
+weight, the flat colour blocking, the saturation, the way volume is suggested with two or three
+tones rather than a gradient.
 
-If fifteen is too many to generate at once, scenes 1–4 cover the early stages and are the ones
-the player sees first.
+Then open one existing backdrop, `assets/art/battle/bg_stage_01.png`. That is the style that was
+rejected. Note how the painterly muted realism fights the sprites.
+
+## The style you are aiming for
+
+**Mid-90s mecha TV anime — Medabots, Digimon, Zoids.** Specifically:
+
+- **Cel shading.** Two or three flat tones per surface, hard-edged transitions. No soft gradients,
+  no airbrushing, no photographic texture.
+- **Defined outlines** on structures and silhouettes — darker than the fill, not pure black.
+- **Saturated colour.** Confident teals, oranges, warm greys. Colour identity per location.
+- **Simplified, chunky shapes.** Readable at thumbnail size. Detail comes from silhouette and
+  colour blocking, not from surface noise.
+- **Clear directional light** with a stated time of day. Skies can be dramatic — big flat cloud
+  shapes, gradient bands, a low sun.
+- Illustrated background art for a game, not concept art and not a photo.
+
+It should look like a frame from the anime the sprites came out of.
+
+## The composition rules — these are load-bearing
+
+Every image is **1080×1920 PNG (9:16 portrait)** and must satisfy:
+
+- The **horizon sits 30% down from the top**. Everything below it is a continuous **walkable
+  ground plane in one-point perspective**, receding to a vanishing point at the horizon's centre.
+  Floor seams and edge lines converge toward that point.
+- The ground plane is **unbroken and unobstructed from 32% to 82% of the image height**. No
+  walls, pits, water, railings, crates or machinery interrupting it in that range.
+- Two **standing lanes** stay visually calm and evenly lit: one centred at **24% of the width**,
+  one at **76%**, each about **30% of the width** across. Flat readable ground only — no busy
+  props, no high-contrast detail, no cast shadows in those two lanes.
+- A **vertical dividing feature runs down the centre** at 50% width — a floor seam, a channel, a
+  strip of different material, a line of embedded lights. Subtle, not a wall.
+- The **top 7%** is empty sky. The **bottom 18%** is plain darker floor.
+- Detail and landmarks live **above the horizon** and in the outer margins — not on the floor.
+- **Bright saturated sprites are composited on the two lanes.** Keep the floor a mid value so
+  they read: not black, not white, not busier than they are.
+
+**Must not contain:** any character, robot, creature, person or animal; text, numbers, logos or
+watermarks; UI, frames, borders or vignettes; foreground objects in front of the camera.
+
+## Which scene goes in which file — read this carefully
+
+**Do not assume `stage_07.tres` uses `bg_stage_07.png`.** It does not. The bindings were made by
+place, and two pairs are crossed.
+
+For each `assets/data/stages/stage_NN.tres`:
+
+1. Read its `display_name` and its `background_path`.
+2. Generate the scene for **that display_name**, from the table below.
+3. Save it to **exactly that `background_path`**, overwriting the existing file.
+
+Do not edit any `.tres`. The bindings are correct; only the pixels are being replaced.
+
+| Stage name | Scene |
+|---|---|
+| Scrapyard Verge | Open yard of compacted scrap; crushed-machinery towers and a dead crane on the skyline. Rust, ochre, warm grey. Late afternoon, long light. |
+| Rusted Gantry | Wide steel gantry deck, rust-streaked plates; a lattice of collapsed catwalks above the horizon. Sodium orange against deep blue shadow. |
+| Coolant Run | Dry poured-concrete channel; enormous coolant pipes crossing the sky behind. Pale cyan mist, cold blue-grey, bright overcast. |
+| Fabrication Floor | Polished factory floor with painted lane markings; idle assembly arms and conveyors along the back wall. Green-white worklight, clean and bright. |
+| The Stack | Flat top of a vast stacked structure, lower tiers falling away past the horizon. High altitude, wind haze, cool violet-grey, big sky. |
+| Signal Yard | Packed gravel and cable trenches; a forest of antenna masts and dishes on the skyline. Muted green-grey, flat overcast. |
+| Broken Relay | Cracked ceramic platform; a toppled relay tower and torn cabling behind. Storm light, blue arcs sparking in the distance. |
+| Cold Storage | Frosted metal decking, ice creeping in from the edges; racked frozen containers receding into fog. Near-monochrome pale blue. |
+| Deep Fabrication | Subterranean machine hall, oil-stained floor; vast dormant machinery climbing out of frame behind. Amber emergency lighting, heavy shadow. |
+| The Foreman | Raised inspection platform of heavy steel grating; a bank of dead screens and a throne-like control rig behind. Hard red key light. |
+| The Overcircuit | Floor of exposed circuit tracery glowing faintly; a colossal branching circuit structure filling the sky. Electric violet on near-black. |
+| Molten Yard | Dark basalt casting floor, cooling channels glowing orange at the edges; foundry ladles and furnace mouths behind. Hot orange rim light, smoke. |
+| Signal Apex | Windswept platform atop a transmission spire; cloud deck below the horizon, dish arrays behind. Cold dawn, thin pale gold. |
+| The Reclamation | Cracked concrete pad taken back by grey-green vegetation; half-buried machinery and a collapsed dome behind. Ashen overcast. |
+| The Core Foreman | Black mirrored floor with concentric inlaid rings; an immense dormant core chamber behind, ribbed and cathedral-like. Deep cyan on black, one hard key light. |
+
+## Generate ONE first
+
+Do **Scrapyard Verge** alone and stop. Show it to the user next to `coilsprite_mk3.png` and ask
+whether the style is right. Only continue to the other fourteen once they say yes — fifteen
+images in the wrong style is the mistake this whole pass is correcting.
+
+## When the images are in
+
+Run these from the repo root and report the results:
+
+```
+/Applications/Godot.app/Contents/MacOS/Godot --headless --import .
+/Applications/Godot.app/Contents/MacOS/Godot --headless -s addons/gut/gut_cmdln.gd -gconfig=.gutconfig.json -gexit
+```
+
+The suite is at **1421 tests, all passing**. Two of them (`test_every_shipped_stage_names_art_that_exists`
+and `test_no_two_stages_share_a_battlefield`) check the art bindings and will catch a file saved
+to the wrong path.
+
+Do not lower `BattleScreen.BACKDROP_DIM` (currently 0.28) to compensate for art that is too dark
+— fix the art instead. That constant was already tuned once for a backdrop set that is being
+replaced.
