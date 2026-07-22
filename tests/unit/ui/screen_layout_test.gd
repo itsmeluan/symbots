@@ -193,3 +193,41 @@ func test_no_screen_is_wider_than_the_viewport() -> void:
 			if child is Control:
 				assert_lte(child.size.x, _viewport_size().x + 1.0,
 					"%s overflows horizontally" % opener)
+
+
+# ---------------------------------------------------------------------------
+# Nothing overflows DOWNWARD either
+# ---------------------------------------------------------------------------
+
+func test_the_battle_controls_are_on_screen() -> void:
+	# Regression: the battlefield used to be two columns of four sprite-plus-nameplate cards,
+	# needing ~600px of column height on a 640px screen. The log, the skill bar and the auto
+	# toggle were pushed off the bottom edge — the player could not see their own attacks.
+	# Every overflow test here checked WIDTH only, so the suite stayed green through it.
+	_game._on_stage_chosen(_game.ctx.stages.get_stage(&"stage_01"))
+	await _settle()
+	var bottom := _viewport_size().y
+	var battle := _game._battle
+	for named in [["skill bar", battle._skill_bar], ["auto toggle", battle._auto_toggle],
+			["log", battle._log_label]]:
+		var control: Control = named[1]
+		assert_lte(control.global_position.y + control.size.y, bottom + 1.0,
+			"the %s sits below the bottom edge" % named[0])
+
+
+func test_no_battle_figure_stands_outside_the_arena_band() -> void:
+	# The figures are positioned absolutely, so nothing but this arithmetic keeps them inside
+	# the band — a container would have complained, and there is no container here.
+	_game._on_stage_chosen(_game.ctx.stages.get_stage(&"stage_01"))
+	await _settle()
+	var battle := _game._battle
+	var band := battle._arena.get_global_rect()
+	for panel in battle._player_panels + battle._enemy_panels:
+		if not panel.visible:
+			continue
+		var rect: Rect2 = panel.get_global_rect()
+		assert_gte(rect.position.x, band.position.x - 1.0, "a figure hangs off the left")
+		assert_lte(rect.position.x + rect.size.x, band.position.x + band.size.x + 1.0,
+			"a figure hangs off the right")
+		assert_lte(rect.position.y + rect.size.y, band.position.y + band.size.y + 1.0,
+			"a figure stands below the band")

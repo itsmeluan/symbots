@@ -31,6 +31,7 @@ var _skills: Dictionary = {}
 var _player_panels: Array[UnitPanel] = []
 var _enemy_panels: Array[UnitPanel] = []
 
+var _arena: Control
 var _banner: Label
 var _log_label: Label
 var _skill_bar: HBoxContainer
@@ -63,6 +64,7 @@ func begin_battle(p_engine: BattleEngine, skill_table: Dictionary) -> void:
 
 	_bind_panels(engine.player_units, _player_panels)
 	_bind_panels(engine.enemy_units, _enemy_panels)
+	_layout_arena()
 
 	engine.start()
 	_drain_events()
@@ -74,8 +76,34 @@ func begin_battle(p_engine: BattleEngine, skill_table: Dictionary) -> void:
 # Layout
 # ---------------------------------------------------------------------------
 
+## Height of the band the figures stand in. Fixed rather than expanding: the empty scene
+## above it is the battlefield, and the action controls below it must always be on screen.
+const ARENA_HEIGHT := 200.0
+
+## Sprite height by formation rank. The back rank is drawn smaller so it reads as further
+## away — the only depth cue a flat 2D field has.
+const FRONT_SPRITE_H := 68.0
+const BACK_SPRITE_H := 55.0
+
+## Width of a figure's tap target and shadow.
+const SLOT_WIDTH := 88.0
+
+## Where each squad slot stands, as fractions of the arena, for the LEFT side; the right
+## side is mirrored (1 - x). Slots 0-1 are the front rank, 2-3 the back, and the back rank
+## is nudged outward so no figure hides directly behind another.
+##
+## [x, feet_y, is_front]
+const FORMATION: Array = [
+	[0.38, 1.00, true],
+	[0.16, 1.00, true],
+	[0.30, 0.62, false],
+	[0.13, 0.62, false],
+]
+
+
 func _build_layout() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var insets := _safe_insets()
 
 	var root := VBoxContainer.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -85,20 +113,32 @@ func _build_layout() -> void:
 	_banner = Label.new()
 	_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_banner.add_theme_font_size_override("font_size", 12)
+	_banner.custom_minimum_size = Vector2(0, 20 + insets.x)
+	_banner.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
 	root.add_child(_banner)
 
-	var field := HBoxContainer.new()
-	field.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	field.add_theme_constant_override("separation", 8)
-	root.add_child(field)
+	# The empty upper scene. Everything below the arena is fixed-height, so this is the one
+	# element that absorbs a taller phone — which is what keeps the action bar on screen.
+	var sky := Control.new()
+	sky.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	sky.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(sky)
 
-	field.add_child(_build_column(_player_panels))
-	field.add_child(_build_column(_enemy_panels))
+	# The battlefield band: figures are positioned absolutely inside it (see _layout_arena),
+	# not stacked by a container, because a formation is a picture rather than a list.
+	_arena = Control.new()
+	_arena.custom_minimum_size = Vector2(0, ARENA_HEIGHT)
+	_arena.resized.connect(_layout_arena)
+	root.add_child(_arena)
+
+	_build_side(_player_panels)
+	_build_side(_enemy_panels)
 
 	_log_label = Label.new()
 	_log_label.add_theme_font_size_override("font_size", 9)
+	_log_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_log_label.custom_minimum_size = Vector2(0, 28)
+	_log_label.custom_minimum_size = Vector2(0, 26)
 	root.add_child(_log_label)
 
 	_skill_bar = HBoxContainer.new()
@@ -107,21 +147,44 @@ func _build_layout() -> void:
 
 	_auto_toggle = CheckButton.new()
 	_auto_toggle.text = "Auto"
-	_auto_toggle.custom_minimum_size = Vector2(0, MIN_BUTTON_HEIGHT)
+	_auto_toggle.custom_minimum_size = Vector2(0, MIN_BUTTON_HEIGHT + insets.y)
 	_connect_owned(_auto_toggle.toggled, Callable(self, "_on_auto_toggled"))
 	root.add_child(_auto_toggle)
 
 
-func _build_column(into: Array[UnitPanel]) -> VBoxContainer:
-	var col := VBoxContainer.new()
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	col.add_theme_constant_override("separation", 4)
+func _build_side(into: Array[UnitPanel]) -> void:
 	for i in SQUAD_SIZE:
 		var panel := UnitPanelScript.new()
 		_connect_owned(panel.tapped, Callable(self, "_on_unit_tapped"))
-		col.add_child(panel)
+		_arena.add_child(panel)
 		into.append(panel)
-	return col
+
+
+## Place the eight figures in their formation. Called on every arena resize rather than once,
+## so the picture survives a rotation or a different phone.
+func _layout_arena() -> void:
+	if _arena == null:
+		return
+	var w := _arena.size.x
+	var h := _arena.size.y
+	if w <= 0.0 or h <= 0.0:
+		return
+	for i in SQUAD_SIZE:
+		_place(_player_panels[i], FORMATION[i], w, h, false)
+		_place(_enemy_panels[i], FORMATION[i], w, h, true)
+
+
+func _place(panel: UnitPanel, spot: Array, w: float, h: float, mirrored: bool) -> void:
+	var sprite_h: float = FRONT_SPRITE_H if spot[2] else BACK_SPRITE_H
+	panel.set_display_height(sprite_h)
+	var panel_h: float = sprite_h + 10.0  # the hairline bars under the feet
+	panel.size = Vector2(SLOT_WIDTH, panel_h)
+
+	var fx: float = (1.0 - float(spot[0])) if mirrored else float(spot[0])
+	var feet_y: float = h * float(spot[1])
+	panel.position = Vector2(
+		clampf(w * fx - SLOT_WIDTH * 0.5, 0.0, maxf(0.0, w - SLOT_WIDTH)),
+		feet_y - panel_h)
 
 
 ## Bind up to SQUAD_SIZE units into a column, hiding the leftover rows. Enemies number
@@ -308,6 +371,9 @@ func _add_skill_button(skill_id: StringName, enabled: bool, is_ult := false) -> 
 	var button := Button.new()
 	button.text = ("★ " if is_ult else "") + skill.display_name
 	button.custom_minimum_size = Vector2(0, MIN_BUTTON_HEIGHT)
+	# Small enough that the longest shipped skill name ("Resonance Field") survives a
+	# four-button bar; clip_text below is the backstop, not the plan.
+	button.add_theme_font_size_override("font_size", 11)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	# Truncate a long skill name rather than letting it widen the bar past the screen edge —
 	# an overflowing row puts the last button somewhere the thumb cannot reach.
