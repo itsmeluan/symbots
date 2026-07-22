@@ -1,0 +1,116 @@
+I need 15 background images for a mobile game. Generate them ONE AT A TIME, in the order listed
+at the bottom, starting with #1. After each image, tell me its filename and wait for me to say
+"next". Do not generate more than one per message.
+
+If I attached an image to this message, that sprite is the style reference — the backgrounds must
+look like the world that creature lives in.
+
+=== STYLE ===
+
+Mid-90s mecha TV anime. Think Medabots, Digimon, Zoids. Illustrated background art for a game,
+NOT concept art, NOT a painting, NOT photorealistic.
+
+- Cel shading: two or three flat tones per surface, hard-edged transitions between them. No soft
+  gradients, no airbrushing, no photographic texture, no grain.
+- Defined outlines on structures and silhouettes — darker than the fill, not pure black.
+- Saturated, confident colour. Every location has its own colour identity.
+- Simplified chunky shapes, readable at thumbnail size. Detail comes from silhouette and colour
+  blocking, never from surface noise.
+- Clear directional light with a stated time of day. Skies can be dramatic: big flat cloud
+  shapes, banded gradients, a low sun.
+
+It should look like a frame from an anime, not like a rendering.
+
+=== FORMAT AND COMPOSITION — these rules are strict ===
+
+Every image: 1080 x 1920 pixels, 9:16 portrait, PNG.
+
+Bright cartoon creature sprites get placed on top of these backgrounds by the game, four on the
+left and four on the right, standing in two vertical columns. The composition must leave room for
+them:
+
+- The HORIZON sits 30% down from the top. Everything below it is a continuous walkable GROUND
+  PLANE in one-point perspective, receding to a vanishing point at the centre of the horizon.
+  Floor seams and edge lines converge toward that point.
+- The ground plane is UNBROKEN and UNOBSTRUCTED from 32% to 82% of the image height. Nothing
+  crosses it in that range — no walls, pits, water, railings, crates, machinery or debris.
+- Two STANDING LANES stay visually calm and evenly lit: one centred at 24% of the width, one at
+  76%, each about 30% of the width across. Flat readable ground only in those two lanes — no
+  props, no high-contrast detail, no cast shadows.
+- A subtle VERTICAL DIVIDER runs down the centre at 50% width for the full height of the floor —
+  a floor seam, a channel, a strip of different material, a line of embedded lights. Subtle, not
+  a wall, and it must not block the view.
+- The top 7% is empty sky. The bottom 18% is plain darker floor.
+- All landmarks and detail live ABOVE the horizon and in the outer margins. Never on the floor.
+- Keep the floor a MID value — not black, not white, and never busier than the creatures that
+  will stand on it.
+
+Do NOT include: any character, robot, creature, person or animal; any text, numbers, logos or
+watermarks; any UI, frame, border or vignette; any foreground object in front of the camera.
+
+=== THE 15 SCENES ===
+
+Generate in this order. Use the exact filename given — the numbers are NOT sequential with the
+list position, and that is intentional. Do not renumber them.
+
+1. bg_stage_01.png — SCRAPYARD VERGE
+   Open yard of compacted scrap metal; towers of crushed machinery and a dead gantry crane on the
+   skyline. Rust, ochre and warm grey. Late afternoon, long low light.
+
+2. bg_stage_02.png — RUSTED GANTRY
+   Wide steel gantry deck, plates streaked with rust; a lattice of collapsed catwalks above the
+   horizon. Sodium orange against deep blue shadow.
+
+3. bg_stage_03.png — COOLANT RUN
+   Dry poured-concrete channel floor; enormous coolant pipes crossing the sky behind. Pale cyan
+   mist, cold blue-grey, bright overcast.
+
+4. bg_stage_04.png — FABRICATION FLOOR
+   Polished factory floor with painted lane markings; idle assembly arms and conveyor lines along
+   the back wall. Green-white worklight, clean and bright.
+
+5. bg_stage_05.png — THE STACK
+   Flat top of a vast stacked structure, lower tiers falling away beyond the horizon. High
+   altitude, wind haze, cool violet-grey, enormous sky.
+
+6. bg_stage_06.png — SIGNAL YARD
+   Packed gravel and cable trenches; a forest of antenna masts and satellite dishes on the
+   skyline. Muted green-grey, flat overcast.
+
+7. bg_stage_07.png — BROKEN RELAY
+   Cracked ceramic platform; a toppled relay tower and torn cabling behind. Storm light, blue
+   electrical arcs sparking in the distance.
+
+8. bg_stage_08.png — COLD STORAGE
+   Frosted metal decking with ice creeping in from the edges; racked frozen containers receding
+   into fog. Near-monochrome pale blue.
+
+9. bg_stage_09.png — DEEP FABRICATION
+   Subterranean machine hall, oil-stained floor; vast dormant machinery climbing out of frame
+   behind. Amber emergency lighting, heavy shadow.
+
+10. bg_stage_10.png — THE FOREMAN
+    Raised inspection platform of heavy steel grating; a bank of dead screens and a throne-like
+    control rig behind. Hard red key light.
+
+11. bg_stage_11.png — THE OVERCIRCUIT
+    Floor of exposed circuit tracery glowing faintly; a colossal branching circuit structure
+    filling the sky behind. Electric violet on near-black.
+
+12. bg_stage_12.png — MOLTEN YARD
+    Dark basalt casting floor, cooling channels glowing orange along the edges; foundry ladles and
+    furnace mouths behind. Hot orange rim light, drifting smoke.
+
+13. bg_stage_13.png — SIGNAL APEX
+    Windswept platform atop a transmission spire; cloud deck below the horizon, dish arrays
+    behind. Cold dawn, thin pale gold.
+
+14. bg_stage_14.png — THE RECLAMATION
+    Cracked concrete pad taken back by grey-green dead vegetation; half-buried machinery and a
+    collapsed dome behind. Ashen overcast.
+
+15. bg_stage_15.png — THE CORE FOREMAN
+    Black mirrored floor with concentric inlaid rings; an immense dormant core chamber behind,
+    ribbed and cathedral-like. Deep cyan on black, a single hard key light.
+
+Start with #1 now.
