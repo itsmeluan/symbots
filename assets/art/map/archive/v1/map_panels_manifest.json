@@ -1,0 +1,50 @@
+{
+  "asset": "stage_map_background",
+  "version": 1,
+  "stack_order_top_to_bottom": [
+    "map_panel_4.png",
+    "map_panel_3.png",
+    "map_panel_2.png",
+    "map_panel_1.png"
+  ],
+  "logical_panel_size": {
+    "width": 360,
+    "height": 640
+  },
+  "export_panel_size": {
+    "width": 1080,
+    "height": 1920
+  },
+  "format": "PNG",
+  "color_mode": "RGB",
+  "panels": [
+    {
+      "panel": 1,
+      "position": "bottom",
+      "region": "Scrap flats",
+      "file": "map_panel_1.png",
+      "sha256": "f8e590ace36b626013850d8d2cfc17f3b441cbe2b2bc67f33d8f6ecf52b07358"
+    },
+    {
+      "panel": 2,
+      "position": "lower-middle",
+      "region": "Signal belt",
+      "file": "map_panel_2.png",
+      "sha256": "156841f5ac8182661b87c36b93763257a16b49da27c4ac606ad8f801b3477703"
+    },
+    {
+      "panel": 3,
+      "position": "upper-middle",
+      "region": "The foundry",
+      "file": "map_panel_3.png",
+      "sha256": "3ef6a2b41b163e2ec95eca39893e7f5f78d767228542f6671896ee92aa0f08b6"
+    },
+    {
+      "panel": 4,
+      "position": "top",
+      "region": "The apex",
+      "file": "map_panel_4.png",
+      "sha256": "abbb7f75b70a1b0a444a3a19c8bccd399e802620173a9e53d5b84d57ec85899b"
+    }
+  ]
+}
