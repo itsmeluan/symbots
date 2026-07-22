@@ -17,3 +17,4 @@ battles = Array[Dictionary]([{
 enemy_level = 1
 chest_item_ids = Array[StringName]([])
 chest_blueprint_id = &""
+background_path = "res://assets/art/battle/bg_stage_01.png"

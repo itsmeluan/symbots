@@ -23,3 +23,4 @@ battles = Array[Dictionary]([{
 enemy_level = 45
 chest_item_ids = Array[StringName]([&"item_servo_t4", &"item_processor_t4"])
 chest_blueprint_id = &"rapierbill"
+background_path = "res://assets/art/battle/bg_stage_15.png"

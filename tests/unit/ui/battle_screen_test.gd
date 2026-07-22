@@ -300,3 +300,32 @@ func test_a_stage_naming_missing_art_still_gets_a_battlefield() -> void:
 	stage.background_path = "res://assets/art/battle/does_not_exist.png"
 	assert_eq(_screen_for(stage)._background_path(),
 		BattleScreenScript.DEFAULT_BACKGROUND)
+
+
+func test_every_shipped_stage_names_art_that_exists() -> void:
+	# There is no stage validator, so a mistyped or renamed background would only surface as
+	# the default battlefield appearing on a stage that has its own art — a silent downgrade
+	# nobody notices.
+	var catalog: StageCatalog = load("res://assets/data/catalogs/stage_catalog.tres")
+	assert_not_null(catalog)
+	var with_art := 0
+	for stage in catalog.entries:
+		if stage == null or stage.background_path.is_empty():
+			continue
+		with_art += 1
+		assert_true(ResourceLoader.exists(stage.background_path),
+			"'%s' names a missing background: %s" % [stage.display_name, stage.background_path])
+	assert_eq(with_art, catalog.entries.size(), "every stage should have its own battlefield")
+
+
+func test_no_two_stages_share_a_battlefield() -> void:
+	# Two stages pointing at one image means a third image is orphaned — the symptom of the
+	# art being bound by file number instead of by place.
+	var catalog: StageCatalog = load("res://assets/data/catalogs/stage_catalog.tres")
+	var seen: Dictionary = {}
+	for stage in catalog.entries:
+		if stage == null or stage.background_path.is_empty():
+			continue
+		assert_false(seen.has(stage.background_path),
+			"'%s' reuses %s" % [stage.display_name, stage.background_path])
+		seen[stage.background_path] = true

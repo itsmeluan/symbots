@@ -26,6 +26,11 @@ const MIN_BUTTON_HEIGHT := 44  ## touch minimum, technical-preferences.md
 ## Shared battlefield used by any stage that has not been given its own art.
 const DEFAULT_BACKGROUND := "res://assets/art/battle/battle_arena_background.png"
 
+## Scrim over the battlefield art. Low because the shipped backdrops are authored mid-to-dark
+## and desaturated for exactly this purpose (design/v1/battle-background-prompts.md); the old
+## 0.62 dated from a bright stock backdrop and now just buries the floor detail twice over.
+const BACKDROP_DIM := 0.28
+
 var engine: BattleEngine = null
 
 ## The stage being fought, set before [method setup] so the screen can draw its battlefield.
@@ -56,7 +61,7 @@ var _auto_enabled: bool = false
 
 func setup(ctx: ServiceContext) -> void:
 	_ctx = ctx
-	_set_background(_background_path(), 0.62)
+	_set_background(_background_path(), BACKDROP_DIM)
 	_build_layout()
 
 
