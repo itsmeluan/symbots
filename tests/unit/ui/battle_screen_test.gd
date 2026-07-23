@@ -329,3 +329,34 @@ func test_no_two_stages_share_a_battlefield() -> void:
 		assert_false(seen.has(stage.background_path),
 			"'%s' reuses %s" % [stage.display_name, stage.background_path])
 		seen[stage.background_path] = true
+
+
+# ---------------------------------------------------------------------------
+# Top strip
+# ---------------------------------------------------------------------------
+
+func test_the_wave_chip_appears_only_on_multi_fight_stages() -> void:
+	assert_false(_screen._wave_label.visible,
+		"a single-fight stage has no journey to count")
+	_screen.set_wave(2, 3)
+	assert_true(_screen._wave_label.visible)
+	assert_eq(_screen._wave_label.text, "WAVE 2/3")
+	_screen.set_wave(1, 1)
+	assert_false(_screen._wave_label.visible,
+		"returning to a single fight hides the chip again")
+
+
+func test_an_uncharged_ultimate_card_reports_its_charge() -> void:
+	var ult := SkillDefScript.new()
+	ult.id = &"nova"
+	ult.display_name = "Nova"
+	ult.target_mode = SkillDefScript.TargetMode.ALL_ENEMIES
+	ult.is_ultimate = true
+	ult.charge_cost = 100
+
+	var p := _unit("p", BattleUnit.Side.PLAYER)
+	p.ultimate_skill = &"nova"
+	p.ultimate_charge = 40
+	assert_eq(_screen._skill_state_text(ult, p, true), "CHARGE 40%")
+	p.ultimate_charge = 100
+	assert_eq(_screen._skill_state_text(ult, p, true), "READY")

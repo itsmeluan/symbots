@@ -323,6 +323,7 @@ func _start_next_battle() -> void:
 		_finish_run(true)
 		return
 	_result.battles.append(engine)
+	_battle.set_wave(_battle_index + 1, _stage.battle_count())
 	_battle.begin_battle(engine, ctx.skills)
 
 

@@ -45,9 +45,16 @@ var _enemy_panels: Array[UnitPanel] = []
 
 var _arena: Control
 var _banner: Label
+var _wave_label: Label
 var _log_label: Label
 var _skill_bar: HBoxContainer
 var _auto_toggle: CheckButton
+
+## Which fight of a multi-fight stage this is (1-based) and how many there are. Drawn as
+## a chip beside the banner so a dungeon run reads as a journey with a visible end rather
+## than an unexplained second battle.
+var _wave: int = 1
+var _wave_count: int = 1
 
 ## The skill awaiting a target, or null when the player has not chosen one yet. This is
 ## the whole of the screen's interaction state — everything else is derived.
@@ -77,6 +84,16 @@ func _background_path() -> String:
 			% [stage.id, stage.background_path])
 		return DEFAULT_BACKGROUND
 	return stage.background_path
+
+
+## Tell the screen where it sits in a multi-fight stage, before [method begin_battle].
+## Separate from begin_battle's signature so single-fight callers never think about waves.
+func set_wave(wave: int, count: int) -> void:
+	_wave = maxi(1, wave)
+	_wave_count = maxi(1, count)
+	if _wave_label != null:
+		_wave_label.text = "WAVE %d/%d" % [_wave, _wave_count]
+		_wave_label.visible = _wave_count > 1
 
 
 ## Start a battle. Separate from [method setup] because a screen is set up once but may
@@ -137,12 +154,42 @@ func _build_layout() -> void:
 	root.add_theme_constant_override("separation", 4)
 	add_child(root)
 
+	# Top strip: wave chip on the left, turn banner in the middle, auto on the right —
+	# the auto toggle lives up here (the genre-standard corner for it) so the bottom of
+	# the screen belongs entirely to the skill cards.
+	var top := MarginContainer.new()
+	top.add_theme_constant_override("margin_top", int(insets.x) + 4)
+	top.add_theme_constant_override("margin_left", 8)
+	top.add_theme_constant_override("margin_right", 8)
+	root.add_child(top)
+
+	var top_row := HBoxContainer.new()
+	top_row.add_theme_constant_override("separation", 8)
+	top.add_child(top_row)
+
+	_wave_label = Label.new()
+	_wave_label.text = "WAVE %d/%d" % [_wave, _wave_count]
+	_wave_label.visible = _wave_count > 1
+	_wave_label.add_theme_font_override("font", UIPalette.display_font())
+	_wave_label.add_theme_font_size_override("font_size", 11)
+	_wave_label.add_theme_color_override("font_color", UIPalette.MUTED)
+	_wave_label.add_theme_stylebox_override("normal", UIPalette.panel(UIPalette.LINE_SOFT))
+	_wave_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	top_row.add_child(_wave_label)
+
 	_banner = Label.new()
 	_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_banner.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_banner.add_theme_font_size_override("font_size", 12)
-	_banner.custom_minimum_size = Vector2(0, 20 + insets.x)
-	_banner.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-	root.add_child(_banner)
+	_banner.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top_row.add_child(_banner)
+
+	_auto_toggle = CheckButton.new()
+	_auto_toggle.text = "Auto"
+	_auto_toggle.add_theme_font_size_override("font_size", 11)
+	_auto_toggle.custom_minimum_size = Vector2(0, MIN_BUTTON_HEIGHT)
+	_connect_owned(_auto_toggle.toggled, Callable(self, "_on_auto_toggled"))
+	top_row.add_child(_auto_toggle)
 
 	# The empty upper scene. Everything below the arena is fixed-height, so this is the one
 	# element that absorbs a taller phone — which is what keeps the action bar on screen.
@@ -168,15 +215,17 @@ func _build_layout() -> void:
 	_log_label.custom_minimum_size = Vector2(0, 26)
 	root.add_child(_log_label)
 
-	_skill_bar = HBoxContainer.new()
-	_skill_bar.custom_minimum_size = Vector2(0, MIN_BUTTON_HEIGHT)
-	root.add_child(_skill_bar)
+	# The action bar: one card per skill, thumb-height, padded off the screen edges.
+	var bar_margin := MarginContainer.new()
+	bar_margin.add_theme_constant_override("margin_left", 8)
+	bar_margin.add_theme_constant_override("margin_right", 8)
+	bar_margin.add_theme_constant_override("margin_bottom", int(insets.y) + 8)
+	root.add_child(bar_margin)
 
-	_auto_toggle = CheckButton.new()
-	_auto_toggle.text = "Auto"
-	_auto_toggle.custom_minimum_size = Vector2(0, MIN_BUTTON_HEIGHT + insets.y)
-	_connect_owned(_auto_toggle.toggled, Callable(self, "_on_auto_toggled"))
-	root.add_child(_auto_toggle)
+	_skill_bar = HBoxContainer.new()
+	_skill_bar.add_theme_constant_override("separation", 6)
+	_skill_bar.custom_minimum_size = Vector2(0, SKILL_CARD_HEIGHT)
+	bar_margin.add_child(_skill_bar)
 
 
 func _build_side(into: Array[UnitPanel]) -> void:
@@ -386,28 +435,101 @@ func _rebuild_skill_bar(actor: BattleUnit) -> void:
 		usable_ids[s.id] = true
 
 	for sid in actor.skills:
-		_add_skill_button(sid, usable_ids.has(sid))
+		_add_skill_button(sid, usable_ids.has(sid), actor)
 	if actor.has_ultimate():
-		_add_skill_button(actor.ultimate_skill, usable_ids.has(actor.ultimate_skill), true)
+		_add_skill_button(actor.ultimate_skill, usable_ids.has(actor.ultimate_skill),
+			actor, true)
 
 
-func _add_skill_button(skill_id: StringName, enabled: bool, is_ult := false) -> void:
+## Height of one skill card. Taller than the bare touch minimum because each card carries
+## two lines — the name and its state — the way every shipped turn-based mobile RPG does.
+const SKILL_CARD_HEIGHT := 58
+
+
+## One card in the action bar: the skill's name over a one-line state readout (target
+## shape, cooldown left, or ult charge). A Button rather than a custom Control so
+## disabled/pressed behaviour and the tests' `child is Button` contract stay stock.
+func _add_skill_button(skill_id: StringName, enabled: bool, actor: BattleUnit,
+		is_ult := false) -> void:
 	var skill: SkillDef = _skills.get(skill_id)
 	if skill == null:
 		return
 	var button := Button.new()
-	button.text = ("★ " if is_ult else "") + skill.display_name
-	button.custom_minimum_size = Vector2(0, MIN_BUTTON_HEIGHT)
-	# Small enough that the longest shipped skill name ("Resonance Field") survives a
-	# four-button bar; clip_text below is the backstop, not the plan.
-	button.add_theme_font_size_override("font_size", 11)
+	button.custom_minimum_size = Vector2(0, SKILL_CARD_HEIGHT)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	# Truncate a long skill name rather than letting it widen the bar past the screen edge —
-	# an overflowing row puts the last button somewhere the thumb cannot reach.
-	button.clip_text = true
 	button.disabled = not enabled
+	var accent := UIPalette.AMBER if is_ult else UIPalette.LINE
+	button.add_theme_stylebox_override("normal", _card_style(accent, "normal", is_ult))
+	button.add_theme_stylebox_override("hover", _card_style(accent, "normal", is_ult))
+	button.add_theme_stylebox_override("pressed", _card_style(accent, "pressed", is_ult))
+	button.add_theme_stylebox_override("disabled", _card_style(accent, "disabled", is_ult))
+	button.add_theme_stylebox_override("focus", UIPalette.empty())
 	button.pressed.connect(Callable(self, "_on_skill_pressed").bind(skill_id))
+
+	# The card's two lines. Centered as a column; mouse_filter IGNORE so every pixel of
+	# the card is still the button's tap target.
+	var column := VBoxContainer.new()
+	column.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	column.alignment = BoxContainer.ALIGNMENT_CENTER
+	column.add_theme_constant_override("separation", 1)
+	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(column)
+
+	var name_label := Label.new()
+	name_label.text = ("★ " if is_ult else "") + skill.display_name
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.add_theme_font_override("font", UIPalette.display_font())
+	name_label.add_theme_font_size_override("font_size", 12)
+	name_label.clip_text = true
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var name_tone := UIPalette.TEXT
+	if not enabled:
+		name_tone = UIPalette.DISABLED
+	elif is_ult:
+		name_tone = UIPalette.AMBER
+	name_label.add_theme_color_override("font_color", name_tone)
+	column.add_child(name_label)
+
+	var state_label := Label.new()
+	state_label.text = _skill_state_text(skill, actor, is_ult)
+	state_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	state_label.add_theme_font_size_override("font_size", 9)
+	state_label.clip_text = true
+	state_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	state_label.add_theme_color_override("font_color",
+		UIPalette.AMBER if (is_ult and enabled) else UIPalette.MUTED)
+	column.add_child(state_label)
+
 	_skill_bar.add_child(button)
+
+
+## The one-line state readout under a skill's name. The rule: say why a card is dark
+## (cooling down, still charging), otherwise say what tapping it will aim at.
+func _skill_state_text(skill: SkillDef, actor: BattleUnit, is_ult: bool) -> String:
+	if is_ult:
+		if actor.is_ultimate_ready(skill.charge_cost):
+			return "READY"
+		return "CHARGE %d%%" % int(actor.ultimate_charge * 100.0 / maxf(1.0, skill.charge_cost))
+	var cooling: int = int(actor.cooldowns.get(skill.id, 0))
+	if cooling > 0:
+		return "COOLDOWN %d" % cooling
+	if not skill.is_single_target():
+		return "AREA"
+	return "SINGLE TARGET" if skill.targets_enemies() else "ALLY"
+
+
+## Card styling: the tech-panel look at button scale. Ults keep their amber border even
+## while disabled — a charging ultimate is a promise, not a dead control.
+func _card_style(accent: Color, state: String, is_ult: bool) -> StyleBoxFlat:
+	var box := UIPalette.panel(accent, Color(UIPalette.PANEL, 0.92))
+	box.set_content_margin_all(4)
+	match state:
+		"pressed":
+			box.bg_color = UIPalette.PANEL_2.darkened(0.15)
+		"disabled":
+			box.bg_color = Color(UIPalette.INK, 0.85)
+			box.border_color = Color(UIPalette.AMBER, 0.35) if is_ult else UIPalette.LINE_SOFT
+	return box
 
 
 ## Turn newly-emitted engine events into the on-screen log. Only events past
