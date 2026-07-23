@@ -297,3 +297,19 @@ func test_the_map_still_scrolls_with_its_bar_hidden() -> void:
 	var scroll: ScrollContainer = _game._map._scroll
 	assert_eq(scroll.vertical_scroll_mode, ScrollContainer.SCROLL_MODE_SHOW_NEVER)
 	assert_ne(scroll.vertical_scroll_mode, ScrollContainer.SCROLL_MODE_DISABLED)
+
+
+func test_exiting_a_battle_settles_it_as_a_defeat() -> void:
+	# Arrange: enter the first stage.
+	_game.show_map()
+	var stage: StageDef = _game.ctx.stages.entries[0]
+	_game._on_stage_chosen(stage)
+	assert_not_null(_game._battle)
+
+	# Act: the player walks out.
+	_game._battle.exit_requested.emit()
+
+	# Assert: the run settled through the normal defeat path — result screen up,
+	# battle gone, and the game did not crash into a half-torn-down state.
+	assert_not_null(_game._reward, "leaving still shows the run's settlement")
+	assert_null(_game._battle, "the battle screen is gone after the exit")

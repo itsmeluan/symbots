@@ -325,6 +325,7 @@ func _on_stage_chosen(stage: StageDef) -> void:
 	_battle.stage = stage
 	_present(_battle)
 	_battle.battle_finished.connect(Callable(self, "_on_battle_finished"))
+	_battle.exit_requested.connect(Callable(self, "_on_battle_exit"))
 	_start_next_battle()
 
 
@@ -336,6 +337,13 @@ func _start_next_battle() -> void:
 	_result.battles.append(engine)
 	_battle.set_wave(_battle_index + 1, _stage.battle_count())
 	_battle.begin_battle(engine, ctx.skills)
+
+
+## Walking out settles the run as a defeat: §6 keeps whatever already dropped, so the
+## exit passes through the same settlement and result screen as a loss — no special case
+## to balance, and no way to farm by fleeing.
+func _on_battle_exit() -> void:
+	_finish_run(false)
 
 
 func _on_battle_finished(outcome: int) -> void:

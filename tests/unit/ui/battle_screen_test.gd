@@ -341,15 +341,14 @@ func test_no_two_stages_share_a_battlefield() -> void:
 # Top strip
 # ---------------------------------------------------------------------------
 
-func test_the_wave_chip_appears_only_on_multi_fight_stages() -> void:
-	assert_false(_screen._wave_label.visible,
-		"a single-fight stage has no journey to count")
+func test_the_wave_chip_is_always_shown_even_for_single_fights() -> void:
 	_screen.set_wave(2, 3)
 	assert_true(_screen._wave_label.visible)
 	assert_eq(_screen._wave_label.text, "WAVE 2/3")
 	_screen.set_wave(1, 1)
-	assert_false(_screen._wave_label.visible,
-		"returning to a single fight hides the chip again")
+	assert_true(_screen._wave_label.visible,
+		"WAVE 1/1 must render — a sometimes-there label reads as misconfigured UI")
+	assert_eq(_screen._wave_label.text, "WAVE 1/1")
 
 
 func test_an_uncharged_ultimate_card_reports_its_charge() -> void:

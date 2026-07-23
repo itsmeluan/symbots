@@ -21,6 +21,10 @@ const UnitInfoModalScript := preload("res://src/ui/battle/unit_info_modal.gd")
 ## and pop back. Carries the [enum BattleEngine.Outcome].
 signal battle_finished(outcome: int)
 
+## Emitted when the player walks out mid-battle. The OWNER decides what leaving costs
+## (v1 settles it as a defeat — §6 keeps whatever already dropped); the screen only asks.
+signal exit_requested
+
 const SQUAD_SIZE := 4
 const MIN_BUTTON_HEIGHT := 44  ## touch minimum, technical-preferences.md
 
@@ -121,8 +125,10 @@ func set_wave(wave: int, count: int) -> void:
 	_wave = maxi(1, wave)
 	_wave_count = maxi(1, count)
 	if _wave_label != null:
+		# Always shown — WAVE 1/1 included. A label that only sometimes exists reads as
+		# a UI misconfiguration, not as information.
 		_wave_label.text = "WAVE %d/%d" % [_wave, _wave_count]
-		_wave_label.visible = _wave_count > 1
+		_wave_label.visible = true
 
 
 ## Start a battle. Separate from [method setup] because a screen is set up once but may
@@ -227,7 +233,6 @@ func _build_layout() -> void:
 
 	_wave_label = Label.new()
 	_wave_label.text = "WAVE %d/%d" % [_wave, _wave_count]
-	_wave_label.visible = _wave_count > 1
 	_wave_label.add_theme_font_override("font", UIPalette.display_font())
 	_wave_label.add_theme_font_size_override("font_size", 11)
 	_wave_label.add_theme_color_override("font_color", UIPalette.CYAN)
@@ -254,19 +259,24 @@ func _build_layout() -> void:
 	_banner.add_theme_font_size_override("font_size", 15)
 	banner_column.add_child(_banner)
 
-	# Boxless auto: just the word and the switch — a mode flag, not a command button.
-	_auto_toggle = CheckButton.new()
-	_auto_toggle.text = "Auto"
-	_auto_toggle.flat = true
-	_auto_toggle.add_theme_font_size_override("font_size", 11)
-	_auto_toggle.add_theme_stylebox_override("normal", UIPalette.empty())
-	_auto_toggle.add_theme_stylebox_override("hover", UIPalette.empty())
-	_auto_toggle.add_theme_stylebox_override("pressed", UIPalette.empty())
-	_auto_toggle.add_theme_stylebox_override("hover_pressed", UIPalette.empty())
-	_auto_toggle.add_theme_stylebox_override("focus", UIPalette.empty())
-	_auto_toggle.custom_minimum_size = Vector2(0, MIN_BUTTON_HEIGHT)
-	_connect_owned(_auto_toggle.toggled, Callable(self, "_on_auto_toggled"))
-	top_row.add_child(_auto_toggle)
+	# Exit lives where a mode flag would be a waste of the corner: walking out is a real
+	# decision, and the corner is where every mobile player looks for the door.
+	var exit_button := Button.new()
+	exit_button.text = "EXIT"
+	exit_button.add_theme_font_override("font", UIPalette.display_font())
+	exit_button.add_theme_font_size_override("font_size", 11)
+	exit_button.add_theme_color_override("font_color", UIPalette.MUTED)
+	exit_button.add_theme_color_override("font_pressed_color", UIPalette.CORAL)
+	exit_button.add_theme_stylebox_override("normal",
+		UIPalette.tech_button(Color(UIPalette.LINE, 0.7)))
+	exit_button.add_theme_stylebox_override("hover",
+		UIPalette.tech_button(Color(UIPalette.LINE, 0.7)))
+	exit_button.add_theme_stylebox_override("pressed",
+		UIPalette.tech_button(UIPalette.CORAL, "pressed"))
+	exit_button.add_theme_stylebox_override("focus", UIPalette.empty())
+	exit_button.custom_minimum_size = Vector2(64, MIN_BUTTON_HEIGHT)
+	_connect_owned(exit_button.pressed, Callable(self, "_on_exit_pressed"))
+	top_row.add_child(exit_button)
 
 	# The action-order strip (the genre's HSR-style queue, laid horizontally for
 	# portrait): who moves next this round, current actor first and largest.
@@ -318,6 +328,27 @@ func _build_layout() -> void:
 	bar_margin.add_child(_skill_bar)
 
 	_build_info_box(insets)
+
+	# Auto FLOATS above the ult card (the bar's right end): the two "let it play"
+	# controls share one corner of the thumb zone. Floating rather than a VBox row, so
+	# it costs the battlefield no height — the arena must never shrink for chrome.
+	_auto_toggle = CheckButton.new()
+	_auto_toggle.text = "Auto"
+	_auto_toggle.flat = true
+	_auto_toggle.add_theme_font_size_override("font_size", 11)
+	_auto_toggle.add_theme_stylebox_override("normal", UIPalette.empty())
+	_auto_toggle.add_theme_stylebox_override("hover", UIPalette.empty())
+	_auto_toggle.add_theme_stylebox_override("pressed", UIPalette.empty())
+	_auto_toggle.add_theme_stylebox_override("hover_pressed", UIPalette.empty())
+	_auto_toggle.add_theme_stylebox_override("focus", UIPalette.empty())
+	_auto_toggle.custom_minimum_size = Vector2(0, MIN_BUTTON_HEIGHT)
+	_auto_toggle.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	_auto_toggle.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_auto_toggle.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_auto_toggle.offset_right = -14
+	_auto_toggle.offset_bottom = -(SKILL_CARD_HEIGHT + int(insets.y) + 12)
+	_connect_owned(_auto_toggle.toggled, Callable(self, "_on_auto_toggled"))
+	add_child(_auto_toggle)
 
 
 ## The floating skill-info panel. A sibling of the main column, anchored under the top
@@ -535,6 +566,10 @@ func _outcome_text(outcome: int) -> String:
 # ---------------------------------------------------------------------------
 # Input
 # ---------------------------------------------------------------------------
+
+func _on_exit_pressed() -> void:
+	exit_requested.emit()
+
 
 func _on_auto_toggled(pressed: bool) -> void:
 	_auto_enabled = pressed
