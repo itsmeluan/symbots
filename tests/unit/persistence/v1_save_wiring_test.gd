@@ -22,6 +22,7 @@ var _game: V1Game
 func _new_game(backend, log: LogSink = null) -> V1Game:
 	var game: V1Game = V1GameScript.new()
 	game.save_backend = backend
+	game.battle_turn_pace = 0.0
 	game.log_override = log
 	add_child_autofree(game)
 	return game

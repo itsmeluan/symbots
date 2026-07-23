@@ -22,6 +22,7 @@ var _game: V1Game
 func before_each() -> void:
 	_game = V1GameScript.new()
 	_game.save_backend = MemoryBackend.new()
+	_game.battle_turn_pace = 0.0
 	# Deliberately NOT sizing the root here. V1Game._ready() must do it. An earlier draft
 	# of this file called set_anchors_and_offsets_preset on the game itself in before_each —
 	# performing the very fix under test — which made every assertion below unfalsifiable.

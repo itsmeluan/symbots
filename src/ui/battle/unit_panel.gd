@@ -227,15 +227,52 @@ func _refresh_status_row() -> void:
 		_status_row.add_child(Glyph.make(glyph_kind, 9.0, tone))
 
 
-## A quick hurt flash on the figure. On the sprite's self_modulate, NOT the panel's
-## modulate — refresh() owns that one for the dead-unit dim, and the two must not fight.
+## Whitening shader for the hit blink. `modulate` can only multiply DOWN, so a true
+## white flash needs a mix toward white in the fragment shader.
+const FLASH_SHADER_CODE := "
+shader_type canvas_item;
+uniform float flash : hint_range(0.0, 1.0) = 0.0;
+void fragment() {
+	vec4 c = texture(TEXTURE, UV);
+	COLOR = vec4(mix(c.rgb, vec3(1.0), flash), c.a);
+}"
+
+
+## The classic hit read: two quick white blinks on the sprite. Shader-driven, so the
+## panel's modulate (owned by refresh() for the death dim) is never touched.
 func flash_hit() -> void:
 	if _sprite == null or not is_inside_tree():
 		return
-	_sprite.self_modulate = Color(2.2, 0.55, 0.45)
+	if _sprite.material == null:
+		var shader := Shader.new()
+		shader.code = FLASH_SHADER_CODE
+		var mat := ShaderMaterial.new()
+		mat.shader = shader
+		_sprite.material = mat
+	var mat: ShaderMaterial = _sprite.material
 	var tween := _sprite.create_tween()
-	tween.tween_property(_sprite, "self_modulate", Color.WHITE, 0.32) \
+	tween.tween_method(func(v: float) -> void:
+		mat.set_shader_parameter(&"flash", v), 0.0, 1.0, 0.05)
+	tween.tween_method(func(v: float) -> void:
+		mat.set_shader_parameter(&"flash", v), 1.0, 0.0, 0.09)
+	tween.tween_method(func(v: float) -> void:
+		mat.set_shader_parameter(&"flash", v), 0.0, 0.65, 0.05)
+	tween.tween_method(func(v: float) -> void:
+		mat.set_shader_parameter(&"flash", v), 0.65, 0.0, 0.12)
+
+
+## The attack read: a short lunge toward the opponent and back. [param direction] is +1
+## for a unit facing right (players) and -1 for enemies. Purely visual — the panel's
+## resting position stays owned by the screen's _place().
+func play_lunge(direction: float) -> void:
+	if not is_inside_tree():
+		return
+	var rest := position
+	var tween := create_tween()
+	tween.tween_property(self, "position:x", rest.x + 16.0 * direction, 0.12) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(self, "position:x", rest.x, 0.16) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
 
 
 ## Charge cost of this unit's ult, injected by the screen (which owns the skill table).

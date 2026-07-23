@@ -18,6 +18,14 @@ signal dismissed
 
 const MIN_BUTTON_HEIGHT := 44
 
+## Shared battlefield used when no stage is set — the same fallback the battle uses.
+const DEFAULT_BACKGROUND := "res://assets/art/battle/battle_arena_background.png"
+
+## The stage that was just fought, set BEFORE setup — the victory screen keeps the
+## battlefield the player was just standing on, so the beat reads as one continuous
+## scene rather than a teleport to a stock backdrop.
+var stage: StageDef = null
+
 var _ctx: ServiceContext = null
 
 var _title: Label
@@ -27,8 +35,15 @@ var _continue_button: Button
 
 func setup(ctx: ServiceContext) -> void:
 	_ctx = ctx
-	_set_background("res://assets/art/battle/battle_arena_background.png", 0.78)
+	_set_background(_background_path(), 0.78)
 	_build_layout()
+
+
+func _background_path() -> String:
+	if stage == null or stage.background_path.is_empty() \
+			or not ResourceLoader.exists(stage.background_path):
+		return DEFAULT_BACKGROUND
+	return stage.background_path
 
 
 func _on_exit_tree() -> void:

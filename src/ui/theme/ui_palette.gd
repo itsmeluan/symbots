@@ -142,6 +142,38 @@ static func button(state: String = "normal") -> StyleBoxFlat:
 	return box
 
 
+## The angled "tech card" action button — the game's combat-tier control language: a
+## skewed parallelogram with a heavier accent edge on the leading side. One factory so
+## every screen's action row leans the same 8 degrees.
+static func tech_button(accent: Color, state: String = "normal") -> StyleBoxFlat:
+	var box := StyleBoxFlat.new()
+	box.bg_color = Color(PANEL_2, 0.94)
+	box.skew = Vector2(0.14, 0.0)
+	box.set_corner_radius_all(2)
+	box.border_color = accent
+	box.border_width_left = 3
+	box.border_width_top = 1
+	box.border_width_right = 1
+	box.border_width_bottom = 1
+	box.set_content_margin_all(6)
+	box.content_margin_left = 14
+	box.content_margin_right = 14
+	match state:
+		"selected":
+			box.border_color = CYAN
+			box.border_width_left = 4
+			box.border_width_top = 2
+			box.border_width_right = 2
+			box.border_width_bottom = 2
+			box.bg_color = PANEL_2.lightened(0.07)
+		"pressed":
+			box.bg_color = PANEL_2.darkened(0.18)
+		"disabled":
+			box.bg_color = Color(INK, 0.88)
+			box.border_color = Color(accent, 0.32)
+	return box
+
+
 ## A flat empty box, for containers that should draw nothing.
 static func empty() -> StyleBoxEmpty:
 	return StyleBoxEmpty.new()

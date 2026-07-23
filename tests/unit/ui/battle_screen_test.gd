@@ -27,6 +27,7 @@ func before_each() -> void:
 	_ctx.balance = _cfg
 
 	_screen = BattleScreenScript.new()
+	_screen.turn_pace = 0.0
 	add_child_autofree(_screen)
 	_screen.setup(_ctx)
 
@@ -570,3 +571,51 @@ func test_status_effects_show_as_chips_on_the_unit() -> void:
 	# Assert: exactly one chip rides the figure.
 	assert_eq(_screen._player_panels[0]._status_row.get_child_count(), 1,
 		"an invisible debuff is a rule the player cannot play around")
+
+
+# ---------------------------------------------------------------------------
+# Pacing & readability
+# ---------------------------------------------------------------------------
+
+func test_the_log_reads_display_names_not_content_ids() -> void:
+	# Arrange: units whose ids and display names differ, the way shipped content's do.
+	var p := _unit("p", BattleUnit.Side.PLAYER, 200, SpeciesDefScript.Role.DPS, 30)
+	p.unit_id = &"starter_coilsprite"
+	p.display_name = "Coilsprite"
+	var x := _unit("x", BattleUnit.Side.ENEMY, 300)
+	x.unit_id = &"enemy_rustcrawler_0"
+	x.display_name = "Rustcrawler"
+	_start([p], [x])
+
+	# Act.
+	_screen._on_skill_pressed(&"strike")
+	_screen._on_unit_tapped(x)
+
+	# Assert: the narration uses names a player recognises.
+	var described := _screen._describe({&"event": &"skill_used",
+		&"unit": &"starter_coilsprite", &"skill": &"strike"})
+	assert_eq(described, "Coilsprite uses Strike",
+		"raw content ids in the log read as debug output, not as a battle")
+
+
+func test_turn_chips_share_one_size_regardless_of_actor() -> void:
+	var p := _unit("p", BattleUnit.Side.PLAYER, 200, SpeciesDefScript.Role.DPS, 30)
+	var x := _unit("x", BattleUnit.Side.ENEMY)
+	_start([p], [x])
+
+	for chip in _screen._turn_strip.get_children():
+		assert_eq(chip.custom_minimum_size, Vector2(
+			BattleScreenScript.TURN_CHIP, BattleScreenScript.TURN_CHIP),
+			"whose turn it is reads from the border, never from a size jump")
+
+
+func test_zero_pace_keeps_the_whole_battle_synchronous() -> void:
+	# The contract every headless suite leans on: at turn_pace 0 a full auto battle
+	# resolves within the calling frame.
+	var p := _unit("p", BattleUnit.Side.PLAYER, 400, SpeciesDefScript.Role.DPS, 30)
+	var x := _unit("x", BattleUnit.Side.ENEMY, 60, SpeciesDefScript.Role.DPS, 5)
+	_start([p], [x])
+
+	_screen._on_auto_toggled(true)
+
+	assert_true(_screen.engine.is_over(), "no awaits may hide in the pace-0 path")

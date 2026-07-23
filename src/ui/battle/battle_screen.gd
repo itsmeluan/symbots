@@ -46,6 +46,7 @@ var _enemy_panels: Array[UnitPanel] = []
 
 var _arena: Control
 var _banner: Label
+var _round_label: Label
 var _wave_label: Label
 var _turn_strip: HBoxContainer
 var _log_label: Label
@@ -80,6 +81,18 @@ var _unit_modal: UnitInfoModal = null
 var _events_drawn: int = 0
 
 var _auto_enabled: bool = false
+
+## Seconds of breathing room around each non-player action. The dial the whole battle
+## rhythm hangs off: at 0 the screen collapses to the old fully-synchronous resolution,
+## which is what headless tests set — a test must never wait on theatre.
+var turn_pace: float = 0.55
+
+## True while the paced playback coroutine is walking turns; input that would submit a
+## second action is ignored until the stage is quiet again.
+var _playback_running: bool = false
+
+## unit_id -> display name, rebuilt per battle so the log and floats never leak raw ids.
+var _display_names: Dictionary = {}
 
 
 func setup(ctx: ServiceContext) -> void:
@@ -129,6 +142,10 @@ func begin_battle(p_engine: BattleEngine, skill_table: Dictionary) -> void:
 		for u in engine.player_units + engine.enemy_units:
 			_ctx.codex.mark_seen(u.species_id, u.art_mark)
 
+	_display_names.clear()
+	for u in engine.player_units + engine.enemy_units:
+		_display_names[u.unit_id] = u.display_name
+
 	_bind_panels(engine.player_units, _player_panels)
 	_bind_panels(engine.enemy_units, _enemy_panels)
 	_layout_arena()
@@ -160,7 +177,7 @@ const SLOT_WIDTH := 108.0
 ## design/v1/battle-background-prompts.md) — on a shallow floor the top row floats.
 ##
 ## [x, feet_y, sprite_height]
-const COLUMN_X := 0.24
+const COLUMN_X := 0.16
 const FORMATION: Array = [
 	[COLUMN_X, 0.990, 94.0],
 	[COLUMN_X, 0.735, 88.0],
@@ -172,6 +189,23 @@ const FORMATION: Array = [
 func _build_layout() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var insets := _safe_insets()
+
+	# A soft ink gradient behind the header, so the strip and banner sit on composed
+	# ground instead of floating raw over the skybox.
+	var header_shade := TextureRect.new()
+	var shade_gradient := Gradient.new()
+	shade_gradient.set_color(0, Color(UIPalette.INK, 0.85))
+	shade_gradient.set_color(1, Color(UIPalette.INK, 0.0))
+	var shade_texture := GradientTexture2D.new()
+	shade_texture.gradient = shade_gradient
+	shade_texture.fill_from = Vector2(0, 0)
+	shade_texture.fill_to = Vector2(0, 1)
+	header_shade.texture = shade_texture
+	header_shade.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	header_shade.offset_bottom = 132 + insets.x
+	header_shade.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	header_shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(header_shade)
 
 	var root := VBoxContainer.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -196,21 +230,40 @@ func _build_layout() -> void:
 	_wave_label.visible = _wave_count > 1
 	_wave_label.add_theme_font_override("font", UIPalette.display_font())
 	_wave_label.add_theme_font_size_override("font_size", 11)
-	_wave_label.add_theme_color_override("font_color", UIPalette.MUTED)
-	_wave_label.add_theme_stylebox_override("normal", UIPalette.panel(UIPalette.LINE_SOFT))
+	_wave_label.add_theme_color_override("font_color", UIPalette.CYAN)
 	_wave_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	top_row.add_child(_wave_label)
 
+	# The banner is two lines: a small ROUND caption over the actor's name in bold —
+	# the header reads as a title block, not a debug string.
+	var banner_column := VBoxContainer.new()
+	banner_column.alignment = BoxContainer.ALIGNMENT_CENTER
+	banner_column.add_theme_constant_override("separation", 0)
+	banner_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top_row.add_child(banner_column)
+
+	_round_label = Label.new()
+	_round_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_round_label.add_theme_font_size_override("font_size", 9)
+	_round_label.add_theme_color_override("font_color", UIPalette.MUTED)
+	banner_column.add_child(_round_label)
+
 	_banner = Label.new()
 	_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_banner.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_banner.add_theme_font_size_override("font_size", 12)
-	_banner.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	top_row.add_child(_banner)
+	_banner.add_theme_font_override("font", UIPalette.bold_font())
+	_banner.add_theme_font_size_override("font_size", 15)
+	banner_column.add_child(_banner)
 
+	# Boxless auto: just the word and the switch — a mode flag, not a command button.
 	_auto_toggle = CheckButton.new()
 	_auto_toggle.text = "Auto"
+	_auto_toggle.flat = true
 	_auto_toggle.add_theme_font_size_override("font_size", 11)
+	_auto_toggle.add_theme_stylebox_override("normal", UIPalette.empty())
+	_auto_toggle.add_theme_stylebox_override("hover", UIPalette.empty())
+	_auto_toggle.add_theme_stylebox_override("pressed", UIPalette.empty())
+	_auto_toggle.add_theme_stylebox_override("hover_pressed", UIPalette.empty())
+	_auto_toggle.add_theme_stylebox_override("focus", UIPalette.empty())
 	_auto_toggle.custom_minimum_size = Vector2(0, MIN_BUTTON_HEIGHT)
 	_connect_owned(_auto_toggle.toggled, Callable(self, "_on_auto_toggled"))
 	top_row.add_child(_auto_toggle)
@@ -372,9 +425,16 @@ func _ult_cost_of(u: BattleUnit) -> int:
 # Turn flow
 # ---------------------------------------------------------------------------
 
-## Let the engine run every turn the player does not own — enemies always, and the player's
-## own units when auto is on. Stops as soon as a decision is the player's.
+## Let the engine run every turn the player does not own — enemies always, and the
+## player's own units when auto is on. Stops as soon as a decision is the player's.
+##
+## At [member turn_pace] 0 this resolves synchronously (tests, offline). Otherwise it
+## hands off to the paced playback coroutine, so the battle opens on a quiet field and
+## every action — enemy AND auto — is watched happening rather than reported done.
 func _advance_if_not_player_turn() -> void:
+	if turn_pace > 0.0:
+		_run_paced_playback()
+		return
 	while not engine.is_over():
 		var actor := engine.current_actor()
 		if actor == null:
@@ -386,6 +446,71 @@ func _advance_if_not_player_turn() -> void:
 	_refresh_all()
 	if engine.is_over():
 		_finish()
+
+
+## The paced walk: present anything already emitted (the player's own action), then take
+## and present each non-player turn with a beat before it. Exits back to the player's
+## input, or into _finish(). Fire-and-forget async — re-entry is blocked by the flag.
+func _run_paced_playback() -> void:
+	if _playback_running:
+		return
+	_playback_running = true
+	await _present_new_events()
+	_refresh_all()
+	while engine != null and is_inside_tree() and not engine.is_over():
+		var actor := engine.current_actor()
+		if actor == null:
+			break
+		if actor.side == BattleUnit.Side.PLAYER and not _auto_enabled:
+			break
+		await _beat(turn_pace)
+		if engine == null or not is_inside_tree():
+			return
+		engine.take_auto_action()
+		await _present_new_events()
+		_refresh_all()
+	_playback_running = false
+	if engine != null and engine.is_over():
+		_finish()
+	_refresh_all()
+
+
+func _beat(seconds: float) -> void:
+	if seconds <= 0.0 or not is_inside_tree():
+		return
+	await get_tree().create_timer(seconds).timeout
+
+
+## Play the not-yet-presented engine events one at a time: the attacker lunges, the
+## victim blinks and its number rises, the log narrates — each on its own beat, so a
+## turn reads as a sentence rather than a lump sum.
+func _present_new_events() -> void:
+	while engine != null and _events_drawn < engine.events.size():
+		var event: Dictionary = engine.events[_events_drawn]
+		_events_drawn += 1
+		var line := _describe(event)
+		if line != "":
+			_log_label.text = line
+		match event.get(&"event", &""):
+			&"skill_used", &"ultimate_fired":
+				var actor_panel := _panel_of(event.get(&"unit", &""))
+				if actor_panel != null and actor_panel.unit != null:
+					actor_panel.play_lunge(
+						1.0 if actor_panel.unit.side == BattleUnit.Side.PLAYER else -1.0)
+				await _beat(0.34)
+			&"damaged":
+				_float_for_event(event, 0)
+				await _beat(0.30)
+			&"healed", &"shielded", &"stunned":
+				_float_for_event(event, 0)
+				await _beat(0.26)
+			&"destroyed":
+				var dead_panel := _panel_of(event.get(&"unit", &""))
+				if dead_panel != null:
+					dead_panel.refresh()
+				await _beat(0.30)
+			_:
+				pass
 
 
 func _finish() -> void:
@@ -425,7 +550,7 @@ func _on_auto_toggled(pressed: bool) -> void:
 ##   - uncharged ult: info only — tappable so the player can always read their ult.
 ## Tapping the selected card again deselects.
 func _on_skill_pressed(skill_id: StringName) -> void:
-	if engine == null or engine.is_over():
+	if engine == null or engine.is_over() or _playback_running:
 		return
 	var actor := engine.current_actor()
 	if actor == null or actor.side != BattleUnit.Side.PLAYER:
@@ -454,7 +579,7 @@ func _on_skill_pressed(skill_id: StringName) -> void:
 func _on_unit_tapped(unit: BattleUnit) -> void:
 	if engine == null:
 		return
-	if _pending_skill != null and not engine.is_over():
+	if _pending_skill != null and not engine.is_over() and not _playback_running:
 		var actor := engine.current_actor()
 		if actor != null and engine.legal_targets(actor, _pending_skill).has(unit):
 			_submit(_pending_skill, unit)
@@ -493,6 +618,11 @@ func _submit(skill: SkillDef, target: BattleUnit) -> void:
 		_refresh_all()
 		return
 	_clear_selection()
+	if turn_pace > 0.0:
+		# The playback coroutine presents the player's own action first, then walks the
+		# replies — one paced rhythm for everything that happens on the field.
+		_advance_if_not_player_turn()
+		return
 	_drain_events()
 	_advance_if_not_player_turn()
 
@@ -518,37 +648,49 @@ func _refresh_all() -> void:
 # Turn order strip
 # ---------------------------------------------------------------------------
 
-## Chip edge for units awaiting their move; the current actor's chip is drawn larger.
-const TURN_CHIP := 30
-const TURN_CHIP_ACTIVE := 38
+## Chip edge — ONE size for everyone. Whose turn it is reads from the border, never from
+## a size jump: uniform boxes are what makes the strip scannable as a queue.
+const TURN_CHIP := 32
+
+## The queue as it was last drawn, so a redraw with the same shape does not replay the
+## entrance animation on every refresh.
+var _turn_strip_ids: Array = []
 
 
 ## Redraw the action-order strip: everyone still to move this round, current actor
-## first. Rebuilt whole on every refresh — at most eight chips, and a diff would be more
-## code than the rebuild.
+## first. When the queue actually advances, the chips ease in (scale + fade, softly
+## staggered) instead of popping — the row reads as moving forward.
 func _rebuild_turn_strip(actor: BattleUnit) -> void:
 	if _turn_strip == null:
 		return
+	if engine == null or engine.is_over():
+		_turn_strip.visible = false
+		_turn_strip_ids = []
+		return
+
+	var upcoming := engine.upcoming_actors()
+	var ids := upcoming.map(func(u): return u.unit_id)
+	var changed: bool = ids != _turn_strip_ids
+	_turn_strip_ids = ids
+
 	for child in _turn_strip.get_children():
 		_turn_strip.remove_child(child)
 		child.queue_free()
-	if engine == null or engine.is_over():
-		_turn_strip.visible = false
-		return
 	_turn_strip.visible = true
 
-	for u in engine.upcoming_actors():
+	var index := 0
+	for u in upcoming:
 		var is_actor: bool = u == actor
-		var edge := TURN_CHIP_ACTIVE if is_actor else TURN_CHIP
 		var chip := PanelContainer.new()
 		var accent := UIPalette.CYAN if u.side == BattleUnit.Side.PLAYER else UIPalette.CORAL
-		var box := UIPalette.panel(accent if is_actor else Color(accent, 0.45),
+		var box := UIPalette.panel(accent if is_actor else Color(accent, 0.40),
 			Color(UIPalette.INK, 0.80))
 		box.set_content_margin_all(2)
 		if is_actor:
 			box.set_border_width_all(2)
 		chip.add_theme_stylebox_override("panel", box)
-		chip.custom_minimum_size = Vector2(edge, edge)
+		chip.custom_minimum_size = Vector2(TURN_CHIP, TURN_CHIP)
+		chip.pivot_offset = Vector2(TURN_CHIP, TURN_CHIP) * 0.5
 		chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 		var face := TextureRect.new()
@@ -560,6 +702,16 @@ func _rebuild_turn_strip(actor: BattleUnit) -> void:
 		face.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		chip.add_child(face)
 		_turn_strip.add_child(chip)
+
+		if changed and turn_pace > 0.0:
+			chip.modulate.a = 0.0
+			chip.scale = Vector2(0.82, 0.82)
+			var tween := chip.create_tween()
+			tween.tween_interval(0.03 * index)
+			tween.tween_property(chip, "modulate:a", 1.0, 0.14)
+			tween.parallel().tween_property(chip, "scale", Vector2.ONE, 0.16) \
+				.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		index += 1
 
 
 ## A unit is highlighted as targetable only while a skill is armed AND the engine agrees
@@ -574,14 +726,16 @@ func _is_targetable(unit: BattleUnit, actor: BattleUnit) -> bool:
 func _refresh_banner(actor: BattleUnit) -> void:
 	if engine == null:
 		return
+	_round_label.text = "ROUND %d" % engine.round_number
 	if engine.is_over():
+		_round_label.text = ""
 		_banner.text = _outcome_text(engine.outcome)
 	elif _pending_skill != null:
-		_banner.text = "Choose a target for %s" % _pending_skill.display_name
+		_banner.text = "Choose a target"
 	elif actor != null:
-		_banner.text = "Round %d — %s" % [engine.round_number, actor.display_name]
+		_banner.text = actor.display_name
 	else:
-		_banner.text = "Round %d" % engine.round_number
+		_banner.text = ""
 
 
 ## Rebuild the action bar for the current actor. Rebuilt rather than updated because the
@@ -729,22 +883,13 @@ func _glyph_colour(kind: StringName, fallback: Color) -> Color:
 	return GLYPH_COLOURS.get(kind, fallback)
 
 
-## Card styling: the tech-panel look at button scale. Ults keep their amber border even
-## while disabled — a charging ultimate is a promise, not a dead control. The selected
-## card gets the cyan double-width border: the accent the whole UI uses for "this one".
+## Card styling: the skewed tech-card language from UIPalette. Ults keep their amber
+## edge even while disabled — a charging ultimate is a promise, not a dead control. The
+## selected card gets the cyan frame: the accent the whole UI uses for "this one".
 func _card_style(accent: Color, state: String, is_ult: bool) -> StyleBoxFlat:
-	var box := UIPalette.panel(accent, Color(UIPalette.PANEL, 0.92))
-	box.set_content_margin_all(4)
-	match state:
-		"selected":
-			box.border_color = UIPalette.CYAN
-			box.set_border_width_all(2)
-			box.bg_color = UIPalette.PANEL_2.lightened(0.06)
-		"pressed":
-			box.bg_color = UIPalette.PANEL_2.darkened(0.15)
-		"disabled":
-			box.bg_color = Color(UIPalette.INK, 0.85)
-			box.border_color = Color(UIPalette.AMBER, 0.35) if is_ult else UIPalette.LINE_SOFT
+	var box := UIPalette.tech_button(accent, state)
+	if state == "disabled" and not is_ult:
+		box.border_color = Color(UIPalette.LINE_SOFT, 0.8)
 	return box
 
 
@@ -926,21 +1071,34 @@ func _spawn_float(unit_id: StringName, text: String, colour: Color, order: int,
 	tween.tween_callback(label.queue_free)
 
 
+## The name a player should read — never a raw content id. Units resolve through the
+## per-battle map; skills through the table; anything unknown falls back to the id
+## rather than an empty string, so a gap is visible instead of silent.
+func _name_of(unit_id) -> String:
+	return _display_names.get(unit_id, String(unit_id))
+
+
+func _skill_name(skill_id) -> String:
+	var skill: SkillDef = _skills.get(skill_id)
+	return skill.display_name if skill != null else String(skill_id)
+
+
 func _describe(event: Dictionary) -> String:
 	match event.get(&"event", &""):
 		&"skill_used":
-			return "%s uses %s" % [event.get(&"unit"), event.get(&"skill")]
+			return "%s uses %s" % [_name_of(event.get(&"unit")), _skill_name(event.get(&"skill"))]
 		&"ultimate_fired":
-			return "%s unleashes %s!" % [event.get(&"unit"), event.get(&"skill")]
+			return "%s unleashes %s!" % [_name_of(event.get(&"unit")),
+				_skill_name(event.get(&"skill"))]
 		&"damaged":
 			var crit: String = " CRIT" if event.get(&"crit", false) else ""
-			return "%s takes %d%s" % [event.get(&"unit"), event.get(&"amount"), crit]
+			return "%s takes %d%s" % [_name_of(event.get(&"unit")), event.get(&"amount"), crit]
 		&"healed":
-			return "%s repairs %d" % [event.get(&"unit"), event.get(&"amount")]
+			return "%s repairs %d" % [_name_of(event.get(&"unit")), event.get(&"amount")]
 		&"destroyed":
-			return "%s is destroyed" % event.get(&"unit")
+			return "%s is destroyed" % _name_of(event.get(&"unit"))
 		&"stunned":
-			return "%s is stunned" % event.get(&"unit")
+			return "%s is stunned" % _name_of(event.get(&"unit"))
 		&"revived":
-			return "%s is back online" % event.get(&"unit")
+			return "%s is back online" % _name_of(event.get(&"unit"))
 	return ""

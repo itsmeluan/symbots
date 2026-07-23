@@ -16,6 +16,8 @@ var _game: V1Game
 func _make_game(backend = null) -> V1Game:
 	var game: V1Game = V1GameScript.new()
 	game.save_backend = backend if backend != null else MemoryBackend.new()
+	# Battles resolve synchronously under test — pacing is theatre, not logic.
+	game.battle_turn_pace = 0.0
 	add_child_autofree(game)
 	return game
 

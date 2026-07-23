@@ -77,6 +77,10 @@ var _home: HomeScreen = null
 
 ## The run in progress: its runner, its stage, and where in the battle sequence we are.
 var _runner: StageRunner = null
+
+## Seconds of pacing around each battle action. Public so tests set it to 0 BEFORE
+## choosing a stage — a paced battle in a headless test is a test that waits on theatre.
+var battle_turn_pace: float = 0.55
 var _stage: StageDef = null
 var _battle_index: int = 0
 var _units: Array = []
@@ -315,6 +319,7 @@ func _on_stage_chosen(stage: StageDef) -> void:
 
 	_clear_screens()
 	_battle = BattleScreenScript.new()
+	_battle.turn_pace = battle_turn_pace
 	# Assigned before _present, because _present calls setup() and that is where the
 	# battlefield art is chosen.
 	_battle.stage = stage
@@ -373,6 +378,7 @@ func _finish_run(cleared: bool) -> void:
 func show_reward(result, stage: StageDef) -> void:
 	_clear_screens()
 	_reward = RewardScreenScript.new()
+	_reward.stage = stage
 	_present(_reward)
 	_reward.show_result(result, stage)
 	_reward.dismissed.connect(Callable(self, "show_map"))
