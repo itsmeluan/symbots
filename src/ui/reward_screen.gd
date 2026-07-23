@@ -32,6 +32,9 @@ var _title: Label
 var _lines: VBoxContainer
 var _continue_button: Button
 
+## The running reveal tweens, so a tap can skip straight to the settled ledger.
+var _reveal_tweens: Array = []
+
 
 func setup(ctx: ServiceContext) -> void:
 	_ctx = ctx
@@ -134,6 +137,81 @@ func show_result(result, stage: StageDef) -> void:
 		_add_line("Chest:")
 		for item_id in result.chest_items:
 			_add_line("   %s" % _item_name(item_id))
+
+	_play_reveal()
+
+
+# ---------------------------------------------------------------------------
+# The reveal
+# ---------------------------------------------------------------------------
+
+## The settlement plays as a sequence: the verdict stamps in, then each ledger line pops
+## up one beat after the last, then the continue button. The most-tested moment in
+## mobile: earnings that ARRIVE feel earned; a list that is simply there reads as a
+## receipt. Content is all placed synchronously first — only alpha and scale animate, so
+## every headless assertion sees the finished ledger.
+func _play_reveal() -> void:
+	_skip_reveal()
+	if not is_inside_tree():
+		return
+	_reveal_tweens.clear()
+
+	_title.pivot_offset = _title.size * 0.5
+	_title.resized.connect(
+		func() -> void: _title.pivot_offset = _title.size * 0.5, CONNECT_ONE_SHOT)
+	_title.modulate.a = 0.0
+	_title.scale = Vector2(1.3, 1.3)
+	var title_tween := _title.create_tween()
+	title_tween.tween_property(_title, "modulate:a", 1.0, 0.12)
+	title_tween.parallel().tween_property(_title, "scale", Vector2.ONE, 0.20) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_reveal_tweens.append(title_tween)
+
+	var order := 0
+	for line in _lines.get_children():
+		line.modulate.a = 0.0
+		var tween := line.create_tween()
+		tween.tween_interval(0.35 + 0.14 * order)
+		tween.tween_property(line, "modulate:a", 1.0, 0.16)
+		_reveal_tweens.append(tween)
+		order += 1
+
+	_continue_button.modulate.a = 0.0
+	var button_tween := _continue_button.create_tween()
+	button_tween.tween_interval(0.35 + 0.14 * order + 0.15)
+	button_tween.tween_property(_continue_button, "modulate:a", 1.0, 0.20)
+	_reveal_tweens.append(button_tween)
+
+
+## Jump the whole reveal to its end state. Called by any tap on the backdrop — nobody
+## should ever wait for a receipt they have already read.
+func _skip_reveal() -> void:
+	for tween in _reveal_tweens:
+		if tween != null and tween.is_valid():
+			tween.kill()
+	_reveal_tweens.clear()
+	if _title != null:
+		_title.modulate.a = 1.0
+		_title.scale = Vector2.ONE
+	if _continue_button != null:
+		_continue_button.modulate.a = 1.0
+	if _lines != null:
+		for line in _lines.get_children():
+			line.modulate.a = 1.0
+
+
+func _reveal_running() -> bool:
+	for tween in _reveal_tweens:
+		if tween != null and tween.is_valid() and tween.is_running():
+			return true
+	return false
+
+
+func _gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed \
+			and event.button_index == MOUSE_BUTTON_LEFT and _reveal_running():
+		_skip_reveal()
+		accept_event()
 
 
 func _species_name(species_id: StringName) -> String:

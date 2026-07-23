@@ -200,3 +200,24 @@ func test_the_reward_screen_can_be_dismissed_back_to_the_map() -> void:
 	_game._reward._on_continue_pressed()
 	assert_not_null(_game._map)
 	assert_null(_game._reward)
+
+
+func test_the_reveal_animates_alpha_only_and_a_tap_settles_it() -> void:
+	# Arrange: a full auto run to the victory screen.
+	_game.show_map()
+	_game._on_stage_chosen(_game.ctx.stages.entries[0])
+	_game._battle._on_auto_toggled(true)
+	var reward: RewardScreen = _game._reward
+	assert_not_null(reward)
+
+	# The ledger CONTENT is already fully placed (assertable) even mid-reveal.
+	assert_gt(reward._lines.get_child_count(), 0)
+
+	# Act: skip.
+	reward._skip_reveal()
+
+	# Assert: everything settled at full visibility.
+	assert_eq(reward._title.modulate.a, 1.0)
+	assert_eq(reward._continue_button.modulate.a, 1.0)
+	for line in reward._lines.get_children():
+		assert_eq(line.modulate.a, 1.0, "a skipped reveal must leave no half-faded line")
