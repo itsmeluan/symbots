@@ -43,13 +43,19 @@ signal foundry_requested
 ## Emitted when the player wants offline expeditions.
 signal expeditions_requested
 
+## One continuous authored journey, rendered behind the timeline. The source is four
+## 1080×1920 panels assembled into one 1080×7680 texture; at the 360px logical viewport
+## width it is exactly 2560px tall.
+const MAP_BACKGROUND_PATH := "res://assets/art/map/map_full.png"
+const MAP_BACKGROUND_SCRIM_ALPHA := 0.30
+
 ## Vertical distance between two nodes on the timeline. Just over the card height, so the
 ## column reads as one connected track rather than as separated rows.
-const NODE_SPACING := 86.0
+const NODE_SPACING := 128.0
 
 ## Empty track above the last node and below the first, so either end can still be scrolled
 ## to the middle of the screen. Without it the first stage can only ever sit at the bottom.
-const TRACK_PAD := 240.0
+const TRACK_PAD := 320.0
 
 const NODE_DIAMETER := 34.0
 const CARD_W := 152.0
@@ -83,6 +89,8 @@ var _ctx: ServiceContext = null
 var _scroll: ScrollContainer
 var _track: Control
 var _line: Control
+var _map_background: TextureRect
+var _map_scrim: ColorRect
 
 ## Cards in STAGE order — index 0 is the first stage, which is drawn at the BOTTOM.
 var _cards: Array[Button] = []
@@ -100,9 +108,12 @@ var _selected: StageDef = null
 
 func setup(ctx: ServiceContext) -> void:
 	_ctx = ctx
-	_set_background("res://assets/art/overworld/map_background.png", 0.6)
+	_build_map_background()
 	_build_layout()
 	refresh()
+	_connect_owned(resized, Callable(self, "_layout_map_background"))
+	_connect_owned(_scroll.resized, Callable(self, "_layout_map_background"))
+	call_deferred("_layout_map_background")
 	# Land on what the player is meant to do next rather than at an arbitrary end of a
 	# 2200px track.
 	call_deferred("scroll_to_next_stage")
@@ -114,6 +125,62 @@ func _on_exit_tree() -> void:
 	super._on_exit_tree()
 	_ctx = null
 	_selected = null
+
+
+# ---------------------------------------------------------------------------
+# Scrolling background
+# ---------------------------------------------------------------------------
+
+## The background lives at screen level, behind the chrome, rather than inside the padded
+## ScrollContainer. That keeps its authored centre route at the physical 50% of the viewport,
+## exactly under the UI spine, and lets the art continue beneath the header and bottom dock.
+func _build_map_background() -> void:
+	if not ResourceLoader.exists(MAP_BACKGROUND_PATH, "Texture2D"):
+		return
+
+	_map_background = TextureRect.new()
+	_map_background.texture = load(MAP_BACKGROUND_PATH)
+	_map_background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_map_background.stretch_mode = TextureRect.STRETCH_SCALE
+	_map_background.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	_map_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_map_background)
+
+	# Static readability layer: the art moves, but UI contrast must not pulse as bright regions
+	# pass under a card. The authored map is already dark, so this is intentionally lighter
+	# than the old generic-background scrim.
+	_map_scrim = ColorRect.new()
+	_map_scrim.color = Color(UIPalette.INK, MAP_BACKGROUND_SCRIM_ALPHA)
+	_map_scrim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_map_scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_map_scrim)
+
+
+## Match the map's full 9:64 aspect to the viewport width, then map timeline scroll progress
+## onto the full image travel. This pins the summit at the top limit and the scrap flats at
+## the bottom limit without cumulative drift from the chrome's header/dock height.
+func _layout_map_background() -> void:
+	if _map_background == null or _map_background.texture == null:
+		return
+	var texture_size := _map_background.texture.get_size()
+	if texture_size.x <= 0.0 or size.x <= 0.0:
+		return
+
+	var background_height := size.x * texture_size.y / texture_size.x
+	_map_background.size = Vector2(size.x, background_height)
+
+	var progress := 0.0
+	if _scroll != null:
+		var bar := _scroll.get_v_scroll_bar()
+		var scroll_range := maxf(0.0, bar.max_value - bar.page)
+		if scroll_range > 0.0:
+			progress = clampf(float(_scroll.scroll_vertical) / scroll_range, 0.0, 1.0)
+	var travel := maxf(0.0, background_height - size.y)
+	_map_background.position = Vector2(0.0, -roundf(progress * travel))
+
+
+func _on_map_scroll_changed(_value: float) -> void:
+	_layout_map_background()
 
 
 # ---------------------------------------------------------------------------
@@ -131,6 +198,8 @@ func _build_layout() -> void:
 	# position happened to be.
 	_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
 	content.add_child(_scroll)
+	_connect_owned(_scroll.get_v_scroll_bar().value_changed,
+		Callable(self, "_on_map_scroll_changed"))
 
 	# Nodes are positioned absolutely inside the track: the timeline is a picture with a
 	# fixed vertical rhythm, not a stack whose spacing a container would decide.
@@ -277,6 +346,7 @@ func refresh() -> void:
 
 	_place_all()
 	_track.resized.connect(_place_all, CONNECT_REFERENCE_COUNTED)
+	call_deferred("_layout_map_background")
 
 
 ## Position every node and card. Index 0 is placed at the BOTTOM of the track and the index

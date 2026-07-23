@@ -110,6 +110,42 @@ func test_the_map_draws_every_stage_including_locked_ones() -> void:
 	assert_eq(_game._map._cards.size(), _game.ctx.stages.entries.size())
 
 
+func test_the_map_uses_the_authored_continuous_background() -> void:
+	_game.show_map()
+	await get_tree().process_frame
+	var map := _game._map
+	assert_not_null(map._map_background)
+	assert_eq(map._map_background.texture.resource_path,
+		StageSelectScreen.MAP_BACKGROUND_PATH)
+	var expected_height := StageSelectScreen.TRACK_PAD * 2.0 \
+		+ StageSelectScreen.NODE_SPACING * float(_game.ctx.stages.entries.size() - 1)
+	assert_eq(map._track.custom_minimum_size.y, expected_height,
+		"the timeline keeps the geometry the 2560px map was authored for")
+
+
+func test_the_map_background_advances_with_scroll() -> void:
+	_game.show_map()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var map := _game._map
+	var bar := map._scroll.get_v_scroll_bar()
+	var max_scroll := int(bar.max_value - bar.page)
+	assert_gt(max_scroll, 0)
+
+	map._scroll.scroll_vertical = 0
+	await get_tree().process_frame
+	var top_y: float = map._map_background.position.y
+
+	map._scroll.scroll_vertical = max_scroll
+	await get_tree().process_frame
+	var bottom_y: float = map._map_background.position.y
+	var expected_bottom := -maxf(0.0, map._map_background.size.y - map.size.y)
+	assert_lt(bottom_y, top_y - 1000.0,
+		"scrolling from summit to scrap flats must visibly advance the authored journey")
+	assert_almost_eq(bottom_y, expected_bottom, 2.0,
+		"the bottom scroll limit must land on the bottom of map_full.png")
+
+
 func test_locked_stages_are_shown_but_not_enterable() -> void:
 	_game.show_map()
 	var enabled := 0

@@ -1,0 +1,75 @@
+{
+  "asset": "stage_map_background",
+  "version": 3,
+  "art_direction": "mid-1990s hand-drawn mecha TV-anime cel background",
+  "master": {
+    "file": "map_full.png",
+    "width": 1080,
+    "height": 7680,
+    "format": "PNG",
+    "color_space": "sRGB",
+    "sha256": "40ab13a63bebb89b9846c1f9ff7e24a5f69a19a347741e840ad810c844ad5260"
+  },
+  "stack_order_top_to_bottom": [
+    "map_panel_4.png",
+    "map_panel_3.png",
+    "map_panel_2.png",
+    "map_panel_1.png"
+  ],
+  "logical_panel_size": {
+    "width": 360,
+    "height": 640
+  },
+  "export_panel_size": {
+    "width": 1080,
+    "height": 1920
+  },
+  "generation": {
+    "mode": "built-in ImageGen",
+    "generation_session": "019f8cca-ddee-7411-bfcd-b2862080801f",
+    "creative_production_board": "5e1cf13a-33a6-4654-92ef-494c02430b62",
+    "sequence": "bottom_to_top",
+    "source_frames": 5,
+    "selected_panel_4_source": "retry",
+    "assembly": "direct edge-to-edge stack in order 4, 3, 2, 1",
+    "derived_panels_are_exact_master_segments": true
+  },
+  "archive": {
+    "previous_session": "019f8738-fb5f-7c82-bda2-8d7956fe6fdb",
+    "path": "old/019f8738-fb5f-7c82-bda2-8d7956fe6fdb"
+  },
+  "panels": [
+    {
+      "panel": 1,
+      "position": "bottom",
+      "region": "Scrap flats",
+      "file": "map_panel_1.png",
+      "master_crop_y": 5760,
+      "sha256": "41fe25de395b5be83b5b40c6e31548177151741c097d7cec5bf02d28a5703fb5"
+    },
+    {
+      "panel": 2,
+      "position": "lower-middle",
+      "region": "Signal belt",
+      "file": "map_panel_2.png",
+      "master_crop_y": 3840,
+      "sha256": "1f32e8658f74c5a0a228129c9829551a65b9a7e387762fada074dbcc3d07cfb6"
+    },
+    {
+      "panel": 3,
+      "position": "upper-middle",
+      "region": "The foundry",
+      "file": "map_panel_3.png",
+      "master_crop_y": 1920,
+      "sha256": "146b53fb38e3789cf17edeadeafe7e6cde80a90aefb2e6f8967762097078c938"
+    },
+    {
+      "panel": 4,
+      "position": "top",
+      "region": "The apex",
+      "file": "map_panel_4.png",
+      "master_crop_y": 0,
+      "sha256": "720af662c9bf90ee9b4577f832fc49122d206d27c5938872a890bef1cd8a8ae6"
+    }
+  ]
+}

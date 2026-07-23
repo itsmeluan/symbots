@@ -1,13 +1,14 @@
 {
   "asset": "stage_map_background",
-  "version": 2,
+  "version": 4,
+  "art_direction": "mid-1990s hand-drawn mecha TV-anime cel background",
   "master": {
     "file": "map_full.png",
     "width": 1080,
     "height": 7680,
     "format": "PNG",
-    "color_mode": "RGB",
-    "sha256": "6cb66cd08c0093f265c8934d1e77db0a3018b79a2c4d92e19d122e2b00a33b16"
+    "color_space": "sRGB",
+    "sha256": "672b9a19a0dd359f6c8ca17c260ee2e2102b84c16f99441c40a7611758864892"
   },
   "stack_order_top_to_bottom": [
     "map_panel_4.png",
@@ -24,15 +25,28 @@
     "height": 1920
   },
   "generation": {
-    "source_frames": 5,
+    "source_mode": "built-in ImageGen",
+    "generation_session": "019f8cca-ddee-7411-bfcd-b2862080801f",
+    "creative_production_board": "5e1cf13a-33a6-4654-92ef-494c02430b62",
+    "continuity_revision": "deterministic cosine-overlap master",
     "normalized_source_size": {
       "width": 1080,
-      "height": 1920
+      "height": 2400
     },
-    "overlap_pixels": 480,
-    "overlap_percent": 25,
+    "source_offsets_y": [
+      0,
+      1760,
+      3520,
+      5280
+    ],
+    "overlap_pixels": 640,
+    "overlap_percent": 26.6667,
     "blend": "cosine feather",
     "derived_panels_are_exact_master_crops": true
+  },
+  "archive": {
+    "original_session_path": "old/019f8738-fb5f-7c82-bda2-8d7956fe6fdb",
+    "previous_v3_path": "old/v3-visible-seams"
   },
   "panels": [
     {
@@ -41,7 +55,7 @@
       "region": "Scrap flats",
       "file": "map_panel_1.png",
       "master_crop_y": 5760,
-      "sha256": "592b1264588bf7d52423cea3976b4fc2086c371764d8c9e16cea751b47f054c1"
+      "sha256": "158d3f1f54439e4df32b741e759e8c5365aad65ed8e4f21186304656e6d9a2ff"
     },
     {
       "panel": 2,
@@ -49,7 +63,7 @@
       "region": "Signal belt",
       "file": "map_panel_2.png",
       "master_crop_y": 3840,
-      "sha256": "482818b81782cb2c7226f35f10e0efc0e96522df34570f9934f7dab0bc89b24c"
+      "sha256": "2e5a5b9ded7ec1a0c9d070dee732a90cb109f232269c912462429139a8b1529e"
     },
     {
       "panel": 3,
@@ -57,7 +71,7 @@
       "region": "The foundry",
       "file": "map_panel_3.png",
       "master_crop_y": 1920,
-      "sha256": "96f46252a0907287aac2a445c8487f1cdde92e34994456b05d30c316433f5bbb"
+      "sha256": "aa1b94b9622c6ea6c8602e774b6e37b4d6d514961aae3b25c3299c6f61a121c9"
     },
     {
       "panel": 4,
@@ -65,7 +79,7 @@
       "region": "The apex",
       "file": "map_panel_4.png",
       "master_crop_y": 0,
-      "sha256": "b1c3646f6bf59562521be2e1bec27971e01b245159dd2e21fe92264c95f1f25e"
+      "sha256": "f674b7be9ca281e1f6e4ee7b8657d4fe70ca41391ae98add7395c6b1cb66b2d7"
     }
   ]
 }

@@ -1,0 +1,71 @@
+{
+  "asset": "stage_map_background",
+  "version": 2,
+  "master": {
+    "file": "map_full.png",
+    "width": 1080,
+    "height": 7680,
+    "format": "PNG",
+    "color_mode": "RGB",
+    "sha256": "6cb66cd08c0093f265c8934d1e77db0a3018b79a2c4d92e19d122e2b00a33b16"
+  },
+  "stack_order_top_to_bottom": [
+    "map_panel_4.png",
+    "map_panel_3.png",
+    "map_panel_2.png",
+    "map_panel_1.png"
+  ],
+  "logical_panel_size": {
+    "width": 360,
+    "height": 640
+  },
+  "export_panel_size": {
+    "width": 1080,
+    "height": 1920
+  },
+  "generation": {
+    "source_frames": 5,
+    "normalized_source_size": {
+      "width": 1080,
+      "height": 1920
+    },
+    "overlap_pixels": 480,
+    "overlap_percent": 25,
+    "blend": "cosine feather",
+    "derived_panels_are_exact_master_crops": true
+  },
+  "panels": [
+    {
+      "panel": 1,
+      "position": "bottom",
+      "region": "Scrap flats",
+      "file": "map_panel_1.png",
+      "master_crop_y": 5760,
+      "sha256": "592b1264588bf7d52423cea3976b4fc2086c371764d8c9e16cea751b47f054c1"
+    },
+    {
+      "panel": 2,
+      "position": "lower-middle",
+      "region": "Signal belt",
+      "file": "map_panel_2.png",
+      "master_crop_y": 3840,
+      "sha256": "482818b81782cb2c7226f35f10e0efc0e96522df34570f9934f7dab0bc89b24c"
+    },
+    {
+      "panel": 3,
+      "position": "upper-middle",
+      "region": "The foundry",
+      "file": "map_panel_3.png",
+      "master_crop_y": 1920,
+      "sha256": "96f46252a0907287aac2a445c8487f1cdde92e34994456b05d30c316433f5bbb"
+    },
+    {
+      "panel": 4,
+      "position": "top",
+      "region": "The apex",
+      "file": "map_panel_4.png",
+      "master_crop_y": 0,
+      "sha256": "b1c3646f6bf59562521be2e1bec27971e01b245159dd2e21fe92264c95f1f25e"
+    }
+  ]
+}
