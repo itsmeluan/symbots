@@ -203,26 +203,33 @@ func _stats_grid() -> Control:
 	grid.add_theme_constant_override("h_separation", 18)
 	grid.add_theme_constant_override("v_separation", 2)
 
-	_add_stat(grid, "STRUCTURE", "%d / %d" % [unit.current_structure, unit.max_structure])
+	_add_stat(grid, &"core", "STRUCTURE",
+		"%d / %d" % [unit.current_structure, unit.max_structure])
 	if unit.shield > 0:
-		_add_stat(grid, "SHIELD", str(unit.shield))
+		_add_stat(grid, &"shield", "SHIELD", str(unit.shield))
 	for entry in STAT_ROWS:
 		var key: StringName = entry[0]
 		if not unit.base_stats.has(key):
 			continue
 		# stat() includes live status modifiers — the number the next hit will use.
-		_add_stat(grid, entry[1], str(unit.stat(key)))
+		_add_stat(grid, Glyph.FOR_STAT.get(key, &"hex"), entry[1], str(unit.stat(key)))
 	if unit.has_ultimate():
-		_add_stat(grid, "ULT CHARGE", "%d / %d" % [mini(unit.ultimate_charge, _ult_cost), _ult_cost])
+		_add_stat(grid, &"star", "ULT CHARGE",
+			"%d / %d" % [mini(unit.ultimate_charge, _ult_cost), _ult_cost])
 	return grid
 
 
-func _add_stat(grid: GridContainer, label: String, value: String) -> void:
+func _add_stat(grid: GridContainer, icon: StringName, label: String, value: String) -> void:
+	var key_cell := HBoxContainer.new()
+	key_cell.add_theme_constant_override("separation", 6)
+	key_cell.add_child(Glyph.make(icon, 11.0, UIPalette.MUTED))
+
 	var key_label := Label.new()
 	key_label.text = label
 	key_label.add_theme_font_size_override("font_size", 10)
 	key_label.add_theme_color_override("font_color", UIPalette.MUTED)
-	grid.add_child(key_label)
+	key_cell.add_child(key_label)
+	grid.add_child(key_cell)
 
 	var value_label := Label.new()
 	value_label.text = value
@@ -244,14 +251,24 @@ func _skill_list() -> Control:
 		var skill: SkillDef = _ctx.skills.get(sid) if _ctx != null else null
 		if skill == null:
 			continue
-		var row := Label.new()
-		var prefix := "★ " if skill.is_ultimate else "• "
-		row.text = prefix + skill.display_name \
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+
+		var glyph_kind := Glyph.for_skill(skill)
+		var icon_holder := VBoxContainer.new()
+		icon_holder.add_child(Glyph.make(glyph_kind, 11.0,
+			UIPalette.AMBER if skill.is_ultimate else UIPalette.MUTED))
+		row.add_child(icon_holder)
+
+		var text := Label.new()
+		text.text = skill.display_name \
 			+ ("  —  " + skill.description if not skill.description.is_empty() else "")
-		row.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		row.add_theme_font_size_override("font_size", 10)
-		row.add_theme_color_override("font_color",
+		text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		text.add_theme_font_size_override("font_size", 10)
+		text.add_theme_color_override("font_color",
 			UIPalette.AMBER if skill.is_ultimate else UIPalette.TEXT)
+		row.add_child(text)
 		column.add_child(row)
 	return column
 

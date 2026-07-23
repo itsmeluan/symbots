@@ -83,6 +83,17 @@ func current_actor() -> BattleUnit:
 	return _order[_cursor]
 
 
+## The actors still to move this round, current first, dead units skipped. The UI's turn
+## strip reads this rather than the raw order so it can never show a corpse acting.
+func upcoming_actors() -> Array:
+	var out: Array = []
+	for i in range(_cursor, _order.size()):
+		var u: BattleUnit = _order[i]
+		if u.is_alive():
+			out.append(u)
+	return out
+
+
 func is_over() -> bool:
 	return phase == Phase.FINISHED
 

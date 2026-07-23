@@ -506,3 +506,67 @@ func test_damage_events_spawn_floating_numbers_over_the_arena() -> void:
 		if child is Label:
 			floats += 1
 	assert_gt(floats, 0, "a hit that shows no number is a hit the player has to infer")
+
+
+# ---------------------------------------------------------------------------
+# Turn order strip & glyphs
+# ---------------------------------------------------------------------------
+
+func test_the_turn_strip_lists_everyone_still_to_move() -> void:
+	# Arrange/Act: two players and one enemy; the fastest player holds the turn.
+	var p1 := _unit("p1", BattleUnit.Side.PLAYER, 200, SpeciesDefScript.Role.DPS, 30)
+	var p2 := _unit("p2", BattleUnit.Side.PLAYER, 200, SpeciesDefScript.Role.DPS, 20, 1)
+	var x := _unit("x", BattleUnit.Side.ENEMY, 300, SpeciesDefScript.Role.DPS, 10)
+	_start([p1, p2], [x])
+
+	# Assert: one chip per unit still to act this round, current actor included.
+	assert_eq(_screen._turn_strip.get_child_count(),
+		_screen.engine.upcoming_actors().size())
+	assert_gt(_screen._turn_strip.get_child_count(), 1)
+
+
+func test_upcoming_actors_skips_the_dead() -> void:
+	var p := _unit("p", BattleUnit.Side.PLAYER, 200, SpeciesDefScript.Role.DPS, 30)
+	var a := _unit("a", BattleUnit.Side.ENEMY, 10, SpeciesDefScript.Role.DPS, 5)
+	var b := _unit("b", BattleUnit.Side.ENEMY, 300, SpeciesDefScript.Role.DPS, 1, 1)
+	var e := _start([p], [a, b])
+
+	_screen._on_skill_pressed(&"strike")
+	_screen._on_unit_tapped(a)  # kills the 10 HP enemy
+
+	for u in e.upcoming_actors():
+		assert_true(u.is_alive(), "a corpse must never appear in the action queue")
+
+
+func test_skill_glyphs_derive_from_what_the_skill_does() -> void:
+	# Arrange: three shapes of skill.
+	var physical := _strike()
+	var heal := SkillDefScript.new()
+	heal.effects = [{"kind": SkillDefScript.EffectKind.HEAL}]
+	var ult := SkillDefScript.new()
+	ult.is_ultimate = true
+
+	# Act + Assert.
+	assert_eq(Glyph.for_skill(physical), &"sword")
+	assert_eq(Glyph.for_skill(heal), &"wrench")
+	assert_eq(Glyph.for_skill(ult), &"star")
+
+	var energy := _strike()
+	energy.scaling_stat = &"energy_power"
+	assert_eq(Glyph.for_skill(energy), &"bolt")
+
+
+func test_status_effects_show_as_chips_on_the_unit() -> void:
+	# Arrange: a unit carrying one debuff.
+	var p := _unit("p", BattleUnit.Side.PLAYER, 200, SpeciesDefScript.Role.DPS, 30)
+	var x := _unit("x", BattleUnit.Side.ENEMY)
+	_start([p], [x])
+	var burn := StatusEffect.new(StatusEffect.Kind.BURN, 2, true)
+	p.add_status(burn)
+
+	# Act: redraw from state.
+	_screen._player_panels[0].refresh()
+
+	# Assert: exactly one chip rides the figure.
+	assert_eq(_screen._player_panels[0]._status_row.get_child_count(), 1,
+		"an invisible debuff is a rule the player cannot play around")

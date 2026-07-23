@@ -58,6 +58,7 @@ var _ground: Control
 var _structure_bar: ProgressBar
 var _shield_bar: ProgressBar
 var _charge_bar: ProgressBar
+var _status_row: HBoxContainer
 var _root: VBoxContainer
 
 ## Visual state the screen drives. Kept as fields rather than as style overrides applied
@@ -89,6 +90,17 @@ func _init() -> void:
 	_ground.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_ground.draw.connect(_draw_ground)
 	stage.add_child(_ground)
+
+	# Active status effects, as a row of small glyphs floating over the figure's head —
+	# buffs green-tinted, debuffs coral. Populated by refresh() from the unit's statuses.
+	_status_row = HBoxContainer.new()
+	_status_row.add_theme_constant_override("separation", 2)
+	_status_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	_status_row.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	_status_row.offset_top = -12
+	_status_row.offset_bottom = -2
+	_status_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stage.add_child(_status_row)
 
 	# A fixed display HEIGHT is what normalises the wildly varying source sizes (102-323px):
 	# every Symbot reads at the scale its formation row calls for, regardless of how big its
@@ -153,12 +165,20 @@ func bind(u: BattleUnit) -> void:
 ## works with no manual mirror step. A missing texture leaves the slot blank rather than
 ## erroring: a species whose art is not authored yet still fights, just without a portrait.
 func _load_sprite() -> void:
-	if unit == null or unit.species_id == &"":
+	if unit == null:
 		_sprite.texture = null
 		return
-	var path := "%s%s_mk%d.png" % [ART_DIR, unit.species_id, clampi(unit.art_mark, 1, 3)]
-	_sprite.texture = load(path) if ResourceLoader.exists(path) else null
+	_sprite.texture = art_texture(unit.species_id, unit.art_mark)
 	_sprite.flip_h = unit.side == BattleUnit.Side.ENEMY
+
+
+## The battlefield art for one (species, mark), or null when unauthored. Static so the
+## turn strip and any future portrait chip resolve art through the same single rule.
+static func art_texture(species_id: StringName, mark: int) -> Texture2D:
+	if species_id == &"":
+		return null
+	var path := "%s%s_mk%d.png" % [ART_DIR, species_id, clampi(mark, 1, 3)]
+	return load(path) if ResourceLoader.exists(path) else null
 
 
 ## Redraw from the unit's current state. Safe to call every frame or once an hour — it
@@ -189,7 +209,33 @@ func refresh() -> void:
 		_charge_bar.value = mini(unit.ultimate_charge, _ult_cost)
 
 	modulate = Color(0.45, 0.45, 0.45) if not unit.is_alive() else Color.WHITE
+	_refresh_status_row()
 	_ground.queue_redraw()
+
+
+## Rebuild the status glyph row from the unit's live statuses. Whole-row rebuild: a unit
+## carries at most a handful, and stale chips are worse than the churn.
+func _refresh_status_row() -> void:
+	for child in _status_row.get_children():
+		_status_row.remove_child(child)
+		child.queue_free()
+	if unit == null or not unit.is_alive():
+		return
+	for status in unit.statuses:
+		var glyph_kind: StringName = Glyph.FOR_STATUS.get(status.kind, &"hex")
+		var tone := UIPalette.CORAL if status.is_debuff else UIPalette.GREEN
+		_status_row.add_child(Glyph.make(glyph_kind, 9.0, tone))
+
+
+## A quick hurt flash on the figure. On the sprite's self_modulate, NOT the panel's
+## modulate — refresh() owns that one for the dead-unit dim, and the two must not fight.
+func flash_hit() -> void:
+	if _sprite == null or not is_inside_tree():
+		return
+	_sprite.self_modulate = Color(2.2, 0.55, 0.45)
+	var tween := _sprite.create_tween()
+	tween.tween_property(_sprite, "self_modulate", Color.WHITE, 0.32) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 
 ## Charge cost of this unit's ult, injected by the screen (which owns the skill table).

@@ -47,6 +47,7 @@ var _enemy_panels: Array[UnitPanel] = []
 var _arena: Control
 var _banner: Label
 var _wave_label: Label
+var _turn_strip: HBoxContainer
 var _log_label: Label
 var _skill_bar: HBoxContainer
 var _auto_toggle: CheckButton
@@ -67,6 +68,7 @@ var _selected_skill_id: StringName = &""
 
 ## The floating skill-info panel at the top of the screen, and its text parts.
 var _info_box: PanelContainer
+var _info_glyph_slot: Control
 var _info_title: Label
 var _info_desc: Label
 var _info_detail: Label
@@ -213,6 +215,19 @@ func _build_layout() -> void:
 	_connect_owned(_auto_toggle.toggled, Callable(self, "_on_auto_toggled"))
 	top_row.add_child(_auto_toggle)
 
+	# The action-order strip (the genre's HSR-style queue, laid horizontally for
+	# portrait): who moves next this round, current actor first and largest.
+	var strip_margin := MarginContainer.new()
+	strip_margin.add_theme_constant_override("margin_left", 8)
+	strip_margin.add_theme_constant_override("margin_right", 8)
+	root.add_child(strip_margin)
+
+	_turn_strip = HBoxContainer.new()
+	_turn_strip.add_theme_constant_override("separation", 4)
+	_turn_strip.alignment = BoxContainer.ALIGNMENT_BEGIN
+	_turn_strip.custom_minimum_size = Vector2(0, TURN_CHIP + 4)
+	strip_margin.add_child(_turn_strip)
+
 	# The empty upper scene. Everything below the arena is fixed-height, so this is the one
 	# element that absorbs a taller phone — which is what keeps the action bar on screen.
 	var sky := Control.new()
@@ -271,10 +286,18 @@ func _build_info_box(insets: Vector2) -> void:
 	column.add_theme_constant_override("separation", 2)
 	_info_box.add_child(column)
 
+	var title_row := HBoxContainer.new()
+	title_row.add_theme_constant_override("separation", 5)
+	column.add_child(title_row)
+
+	_info_glyph_slot = Control.new()
+	_info_glyph_slot.custom_minimum_size = Vector2(14, 14)
+	title_row.add_child(_info_glyph_slot)
+
 	_info_title = Label.new()
 	_info_title.add_theme_font_override("font", UIPalette.display_font())
 	_info_title.add_theme_font_size_override("font_size", 13)
-	column.add_child(_info_title)
+	title_row.add_child(_info_title)
 
 	_info_desc = Label.new()
 	_info_desc.add_theme_font_size_override("font_size", 9)
@@ -487,7 +510,56 @@ func _refresh_all() -> void:
 		panel.set_targetable(_is_targetable(panel.unit, actor))
 		panel.refresh()
 	_refresh_banner(actor)
+	_rebuild_turn_strip(actor)
 	_rebuild_skill_bar(actor)
+
+
+# ---------------------------------------------------------------------------
+# Turn order strip
+# ---------------------------------------------------------------------------
+
+## Chip edge for units awaiting their move; the current actor's chip is drawn larger.
+const TURN_CHIP := 30
+const TURN_CHIP_ACTIVE := 38
+
+
+## Redraw the action-order strip: everyone still to move this round, current actor
+## first. Rebuilt whole on every refresh — at most eight chips, and a diff would be more
+## code than the rebuild.
+func _rebuild_turn_strip(actor: BattleUnit) -> void:
+	if _turn_strip == null:
+		return
+	for child in _turn_strip.get_children():
+		_turn_strip.remove_child(child)
+		child.queue_free()
+	if engine == null or engine.is_over():
+		_turn_strip.visible = false
+		return
+	_turn_strip.visible = true
+
+	for u in engine.upcoming_actors():
+		var is_actor: bool = u == actor
+		var edge := TURN_CHIP_ACTIVE if is_actor else TURN_CHIP
+		var chip := PanelContainer.new()
+		var accent := UIPalette.CYAN if u.side == BattleUnit.Side.PLAYER else UIPalette.CORAL
+		var box := UIPalette.panel(accent if is_actor else Color(accent, 0.45),
+			Color(UIPalette.INK, 0.80))
+		box.set_content_margin_all(2)
+		if is_actor:
+			box.set_border_width_all(2)
+		chip.add_theme_stylebox_override("panel", box)
+		chip.custom_minimum_size = Vector2(edge, edge)
+		chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+		var face := TextureRect.new()
+		face.texture = UnitPanelScript.art_texture(u.species_id, u.art_mark)
+		face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		face.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		face.flip_h = u.side == BattleUnit.Side.ENEMY
+		face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		chip.add_child(face)
+		_turn_strip.add_child(chip)
 
 
 ## A unit is highlighted as targetable only while a skill is armed AND the engine agrees
@@ -582,20 +654,33 @@ func _add_skill_button(skill_id: StringName, enabled: bool, actor: BattleUnit,
 	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(column)
 
-	var name_label := Label.new()
-	name_label.text = ("★ " if is_ult else "") + skill.display_name
-	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_label.add_theme_font_override("font", UIPalette.display_font())
-	name_label.add_theme_font_size_override("font_size", 12)
-	name_label.clip_text = true
-	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var name_tone := UIPalette.TEXT
 	if not enabled:
 		name_tone = UIPalette.DISABLED
 	elif is_ult:
 		name_tone = UIPalette.AMBER
+
+	# Name row: the skill's icon beside its name, centered as a pair. The row clips at
+	# the card's edge — clip_text on the LABEL would zero its minimum width inside an
+	# HBox and the name would vanish entirely.
+	var name_row := HBoxContainer.new()
+	name_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	name_row.add_theme_constant_override("separation", 4)
+	name_row.clip_contents = true
+	name_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_child(name_row)
+
+	var glyph_kind := Glyph.for_skill(skill)
+	name_row.add_child(Glyph.make(glyph_kind, 12.0,
+		_glyph_colour(glyph_kind, name_tone) if enabled else UIPalette.DISABLED))
+
+	var name_label := Label.new()
+	name_label.text = skill.display_name
+	name_label.add_theme_font_override("font", UIPalette.display_font())
+	name_label.add_theme_font_size_override("font_size", 12)
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	name_label.add_theme_color_override("font_color", name_tone)
-	column.add_child(name_label)
+	name_row.add_child(name_label)
 
 	var state_label := Label.new()
 	state_label.text = _skill_state_text(skill, actor, is_ult)
@@ -623,6 +708,25 @@ func _skill_state_text(skill: SkillDef, actor: BattleUnit, is_ult: bool) -> Stri
 	if not skill.is_single_target():
 		return "AREA"
 	return "SINGLE TARGET" if skill.targets_enemies() else "ALLY"
+
+
+## Icon tints: each skill family keeps one colour everywhere it appears, so the icon
+## alone carries meaning before the name is read.
+const GLYPH_COLOURS := {
+	&"star": UIPalette.AMBER,
+	&"bolt": UIPalette.CYAN,
+	&"sword": Color(1.0, 0.80, 0.70),
+	&"wrench": UIPalette.GREEN,
+	&"shield": Color(0.45, 0.70, 0.95),
+	&"arrow_up": UIPalette.GREEN,
+	&"arrow_down": UIPalette.CORAL,
+	&"sparkle": UIPalette.CYAN,
+	&"core": UIPalette.AMBER,
+}
+
+
+func _glyph_colour(kind: StringName, fallback: Color) -> Color:
+	return GLYPH_COLOURS.get(kind, fallback)
 
 
 ## Card styling: the tech-panel look at button scale. Ults keep their amber border even
@@ -667,7 +771,13 @@ const TARGET_LABELS := {
 
 
 func _show_skill_info(skill: SkillDef, actor: BattleUnit) -> void:
-	_info_title.text = ("★ " if skill.is_ultimate else "") + skill.display_name
+	for child in _info_glyph_slot.get_children():
+		_info_glyph_slot.remove_child(child)
+		child.queue_free()
+	var glyph_kind := Glyph.for_skill(skill)
+	_info_glyph_slot.add_child(Glyph.make(glyph_kind, 14.0,
+		_glyph_colour(glyph_kind, UIPalette.TEXT)))
+	_info_title.text = skill.display_name
 	_info_desc.text = skill.description
 	_info_desc.visible = not skill.description.is_empty()
 	_info_detail.text = "\n".join(_skill_info_lines(skill, actor))
@@ -756,6 +866,9 @@ func _float_for_event(event: Dictionary, order: int) -> bool:
 			var text := "-%d" % int(event.get(&"amount", 0)) + ("!" if crit else "")
 			_spawn_float(event.get(&"unit", &""), text,
 				FLOAT_CRIT_COLOUR if crit else FLOAT_DAMAGE_COLOUR, order, crit)
+			var hit_panel := _panel_of(event.get(&"unit", &""))
+			if hit_panel != null:
+				hit_panel.flash_hit()
 			return true
 		&"healed":
 			_spawn_float(event.get(&"unit", &""), "+%d" % int(event.get(&"amount", 0)),
