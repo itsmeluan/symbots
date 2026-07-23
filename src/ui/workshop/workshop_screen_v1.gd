@@ -770,24 +770,20 @@ func _part_rate_text(species: SpeciesDef, slot: int) -> String:
 ## The chamfered "tech tag" shape of the nameplate, at button scale: amber when actionable,
 ## grey when capped/unaffordable.
 func _style_upgrade_button(button: Button, actionable: bool) -> void:
-	var box := ChamferStyleBox.new()
-	box.chamfer = 5.0
-	box.set_content_margin(SIDE_LEFT, 5)
-	box.set_content_margin(SIDE_RIGHT, 5)
-	box.set_content_margin(SIDE_TOP, 3)
-	box.set_content_margin(SIDE_BOTTOM, 3)
+	# The chunky volumetric language at tag scale (charisma pass): amber lift when
+	# actionable, sunken grey when capped/unaffordable.
 	if actionable:
-		box.bg_color = UIPalette.AMBER
+		button.add_theme_stylebox_override("normal", UIPalette.primary_button())
+		button.add_theme_stylebox_override("hover", UIPalette.primary_button("hover"))
+		button.add_theme_stylebox_override("pressed", UIPalette.primary_button("pressed"))
+		button.add_theme_stylebox_override("disabled", UIPalette.primary_button("disabled"))
 		button.add_theme_color_override("font_color", UIPalette.INK)
 	else:
-		box.bg_color = UIPalette.PANEL_2
-		box.border_color = UIPalette.LINE_SOFT
-		box.border_width = 1.0
+		button.add_theme_stylebox_override("normal", UIPalette.button("disabled"))
+		button.add_theme_stylebox_override("hover", UIPalette.button("disabled"))
+		button.add_theme_stylebox_override("pressed", UIPalette.button("disabled"))
+		button.add_theme_stylebox_override("disabled", UIPalette.button("disabled"))
 		button.add_theme_color_override("font_color", UIPalette.DISABLED)
-	button.add_theme_stylebox_override("normal", box)
-	button.add_theme_stylebox_override("hover", box)
-	button.add_theme_stylebox_override("pressed", box)
-	button.add_theme_stylebox_override("disabled", box)
 	button.add_theme_stylebox_override("focus", UIPalette.empty())
 
 

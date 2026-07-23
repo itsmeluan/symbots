@@ -104,42 +104,31 @@ static func well() -> StyleBoxFlat:
 	return box
 
 
-## The amber primary-action button, in its three states.
+## The amber primary-action button. Since the charisma pass this is the chunky
+## volumetric language (see [method chunky]) — every screen's CTA lifts and presses.
 static func primary_button(state: String = "normal") -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.set_corner_radius_all(3)
-	box.set_content_margin_all(8)
 	match state:
 		"hover":
-			box.bg_color = AMBER.lightened(0.08)
+			return chunky(AMBER.lightened(0.05))
 		"pressed":
-			box.bg_color = AMBER.darkened(0.15)
+			return chunky(AMBER, "pressed")
 		"disabled":
-			box.bg_color = PANEL_2
-			box.set_border_width_all(1)
-			box.border_color = LINE_SOFT
-		_:
-			box.bg_color = AMBER
-	return box
+			return chunky(AMBER, "disabled")
+	return chunky(AMBER)
 
 
-## The dark secondary/normal button.
+## The dark secondary/normal button — same volumetric language, neutral slate face.
+const BUTTON_FACE := Color("242e39")
+
 static func button(state: String = "normal") -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.bg_color = PANEL_2
-	box.set_border_width_all(1)
-	box.border_color = LINE
-	box.set_corner_radius_all(3)
-	box.set_content_margin_all(6)
 	match state:
 		"hover":
-			box.border_color = CYAN.darkened(0.2)
+			return chunky(BUTTON_FACE.lightened(0.06))
 		"pressed":
-			box.bg_color = PANEL_2.darkened(0.15)
+			return chunky(BUTTON_FACE, "pressed")
 		"disabled":
-			box.bg_color = INK
-			box.border_color = LINE_SOFT
-	return box
+			return chunky(BUTTON_FACE, "disabled")
+	return chunky(BUTTON_FACE)
 
 
 ## The angled "tech card" action button — the game's combat-tier control language: a

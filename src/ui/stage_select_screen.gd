@@ -293,13 +293,11 @@ func _build_sheet() -> void:
 	_deploy = Button.new()
 	_deploy.text = "▶  DEPLOY SQUAD"
 	_deploy.custom_minimum_size = Vector2(0, 42)
-	var deploy_box := StyleBoxFlat.new()
-	deploy_box.bg_color = UIPalette.AMBER
-	deploy_box.set_corner_radius_all(4)
-	_deploy.add_theme_stylebox_override("normal", deploy_box)
-	_deploy.add_theme_stylebox_override("hover", deploy_box)
-	_deploy.add_theme_stylebox_override("pressed", deploy_box)
+	_deploy.add_theme_stylebox_override("normal", UIPalette.primary_button())
+	_deploy.add_theme_stylebox_override("hover", UIPalette.primary_button("hover"))
+	_deploy.add_theme_stylebox_override("pressed", UIPalette.primary_button("pressed"))
 	_deploy.add_theme_stylebox_override("focus", UIPalette.empty())
+	_deploy.add_child(UIPalette.gloss())
 	_deploy.add_theme_color_override("font_color", UIPalette.INK)
 	_deploy.add_theme_font_size_override("font_size", 14)
 	_connect_owned(_deploy.pressed, Callable(self, "_on_deploy_pressed"))
