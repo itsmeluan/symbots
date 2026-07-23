@@ -174,6 +174,60 @@ static func tech_button(accent: Color, state: String = "normal") -> StyleBoxFlat
 	return box
 
 
+## The chunky "volumetric" button — the mobile-game depth language: rounded face, a
+## solid darker base edge below it (the 3D lift), and a pressed state that shortens the
+## base and drops the face onto it, so a tap physically pushes the button down.
+##
+## [param base] is the face colour; the depth edge derives from it, so every family of
+## button carries its own material. [param rim] (optional) draws a selection ring.
+static func chunky(base: Color, state: String = "normal", rim: Color = Color.TRANSPARENT) -> StyleBoxFlat:
+	var box := StyleBoxFlat.new()
+	box.set_corner_radius_all(9)
+	box.bg_color = base
+	box.border_color = base.darkened(0.55)
+	box.border_width_bottom = 5
+	box.set_content_margin_all(6)
+	box.content_margin_bottom = 11
+	match state:
+		"pressed":
+			box.bg_color = base.darkened(0.10)
+			box.border_width_bottom = 2
+			box.content_margin_top = 9
+			box.content_margin_bottom = 8
+		"disabled":
+			var grey := base.lerp(INK, 0.72)
+			box.bg_color = grey
+			box.border_color = grey.darkened(0.45)
+			box.border_width_bottom = 3
+	if rim.a > 0.0 and state != "pressed":
+		box.border_color = rim
+		box.border_width_top = 2
+		box.border_width_left = 2
+		box.border_width_right = 2
+		box.border_width_bottom = 5
+	return box
+
+
+## A soft top-half sheen for chunky buttons: white fading to nothing. A child overlay
+## rather than part of the stylebox, because StyleBoxFlat has no gradients.
+static func gloss(strength: float = 0.10) -> TextureRect:
+	var sheen := TextureRect.new()
+	var gradient := Gradient.new()
+	gradient.set_color(0, Color(1, 1, 1, strength))
+	gradient.set_color(1, Color(1, 1, 1, 0.0))
+	var texture := GradientTexture2D.new()
+	texture.gradient = gradient
+	texture.fill_from = Vector2(0, 0)
+	texture.fill_to = Vector2(0, 1)
+	sheen.texture = texture
+	sheen.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	sheen.anchor_bottom = 0.55
+	sheen.grow_vertical = Control.GROW_DIRECTION_END
+	sheen.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	sheen.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return sheen
+
+
 ## A flat empty box, for containers that should draw nothing.
 static func empty() -> StyleBoxEmpty:
 	return StyleBoxEmpty.new()

@@ -135,9 +135,15 @@ func _make_bar(colour: Color, height: int) -> ProgressBar:
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var fill := StyleBoxFlat.new()
 	fill.bg_color = colour
+	fill.set_corner_radius_all(2)
 	bar.add_theme_stylebox_override("fill", fill)
+	# A rounded trough with a hairline rim, so the bar reads as a little gauge set into
+	# the scene rather than a raw rectangle painted on it.
 	var back := StyleBoxFlat.new()
-	back.bg_color = Color(0.0, 0.0, 0.0, 0.55)
+	back.bg_color = Color(0.0, 0.0, 0.0, 0.60)
+	back.set_corner_radius_all(2)
+	back.set_border_width_all(1)
+	back.border_color = Color(0.0, 0.0, 0.0, 0.85)
 	bar.add_theme_stylebox_override("background", back)
 	return bar
 

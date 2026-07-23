@@ -261,22 +261,22 @@ func _build_layout() -> void:
 
 	# Exit lives where a mode flag would be a waste of the corner: walking out is a real
 	# decision, and the corner is where every mobile player looks for the door.
-	var exit_button := Button.new()
-	exit_button.text = "EXIT"
-	exit_button.add_theme_font_override("font", UIPalette.display_font())
-	exit_button.add_theme_font_size_override("font_size", 11)
-	exit_button.add_theme_color_override("font_color", UIPalette.MUTED)
-	exit_button.add_theme_color_override("font_pressed_color", UIPalette.CORAL)
-	exit_button.add_theme_stylebox_override("normal",
-		UIPalette.tech_button(Color(UIPalette.LINE, 0.7)))
-	exit_button.add_theme_stylebox_override("hover",
-		UIPalette.tech_button(Color(UIPalette.LINE, 0.7)))
-	exit_button.add_theme_stylebox_override("pressed",
-		UIPalette.tech_button(UIPalette.CORAL, "pressed"))
-	exit_button.add_theme_stylebox_override("focus", UIPalette.empty())
-	exit_button.custom_minimum_size = Vector2(64, MIN_BUTTON_HEIGHT)
-	_connect_owned(exit_button.pressed, Callable(self, "_on_exit_pressed"))
-	top_row.add_child(exit_button)
+	var leave_button := Button.new()
+	leave_button.text = "LEAVE"
+	leave_button.add_theme_font_override("font", UIPalette.display_font())
+	leave_button.add_theme_font_size_override("font_size", 10)
+	leave_button.add_theme_color_override("font_color", UIPalette.MUTED)
+	leave_button.add_theme_color_override("font_pressed_color", UIPalette.TEXT)
+	leave_button.add_theme_stylebox_override("normal", UIPalette.chunky(Color("232c36")))
+	leave_button.add_theme_stylebox_override("hover", UIPalette.chunky(Color("232c36")))
+	leave_button.add_theme_stylebox_override("pressed",
+		UIPalette.chunky(Color("40222e"), "pressed"))
+	leave_button.add_theme_stylebox_override("focus", UIPalette.empty())
+	leave_button.custom_minimum_size = Vector2(64, 32)
+	leave_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	leave_button.add_child(UIPalette.gloss())
+	_connect_owned(leave_button.pressed, Callable(self, "_on_exit_pressed"))
+	top_row.add_child(leave_button)
 
 	# The action-order strip (the genre's HSR-style queue, laid horizontally for
 	# portrait): who moves next this round, current actor first and largest.
@@ -356,8 +356,13 @@ func _build_layout() -> void:
 ## the player is lining up a tap.
 func _build_info_box(insets: Vector2) -> void:
 	_info_box = PanelContainer.new()
-	_info_box.add_theme_stylebox_override("panel",
-		UIPalette.panel(UIPalette.CYAN_DARK, Color(UIPalette.PANEL, 0.94)))
+	var info_style := UIPalette.panel(UIPalette.CYAN_DARK, Color(UIPalette.PANEL, 0.96))
+	info_style.set_corner_radius_all(10)
+	info_style.border_width_bottom = 4
+	info_style.shadow_color = Color(0, 0, 0, 0.45)
+	info_style.shadow_size = 8
+	info_style.shadow_offset = Vector2(0, 3)
+	_info_box.add_theme_stylebox_override("panel", info_style)
 	_info_box.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	_info_box.offset_left = 10
 	_info_box.offset_right = -10
@@ -722,11 +727,14 @@ func _rebuild_turn_strip(actor: BattleUnit) -> void:
 		var is_actor: bool = u == actor
 		var chip := PanelContainer.new()
 		var accent := UIPalette.CYAN if u.side == BattleUnit.Side.PLAYER else UIPalette.CORAL
-		var box := UIPalette.panel(accent if is_actor else Color(accent, 0.40),
-			Color(UIPalette.INK, 0.80))
+		var box := StyleBoxFlat.new()
+		box.set_corner_radius_all(8)
+		box.bg_color = Color("1a222c") if u.side == BattleUnit.Side.PLAYER else Color("2a1d1c")
+		box.border_color = accent if is_actor else Color(accent, 0.35)
+		box.set_border_width_all(2 if is_actor else 1)
+		box.border_width_bottom = 4 if is_actor else 3
 		box.set_content_margin_all(2)
-		if is_actor:
-			box.set_border_width_all(2)
+		box.content_margin_bottom = 4
 		chip.add_theme_stylebox_override("panel", box)
 		chip.custom_minimum_size = Vector2(TURN_CHIP, TURN_CHIP)
 		chip.pivot_offset = Vector2(TURN_CHIP, TURN_CHIP) * 0.5
@@ -826,18 +834,27 @@ func _add_skill_button(skill_id: StringName, enabled: bool, actor: BattleUnit,
 	if skill == null:
 		return
 	var selected := skill_id == _selected_skill_id
+	var glyph_kind := Glyph.for_skill(skill)
+	var surface: Color = CARD_SURFACES.get(glyph_kind, UIPalette.PANEL_2)
+	var rim := Color.TRANSPARENT
+	if selected:
+		rim = UIPalette.CYAN
+	elif is_ult:
+		rim = Color(UIPalette.AMBER, 0.55)
+
 	var button := Button.new()
 	button.custom_minimum_size = Vector2(0, SKILL_CARD_HEIGHT)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.disabled = not enabled and not is_ult
-	var accent := UIPalette.AMBER if is_ult else UIPalette.LINE
-	var normal_state := "selected" if selected else "normal"
-	button.add_theme_stylebox_override("normal", _card_style(accent, normal_state, is_ult))
-	button.add_theme_stylebox_override("hover", _card_style(accent, normal_state, is_ult))
-	button.add_theme_stylebox_override("pressed", _card_style(accent, "pressed", is_ult))
-	button.add_theme_stylebox_override("disabled", _card_style(accent, "disabled", is_ult))
+	button.add_theme_stylebox_override("normal", UIPalette.chunky(surface, "normal", rim))
+	button.add_theme_stylebox_override("hover", UIPalette.chunky(surface, "normal", rim))
+	button.add_theme_stylebox_override("pressed", UIPalette.chunky(surface, "pressed"))
+	button.add_theme_stylebox_override("disabled",
+		UIPalette.chunky(surface, "disabled", rim if is_ult else Color.TRANSPARENT))
 	button.add_theme_stylebox_override("focus", UIPalette.empty())
 	button.pressed.connect(Callable(self, "_on_skill_pressed").bind(skill_id))
+	# The top-half sheen that sells the volume.
+	button.add_child(UIPalette.gloss())
 
 	# The card's two lines. Centered as a column; mouse_filter IGNORE so every pixel of
 	# the card is still the button's tap target.
@@ -864,7 +881,6 @@ func _add_skill_button(skill_id: StringName, enabled: bool, actor: BattleUnit,
 	name_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_child(name_row)
 
-	var glyph_kind := Glyph.for_skill(skill)
 	name_row.add_child(Glyph.make(glyph_kind, 12.0,
 		_glyph_colour(glyph_kind, name_tone) if enabled else UIPalette.DISABLED))
 
@@ -904,6 +920,22 @@ func _skill_state_text(skill: SkillDef, actor: BattleUnit, is_ult: bool) -> Stri
 	return "SINGLE TARGET" if skill.targets_enemies() else "ALLY"
 
 
+## Card face colour per skill family: the material the chunky button is "made of".
+## Warm rust for physical, deep teal for energy, workshop green for repairs, forged
+## amber for ults — the bar reads as a hand of distinct, characterful cards.
+const CARD_SURFACES := {
+	&"star": Color("4a3512"),
+	&"sword": Color("46302a"),
+	&"bolt": Color("143a44"),
+	&"wrench": Color("1e3b27"),
+	&"shield": Color("223850"),
+	&"arrow_up": Color("1e3b27"),
+	&"arrow_down": Color("40222e"),
+	&"sparkle": Color("1c3d3d"),
+	&"core": Color("4a3512"),
+}
+
+
 ## Icon tints: each skill family keeps one colour everywhere it appears, so the icon
 ## alone carries meaning before the name is read.
 const GLYPH_COLOURS := {
@@ -923,14 +955,6 @@ func _glyph_colour(kind: StringName, fallback: Color) -> Color:
 	return GLYPH_COLOURS.get(kind, fallback)
 
 
-## Card styling: the skewed tech-card language from UIPalette. Ults keep their amber
-## edge even while disabled — a charging ultimate is a promise, not a dead control. The
-## selected card gets the cyan frame: the accent the whole UI uses for "this one".
-func _card_style(accent: Color, state: String, is_ult: bool) -> StyleBoxFlat:
-	var box := UIPalette.tech_button(accent, state)
-	if state == "disabled" and not is_ult:
-		box.border_color = Color(UIPalette.LINE_SOFT, 0.8)
-	return box
 
 
 # ---------------------------------------------------------------------------
