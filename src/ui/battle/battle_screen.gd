@@ -515,7 +515,11 @@ func _present_new_events() -> void:
 
 func _finish() -> void:
 	_banner.text = _outcome_text(engine.outcome)
-	_skill_bar.visible = false
+	# Emptied, never hidden: the bar's row keeps its height so the battlefield doesn't
+	# jump on the final frame (the reward screen replaces this whole view anyway).
+	for child in _skill_bar.get_children():
+		_skill_bar.remove_child(child)
+		child.queue_free()
 	_clear_selection()
 	battle_finished.emit(engine.outcome)
 
@@ -748,11 +752,12 @@ func _rebuild_skill_bar(actor: BattleUnit) -> void:
 		_skill_bar.remove_child(child)
 		child.queue_free()
 
+	# Not the player's move: the bar goes EMPTY, never hidden. Hiding would collapse its
+	# row and the whole battlefield column would jump downward every enemy turn — the
+	# reserved space is what keeps the figures planted while the theatre plays.
 	if engine == null or engine.is_over() or actor == null \
 			or actor.side != BattleUnit.Side.PLAYER or _auto_enabled:
-		_skill_bar.visible = false
 		return
-	_skill_bar.visible = true
 
 	# available_skills() already filters by cooldown, charge and whether a legal target
 	# exists, so the bar cannot offer something the engine would refuse.
