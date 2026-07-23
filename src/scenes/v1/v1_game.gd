@@ -103,7 +103,7 @@ func attach_save(service: SaveLoadService) -> void:
 	save_service.register_provider(V1StateProviderScript.KEY,
 		V1StateProviderScript.new(ctx.roster, ctx.wallet, ctx.species, ctx.tree, ctx.log,
 			ctx.inventory_items, ctx.item_catalog, ctx.expeditions, ctx.progress,
-			ctx.blueprints, ctx.key_items))
+			ctx.blueprints, ctx.key_items, ctx.codex))
 
 
 ## Load the save, then make sure the player actually has Symbots.
@@ -125,6 +125,11 @@ func load_or_start_new() -> void:
 		save_service.load(SAVE_SLOT)
 	if ctx.roster.symbots.is_empty():
 		StartingSquad.grant(ctx.roster, ctx.species, ctx.log)
+	# Owning a Symbot reveals its line up to its current mark, whatever the save said —
+	# rederiving here also backfills saves written before the codex existed.
+	if ctx.codex != null:
+		for inst in ctx.roster.symbots:
+			ctx.codex.mark_owned(inst.species_id, inst.mark)
 
 
 ## Write the save. Called after anything the player would be upset to redo — finishing a
@@ -148,6 +153,7 @@ func build_context() -> ServiceContext:
 	c.blueprints = BlueprintLibrary.new()
 	c.expeditions = ExpeditionBoard.new()
 	c.progress = StageProgress.new()
+	c.codex = DiscoveryCodex.new()
 	c.species = load(SPECIES_PATH)
 	c.stages = load(STAGE_PATH)
 	c.tree = load(TREE_PATH)

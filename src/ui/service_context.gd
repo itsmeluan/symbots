@@ -80,6 +80,9 @@ var progress: StageProgress
 ## Timed offline missions for the bench (§7).
 var expeditions: ExpeditionBoard
 
+## Which species marks the player has discovered — drives silhouettes in unit info.
+var codex: DiscoveryCodex
+
 ## Frozen content catalogs. Screens read; nothing mutates them.
 var species: SpeciesCatalog
 var stages: StageCatalog

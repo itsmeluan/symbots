@@ -26,6 +26,23 @@ enum Kind {
 	COOLDOWN_REDUCTION = 40,
 }
 
+## Player-facing name per kind, the single home of the mapping — the battle log, skill
+## info and any future status icons all read it from here.
+const KIND_NAMES := {
+	Kind.BURN: "Burn", Kind.CORRODE: "Corrode", Kind.SHOCK: "Shock",
+	Kind.STUN: "Stun", Kind.SLOW: "Slow", Kind.TAUNT_BREAK: "Taunt Break",
+	Kind.HASTE: "Haste",
+	Kind.REGEN: "Regen", Kind.DAMAGE_REDUCTION: "Damage Reduction",
+	Kind.ATTACK_UP: "Attack Up", Kind.ATTACK_DOWN: "Attack Down",
+	Kind.CRIT_UP: "Crit Up", Kind.PIERCE: "Pierce",
+	Kind.COOLDOWN_REDUCTION: "Cooldown Reduction",
+}
+
+
+static func kind_name(kind_value: int) -> String:
+	return KIND_NAMES.get(kind_value, "Effect")
+
+
 var kind: Kind = Kind.INVALID
 var remaining: int = 0
 var is_debuff: bool = false

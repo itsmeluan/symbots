@@ -33,6 +33,7 @@ var _species: SpeciesCatalog = null
 var _tree: SkillTree = null
 var _item_catalog: InstallItemCatalog = null
 var _progress: StageProgress = null
+var _codex: DiscoveryCodex = null
 var _log: LogSink = null
 
 
@@ -40,7 +41,9 @@ func _init(roster: PlayerRoster, wallet: Wallet, species: SpeciesCatalog,
 		tree: SkillTree, log: LogSink = null, items: ItemInventory = null,
 		item_catalog: InstallItemCatalog = null,
 		expeditions: ExpeditionBoard = null, progress: StageProgress = null,
-		library: BlueprintLibrary = null, key_items: ItemInventory = null) -> void:
+		library: BlueprintLibrary = null, key_items: ItemInventory = null,
+		codex: DiscoveryCodex = null) -> void:
+	_codex = codex
 	_roster = roster
 	_wallet = wallet
 	_items = items
@@ -71,6 +74,7 @@ func snapshot() -> Dictionary:
 		"progress": _progress_dict(),
 		"blueprints": _library.to_dict() if _library != null else {},
 		"key_items": _key_items.to_dict() if _key_items != null else {},
+		"codex": _codex.to_dict() if _codex != null else {},
 	}
 
 
@@ -118,6 +122,9 @@ func restore(data: Dictionary) -> void:
 	if _library != null:
 		var lib := BlueprintLibrary.from_dict(data.get("blueprints", {}), _species)
 		_library.unlocked = lib.unlocked
+
+	if _codex != null:
+		_codex.load_dict(data.get("codex", {}))
 
 
 func _restore_symbot(raw) -> SymbotInstance:

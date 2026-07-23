@@ -1,0 +1,271 @@
+## UnitInfoModal — full-screen overlay with everything about one combatant (ADR-0008).
+##
+## Opened by tapping a unit on the battlefield when no skill is armed. Shows identity,
+## live stats, the skill kit, and the species' evolution line. The evolution strip is the
+## collection tease: the mark being inspected renders normally, other DISCOVERED marks
+## render desaturated, and marks the player has never obtained nor met in battle render
+## as pure black silhouettes (see [DiscoveryCodex]).
+##
+## Built in code like every v1 screen. A plain overlay Control rather than a Window —
+## it lives inside the battle screen, dims it, and swallows input until dismissed.
+class_name UnitInfoModal
+extends Control
+
+## Emitted when the player dismisses the modal (scrim tap or the close button).
+signal closed
+
+const ROLE_TAGS := UnitPanel.ROLE_TAGS
+const RARITY_NAMES := {
+	SpeciesDef.Rarity.COMMON: "COMMON",
+	SpeciesDef.Rarity.RARE: "RARE",
+	SpeciesDef.Rarity.EPIC: "EPIC",
+	SpeciesDef.Rarity.PROTOTYPE: "PROTOTYPE",
+}
+const MARK_LABELS := ["MK I", "MK II", "MK III"]
+
+## Stat rows shown in the grid, in display order: [stat_key, label].
+const STAT_ROWS := [
+	[&"physical_power", "PHYSICAL PWR"],
+	[&"energy_power", "ENERGY PWR"],
+	[&"armor", "ARMOR"],
+	[&"resistance", "RESISTANCE"],
+	[&"mobility", "MOBILITY"],
+	[&"targeting", "TARGETING"],
+	[&"processing", "PROCESSING"],
+]
+
+const EVOLUTION_SPRITE_HEIGHT := 72.0
+
+## Desaturation for discovered-but-other marks in the evolution strip. A shader rather
+## than modulate because modulate can only darken/tint — it cannot remove saturation.
+const DESAT_SHADER_CODE := "
+shader_type canvas_item;
+void fragment() {
+	vec4 c = texture(TEXTURE, UV);
+	float grey = dot(c.rgb, vec3(0.299, 0.587, 0.114));
+	COLOR = vec4(mix(c.rgb, vec3(grey), 0.85) * 0.72, c.a);
+}"
+
+var unit: BattleUnit = null
+
+var _ctx: ServiceContext = null
+var _ult_cost: int = 100
+
+
+## Build and show. [param ult_cost] is the charge cost of the unit's ult, injected by the
+## battle screen which owns the skill table.
+func open(p_unit: BattleUnit, ctx: ServiceContext, ult_cost: int) -> void:
+	unit = p_unit
+	_ctx = ctx
+	_ult_cost = maxi(1, ult_cost)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_build()
+
+
+func _build() -> void:
+	# The scrim: dims the battle and swallows every tap that is not on the panel.
+	var scrim := ColorRect.new()
+	scrim.color = Color(UIPalette.INK, 0.78)
+	scrim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scrim.gui_input.connect(_on_scrim_input)
+	add_child(scrim)
+
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", UIPalette.panel(UIPalette.LINE, UIPalette.PANEL))
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
+	panel.custom_minimum_size = Vector2(328, 0)
+	add_child(panel)
+
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 8)
+	panel.add_child(column)
+
+	var species: SpeciesDef = null
+	if _ctx != null and _ctx.species != null:
+		species = _ctx.species.get_species(unit.species_id)
+
+	column.add_child(_header(species))
+	column.add_child(_evolution_strip(species))
+	column.add_child(_stats_grid())
+	column.add_child(_skill_list())
+
+
+# ---------------------------------------------------------------------------
+# Sections
+# ---------------------------------------------------------------------------
+
+func _header(species: SpeciesDef) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+
+	var name_label := Label.new()
+	name_label.text = unit.display_name
+	name_label.add_theme_font_override("font", UIPalette.bold_font())
+	name_label.add_theme_font_size_override("font_size", 16)
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(name_label)
+
+	var tags := Label.new()
+	var bits: PackedStringArray = []
+	bits.append(String(ROLE_TAGS.get(unit.role, "")))
+	if species != null:
+		bits.append(String(RARITY_NAMES.get(species.rarity, "")))
+	bits.append(MARK_LABELS[clampi(unit.art_mark, 1, 3) - 1])
+	tags.text = " · ".join(bits)
+	tags.add_theme_font_size_override("font_size", 10)
+	tags.add_theme_color_override("font_color", UIPalette.MUTED)
+	tags.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(tags)
+
+	var close_button := Button.new()
+	close_button.text = "✕"
+	close_button.custom_minimum_size = Vector2(44, 44)
+	close_button.add_theme_stylebox_override("normal", UIPalette.button())
+	close_button.add_theme_stylebox_override("pressed", UIPalette.button("pressed"))
+	close_button.add_theme_stylebox_override("focus", UIPalette.empty())
+	close_button.pressed.connect(_dismiss)
+	row.add_child(close_button)
+	return row
+
+
+## The evolution line: every mark side by side with arrows between, the inspected mark
+## bright, other discovered marks desaturated, unknown marks as black silhouettes.
+func _evolution_strip(species: SpeciesDef) -> Control:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 6)
+
+	var desat := ShaderMaterial.new()
+	var shader := Shader.new()
+	shader.code = DESAT_SHADER_CODE
+	desat.shader = shader
+
+	for mark in range(1, 4):
+		if mark > 1:
+			var arrow := Label.new()
+			arrow.text = "→"
+			arrow.add_theme_font_size_override("font_size", 16)
+			arrow.add_theme_color_override("font_color", UIPalette.MUTED)
+			arrow.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			row.add_child(arrow)
+		row.add_child(_evolution_slot(species, mark, desat))
+	return row
+
+
+func _evolution_slot(species: SpeciesDef, mark: int, desat: ShaderMaterial) -> Control:
+	var discovered := _is_discovered(mark)
+	var slot := VBoxContainer.new()
+	slot.add_theme_constant_override("separation", 2)
+
+	var sprite := TextureRect.new()
+	sprite.custom_minimum_size = Vector2(EVOLUTION_SPRITE_HEIGHT, EVOLUTION_SPRITE_HEIGHT)
+	sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	sprite.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	var path := "%s%s_mk%d.png" % [UnitPanel.ART_DIR, unit.species_id, mark]
+	sprite.texture = load(path) if ResourceLoader.exists(path) else null
+
+	if not discovered:
+		# Pure black keeps the outline readable — the classic "who's that" silhouette.
+		sprite.modulate = Color.BLACK
+	elif mark != unit.art_mark:
+		sprite.material = desat
+	slot.add_child(sprite)
+
+	var caption := Label.new()
+	caption.text = MARK_LABELS[mark - 1] if discovered else "???"
+	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	caption.add_theme_font_size_override("font_size", 9)
+	caption.add_theme_color_override("font_color",
+		UIPalette.TEXT if mark == unit.art_mark and discovered else UIPalette.MUTED)
+	slot.add_child(caption)
+
+	if species == null:
+		pass  # header already shows what we know; the strip still renders from art alone
+	return slot
+
+
+func _is_discovered(mark: int) -> bool:
+	# The unit being inspected is on the field right now, so its own mark is by
+	# definition seen — even if a stale save said otherwise.
+	if mark == unit.art_mark:
+		return true
+	if _ctx == null or _ctx.codex == null:
+		return true
+	return _ctx.codex.is_discovered(unit.species_id, mark)
+
+
+func _stats_grid() -> Control:
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 18)
+	grid.add_theme_constant_override("v_separation", 2)
+
+	_add_stat(grid, "STRUCTURE", "%d / %d" % [unit.current_structure, unit.max_structure])
+	if unit.shield > 0:
+		_add_stat(grid, "SHIELD", str(unit.shield))
+	for entry in STAT_ROWS:
+		var key: StringName = entry[0]
+		if not unit.base_stats.has(key):
+			continue
+		# stat() includes live status modifiers — the number the next hit will use.
+		_add_stat(grid, entry[1], str(unit.stat(key)))
+	if unit.has_ultimate():
+		_add_stat(grid, "ULT CHARGE", "%d / %d" % [mini(unit.ultimate_charge, _ult_cost), _ult_cost])
+	return grid
+
+
+func _add_stat(grid: GridContainer, label: String, value: String) -> void:
+	var key_label := Label.new()
+	key_label.text = label
+	key_label.add_theme_font_size_override("font_size", 10)
+	key_label.add_theme_color_override("font_color", UIPalette.MUTED)
+	grid.add_child(key_label)
+
+	var value_label := Label.new()
+	value_label.text = value
+	value_label.add_theme_font_override("font", UIPalette.mono_font())
+	value_label.add_theme_font_size_override("font_size", 10)
+	grid.add_child(value_label)
+
+
+func _skill_list() -> Control:
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 3)
+
+	var skill_ids: Array[StringName] = []
+	skill_ids.assign(unit.skills)
+	if unit.has_ultimate():
+		skill_ids.append(unit.ultimate_skill)
+
+	for sid in skill_ids:
+		var skill: SkillDef = _ctx.skills.get(sid) if _ctx != null else null
+		if skill == null:
+			continue
+		var row := Label.new()
+		var prefix := "★ " if skill.is_ultimate else "• "
+		row.text = prefix + skill.display_name \
+			+ ("  —  " + skill.description if not skill.description.is_empty() else "")
+		row.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		row.add_theme_font_size_override("font_size", 10)
+		row.add_theme_color_override("font_color",
+			UIPalette.AMBER if skill.is_ultimate else UIPalette.TEXT)
+		column.add_child(row)
+	return column
+
+
+# ---------------------------------------------------------------------------
+# Dismissal
+# ---------------------------------------------------------------------------
+
+func _on_scrim_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed \
+			and event.button_index == MOUSE_BUTTON_LEFT:
+		_dismiss()
+
+
+func _dismiss() -> void:
+	closed.emit()
+	queue_free()

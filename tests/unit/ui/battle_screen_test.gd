@@ -163,7 +163,7 @@ func test_the_skill_bar_only_offers_usable_skills() -> void:
 	assert_gt(disabled, 0, "a button that lies about being usable is worse than no button")
 
 
-func test_a_multi_target_skill_resolves_without_a_second_tap() -> void:
+func test_a_multi_target_skill_fires_on_a_confirming_second_tap() -> void:
 	var p := _unit("p", BattleUnit.Side.PLAYER, 200, SpeciesDefScript.Role.DPS, 30)
 	p.skills = [&"sweep"]
 	var a := _unit("a", BattleUnit.Side.ENEMY, 300, SpeciesDefScript.Role.DPS, 5)
@@ -171,9 +171,14 @@ func test_a_multi_target_skill_resolves_without_a_second_tap() -> void:
 	_start([p], [a, b])
 
 	_screen._on_skill_pressed(&"sweep")
+	assert_eq(a.current_structure, 300,
+		"the first tap only selects — the info box is open for reading")
+	assert_true(_screen._info_box.visible)
 
-	assert_lt(a.current_structure, 300, "an AoE has nothing to aim, so it fires at once")
+	_screen._on_skill_pressed(&"sweep")
+	assert_lt(a.current_structure, 300, "the confirming tap fires the AoE")
 	assert_lt(b.current_structure, 300)
+	assert_false(_screen._info_box.visible, "firing closes the info box")
 	assert_null(_screen._pending_skill, "and leaves no armed skill behind")
 
 
@@ -360,3 +365,121 @@ func test_an_uncharged_ultimate_card_reports_its_charge() -> void:
 	assert_eq(_screen._skill_state_text(ult, p, true), "CHARGE 40%")
 	p.ultimate_charge = 100
 	assert_eq(_screen._skill_state_text(ult, p, true), "READY")
+
+
+# ---------------------------------------------------------------------------
+# Skill info & selection
+# ---------------------------------------------------------------------------
+
+func test_selecting_a_skill_opens_its_info_box_and_arms_it() -> void:
+	var p := _unit("p", BattleUnit.Side.PLAYER, 200, SpeciesDefScript.Role.DPS, 30)
+	_start([p], [_unit("x", BattleUnit.Side.ENEMY)])
+
+	_screen._on_skill_pressed(&"strike")
+	assert_eq(_screen._selected_skill_id, &"strike")
+	assert_not_null(_screen._pending_skill, "a usable single-target skill arms on select")
+	assert_true(_screen._info_box.visible)
+	assert_eq(_screen._info_title.text, "Strike")
+
+	_screen._on_skill_pressed(&"strike")
+	assert_eq(_screen._selected_skill_id, &"", "tapping the selection again deselects")
+	assert_null(_screen._pending_skill)
+	assert_false(_screen._info_box.visible)
+
+
+func test_an_uncharged_ult_is_readable_but_never_armed() -> void:
+	var nova := SkillDefScript.new()
+	nova.id = &"nova"
+	nova.display_name = "Nova"
+	nova.target_mode = SkillDefScript.TargetMode.ALL_ENEMIES
+	nova.scaling_stat = &"physical_power"
+	nova.power_percent = 200
+	nova.effects = [{"kind": SkillDefScript.EffectKind.DAMAGE}]
+	nova.is_ultimate = true
+	nova.charge_cost = 100
+
+	var p := _unit("p", BattleUnit.Side.PLAYER, 200, SpeciesDefScript.Role.DPS, 30)
+	p.ultimate_skill = &"nova"
+	p.ultimate_charge = 0
+	var x := _unit("x", BattleUnit.Side.ENEMY, 300)
+	var table := _table()
+	table[&"nova"] = nova
+	var e := BattleEngineScript.new([p], [x], table, _cfg, _rng, _ctx.log)
+	_screen.begin_battle(e, table)
+
+	# The ult card is tappable even at 0 charge — the widget must not be disabled.
+	var ult_button: Button = _screen._skill_bar.get_children().back()
+	assert_false(ult_button.disabled, "an uncharged ult still opens its info")
+
+	_screen._on_skill_pressed(&"nova")
+	assert_true(_screen._info_box.visible)
+	assert_null(_screen._pending_skill, "reading about an ult never arms it")
+
+	_screen._on_skill_pressed(&"nova")
+	assert_eq(x.current_structure, 300, "a confirm tap on an UNUSABLE ult must not fire")
+	assert_false(_screen._info_box.visible, "it just closes the info box")
+
+
+# ---------------------------------------------------------------------------
+# Unit info modal
+# ---------------------------------------------------------------------------
+
+func test_tapping_a_unit_with_nothing_armed_opens_its_info_modal() -> void:
+	var p := _unit("p", BattleUnit.Side.PLAYER, 200, SpeciesDefScript.Role.DPS, 30)
+	var x := _unit("x", BattleUnit.Side.ENEMY)
+	_start([p], [x])
+
+	_screen._on_unit_tapped(x)
+	assert_not_null(_screen._unit_modal, "an idle tap inspects the unit")
+	assert_eq(_screen._unit_modal.unit, x)
+
+	_screen._unit_modal._dismiss()
+	assert_null(_screen._unit_modal, "dismissing frees the slot for the next tap")
+
+
+func test_a_legal_target_tap_still_attacks_rather_than_inspecting() -> void:
+	var p := _unit("p", BattleUnit.Side.PLAYER, 200, SpeciesDefScript.Role.DPS, 30)
+	var x := _unit("x", BattleUnit.Side.ENEMY, 300)
+	_start([p], [x])
+
+	_screen._on_skill_pressed(&"strike")
+	_screen._on_unit_tapped(x)
+	assert_lt(x.current_structure, 300, "targeting keeps priority over inspection")
+	assert_null(_screen._unit_modal)
+
+
+func _modal_texture_rects(node: Node, out: Array) -> void:
+	for child in node.get_children():
+		if child is TextureRect:
+			out.append(child)
+		_modal_texture_rects(child, out)
+
+
+func test_the_evolution_strip_silhouettes_undiscovered_marks() -> void:
+	_ctx.codex = DiscoveryCodex.new()
+	var p := _unit("p", BattleUnit.Side.PLAYER, 200, SpeciesDefScript.Role.DPS, 30)
+	p.species_id = &"gravelock"
+	p.art_mark = 1
+	_start([p], [_unit("x", BattleUnit.Side.ENEMY)])
+
+	# begin_battle marked (gravelock, mk1) as seen; mk2 and mk3 remain unknown.
+	_screen._on_unit_tapped(p)
+	var sprites: Array = []
+	_modal_texture_rects(_screen._unit_modal, sprites)
+	var silhouettes := 0
+	for sprite in sprites:
+		if sprite.modulate == Color.BLACK:
+			silhouettes += 1
+	assert_eq(silhouettes, 2, "mk2 and mk3 are unmet, so both render as silhouettes")
+	_screen._unit_modal._dismiss()
+
+	_ctx.codex.mark_seen(&"gravelock", 2)
+	_screen._on_unit_tapped(p)
+	sprites.clear()
+	_modal_texture_rects(_screen._unit_modal, sprites)
+	silhouettes = 0
+	for sprite in sprites:
+		if sprite.modulate == Color.BLACK:
+			silhouettes += 1
+	assert_eq(silhouettes, 1, "meeting the mk2 in battle lifts its silhouette")
+	_screen._unit_modal._dismiss()

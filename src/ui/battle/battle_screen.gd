@@ -15,6 +15,7 @@ extends Screen
 
 const UnitPanelScript := preload("res://src/ui/battle/unit_panel.gd")
 const BattleTargetingScript := preload("res://src/core/battle_v1/targeting.gd")
+const UnitInfoModalScript := preload("res://src/ui/battle/unit_info_modal.gd")
 
 ## Emitted once the battle resolves, so whatever pushed this screen can hand out rewards
 ## and pop back. Carries the [enum BattleEngine.Outcome].
@@ -56,9 +57,22 @@ var _auto_toggle: CheckButton
 var _wave: int = 1
 var _wave_count: int = 1
 
-## The skill awaiting a target, or null when the player has not chosen one yet. This is
-## the whole of the screen's interaction state — everything else is derived.
+## The skill awaiting a target, or null when the player has not chosen one yet.
 var _pending_skill: SkillDef = null
+
+## The skill whose card is highlighted and whose info box is open. Wider than
+## [member _pending_skill]: an uncharged ult can be SELECTED (read about) but never
+## pending (armed). Cleared when the action fires or the selection is tapped again.
+var _selected_skill_id: StringName = &""
+
+## The floating skill-info panel at the top of the screen, and its text parts.
+var _info_box: PanelContainer
+var _info_title: Label
+var _info_desc: Label
+var _info_detail: Label
+
+## The open unit modal, so a second tap re-uses rather than stacks.
+var _unit_modal: UnitInfoModal = null
 
 ## How many events have already been rendered, so a drain never replays the whole battle.
 var _events_drawn: int = 0
@@ -104,6 +118,14 @@ func begin_battle(p_engine: BattleEngine, skill_table: Dictionary) -> void:
 	_skills = skill_table
 	_events_drawn = 0
 	_pending_skill = null
+	_selected_skill_id = &""
+	_hide_skill_info()
+
+	# Everything fielded in a battle the player watches is discovered — this is what
+	# turns an enemy's silhouette into a sprite in the unit modal (DiscoveryCodex).
+	if _ctx != null and _ctx.codex != null:
+		for u in engine.player_units + engine.enemy_units:
+			_ctx.codex.mark_seen(u.species_id, u.art_mark)
 
 	_bind_panels(engine.player_units, _player_panels)
 	_bind_panels(engine.enemy_units, _enemy_panels)
@@ -227,6 +249,44 @@ func _build_layout() -> void:
 	_skill_bar.custom_minimum_size = Vector2(0, SKILL_CARD_HEIGHT)
 	bar_margin.add_child(_skill_bar)
 
+	_build_info_box(insets)
+
+
+## The floating skill-info panel. A sibling of the main column, anchored under the top
+## strip, so opening it never reflows the battlefield — the figures must not jump when
+## the player is lining up a tap.
+func _build_info_box(insets: Vector2) -> void:
+	_info_box = PanelContainer.new()
+	_info_box.add_theme_stylebox_override("panel",
+		UIPalette.panel(UIPalette.CYAN_DARK, Color(UIPalette.PANEL, 0.94)))
+	_info_box.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	_info_box.offset_left = 10
+	_info_box.offset_right = -10
+	_info_box.offset_top = insets.x + 58
+	_info_box.grow_vertical = Control.GROW_DIRECTION_END
+	_info_box.visible = false
+	add_child(_info_box)
+
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 2)
+	_info_box.add_child(column)
+
+	_info_title = Label.new()
+	_info_title.add_theme_font_override("font", UIPalette.display_font())
+	_info_title.add_theme_font_size_override("font_size", 13)
+	column.add_child(_info_title)
+
+	_info_desc = Label.new()
+	_info_desc.add_theme_font_size_override("font_size", 9)
+	_info_desc.add_theme_color_override("font_color", UIPalette.MUTED)
+	_info_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	column.add_child(_info_desc)
+
+	_info_detail = Label.new()
+	_info_detail.add_theme_font_size_override("font_size", 10)
+	_info_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	column.add_child(_info_detail)
+
 
 func _build_side(into: Array[UnitPanel]) -> void:
 	for i in SQUAD_SIZE:
@@ -308,6 +368,7 @@ func _advance_if_not_player_turn() -> void:
 func _finish() -> void:
 	_banner.text = _outcome_text(engine.outcome)
 	_skill_bar.visible = false
+	_clear_selection()
 	battle_finished.emit(engine.outcome)
 
 
@@ -325,16 +386,21 @@ func _outcome_text(outcome: int) -> String:
 
 func _on_auto_toggled(pressed: bool) -> void:
 	_auto_enabled = pressed
-	_pending_skill = null
+	_clear_selection()
 	if pressed:
 		_advance_if_not_player_turn()
 	else:
 		_refresh_all()
 
 
-## Tapping a skill arms it; the next unit tap resolves it. Two taps rather than one
-## because a single-tap "use on best target" would remove the choice the design says is
-## the player's (§3.3 — the player picks the target).
+## Tapping a skill SELECTS it: the card highlights and the info box opens. What the
+## selection then means depends on the skill:
+##   - usable single-target: armed; the next unit tap resolves it (§3.3 — the player
+##     picks the target).
+##   - usable auto-target (AoE, self, lowest-HP): a second tap on the same card fires
+##     it. The confirm tap exists so the info box can be read before committing.
+##   - uncharged ult: info only — tappable so the player can always read their ult.
+## Tapping the selected card again deselects.
 func _on_skill_pressed(skill_id: StringName) -> void:
 	if engine == null or engine.is_over():
 		return
@@ -344,20 +410,55 @@ func _on_skill_pressed(skill_id: StringName) -> void:
 	var skill: SkillDef = _skills.get(skill_id)
 	if skill == null:
 		return
+	var usable := _usable_ids(actor).has(skill_id)
 
-	# A skill that picks its own target needs no second tap.
-	if not skill.is_single_target():
-		_submit(skill, null)
+	if _selected_skill_id == skill_id:
+		if usable and not skill.is_single_target():
+			_submit(skill, null)
+			return
+		_clear_selection()
+		_refresh_all()
 		return
 
-	_pending_skill = skill
+	_selected_skill_id = skill_id
+	_pending_skill = skill if (usable and skill.is_single_target()) else null
+	_show_skill_info(skill, actor)
 	_refresh_all()
 
 
+## Tapping a unit resolves the armed skill when the unit is a legal target; any other
+## unit tap opens the full info modal — which is also how enemies are inspected.
 func _on_unit_tapped(unit: BattleUnit) -> void:
-	if _pending_skill == null or engine == null or engine.is_over():
+	if engine == null:
 		return
-	_submit(_pending_skill, unit)
+	if _pending_skill != null and not engine.is_over():
+		var actor := engine.current_actor()
+		if actor != null and engine.legal_targets(actor, _pending_skill).has(unit):
+			_submit(_pending_skill, unit)
+			return
+	_open_unit_modal(unit)
+
+
+func _open_unit_modal(unit: BattleUnit) -> void:
+	if _unit_modal != null:
+		return
+	_unit_modal = UnitInfoModalScript.new()
+	_unit_modal.closed.connect(func() -> void: _unit_modal = null)
+	add_child(_unit_modal)
+	_unit_modal.open(unit, _ctx, _ult_cost_of(unit))
+
+
+func _usable_ids(actor: BattleUnit) -> Dictionary:
+	var ids: Dictionary = {}
+	for s in engine.available_skills(actor):
+		ids[s.id] = true
+	return ids
+
+
+func _clear_selection() -> void:
+	_selected_skill_id = &""
+	_pending_skill = null
+	_hide_skill_info()
 
 
 func _submit(skill: SkillDef, target: BattleUnit) -> void:
@@ -365,10 +466,10 @@ func _submit(skill: SkillDef, target: BattleUnit) -> void:
 	# can have died to a damage-over-time tick since. A refusal is not an error: the screen
 	# simply redraws and the player picks again.
 	if not engine.submit_action(skill.id, target):
-		_pending_skill = null
+		_clear_selection()
 		_refresh_all()
 		return
-	_pending_skill = null
+	_clear_selection()
 	_drain_events()
 	_advance_if_not_player_turn()
 
@@ -449,18 +550,24 @@ const SKILL_CARD_HEIGHT := 58
 ## One card in the action bar: the skill's name over a one-line state readout (target
 ## shape, cooldown left, or ult charge). A Button rather than a custom Control so
 ## disabled/pressed behaviour and the tests' `child is Button` contract stay stock.
+##
+## The ULT card is never disabled: an uncharged ult still opens its info on tap (the
+## player may always read their own kit); firing stays gated by `enabled` in
+## [method _on_skill_pressed]'s usable check, not by the widget.
 func _add_skill_button(skill_id: StringName, enabled: bool, actor: BattleUnit,
 		is_ult := false) -> void:
 	var skill: SkillDef = _skills.get(skill_id)
 	if skill == null:
 		return
+	var selected := skill_id == _selected_skill_id
 	var button := Button.new()
 	button.custom_minimum_size = Vector2(0, SKILL_CARD_HEIGHT)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.disabled = not enabled
+	button.disabled = not enabled and not is_ult
 	var accent := UIPalette.AMBER if is_ult else UIPalette.LINE
-	button.add_theme_stylebox_override("normal", _card_style(accent, "normal", is_ult))
-	button.add_theme_stylebox_override("hover", _card_style(accent, "normal", is_ult))
+	var normal_state := "selected" if selected else "normal"
+	button.add_theme_stylebox_override("normal", _card_style(accent, normal_state, is_ult))
+	button.add_theme_stylebox_override("hover", _card_style(accent, normal_state, is_ult))
 	button.add_theme_stylebox_override("pressed", _card_style(accent, "pressed", is_ult))
 	button.add_theme_stylebox_override("disabled", _card_style(accent, "disabled", is_ult))
 	button.add_theme_stylebox_override("focus", UIPalette.empty())
@@ -519,17 +626,89 @@ func _skill_state_text(skill: SkillDef, actor: BattleUnit, is_ult: bool) -> Stri
 
 
 ## Card styling: the tech-panel look at button scale. Ults keep their amber border even
-## while disabled — a charging ultimate is a promise, not a dead control.
+## while disabled — a charging ultimate is a promise, not a dead control. The selected
+## card gets the cyan double-width border: the accent the whole UI uses for "this one".
 func _card_style(accent: Color, state: String, is_ult: bool) -> StyleBoxFlat:
 	var box := UIPalette.panel(accent, Color(UIPalette.PANEL, 0.92))
 	box.set_content_margin_all(4)
 	match state:
+		"selected":
+			box.border_color = UIPalette.CYAN
+			box.set_border_width_all(2)
+			box.bg_color = UIPalette.PANEL_2.lightened(0.06)
 		"pressed":
 			box.bg_color = UIPalette.PANEL_2.darkened(0.15)
 		"disabled":
 			box.bg_color = Color(UIPalette.INK, 0.85)
 			box.border_color = Color(UIPalette.AMBER, 0.35) if is_ult else UIPalette.LINE_SOFT
 	return box
+
+
+# ---------------------------------------------------------------------------
+# Skill info box
+# ---------------------------------------------------------------------------
+
+## Human label per scaling stat, for the damage line.
+const STAT_LABELS := {
+	&"physical_power": "Physical Power",
+	&"energy_power": "Energy Power",
+	&"processing": "Processing",
+}
+
+const TARGET_LABELS := {
+	SkillDef.TargetMode.SELF: "Self",
+	SkillDef.TargetMode.SINGLE_ALLY: "One ally",
+	SkillDef.TargetMode.ALL_ALLIES: "All allies",
+	SkillDef.TargetMode.LOWEST_HP_ALLY: "Most damaged ally",
+	SkillDef.TargetMode.SINGLE_ENEMY: "One enemy",
+	SkillDef.TargetMode.ALL_ENEMIES: "All enemies",
+	SkillDef.TargetMode.RANDOM_ENEMY: "Random enemy",
+}
+
+
+func _show_skill_info(skill: SkillDef, actor: BattleUnit) -> void:
+	_info_title.text = ("★ " if skill.is_ultimate else "") + skill.display_name
+	_info_desc.text = skill.description
+	_info_desc.visible = not skill.description.is_empty()
+	_info_detail.text = "\n".join(_skill_info_lines(skill, actor))
+	_info_box.visible = true
+
+
+func _hide_skill_info() -> void:
+	if _info_box != null:
+		_info_box.visible = false
+
+
+## The numbers: one line per effect, then targeting and cost. Magnitudes come from
+## [method BattleEngine.preview_magnitude] — the engine's own formula, not a UI copy —
+## and are pre-defense, because no target is chosen yet.
+func _skill_info_lines(skill: SkillDef, actor: BattleUnit) -> PackedStringArray:
+	var lines: PackedStringArray = []
+	var magnitude := engine.preview_magnitude(actor, skill)
+	for effect in skill.effects:
+		match int(effect.get("kind", SkillDef.EffectKind.INVALID)):
+			SkillDef.EffectKind.DAMAGE:
+				lines.append("Damage ≈ %d  (%d%% %s, before defense)" % [magnitude,
+					skill.power_percent, STAT_LABELS.get(skill.scaling_stat, "Power")])
+			SkillDef.EffectKind.HEAL:
+				lines.append("Repairs ≈ %d structure" % magnitude)
+			SkillDef.EffectKind.SHIELD:
+				lines.append("Shields ≈ %d" % magnitude)
+			SkillDef.EffectKind.APPLY_STATUS:
+				lines.append("Applies %s (%d turns)" % [
+					StatusEffect.kind_name(int(effect.get("status", 0))),
+					int(effect.get("turns", 1))])
+			SkillDef.EffectKind.CLEANSE:
+				lines.append("Cleanses debuffs")
+			SkillDef.EffectKind.REVIVE:
+				lines.append("Revives at %d%% structure" % int(effect.get("percent", 25)))
+	lines.append("Target: %s" % TARGET_LABELS.get(skill.target_mode, "—"))
+	if skill.is_ultimate:
+		lines.append("Charge: %d / %d" % [mini(actor.ultimate_charge, skill.charge_cost),
+			skill.charge_cost])
+	elif skill.cooldown > 0:
+		lines.append("Cooldown: %d turns" % skill.cooldown)
+	return lines
 
 
 ## Turn newly-emitted engine events into the on-screen log. Only events past

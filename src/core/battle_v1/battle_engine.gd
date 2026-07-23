@@ -295,6 +295,13 @@ func _magnitude(actor: BattleUnit, skill: SkillDef) -> int:
 	return actor.stat(skill.scaling_stat) * skill.power_percent / 100
 
 
+## The pre-mitigation magnitude, for the UI's skill preview. Public so the view reads the
+## SAME formula the resolution runs — a preview that re-derives it can drift (the Enemy AI
+## once shipped exactly that bug). Pre-defense because no target is chosen yet.
+func preview_magnitude(actor: BattleUnit, skill: SkillDef) -> int:
+	return _magnitude(actor, skill)
+
+
 ## Physical attacks are met by armor, energy attacks by resistance.
 func _defense_key_for(skill: SkillDef) -> StringName:
 	return &"resistance" if skill.scaling_stat == &"energy_power" else &"armor"
