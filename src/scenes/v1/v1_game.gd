@@ -221,6 +221,11 @@ func _present(screen: Screen) -> void:
 	add_child(screen)
 	screen.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	screen.setup(ctx)
+	# Every screen fades up over its first 0.15s — an alpha-only transition, so no
+	# layout or position a test could measure ever moves.
+	screen.modulate.a = 0.0
+	var tween := screen.create_tween()
+	tween.tween_property(screen, "modulate:a", 1.0, 0.15)
 
 
 func show_map() -> void:

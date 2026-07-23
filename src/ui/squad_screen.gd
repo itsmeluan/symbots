@@ -8,6 +8,7 @@ class_name SquadScreen
 extends Screen
 
 const SpeciesDefScript := preload("res://src/core/species/species_def.gd")
+const UnitPanelScript := preload("res://src/ui/battle/unit_panel.gd")
 
 signal closed
 
@@ -84,8 +85,28 @@ func _rebuild_slots() -> void:
 		button.toggle_mode = true
 		button.button_pressed = (_armed_slot == slot)
 		button.text = _slot_text(slot)
+		_apply_portrait(button, _slot_instance(slot), 30)
+		button.add_theme_font_size_override("font_size", 11)
 		button.pressed.connect(Callable(self, "_on_slot_pressed").bind(slot))
 		_slot_row.add_child(button)
+
+
+func _slot_instance(slot: int) -> SymbotInstance:
+	var id: StringName = _ctx.roster.squad[slot]
+	return _ctx.roster.get_symbot(id) if id != &"" else null
+
+
+## Put the Symbot's own face on the button. Icon, not a texture child, so it lays out
+## beside the text and inherits the button's press/disable tinting for free.
+func _apply_portrait(button: Button, symbot: SymbotInstance, max_width: int) -> void:
+	if symbot == null:
+		return
+	var art := UnitPanelScript.art_texture(symbot.species_id, symbot.mark)
+	if art == null:
+		return
+	button.icon = art
+	button.expand_icon = true
+	button.add_theme_constant_override("icon_max_width", max_width)
 
 
 func _slot_text(slot: int) -> String:
@@ -120,6 +141,7 @@ func _build_bench_row(symbot: SymbotInstance) -> Control:
 		_roman(symbot.mark), symbot.level,
 		"   ·   FIELDED" if fielded else ""]
 	_style_bench(button, fielded)
+	_apply_portrait(button, symbot, 40)
 	# Enabled even when already fielded: tapping a fielded Symbot into another slot is how
 	# the player reorders, and the roster moves rather than duplicates.
 	button.pressed.connect(Callable(self, "_on_bench_pressed").bind(symbot))

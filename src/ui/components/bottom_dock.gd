@@ -79,12 +79,15 @@ func _build_tab(dest: StringName, label: String) -> Button:
 	return button
 
 
-## A tab draws no button chrome — just a label that goes cyan with a top rule when active,
-## muted otherwise. This keeps the dock reading as a bar rather than six raised buttons.
+## A tab draws no button chrome — just a label. The ACTIVE tab is the one lit key:
+## raised face, rounded top corners and the cyan top rule, so the bar keeps reading as a
+## bar while the current place gets the game's volumetric accent.
 func _style_tab(button: Button, active: bool) -> void:
 	var flat := StyleBoxFlat.new()
-	flat.bg_color = UIPalette.PANEL_2 if active else Color(0, 0, 0, 0)
+	flat.bg_color = Color("1c2632") if active else Color(0, 0, 0, 0)
 	if active:
+		flat.corner_radius_top_left = 7
+		flat.corner_radius_top_right = 7
 		flat.border_width_top = 2
 		flat.border_color = UIPalette.CYAN
 	flat.set_content_margin_all(1)
