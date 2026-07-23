@@ -96,6 +96,10 @@ var turn_pace: float = 0.55
 ## second action is ignored until the stage is quiet again.
 var _playback_running: bool = false
 
+## Set at battle start so the first paced action waits for the entrance and the wave
+## card to finish instead of swinging through them.
+var _entrance_hold: bool = false
+
 ## unit_id -> display name, rebuilt per battle so the log and floats never leak raw ids.
 var _display_names: Dictionary = {}
 
@@ -165,7 +169,79 @@ func begin_battle(p_engine: BattleEngine, skill_table: Dictionary) -> void:
 	engine.start()
 	_drain_events()
 	_refresh_all()
+	_play_entrance()
+	_announce_wave()
+	_entrance_hold = turn_pace > 0.0
 	_advance_if_not_player_turn()
+
+
+## The combatants take the field: each figure slides in from its own side of the screen
+## and fades up, row by row. Purely presentational — at pace 0 (headless) nothing moves.
+##
+## Waits two frames before touching positions: begin_battle can run before the arena has
+## been given a size, and rest positions captured then are garbage the tweens would pin
+## the figures to (the first version stacked the whole cast in the corner).
+func _play_entrance() -> void:
+	if turn_pace <= 0.0 or not is_inside_tree():
+		return
+	# Hide the cast during the settle frames so nobody flashes at a wrong position.
+	for panel in _player_panels + _enemy_panels:
+		panel.modulate.a = 0.0
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if not is_inside_tree():
+		return
+	_layout_arena()
+	var order := 0
+	for panel in _player_panels + _enemy_panels:
+		if not panel.visible:
+			panel.modulate.a = 1.0
+			continue
+		var rest: Vector2 = panel.position
+		var from_x := -90.0 if _player_panels.has(panel) else 90.0
+		panel.position = rest + Vector2(from_x, 0)
+		var tween := panel.create_tween()
+		tween.tween_interval(0.06 * order)
+		tween.tween_property(panel, "modulate:a", 1.0, 0.20)
+		tween.parallel().tween_property(panel, "position", rest, 0.34) \
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		order += 1
+
+
+## The wave title card: WAVE n/m stamps into the middle of the field, holds a beat and
+## fades — the "new room" read in a dungeon, and the opening bell of any fight.
+func _announce_wave() -> void:
+	if turn_pace <= 0.0:
+		return
+	var announcement := Label.new()
+	announcement.text = "WAVE %d/%d" % [_wave, _wave_count]
+	announcement.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	announcement.add_theme_font_override("font", UIPalette.bold_font())
+	announcement.add_theme_font_size_override("font_size", 30)
+	announcement.add_theme_color_override("font_color", UIPalette.AMBER)
+	announcement.add_theme_color_override("font_outline_color", UIPalette.INK)
+	announcement.add_theme_constant_override("outline_size", 8)
+	announcement.set_anchors_preset(Control.PRESET_CENTER)
+	announcement.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	announcement.grow_vertical = Control.GROW_DIRECTION_BOTH
+	announcement.position.y -= 60
+	announcement.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	announcement.modulate.a = 0.0
+	announcement.scale = Vector2(1.35, 1.35)
+	announcement.z_index = 20
+	add_child(announcement)
+	# Size is 0 until first layout, so the scale pivot re-centres itself on resize.
+	announcement.resized.connect(
+		func() -> void: announcement.pivot_offset = announcement.size * 0.5)
+
+	var tween := announcement.create_tween()
+	tween.tween_interval(0.28)
+	tween.tween_property(announcement, "modulate:a", 1.0, 0.14)
+	tween.parallel().tween_property(announcement, "scale", Vector2.ONE, 0.18) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_interval(0.75)
+	tween.tween_property(announcement, "modulate:a", 0.0, 0.30)
+	tween.tween_callback(announcement.queue_free)
 
 
 # ---------------------------------------------------------------------------
@@ -497,6 +573,10 @@ func _run_paced_playback() -> void:
 	if _playback_running:
 		return
 	_playback_running = true
+	if _entrance_hold:
+		# Let the combatants land and the wave card fade before the first swing.
+		_entrance_hold = false
+		await _beat(1.1)
 	await _present_new_events()
 	_refresh_all()
 	while engine != null and is_inside_tree() and not engine.is_over():

@@ -651,3 +651,28 @@ func test_the_sfx_node_registers_every_battle_cue() -> void:
 		assert_not_null(player, String(cue) + " must be wired")
 		assert_not_null(player.stream, String(cue) + " must carry a generated stream")
 		assert_gt((player.stream as AudioStreamWAV).data.size(), 0)
+
+
+func test_pace_zero_skips_the_entrance_theatre() -> void:
+	# At pace 0 (every headless suite) begin_battle must leave the figures planted.
+	var p := _unit("p", BattleUnit.Side.PLAYER, 200, SpeciesDefScript.Role.DPS, 30)
+	_start([p], [_unit("x", BattleUnit.Side.ENEMY)])
+	for panel in _screen._player_panels + _screen._enemy_panels:
+		if panel.visible:
+			assert_eq(panel.modulate.a, 1.0, "no entrance tween may run at pace 0")
+
+
+func test_the_wave_announcement_stamps_the_wave_text() -> void:
+	# Arrange: paced mode, wave 2 of 3.
+	_screen.turn_pace = 0.4
+	_screen.set_wave(2, 3)
+
+	# Act.
+	_screen._announce_wave()
+
+	# Assert: a big label carrying the wave text is on screen.
+	var found := false
+	for child in _screen.get_children():
+		if child is Label and child.text == "WAVE 2/3":
+			found = true
+	assert_true(found, "the new-room read needs its title card")
