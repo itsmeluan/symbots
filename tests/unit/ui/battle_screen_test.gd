@@ -618,3 +618,36 @@ func test_zero_pace_keeps_the_whole_battle_synchronous() -> void:
 	_screen._on_auto_toggled(true)
 
 	assert_true(_screen.engine.is_over(), "no awaits may hide in the pace-0 path")
+
+
+# ---------------------------------------------------------------------------
+# Juice pass
+# ---------------------------------------------------------------------------
+
+func test_arming_a_skill_shows_the_targets_nameplate_with_level() -> void:
+	# Arrange.
+	var p := _unit("p", BattleUnit.Side.PLAYER, 200, SpeciesDefScript.Role.DPS, 30)
+	var x := _unit("x", BattleUnit.Side.ENEMY)
+	x.display_name = "Rustcrawler"
+	x.level = 7
+	_start([p], [x])
+
+	# Act.
+	_screen._on_skill_pressed(&"strike")
+
+	# Assert: the legal target announces itself.
+	var enemy_panel: UnitPanel = _screen._enemy_panels[0]
+	assert_true(enemy_panel._nameplate.visible)
+	assert_eq(enemy_panel._nameplate.text, "Rustcrawler · LV 7")
+
+	# And it clears when the selection does.
+	_screen._on_skill_pressed(&"strike")
+	assert_false(enemy_panel._nameplate.visible)
+
+
+func test_the_sfx_node_registers_every_battle_cue() -> void:
+	for cue in [&"tap", &"hit", &"crit", &"heal", &"destroyed"]:
+		var player: AudioStreamPlayer = _screen._sfx._players.get(cue)
+		assert_not_null(player, String(cue) + " must be wired")
+		assert_not_null(player.stream, String(cue) + " must carry a generated stream")
+		assert_gt((player.stream as AudioStreamWAV).data.size(), 0)

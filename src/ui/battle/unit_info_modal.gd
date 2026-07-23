@@ -109,6 +109,7 @@ func _header(species: SpeciesDef) -> Control:
 
 	var tags := Label.new()
 	var bits: PackedStringArray = []
+	bits.append("LV %d" % unit.level)
 	bits.append(String(ROLE_TAGS.get(unit.role, "")))
 	if species != null:
 		bits.append(String(RARITY_NAMES.get(species.rarity, "")))

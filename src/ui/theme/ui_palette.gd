@@ -180,31 +180,37 @@ static func tech_button(accent: Color, state: String = "normal") -> StyleBoxFlat
 ##
 ## [param base] is the face colour; the depth edge derives from it, so every family of
 ## button carries its own material. [param rim] (optional) draws a selection ring.
-static func chunky(base: Color, state: String = "normal", rim: Color = Color.TRANSPARENT) -> StyleBoxFlat:
+## [param glow] draws a soft outer halo (selection, charged ult) via the stylebox's
+## zero-offset shadow — kept SEPARATE from the depth edge on purpose: an earlier version
+## recoloured the borders for selection and the "3D base" turned into a fat coloured
+## ring with ragged corner joins.
+static func chunky(base: Color, state: String = "normal", glow: Color = Color.TRANSPARENT) -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
-	box.set_corner_radius_all(9)
+	box.set_corner_radius_all(7)
+	box.corner_detail = 12
+	box.anti_aliasing_size = 0.8
 	box.bg_color = base
-	box.border_color = base.darkened(0.55)
-	box.border_width_bottom = 5
+	box.border_color = base.darkened(0.52)
+	box.border_width_bottom = 4
 	box.set_content_margin_all(6)
-	box.content_margin_bottom = 11
+	box.content_margin_bottom = 10
 	match state:
+		"selected":
+			box.bg_color = base.lightened(0.10)
 		"pressed":
 			box.bg_color = base.darkened(0.10)
-			box.border_width_bottom = 2
+			box.border_width_bottom = 1
 			box.content_margin_top = 9
-			box.content_margin_bottom = 8
+			box.content_margin_bottom = 7
 		"disabled":
-			var grey := base.lerp(INK, 0.72)
+			var grey := base.lerp(INK, 0.68)
 			box.bg_color = grey
 			box.border_color = grey.darkened(0.45)
 			box.border_width_bottom = 3
-	if rim.a > 0.0 and state != "pressed":
-		box.border_color = rim
-		box.border_width_top = 2
-		box.border_width_left = 2
-		box.border_width_right = 2
-		box.border_width_bottom = 5
+	if glow.a > 0.0 and state != "disabled" and state != "pressed":
+		box.shadow_color = glow
+		box.shadow_size = 6
+		box.shadow_offset = Vector2.ZERO
 	return box
 
 
@@ -221,8 +227,13 @@ static func gloss(strength: float = 0.10) -> TextureRect:
 	texture.fill_to = Vector2(0, 1)
 	sheen.texture = texture
 	sheen.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	sheen.anchor_bottom = 0.55
+	sheen.anchor_bottom = 0.52
 	sheen.grow_vertical = Control.GROW_DIRECTION_END
+	# Inset from the rounded corners — a square sheen poking past a 7px radius is
+	# exactly the "badly cut edge" it would otherwise read as.
+	sheen.offset_left = 4
+	sheen.offset_right = -4
+	sheen.offset_top = 3
 	sheen.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	sheen.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return sheen

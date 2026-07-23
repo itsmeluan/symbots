@@ -26,6 +26,10 @@ var display_name: String = ""
 ## needs. `art_mark` is 1-3; a Retrofit changes it.
 var species_id: StringName = &""
 var art_mark: int = 1
+
+## The level the unit was built at (instance level for the player's squad, the stage's
+## enemy level for wilds). Display-only in battle — every stat is already baked.
+var level: int = 1
 ## Stored as int, not as `Side`. A `class_name` script's own enum resolves to a
 ## different type identity when read from outside the script, so a typed property
 ## rejects `BattleUnit.Side.ENEMY` from a caller. Same idiom as `role` below.

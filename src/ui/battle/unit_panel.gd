@@ -61,6 +61,11 @@ var _charge_bar: ProgressBar
 var _status_row: HBoxContainer
 var _root: VBoxContainer
 
+## The running structure-bar slide, killed and replaced on every refresh.
+var _bar_tween: Tween = null
+
+var _nameplate: Label
+
 ## Visual state the screen drives. Kept as fields rather than as style overrides applied
 ## immediately so [method refresh] stays the single place that touches appearance.
 var is_active_turn: bool = false
@@ -90,6 +95,21 @@ func _init() -> void:
 	_ground.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_ground.draw.connect(_draw_ground)
 	stage.add_child(_ground)
+
+	# The targeting nameplate: who this is and what level, shown only while the unit is
+	# a legal target — the aim-assist read, not permanent clutter.
+	_nameplate = Label.new()
+	_nameplate.visible = false
+	_nameplate.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_nameplate.add_theme_font_override("font", UIPalette.display_font())
+	_nameplate.add_theme_font_size_override("font_size", 10)
+	_nameplate.add_theme_color_override("font_outline_color", UIPalette.INK)
+	_nameplate.add_theme_constant_override("outline_size", 4)
+	_nameplate.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	_nameplate.offset_top = -26
+	_nameplate.offset_bottom = -14
+	_nameplate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stage.add_child(_nameplate)
 
 	# Active status effects, as a row of small glyphs floating over the figure's head —
 	# buffs green-tinted, debuffs coral. Populated by refresh() from the unit's statuses.
@@ -201,7 +221,18 @@ func refresh() -> void:
 	_structure_bar.add_theme_stylebox_override("fill", fill)
 
 	_structure_bar.max_value = maxi(1, unit.max_structure)
-	_structure_bar.value = unit.current_structure
+	# The bar SLIDES to its new value instead of snapping — the lost chunk is visible
+	# leaving. Snap only outside the tree (headless refresh before layout).
+	var target := float(unit.current_structure)
+	if _bar_tween != null:
+		_bar_tween.kill()
+		_bar_tween = null
+	if is_inside_tree() and absf(_structure_bar.value - target) > 0.5:
+		_bar_tween = create_tween()
+		_bar_tween.tween_property(_structure_bar, "value", target, 0.30) \
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	else:
+		_structure_bar.value = target
 
 	# The shield bar is scaled against max structure, not against itself, so a 10-point
 	# shield on a 500-HP tank reads as the sliver it actually is rather than as a full bar.
@@ -316,6 +347,12 @@ func set_active_turn(active: bool) -> void:
 
 func set_targetable(targetable: bool) -> void:
 	is_targetable = targetable
+	if _nameplate != null:
+		_nameplate.visible = targetable and unit != null
+		if targetable and unit != null:
+			_nameplate.text = "%s · LV %d" % [unit.display_name, unit.level]
+			_nameplate.add_theme_color_override("font_color",
+				UIPalette.CORAL if unit.side == BattleUnit.Side.ENEMY else UIPalette.GREEN)
 	_ground.queue_redraw()
 
 

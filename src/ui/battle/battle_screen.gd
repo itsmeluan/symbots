@@ -16,6 +16,7 @@ extends Screen
 const UnitPanelScript := preload("res://src/ui/battle/unit_panel.gd")
 const BattleTargetingScript := preload("res://src/core/battle_v1/targeting.gd")
 const UnitInfoModalScript := preload("res://src/ui/battle/unit_info_modal.gd")
+const BattleSfxScript := preload("res://src/ui/battle/battle_sfx.gd")
 
 ## Emitted once the battle resolves, so whatever pushed this screen can hand out rewards
 ## and pop back. Carries the [enum BattleEngine.Outcome].
@@ -98,11 +99,16 @@ var _playback_running: bool = false
 ## unit_id -> display name, rebuilt per battle so the log and floats never leak raw ids.
 var _display_names: Dictionary = {}
 
+## The battle's audio-event seam (procedural placeholders until authored SFX land).
+var _sfx: BattleSfx = null
+
 
 func setup(ctx: ServiceContext) -> void:
 	_ctx = ctx
 	_set_background(_background_path(), BACKDROP_DIM)
 	_build_layout()
+	_sfx = BattleSfxScript.new()
+	add_child(_sfx)
 
 
 ## This stage's battlefield, or the shared one.
@@ -536,7 +542,9 @@ func _present_new_events() -> void:
 				await _beat(0.34)
 			&"damaged":
 				_float_for_event(event, 0)
-				await _beat(0.30)
+				# A crit holds the frame a beat longer — the hit-stop that gives the
+				# shake room to land before the fight moves on.
+				await _beat(0.44 if event.get(&"crit", false) else 0.30)
 			&"healed", &"shielded", &"stunned":
 				_float_for_event(event, 0)
 				await _beat(0.26)
@@ -544,6 +552,7 @@ func _present_new_events() -> void:
 				var dead_panel := _panel_of(event.get(&"unit", &""))
 				if dead_panel != null:
 					dead_panel.refresh()
+				_play_cue(&"destroyed")
 				await _beat(0.30)
 			_:
 				pass
@@ -603,6 +612,7 @@ func _on_skill_pressed(skill_id: StringName) -> void:
 	if skill == null:
 		return
 	var usable := _usable_ids(actor).has(skill_id)
+	_play_cue(&"tap")
 
 	if _selected_skill_id == skill_id:
 		if usable and not skill.is_single_target():
@@ -836,21 +846,24 @@ func _add_skill_button(skill_id: StringName, enabled: bool, actor: BattleUnit,
 	var selected := skill_id == _selected_skill_id
 	var glyph_kind := Glyph.for_skill(skill)
 	var surface: Color = CARD_SURFACES.get(glyph_kind, UIPalette.PANEL_2)
-	var rim := Color.TRANSPARENT
+	# Selection and the ready-ult both read as LIGHT (an outer halo), never as recoloured
+	# borders — the depth edge always stays the card's own darker material.
+	var glow := Color.TRANSPARENT
+	var face_state := "normal"
 	if selected:
-		rim = UIPalette.CYAN
-	elif is_ult:
-		rim = Color(UIPalette.AMBER, 0.55)
+		glow = Color(UIPalette.CYAN, 0.55)
+		face_state = "selected"
+	elif is_ult and enabled:
+		glow = Color(UIPalette.AMBER, 0.45)
 
 	var button := Button.new()
 	button.custom_minimum_size = Vector2(0, SKILL_CARD_HEIGHT)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.disabled = not enabled and not is_ult
-	button.add_theme_stylebox_override("normal", UIPalette.chunky(surface, "normal", rim))
-	button.add_theme_stylebox_override("hover", UIPalette.chunky(surface, "normal", rim))
+	button.add_theme_stylebox_override("normal", UIPalette.chunky(surface, face_state, glow))
+	button.add_theme_stylebox_override("hover", UIPalette.chunky(surface, face_state, glow))
 	button.add_theme_stylebox_override("pressed", UIPalette.chunky(surface, "pressed"))
-	button.add_theme_stylebox_override("disabled",
-		UIPalette.chunky(surface, "disabled", rim if is_ult else Color.TRANSPARENT))
+	button.add_theme_stylebox_override("disabled", UIPalette.chunky(surface, "disabled"))
 	button.add_theme_stylebox_override("focus", UIPalette.empty())
 	button.pressed.connect(Callable(self, "_on_skill_pressed").bind(skill_id))
 	# The top-half sheen that sells the volume.
@@ -924,15 +937,15 @@ func _skill_state_text(skill: SkillDef, actor: BattleUnit, is_ult: bool) -> Stri
 ## Warm rust for physical, deep teal for energy, workshop green for repairs, forged
 ## amber for ults — the bar reads as a hand of distinct, characterful cards.
 const CARD_SURFACES := {
-	&"star": Color("4a3512"),
-	&"sword": Color("46302a"),
-	&"bolt": Color("143a44"),
-	&"wrench": Color("1e3b27"),
-	&"shield": Color("223850"),
-	&"arrow_up": Color("1e3b27"),
-	&"arrow_down": Color("40222e"),
-	&"sparkle": Color("1c3d3d"),
-	&"core": Color("4a3512"),
+	&"star": Color("6b4a10"),
+	&"sword": Color("57352b"),
+	&"bolt": Color("125666"),
+	&"wrench": Color("1d5638"),
+	&"shield": Color("27476b"),
+	&"arrow_up": Color("1d5638"),
+	&"arrow_down": Color("5c2f40"),
+	&"sparkle": Color("175252"),
+	&"core": Color("6b4a10"),
 }
 
 
@@ -1078,10 +1091,15 @@ func _float_for_event(event: Dictionary, order: int) -> bool:
 			var hit_panel := _panel_of(event.get(&"unit", &""))
 			if hit_panel != null:
 				hit_panel.flash_hit()
+				_spawn_sparks(hit_panel, crit)
+			if crit:
+				_shake()
+			_play_cue(&"crit" if crit else &"hit")
 			return true
 		&"healed":
 			_spawn_float(event.get(&"unit", &""), "+%d" % int(event.get(&"amount", 0)),
 				FLOAT_HEAL_COLOUR, order)
+			_play_cue(&"heal")
 			return true
 		&"shielded":
 			_spawn_float(event.get(&"unit", &""), "+%d" % int(event.get(&"amount", 0)),
@@ -1091,6 +1109,47 @@ func _float_for_event(event: Dictionary, order: int) -> bool:
 			_spawn_float(event.get(&"unit", &""), "STUNNED", FLOAT_CRIT_COLOUR, order)
 			return true
 	return false
+
+
+## A short decaying screen shake — the crit's exclamation mark. Deterministic offsets
+## (no RNG in the view), always ending back at rest.
+## Route a cue through the sfx node. Silent at pace 0 — a headless test suite that
+## plays hundreds of battles should not also mix hundreds of thuds.
+func _play_cue(cue: StringName) -> void:
+	if _sfx != null and turn_pace > 0.0:
+		_sfx.play(cue)
+
+
+func _shake(strength: float = 5.0) -> void:
+	if not is_inside_tree() or turn_pace <= 0.0:
+		return
+	var tween := create_tween()
+	for offset in [Vector2(1.2, -0.6), Vector2(-1.0, 0.5), Vector2(0.6, -0.4)]:
+		tween.tween_property(self, "position", offset * strength, 0.045)
+	tween.tween_property(self, "position", Vector2.ZERO, 0.06)
+
+
+## A burst of sparks at the point of impact. CPU particles, one-shot, self-freeing.
+func _spawn_sparks(panel: UnitPanel, crit: bool) -> void:
+	if _arena == null or not is_inside_tree():
+		return
+	var sparks := CPUParticles2D.new()
+	sparks.one_shot = true
+	sparks.explosiveness = 1.0
+	sparks.amount = 14 if crit else 8
+	sparks.lifetime = 0.38
+	sparks.direction = Vector2(0, -1)
+	sparks.spread = 70.0
+	sparks.initial_velocity_min = 70.0
+	sparks.initial_velocity_max = 170.0 if crit else 120.0
+	sparks.gravity = Vector2(0, 340)
+	sparks.scale_amount_min = 1.4
+	sparks.scale_amount_max = 2.6
+	sparks.color = UIPalette.AMBER if crit else Color(1.0, 0.88, 0.66)
+	sparks.position = panel.position + panel.size * 0.5
+	_arena.add_child(sparks)
+	sparks.emitting = true
+	get_tree().create_timer(0.9).timeout.connect(sparks.queue_free)
 
 
 func _panel_of(unit_id: StringName) -> UnitPanel:

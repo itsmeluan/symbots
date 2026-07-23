@@ -166,3 +166,15 @@ func test_slow_pushes_a_unit_down_the_order() -> void:
 	a.add_status(StatusEffectScript.slow(50, 2))
 	assert_eq(TurnOrderScript.for_round([a, b], [])[0], b,
 		"Slow feeds through stat() into ordering — 20 becomes 10, below b's 15")
+
+
+func test_unit_builder_carries_the_level_onto_the_unit() -> void:
+	# Arrange: a minimal species; Act: build a level-12 wild from it.
+	var species := SpeciesDef.new()
+	species.id = &"testbot"
+	species.display_name = "Testbot"
+	species.base_stats = {&"structure": 100, &"mobility": 10}
+	var unit := UnitBuilder.build_enemy(species, 12, BattleUnit.Side.ENEMY, 0, {})
+
+	# Assert: the display level survives the build — the nameplate reads it.
+	assert_eq(unit.level, 12)
