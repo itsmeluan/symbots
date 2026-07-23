@@ -717,13 +717,100 @@ func _drain_events() -> void:
 	if engine == null:
 		return
 	var lines: PackedStringArray = []
+	var float_order := 0
 	while _events_drawn < engine.events.size():
-		var line := _describe(engine.events[_events_drawn])
+		var event: Dictionary = engine.events[_events_drawn]
+		if _float_for_event(event, float_order):
+			float_order += 1
+		var line := _describe(event)
 		if line != "":
 			lines.append(line)
 		_events_drawn += 1
 	if not lines.is_empty():
 		_log_label.text = "\n".join(lines.slice(maxi(0, lines.size() - 2)))
+
+
+# ---------------------------------------------------------------------------
+# Floating combat numbers
+# ---------------------------------------------------------------------------
+
+const FLOAT_RISE := 34.0
+const FLOAT_DURATION := 0.9
+## Events resolve synchronously in a batch (a whole enemy round can land in one drain),
+## so each popup starts a beat after the previous one — a cascade the eye can follow
+## instead of eight numbers appearing in the same frame.
+const FLOAT_STAGGER := 0.22
+
+const FLOAT_DAMAGE_COLOUR := Color(1.0, 0.92, 0.85)
+const FLOAT_CRIT_COLOUR := UIPalette.AMBER
+const FLOAT_HEAL_COLOUR := UIPalette.GREEN
+const FLOAT_SHIELD_COLOUR := Color(0.45, 0.70, 0.95)
+
+
+## Spawn the floating number for one engine event, if it deserves one. Returns whether
+## it did, so the caller advances the cascade order only for visible popups.
+func _float_for_event(event: Dictionary, order: int) -> bool:
+	match event.get(&"event", &""):
+		&"damaged":
+			var crit: bool = event.get(&"crit", false)
+			var text := "-%d" % int(event.get(&"amount", 0)) + ("!" if crit else "")
+			_spawn_float(event.get(&"unit", &""), text,
+				FLOAT_CRIT_COLOUR if crit else FLOAT_DAMAGE_COLOUR, order, crit)
+			return true
+		&"healed":
+			_spawn_float(event.get(&"unit", &""), "+%d" % int(event.get(&"amount", 0)),
+				FLOAT_HEAL_COLOUR, order)
+			return true
+		&"shielded":
+			_spawn_float(event.get(&"unit", &""), "+%d" % int(event.get(&"amount", 0)),
+				FLOAT_SHIELD_COLOUR, order)
+			return true
+		&"stunned":
+			_spawn_float(event.get(&"unit", &""), "STUNNED", FLOAT_CRIT_COLOUR, order)
+			return true
+	return false
+
+
+func _panel_of(unit_id: StringName) -> UnitPanel:
+	for panel in _player_panels + _enemy_panels:
+		if panel.unit != null and panel.unit.unit_id == unit_id:
+			return panel
+	return null
+
+
+## One rising, fading number above a unit's head. Crits are bigger — the reward for the
+## roll is seeing it land. The label owns its tween and frees itself, so a popup never
+## outlives the battle screen's interest in it.
+func _spawn_float(unit_id: StringName, text: String, colour: Color, order: int,
+		big := false) -> void:
+	var panel := _panel_of(unit_id)
+	if panel == null or _arena == null or not panel.visible:
+		return
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_override("font", UIPalette.bold_font())
+	label.add_theme_font_size_override("font_size", 18 if big else 13)
+	label.add_theme_color_override("font_color", colour)
+	label.add_theme_color_override("font_outline_color", UIPalette.INK)
+	label.add_theme_constant_override("outline_size", 5)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.z_index = 10
+	# Sized to the slot and centered over it, so the number hangs above the figure's head
+	# without needing the label's own metrics (unknown until layout).
+	label.size = Vector2(SLOT_WIDTH, 22)
+	label.position = panel.position + Vector2((panel.size.x - SLOT_WIDTH) * 0.5, -18.0)
+	label.modulate.a = 0.0
+	_arena.add_child(label)
+
+	var tween := label.create_tween()
+	if order > 0:
+		tween.tween_interval(order * FLOAT_STAGGER)
+	tween.tween_property(label, "modulate:a", 1.0, 0.08)
+	tween.parallel().tween_property(label, "position:y", label.position.y - FLOAT_RISE,
+		FLOAT_DURATION).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(label, "modulate:a", 0.0, 0.3)
+	tween.tween_callback(label.queue_free)
 
 
 func _describe(event: Dictionary) -> String:

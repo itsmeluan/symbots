@@ -483,3 +483,26 @@ func test_the_evolution_strip_silhouettes_undiscovered_marks() -> void:
 			silhouettes += 1
 	assert_eq(silhouettes, 1, "meeting the mk2 in battle lifts its silhouette")
 	_screen._unit_modal._dismiss()
+
+
+# ---------------------------------------------------------------------------
+# Floating combat numbers
+# ---------------------------------------------------------------------------
+
+func test_damage_events_spawn_floating_numbers_over_the_arena() -> void:
+	# Arrange: a fast player so the first turn is theirs.
+	var p := _unit("p", BattleUnit.Side.PLAYER, 200, SpeciesDefScript.Role.DPS, 30)
+	var x := _unit("x", BattleUnit.Side.ENEMY, 300)
+	_start([p], [x])
+
+	# Act: land a hit.
+	_screen._on_skill_pressed(&"strike")
+	_screen._on_unit_tapped(x)
+
+	# Assert: at least one popup Label is riding the arena (panels are UnitPanels, so any
+	# direct Label child is a combat number).
+	var floats := 0
+	for child in _screen._arena.get_children():
+		if child is Label:
+			floats += 1
+	assert_gt(floats, 0, "a hit that shows no number is a hit the player has to infer")
