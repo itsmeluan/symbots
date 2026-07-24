@@ -319,9 +319,8 @@ func _skill_list() -> Control:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 6)
 
-		var glyph_kind := Glyph.for_skill(skill)
 		var icon_holder := VBoxContainer.new()
-		icon_holder.add_child(Glyph.make(glyph_kind, 11.0,
+		icon_holder.add_child(SkillIcons.make(skill, 14.0,
 			UIPalette.AMBER if skill.is_ultimate else UIPalette.MUTED))
 		row.add_child(icon_holder)
 

@@ -974,7 +974,7 @@ func _add_skill_button(skill_id: StringName, enabled: bool, actor: BattleUnit,
 	name_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_child(name_row)
 
-	name_row.add_child(Glyph.make(glyph_kind, 12.0,
+	name_row.add_child(SkillIcons.make(skill, 15.0,
 		_glyph_colour(glyph_kind, name_tone) if enabled else UIPalette.DISABLED))
 
 	var name_label := Label.new()
@@ -1077,7 +1077,7 @@ func _show_skill_info(skill: SkillDef, actor: BattleUnit) -> void:
 		_info_glyph_slot.remove_child(child)
 		child.queue_free()
 	var glyph_kind := Glyph.for_skill(skill)
-	_info_glyph_slot.add_child(Glyph.make(glyph_kind, 14.0,
+	_info_glyph_slot.add_child(SkillIcons.make(skill, 16.0,
 		_glyph_colour(glyph_kind, UIPalette.TEXT)))
 	_info_title.text = skill.display_name
 	_info_desc.text = skill.description
