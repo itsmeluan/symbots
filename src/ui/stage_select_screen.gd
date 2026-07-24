@@ -77,7 +77,7 @@ const MIN_ROW_HEIGHT := 60  ## comfortably past the 44pt touch minimum
 ## description genuinely needs less room — a budget fitted to one stage clips another. The
 ## sheet therefore looks a little roomy on short descriptions, which is the price of DEPLOY
 ## never moving under the player's thumb as they browse.
-const SHEET_HEIGHT := 178.0
+const SHEET_HEIGHT := 218.0
 
 ## Inset from the screen edges, and the gap left between the sheet and the dock, so the sheet
 ## reads as a card floating over the map rather than as a slab welded to the bottom.
@@ -100,6 +100,7 @@ var _nodes: Array[Control] = []
 var _sheet: PanelContainer
 var _sheet_name: Label
 var _sheet_chips: HBoxContainer
+var _sheet_enemies: HBoxContainer
 var _sheet_body: Label
 var _sheet_reward: Label
 var _deploy: Button
@@ -275,6 +276,14 @@ func _build_sheet() -> void:
 	_sheet_chips.add_theme_constant_override("separation", 6)
 	v.add_child(_sheet_chips)
 
+	# Scout row: the faces of what waits in the first fight — full sprite for anything
+	# met before, black silhouette for the unknown (DiscoveryCodex). Turns "DEPLOY" from
+	# a blind commit into a look before the leap.
+	_sheet_enemies = HBoxContainer.new()
+	_sheet_enemies.add_theme_constant_override("separation", 4)
+	_sheet_enemies.custom_minimum_size = Vector2(0, 34)
+	v.add_child(_sheet_enemies)
+
 	_sheet_body = Label.new()
 	_sheet_body.add_theme_font_size_override("font_size", 10)
 	_sheet_body.add_theme_color_override("font_color", UIPalette.MUTED)
@@ -382,23 +391,26 @@ func _build_node(stage: StageDef, index: int) -> Control:
 	node.size = Vector2(NODE_DIAMETER, NODE_DIAMETER)
 	node.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
+	# A dungeon/raid is a milestone: its node reads coral (danger) rather than cyan while
+	# it is still ahead, so the map's big fights stand out from the string of skirmishes.
+	var boss: bool = _is_boss_stage(stage)
 	var accent := UIPalette.LINE
 	if cleared:
 		accent = UIPalette.AMBER
 	elif available:
-		accent = UIPalette.CYAN
+		accent = UIPalette.CORAL if boss else UIPalette.CYAN
 
 	var box := StyleBoxFlat.new()
 	box.bg_color = UIPalette.INK if not cleared else Color(UIPalette.AMBER_DARK, 0.9)
 	box.set_corner_radius_all(int(NODE_DIAMETER * 0.5))
 	box.border_color = accent
-	box.set_border_width_all(2)
+	box.set_border_width_all(3 if boss and not cleared else 2)
 	node.add_theme_stylebox_override("panel", box)
 
 	var label := Label.new()
-	# A cleared stage shows a tick, not its number — the number is only useful while it is
-	# still ahead of you.
-	label.text = "✓" if cleared else str(index + 1)
+	# A cleared stage shows a tick; a boss shows a diamond marker; otherwise its number,
+	# which is only useful while the stage is still ahead of you.
+	label.text = "✓" if cleared else ("◆" if boss else str(index + 1))
 	label.add_theme_font_size_override("font_size", 13)
 	label.add_theme_color_override("font_color", accent)
 	label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -536,8 +548,11 @@ func _fill_sheet(stage: StageDef) -> void:
 		_sheet_chips.remove_child(chip)
 		chip.queue_free()
 	_sheet_chips.add_child(_chip("LV. %d" % stage.enemy_level, UIPalette.CYAN))
-	_sheet_chips.add_child(_chip(_mode_name(stage.mode), UIPalette.CYAN))
+	_sheet_chips.add_child(_chip(_mode_name(stage.mode),
+		UIPalette.CORAL if _is_boss_stage(stage) else UIPalette.CYAN))
 	_sheet_chips.add_child(_chip(_fight_count(stage), UIPalette.CYAN))
+
+	_fill_enemy_preview(stage)
 
 	var reward := ""
 	if _ctx.balance != null:
@@ -547,6 +562,57 @@ func _fill_sheet(stage: StageDef) -> void:
 		reward += " · Blueprint"
 	_sheet_reward.text = reward
 	_sheet_reward.visible = reward != ""
+
+
+## A dungeon or raid — the map's milestone fights (mode drives carry-over, §3.6).
+func _is_boss_stage(stage: StageDef) -> bool:
+	return stage.mode == StageDefScript.Mode.DUNGEON \
+		or stage.mode == StageDefScript.Mode.RAID
+
+
+## Draw the first fight's line-up as small faces: sprite if the player has met the
+## species (codex), silhouette otherwise. Up to five, so it never overflows the sheet.
+func _fill_enemy_preview(stage: StageDef) -> void:
+	for child in _sheet_enemies.get_children():
+		_sheet_enemies.remove_child(child)
+		child.queue_free()
+	if _ctx.species == null:
+		_sheet_enemies.visible = false
+		return
+
+	var ids := stage.enemies_at(0)
+	var marks := stage.marks_at(0)
+	var shown := 0
+	for i in ids.size():
+		if shown >= 5:
+			break
+		var species: SpeciesDef = _ctx.species.get_species(ids[i])
+		if species == null:
+			continue
+		var mark := int(marks[i]) if i < marks.size() else 1
+		var seen := _ctx.codex == null or _ctx.codex.is_discovered(ids[i], mark)
+
+		var frame := PanelContainer.new()
+		frame.custom_minimum_size = Vector2(32, 32)
+		var box := StyleBoxFlat.new()
+		box.bg_color = Color(UIPalette.INK, 0.7)
+		box.set_corner_radius_all(6)
+		box.set_border_width_all(1)
+		box.border_color = Color(UIPalette.CORAL, 0.5)
+		frame.add_theme_stylebox_override("panel", box)
+
+		var face := TextureRect.new()
+		face.texture = UnitPanel.art_texture(ids[i], mark)
+		face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		face.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		face.custom_minimum_size = Vector2(28, 28)
+		if not seen:
+			face.modulate = Color.BLACK
+		frame.add_child(face)
+		_sheet_enemies.add_child(frame)
+		shown += 1
+	_sheet_enemies.visible = shown > 0
 
 
 func _fight_count(stage: StageDef) -> String:
