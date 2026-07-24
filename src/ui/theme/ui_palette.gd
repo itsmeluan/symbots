@@ -25,6 +25,14 @@ const AMBER_DARK := Color("5f4714")
 const CORAL := Color("ff6d4b")        ## enemy, danger, taunt
 const GREEN := Color("69d783")        ## ally HP, success
 const DISABLED := Color("65707a")
+
+## The SURFACE LADDER (style brief rule 1): every fill in the game is one of these five
+## steps of the same navy, each one lerp step lighter than its parent. A fill outside the
+## ladder is what reads as "prototype" — two random darks side by side.
+const SURFACE := Color("161b26")    ## panels one step above the screen
+const CARD_FACE := Color("1a2130")  ## interactive rows/cards/buttons
+const RAISED := Color("1f2737")     ## hover / selected face
+const OVERLAY := Color("242d3f")    ## modals, topmost sheets
 const SCRAP := AMBER                   ## Scrap currency — the common upgrade sink
 const ALLOY := Color("7ec8ff")        ## Alloy currency — the rare blueprint metal (light blue)
 
@@ -176,22 +184,22 @@ static func tech_button(accent: Color, state: String = "normal") -> StyleBoxFlat
 ## [param rim], when set, draws a SOLID coloured frame all around (equipped/selected
 ## marker) — distinct from [param glow], which is a soft outer halo. Prefer rim for a
 ## crisp "this is chosen" edge; the two can combine but usually you want one.
-## The 3D depth is a downward DROP SHADOW, not a thick bottom border: an asymmetric
-## border rounds cleanly on the outside but leaves a square INNER corner (Godot
-## StyleBoxFlat limitation), which read as the "cantos retos". A symmetric thin border
-## rounds perfectly inside and out, and the shadow — always smooth on a rounded rect —
-## carries the lift. Pressing collapses the shadow so the button sinks onto the surface.
+## The premium treatment from the style brief: NO wireframe outline. Depth comes from a
+## top-light bevel (1px inner white line along the top only — the "machined" edge every
+## finished dark UI carries) plus a tight downward drop shadow; pressing collapses the
+## shadow so the button physically sinks. Selection is the ONE case a full border is
+## allowed: a 2px accent rim, optionally with a glow halo.
 static func chunky(base: Color, state: String = "normal", glow: Color = Color.TRANSPARENT,
 		rim: Color = Color.TRANSPARENT) -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
-	box.set_corner_radius_all(10)
+	box.set_corner_radius_all(9)
 	box.corner_detail = 20
 	box.anti_aliasing_size = 1.0
 	box.bg_color = base
-	box.set_border_width_all(2)          # symmetric — clean inner + outer corners
-	box.border_color = base.darkened(0.5)
+	box.border_width_top = 1
+	box.border_color = Color(1, 1, 1, 0.10)
 	box.set_content_margin_all(7)
-	box.shadow_color = Color(0.0, 0.0, 0.0, 0.5)
+	box.shadow_color = Color(0.0, 0.0, 0.0, 0.45)
 	box.shadow_size = 3
 	box.shadow_offset = Vector2(0, 3)
 	match state:
@@ -199,25 +207,36 @@ static func chunky(base: Color, state: String = "normal", glow: Color = Color.TR
 			box.bg_color = base.lightened(0.10)
 		"pressed":
 			box.bg_color = base.darkened(0.10)
+			box.border_color = Color(1, 1, 1, 0.05)
 			box.shadow_size = 1
 			box.shadow_offset = Vector2(0, 1)
-			box.content_margin_top = 8
-			box.content_margin_bottom = 6
+			box.content_margin_top = 9
+			box.content_margin_bottom = 5
 		"disabled":
 			var grey := base.lerp(INK, 0.68)
 			box.bg_color = grey
-			box.border_color = grey.darkened(0.4)
+			box.border_color = Color(1, 1, 1, 0.04)
 			box.shadow_size = 1
 			box.shadow_offset = Vector2(0, 1)
 	if rim.a > 0.0:
-		# Solid selection/equipped frame — the crisp coloured edge, still symmetric.
+		# Solid selection/equipped frame — the crisp coloured edge on every side.
+		box.set_border_width_all(2)
 		box.border_color = rim
 	if glow.a > 0.0 and state != "disabled" and state != "pressed":
-		# A halo replaces the depth shadow (can't have both on one stylebox).
+		# A halo replaces the depth shadow (one shadow per stylebox).
 		box.shadow_color = glow
 		box.shadow_size = 6
 		box.shadow_offset = Vector2.ZERO
 	return box
+
+
+## Caption typography (style brief rule 3): the display face with a breath of extra
+## letter-spacing, for uppercase labels — nav tabs, section headers, stat names.
+static func caption_font() -> FontVariation:
+	var variation := FontVariation.new()
+	variation.base_font = display_font()
+	variation.set_spacing(TextServer.SPACING_GLYPH, 1)
+	return variation
 
 
 ## A soft top-half sheen for chunky buttons: white fading to nothing. A child overlay

@@ -12,6 +12,10 @@ extends Control
 ## so a listener can afford to rebuild the parts panel on it.
 signal focused_changed(index: int)
 
+## Emitted when the player drags UP off the carousel — the workshop opens its roster
+## drawer on this. The threshold is generous so a wobbly horizontal flick never triggers.
+signal dragged_up
+
 ## Distance between adjacent item centres, in px.
 const SPACING := 76.0
 ## Snap animation length.
@@ -31,6 +35,7 @@ var _scroll: float = 0.0:
 var _last_focus: int = -1
 var _pressed: bool = false
 var _moved: float = 0.0
+var _lift: float = 0.0
 var _snap: Tween = null
 
 
@@ -111,6 +116,7 @@ func _gui_input(event: InputEvent) -> void:
 		if event.pressed:
 			_pressed = true
 			_moved = 0.0
+			_lift = 0.0
 			_kill_snap()
 		else:
 			_pressed = false
@@ -119,6 +125,13 @@ func _gui_input(event: InputEvent) -> void:
 	elif _pressed and (event is InputEventScreenDrag or event is InputEventMouseMotion):
 		_scroll -= event.relative.x / SPACING
 		_moved += absf(event.relative.x)
+		_lift += -event.relative.y
+		# A clearly vertical pull (more lift than horizontal travel) opens the drawer.
+		if _lift > 26.0 and _lift > _moved:
+			_pressed = false
+			_lift = 0.0
+			_animate_to(focused_index())
+			dragged_up.emit()
 		accept_event()
 
 

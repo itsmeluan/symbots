@@ -76,15 +76,18 @@ func refresh() -> void:
 func _add_key_items() -> int:
 	if _ctx.key_items == null:
 		return 0
+	var grid: GridContainer = null
 	var rows := 0
 	for id in KeyItems.ids():
 		var count: int = _ctx.key_items.count(id)
 		if count <= 0:
 			continue
-		if rows == 0:
+		if grid == null:
 			_list.add_child(_section("KEY ITEMS"))
-		_list.add_child(_row(KeyItems.display_name(id), KeyItems.description(id),
-			count, UIPalette.AMBER, &"core"))
+			grid = _grid()
+			_list.add_child(grid)
+		grid.add_child(_card(KeyItems.display_name(id), KeyItems.description(id),
+			count, UIPalette.AMBER, &"core", null))
 		rows += 1
 	return rows
 
@@ -92,15 +95,18 @@ func _add_key_items() -> int:
 func _add_components() -> int:
 	if _ctx.inventory_items == null or _ctx.item_catalog == null:
 		return 0
+	var grid: GridContainer = null
 	var rows := 0
 	for id in _ctx.inventory_items.owned_ids():
 		var item: InstallItemDef = _ctx.item_catalog.get_item(id)
 		if item == null:
 			continue
-		if rows == 0:
+		if grid == null:
 			_list.add_child(_section("COMPONENTS"))
-		_list.add_child(_row(item.display_name, item.description,
-			_ctx.inventory_items.count(id), UIPalette.CYAN, &"chip"))
+			grid = _grid()
+			_list.add_child(grid)
+		grid.add_child(_card(item.display_name, item.description,
+			_ctx.inventory_items.count(id), UIPalette.CYAN, _component_glyph(id), null))
 		rows += 1
 	return rows
 
@@ -108,15 +114,18 @@ func _add_components() -> int:
 func _add_blueprints() -> int:
 	if _ctx.blueprints == null or _ctx.species == null:
 		return 0
+	var grid: GridContainer = null
 	var rows := 0
 	for id in _ctx.blueprints.known_ids():
 		var species: SpeciesDef = _ctx.species.get_species(id)
 		if species == null:
 			continue
-		if rows == 0:
+		if grid == null:
 			_list.add_child(_section("BLUEPRINTS"))
-		_list.add_child(_row(species.display_name, "Craftable in the Forge.", 0,
-			UIPalette.ALLOY, &"hex"))
+			grid = _grid()
+			_list.add_child(grid)
+		grid.add_child(_card(species.display_name, "Craftable in the Forge.", 0,
+			UIPalette.ALLOY, &"hex", UnitPanel.art_texture(id, 1)))
 		rows += 1
 	return rows
 
@@ -131,59 +140,87 @@ func _section(title: String) -> Control:
 	return label
 
 
-## One owned thing: a category glyph, its name and purpose, and a count badge. Framed in
-## the chunky card language with the category's accent glyph — a Chipset, a component and
-## a blueprint read apart at a glance. [param count] of 0 hides the tally — a blueprint is
-## known or not, never "×2".
-func _row(item_name: String, description: String, count: int, accent: Color,
-		icon: StringName) -> Control:
+## Two small cards per row — items are inventory, not heroes, so their cards are half
+## the size of a Symbot's.
+func _grid() -> GridContainer:
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	grid.add_theme_constant_override("h_separation", 6)
+	grid.add_theme_constant_override("v_separation", 6)
+	return grid
+
+
+## Which glyph a component wears, from its id — a capacitor, a heat sink, a processor, a
+## RAM stick and a servo each read as their own object across the whole inventory.
+func _component_glyph(id: StringName) -> StringName:
+	var key := String(id)
+	if key.contains("capacitor"):
+		return &"bolt"
+	if key.contains("heat_sink"):
+		return &"fins"
+	if key.contains("processor"):
+		return &"chip"
+	if key.contains("ram"):
+		return &"ram"
+	if key.contains("servo"):
+		return &"gear"
+	return &"hex"
+
+
+## One owned thing as a SMALL card: icon chip on the left, name + count beside it. The
+## description lives in the tooltip — a small card earns its size by not repeating prose.
+## [param sprite] (blueprints) replaces the glyph with the creature's own face.
+func _card(item_name: String, description: String, count: int, accent: Color,
+		icon: StringName, sprite: Texture2D) -> Control:
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(0, ROW_HEIGHT)
-	panel.add_theme_stylebox_override("panel",
-		UIPalette.chunky(Color("18212b"), "normal", Color.TRANSPARENT, Color(accent, 0.55)))
+	panel.custom_minimum_size = Vector2(0, 48)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.tooltip_text = "%s\n%s" % [item_name, description]
+	panel.add_theme_stylebox_override("panel", UIPalette.chunky(Color("18212b")))
 
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
+	row.add_theme_constant_override("separation", 8)
 	panel.add_child(row)
 
-	# The category glyph, in a round accent-tinted well.
+	# The uniform icon chip: accent lives on the CHIP fill, the glyph stays clean.
 	var well := PanelContainer.new()
 	var well_box := StyleBoxFlat.new()
-	well_box.bg_color = Color(accent, 0.14)
-	well_box.set_corner_radius_all(8)
-	well_box.set_content_margin_all(6)
+	well_box.bg_color = Color(accent, 0.16)
+	well_box.set_corner_radius_all(6)
+	well_box.set_border_width_all(1)
+	well_box.border_color = Color(accent, 0.35)
+	well_box.set_content_margin_all(4)
 	well.add_theme_stylebox_override("panel", well_box)
 	well.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	well.add_child(Glyph.make(icon, 18.0, accent))
+	well.custom_minimum_size = Vector2(28, 28)
+	if sprite != null:
+		var face := TextureRect.new()
+		face.texture = sprite
+		face.custom_minimum_size = Vector2(20, 20)
+		face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		face.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		well.add_child(face)
+	else:
+		well.add_child(Glyph.make(icon, 18.0, accent))
 	row.add_child(well)
-
-	var text := VBoxContainer.new()
-	text.add_theme_constant_override("separation", 0)
-	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	text.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(text)
 
 	var name_label := Label.new()
 	name_label.text = item_name
-	name_label.add_theme_font_override("font", UIPalette.bold_font())
-	name_label.add_theme_font_size_override("font_size", 12)
+	name_label.add_theme_font_override("font", UIPalette.display_font())
+	name_label.add_theme_font_size_override("font_size", 10)
 	name_label.add_theme_color_override("font_color", UIPalette.TEXT)
 	name_label.clip_text = true
-	text.add_child(name_label)
-
-	var desc := Label.new()
-	desc.theme_type_variation = &"Light"
-	desc.text = description
-	desc.add_theme_font_size_override("font_size", 9)
-	desc.add_theme_color_override("font_color", UIPalette.MUTED)
-	desc.clip_text = true
-	text.add_child(desc)
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(name_label)
 
 	if count > 0:
 		var tally := Label.new()
 		tally.text = "×%d" % count
 		tally.add_theme_font_override("font", UIPalette.bold_font())
-		tally.add_theme_font_size_override("font_size", 15)
+		tally.add_theme_font_size_override("font_size", 12)
 		tally.add_theme_color_override("font_color", accent)
 		tally.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		row.add_child(tally)

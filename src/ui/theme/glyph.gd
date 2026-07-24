@@ -174,6 +174,51 @@ func _draw() -> void:
 			_line(Vector2(0.12, 0.5), Vector2(0.88, 0.5), s)
 			_line(Vector2(0.28, 0.28), Vector2(0.72, 0.72), s)
 			_line(Vector2(0.72, 0.28), Vector2(0.28, 0.72), s)
+		&"gear":
+			# A cog: ring + teeth + hub.
+			draw_arc(p(Vector2(0.5, 0.5), s), s * 0.22, 0.0, TAU, 16, colour, thickness * 1.4)
+			for i in 8:
+				var a := TAU * i / 8.0
+				_line(Vector2(0.5 + cos(a) * 0.26, 0.5 + sin(a) * 0.26),
+					Vector2(0.5 + cos(a) * 0.40, 0.5 + sin(a) * 0.40), s)
+			draw_circle(p(Vector2(0.5, 0.5), s), s * 0.07, colour)
+		&"fins":
+			# A heat sink: base plate with rising fins.
+			draw_rect(Rect2(p(Vector2(0.18, 0.68), s), Vector2(s * 0.64, s * 0.10)), colour)
+			for i in 4:
+				var x := 0.24 + 0.17 * i
+				_line(Vector2(x, 0.66), Vector2(x, 0.26), s)
+		&"ram":
+			# A RAM stick: a slab with contact pins along its base.
+			draw_rect(Rect2(p(Vector2(0.16, 0.34), s), Vector2(s * 0.68, s * 0.30)),
+				colour, false, thickness)
+			for i in 5:
+				var x := 0.24 + 0.13 * i
+				_line(Vector2(x, 0.64), Vector2(x, 0.76), s)
+			_line(Vector2(0.28, 0.44), Vector2(0.28, 0.54), s)
+			_line(Vector2(0.44, 0.44), Vector2(0.44, 0.54), s)
+			_line(Vector2(0.60, 0.44), Vector2(0.60, 0.54), s)
+		&"house":
+			# A home: roof gable over a doored box.
+			_line(Vector2(0.14, 0.48), Vector2(0.50, 0.16), s)
+			_line(Vector2(0.50, 0.16), Vector2(0.86, 0.48), s)
+			draw_rect(Rect2(p(Vector2(0.26, 0.48), s), Vector2(s * 0.48, s * 0.38)),
+				colour, false, thickness)
+			draw_rect(Rect2(p(Vector2(0.44, 0.62), s), Vector2(s * 0.12, s * 0.24)), colour)
+		&"flag":
+			# A waypoint flag on its pole.
+			_line(Vector2(0.30, 0.12), Vector2(0.30, 0.88), s)
+			var banner := PackedVector2Array([
+				p(Vector2(0.30, 0.16), s), p(Vector2(0.74, 0.28), s), p(Vector2(0.30, 0.44), s)])
+			draw_colored_polygon(banner, colour)
+		&"bot":
+			# A robot head: rounded box, two eyes, one antenna.
+			draw_rect(Rect2(p(Vector2(0.22, 0.34), s), Vector2(s * 0.56, s * 0.44)),
+				colour, false, thickness)
+			draw_circle(p(Vector2(0.38, 0.54), s), s * 0.06, colour)
+			draw_circle(p(Vector2(0.62, 0.54), s), s * 0.06, colour)
+			_line(Vector2(0.50, 0.34), Vector2(0.50, 0.20), s)
+			draw_circle(p(Vector2(0.50, 0.17), s), s * 0.05, colour)
 		&"bag":
 			# A pouch: a rounded body under a drawstring neck.
 			var body := PackedVector2Array([

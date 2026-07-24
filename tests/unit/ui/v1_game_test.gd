@@ -316,3 +316,32 @@ func test_exiting_a_battle_settles_it_as_a_defeat() -> void:
 	# battle gone, and the game did not crash into a half-torn-down state.
 	assert_not_null(_game._reward, "leaving still shows the run's settlement")
 	assert_null(_game._battle, "the battle screen is gone after the exit")
+
+
+func test_the_symbots_dossier_workshop_action_lands_focused() -> void:
+	# Arrange/Act: the Symbots screen asks for the workshop pointed at someone specific.
+	_game.show_squad()
+	var target: SymbotInstance = _game.ctx.roster.symbots[2]
+	_game._squad.workshop_for.emit(target)
+
+	# Assert: workshop open, already on that Symbot.
+	assert_not_null(_game._workshop)
+	assert_eq(_game._workshop._selected, target,
+		"arriving unfocused would make the dossier button a lie")
+
+
+func test_map_cards_never_overlap_their_nodes() -> void:
+	# The clamp that keeps cards on-screen must never shove one back over its circle.
+	_game.show_map()
+	await get_tree().process_frame
+	var map := _game._map
+	var centre: float = map._track.size.x * 0.5
+	var radius: float = StageSelectScreen.NODE_DIAMETER * 0.5
+	for i in map._cards.size():
+		var card: Button = map._cards[i]
+		if card.position.x > centre:
+			assert_gte(card.position.x, centre + radius,
+				"right-side card %d rides over its node" % i)
+		else:
+			assert_lte(card.position.x + card.size.x, centre - radius,
+				"left-side card %d rides over its node" % i)

@@ -58,10 +58,14 @@ const NODE_SPACING := 128.0
 const TRACK_PAD := 320.0
 
 const NODE_DIAMETER := 34.0
-const CARD_W := 152.0
+## Narrow enough that a card NEVER has to be clamped back over its node: at the 336px
+## content width, centre + radius + gap + CARD_W must stay inside the right margin. The
+## old 152 width failed that by 17px and the clamp shoved every right-side card onto its
+## circle.
+const CARD_W := 130.0
 const CARD_H := 46.0
 ## Clearance between the node circle and the card beside it.
-const CARD_GAP := 12.0
+const CARD_GAP := 10.0
 
 const MIN_ROW_HEIGHT := 60  ## comfortably past the 44pt touch minimum
 

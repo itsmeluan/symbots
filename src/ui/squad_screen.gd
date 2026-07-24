@@ -17,6 +17,9 @@ signal closed
 ## Bottom-dock navigation; the game root routes it.
 signal navigate(dest: StringName)
 
+## The dossier's WORKSHOP action: open the workshop already pointed at this Symbot.
+signal workshop_for(symbot: SymbotInstance)
+
 const MIN_ROW_HEIGHT := 52
 
 ## Bench card geometry: three across at the 360 base width, tall enough for name over
@@ -57,7 +60,7 @@ func _on_exit_tree() -> void:
 
 func _build_layout() -> void:
 	_set_background("res://assets/art/workshop/bench_backdrop.png", 0.62)
-	var content := build_chrome(_ctx, "SQUAD", &"squad", func(d): navigate.emit(d))
+	var content := build_chrome(_ctx, "SYMBOTS", &"squad", func(d): navigate.emit(d))
 
 	_slot_row = HBoxContainer.new()
 	_slot_row.add_theme_constant_override("separation", 6)
@@ -209,76 +212,11 @@ func _rebuild_bench() -> void:
 		_bench.add_child(_build_bench_row(symbot))
 
 
-## One roster card: the name over the creature over its credentials, framed in the
-## chunky card language. Fielded cards glow cyan; benched ones sit quiet. The whole
-## summary also lives in tooltip_text — hover help on desktop, and the one string tests
-## read without caring about the card's internal layout.
+## One roster card — delegated to the shared [SymbotCard] so the workshop's roster
+## drawer shows the exact same object.
 func _build_bench_row(symbot: SymbotInstance) -> Control:
-	var species: SpeciesDef = _ctx.species.get_species(symbot.species_id)
-	var fielded := _ctx.roster.squad.has(symbot.instance_id)
-	var caption := "%s · MK %s · LV.%d" % [
-		ROLE_NAMES.get(species.role, "—") if species != null else "—",
-		_roman(symbot.mark), symbot.level]
-
-	var button := Button.new()
-	button.custom_minimum_size = Vector2(0, CARD_HEIGHT)
-	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.tooltip_text = "%s\n%s%s" % [_display_name_of(symbot).to_upper(), caption,
-		"   ·   FIELDED" if fielded else ""]
-	# Fielded reads from a SOLID amber frame — no soft halo. A benched card is plain.
-	var face := Color("1b242f") if fielded else Color("161e27")
-	var rim := UIPalette.AMBER if fielded else Color.TRANSPARENT
-	button.add_theme_stylebox_override("normal",
-		UIPalette.chunky(face, "normal", Color.TRANSPARENT, rim))
-	button.add_theme_stylebox_override("hover",
-		UIPalette.chunky(face, "normal", Color.TRANSPARENT, rim))
-	button.add_theme_stylebox_override("pressed", UIPalette.chunky(face, "pressed"))
-	button.add_theme_stylebox_override("focus", UIPalette.empty())
-	button.add_child(UIPalette.gloss(0.06))
-	# Enabled even when already fielded: tapping a fielded Symbot into another slot is how
-	# the player reorders, and the roster moves rather than duplicates.
-	button.pressed.connect(Callable(self, "_on_bench_pressed").bind(symbot))
-
-	var column := VBoxContainer.new()
-	column.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	# Inset off the frame, and clear the thicker bottom lip so the FIELDED badge is never
-	# clipped by the border.
-	column.offset_left = 5
-	column.offset_right = -5
-	column.offset_top = 5
-	column.offset_bottom = -8
-	column.add_theme_constant_override("separation", 2)
-	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	button.add_child(column)
-
-	var name_label := Label.new()
-	name_label.text = _display_name_of(symbot)
-	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_label.add_theme_font_override("font", UIPalette.bold_font())
-	name_label.add_theme_font_size_override("font_size", 11)
-	name_label.clip_text = true
-	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	column.add_child(name_label)
-
-	column.add_child(_sprite_view(symbot, 56.0))
-
-	var caption_label := Label.new()
-	caption_label.text = caption
-	caption_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	caption_label.add_theme_font_size_override("font_size", 8)
-	caption_label.add_theme_color_override("font_color", UIPalette.MUTED)
-	caption_label.clip_text = true
-	caption_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	column.add_child(caption_label)
-
-	var badge := Label.new()
-	badge.text = "FIELDED" if fielded else " "
-	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	badge.add_theme_font_size_override("font_size", 8)
-	badge.add_theme_color_override("font_color", UIPalette.AMBER)
-	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	column.add_child(badge)
-	return button
+	return SymbotCard.build(_ctx, symbot,
+		Callable(self, "_on_bench_pressed").bind(symbot))
 
 
 func _roman(n: int) -> String:
@@ -342,22 +280,13 @@ func _on_bench_pressed(symbot: SymbotInstance) -> void:
 func _open_details(symbot: SymbotInstance) -> void:
 	if _detail_modal != null:
 		return
-	var species := _ctx.species.get_species(symbot.species_id)
-	if species == null:
-		return
-	var unit := UnitBuilderScript.build(symbot, species, _ctx.tree, _ctx.skills,
-		BattleUnit.Side.PLAYER, 0, _ctx.items)
-	if unit == null:
-		return
-	var ult_cost := 100
-	var ult: SkillDef = _ctx.skills.get(unit.ultimate_skill)
-	if ult != null:
-		ult_cost = ult.charge_cost
-
 	_detail_modal = UnitInfoModalScript.new()
 	_detail_modal.closed.connect(func() -> void: _detail_modal = null)
 	add_child(_detail_modal)
-	_detail_modal.open(unit, _ctx, ult_cost)
+	if not _detail_modal.open_instance(symbot, _ctx):
+		_detail_modal.queue_free()
+		_detail_modal = null
+		return
 
 	if not _ctx.roster.squad.has(symbot.instance_id) and _first_empty_slot() >= 0:
 		_detail_modal.add_action("ADD TO SQUAD", func() -> void:
@@ -365,6 +294,8 @@ func _open_details(symbot: SymbotInstance) -> void:
 			if slot >= 0:
 				_ctx.roster.set_squad_slot(slot, symbot.instance_id)
 			refresh())
+	_detail_modal.add_action("WORKSHOP", func() -> void:
+		workshop_for.emit(symbot), false)
 
 
 func _first_empty_slot() -> int:

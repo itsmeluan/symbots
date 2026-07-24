@@ -129,6 +129,7 @@ func setup(ctx: ServiceContext) -> void:
 		_ctx.roster.symbots[0] if not _ctx.roster.symbots.is_empty() else null)
 	if _selected != null:
 		_carousel.focus(_index_of(_selected))
+	_build_roster_drawer()
 	refresh()
 	# The drawer has no button — teach the gesture once, faintly, on every entry.
 	_hint.play("Drag left for more info")
@@ -166,6 +167,7 @@ func _build_layout() -> void:
 	_carousel = SymbotCarousel.new()
 	_carousel.custom_minimum_size = Vector2(0, 102)
 	_carousel.focused_changed.connect(_on_focus_changed)
+	_carousel.dragged_up.connect(_open_roster_drawer)
 	content.add_child(_carousel)
 
 	_hint = SwipeHint.new()
@@ -258,6 +260,9 @@ func _release_drag() -> void:
 	if _drag_moved < 8.0:
 		if _drawer_open:
 			_animate_drawer(false)
+		else:
+			# A clean tap on the hero with nothing open: the full dossier.
+			_open_hero_details()
 		return
 	_animate_drawer(_drawer_t > 0.5)
 
@@ -928,6 +933,17 @@ func _populate_carousel(keep_focus: bool = false) -> void:
 	_carousel.set_items(textures, keep_focus)
 
 
+## Point the workshop at [param symbot] — the Symbots screen's WORKSHOP action and the
+## roster drawer both land here.
+func focus_on(symbot: SymbotInstance) -> void:
+	var index := _index_of(symbot)
+	if index < 0:
+		return
+	_selected = symbot
+	_carousel.focus(index)
+	refresh()
+
+
 func _on_focus_changed(index: int) -> void:
 	if index < 0 or index >= _ctx.roster.symbots.size():
 		return
@@ -1125,6 +1141,195 @@ func _play_retrofit_ceremony() -> void:
 	tween.tween_interval(0.9)
 	tween.tween_property(stamp, "modulate:a", 0.0, 0.30)
 	tween.tween_callback(stamp.queue_free)
+
+
+# ---------------------------------------------------------------------------
+# Roster drawer — swipe the carousel UP to pick who to work on
+# ---------------------------------------------------------------------------
+
+## Fraction of the screen the roster drawer covers when open.
+const ROSTER_DRAWER_FRAC := 0.68
+
+var _roster_scrim: ColorRect
+var _roster_drawer: PanelContainer
+var _roster_grid: GridContainer
+var _roster_t: float = 0.0
+var _roster_tween: Tween = null
+var _roster_drag_active: bool = false
+var _detail_modal: UnitInfoModal = null
+
+
+func _build_roster_drawer() -> void:
+	# Dim scrim behind the drawer; a tap on it closes.
+	_roster_scrim = ColorRect.new()
+	_roster_scrim.color = Color(UIPalette.INK, 0.6)
+	_roster_scrim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_roster_scrim.visible = false
+	_roster_scrim.gui_input.connect(func(event: InputEvent) -> void:
+		if event is InputEventMouseButton and event.pressed:
+			_close_roster_drawer())
+	add_child(_roster_scrim)
+
+	_roster_drawer = PanelContainer.new()
+	var box := StyleBoxFlat.new()
+	box.bg_color = Color("101823")
+	box.corner_radius_top_left = 16
+	box.corner_radius_top_right = 16
+	box.corner_detail = 20
+	box.anti_aliasing_size = 1.0
+	box.border_width_top = 1
+	box.border_color = UIPalette.LINE
+	box.shadow_color = Color(0, 0, 0, 0.5)
+	box.shadow_size = 12
+	box.set_content_margin_all(10)
+	_roster_drawer.add_theme_stylebox_override("panel", box)
+	_roster_drawer.anchor_left = 0.0
+	_roster_drawer.anchor_right = 1.0
+	_roster_drawer.anchor_top = 1.0
+	_roster_drawer.anchor_bottom = 1.0
+	_roster_drawer.gui_input.connect(_on_roster_drawer_input)
+	add_child(_roster_drawer)
+
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 6)
+	_roster_drawer.add_child(column)
+
+	# The grab handle: the universal "this sheet drags" affordance.
+	var handle := Panel.new()
+	handle.custom_minimum_size = Vector2(0, 14)
+	handle.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var pill := Panel.new()
+	var pill_box := StyleBoxFlat.new()
+	pill_box.bg_color = UIPalette.LINE
+	pill_box.set_corner_radius_all(3)
+	pill.add_theme_stylebox_override("panel", pill_box)
+	pill.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	pill.custom_minimum_size = Vector2(44, 5)
+	pill.offset_left = -22
+	pill.offset_right = 22
+	pill.offset_bottom = 5
+	pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	handle.add_child(pill)
+	column.add_child(handle)
+
+	var title := Label.new()
+	title.text = "SYMBOTS"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_override("font", UIPalette.bold_font())
+	title.add_theme_font_size_override("font_size", 13)
+	column.add_child(title)
+
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	UIPalette.thin_scrollbar(scroll)
+	column.add_child(scroll)
+
+	var pad := MarginContainer.new()
+	pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	pad.add_theme_constant_override("margin_top", 4)
+	pad.add_theme_constant_override("margin_right", 8)
+	scroll.add_child(pad)
+
+	_roster_grid = GridContainer.new()
+	_roster_grid.columns = 3
+	_roster_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_roster_grid.add_theme_constant_override("h_separation", 6)
+	_roster_grid.add_theme_constant_override("v_separation", 6)
+	pad.add_child(_roster_grid)
+
+	_apply_roster_t()
+
+
+func _roster_drawer_height() -> float:
+	return size.y * ROSTER_DRAWER_FRAC
+
+
+func _apply_roster_t() -> void:
+	if _roster_drawer == null:
+		return
+	var h := _roster_drawer_height()
+	_roster_drawer.offset_top = -h * _roster_t
+	_roster_drawer.offset_bottom = h * (1.0 - _roster_t)
+	_roster_drawer.visible = _roster_t > 0.001
+	_roster_scrim.visible = _roster_t > 0.001
+	_roster_scrim.modulate.a = _roster_t
+
+
+func _open_roster_drawer() -> void:
+	for child in _roster_grid.get_children():
+		_roster_grid.remove_child(child)
+		child.queue_free()
+	for symbot in _ctx.roster.symbots:
+		_roster_grid.add_child(SymbotCard.build(_ctx, symbot,
+			Callable(self, "_on_roster_card_pressed").bind(symbot)))
+	_animate_roster(true)
+
+
+func _close_roster_drawer() -> void:
+	_animate_roster(false)
+
+
+func _animate_roster(open: bool) -> void:
+	if _roster_tween != null and _roster_tween.is_valid():
+		_roster_tween.kill()
+	if not is_inside_tree():
+		_roster_t = 1.0 if open else 0.0
+		_apply_roster_t()
+		return
+	_roster_tween = create_tween()
+	_roster_tween.tween_method(func(v: float) -> void:
+		_roster_t = v
+		_apply_roster_t(),
+		_roster_t, 1.0 if open else 0.0, 0.22) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
+
+## The drawer follows the finger vertically; releasing settles it to whichever side is
+## nearer. Dragging it all the way down is how it closes.
+func _on_roster_drawer_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			_roster_drag_active = true
+			if _roster_tween != null and _roster_tween.is_valid():
+				_roster_tween.kill()
+		else:
+			if _roster_drag_active:
+				_roster_drag_active = false
+				_animate_roster(_roster_t > 0.55)
+	elif _roster_drag_active \
+			and (event is InputEventScreenDrag or event is InputEventMouseMotion):
+		_roster_t = clampf(_roster_t - event.relative.y / _roster_drawer_height(), 0.0, 1.0)
+		_apply_roster_t()
+
+
+## A drawer card was tapped: open the dossier over it; its WORKSHOP action selects the
+## Symbot here and puts everything away.
+func _on_roster_card_pressed(symbot: SymbotInstance) -> void:
+	if _detail_modal != null:
+		return
+	_detail_modal = UnitInfoModal.new()
+	_detail_modal.closed.connect(func() -> void: _detail_modal = null)
+	add_child(_detail_modal)
+	if not _detail_modal.open_instance(symbot, _ctx):
+		_detail_modal.queue_free()
+		_detail_modal = null
+		return
+	_detail_modal.add_action("WORKSHOP", func() -> void:
+		focus_on(symbot)
+		_close_roster_drawer())
+
+
+## Tapping the hero: the same dossier, read-only (you are already at the workshop).
+func _open_hero_details() -> void:
+	if _selected == null or _detail_modal != null:
+		return
+	_detail_modal = UnitInfoModal.new()
+	_detail_modal.closed.connect(func() -> void: _detail_modal = null)
+	add_child(_detail_modal)
+	if not _detail_modal.open_instance(_selected, _ctx):
+		_detail_modal.queue_free()
+		_detail_modal = null
 
 
 func _on_close_pressed() -> void:

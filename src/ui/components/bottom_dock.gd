@@ -11,16 +11,17 @@ extends PanelContainer
 
 signal navigate(dest: StringName)
 
-const HEIGHT := 56
+const HEIGHT := 62
 
-## dest id -> short label. Order is left-to-right. Four PRIMARY destinations only —
+## dest id -> [label, glyph]. Order is left-to-right. Four PRIMARY destinations only —
 ## the secondary ones (Forge, Tree, Send, Bag) live on the Home hub now (research: a
-## mobile bottom bar tops out at ~5). MAP is the emphasised "play" tab.
+## mobile bottom bar tops out at ~5). MAP is the emphasised "play" tab. Every tab is
+## icon AND label — the pattern every finished mobile nav shares.
 const TABS: Array = [
-	[&"home", "HOME"],
-	[&"squad", "SQUAD"],
-	[&"workshop", "WORKSHOP"],
-	[&"map", "MAP"],
+	[&"home", "HOME", &"house"],
+	[&"squad", "SYMBOTS", &"bot"],
+	[&"workshop", "WORKSHOP", &"wrench"],
+	[&"map", "MAP", &"flag"],
 ]
 
 ## The tab drawn as the primary call to action — the way into the core loop.
@@ -33,22 +34,30 @@ var _box: StyleBoxFlat
 
 func _init() -> void:
 	custom_minimum_size = Vector2(0, HEIGHT)
-	# The dock has its own dark bar with a cyan top edge, distinct from the content panels.
+	# The bar sits one surface-ladder step above the screen, separated by the 1px
+	# top-light edge — never a plain grey hairline.
 	_box = StyleBoxFlat.new()
-	_box.bg_color = UIPalette.INK
-	_box.border_color = UIPalette.LINE
+	_box.bg_color = UIPalette.SURFACE
+	_box.border_color = Color(1, 1, 1, 0.08)
 	_box.border_width_top = 1
-	_box.set_content_margin(SIDE_TOP, 4)
-	_box.set_content_margin(SIDE_BOTTOM, 4)
-	_box.set_content_margin(SIDE_LEFT, 1)
-	_box.set_content_margin(SIDE_RIGHT, 1)
+	_box.set_content_margin(SIDE_TOP, 5)
+	_box.set_content_margin(SIDE_BOTTOM, 5)
+	_box.set_content_margin(SIDE_LEFT, 6)
+	_box.set_content_margin(SIDE_RIGHT, 6)
 	add_theme_stylebox_override("panel", _box)
 
 	_row = HBoxContainer.new()
-	_row.add_theme_constant_override("separation", 0)
+	_row.add_theme_constant_override("separation", 4)
 	add_child(_row)
+	_rebuild_tabs()
+
+
+func _rebuild_tabs() -> void:
+	for child in _row.get_children():
+		_row.remove_child(child)
+		child.queue_free()
 	for tab in TABS:
-		_row.add_child(_build_tab(tab[0], tab[1]))
+		_row.add_child(_build_tab(tab[0], tab[1], tab[2]))
 
 
 ## Reserve room below the tabs for the phone's home indicator, so a tap on a tab never lands
@@ -60,47 +69,60 @@ func set_safe_bottom(px: float) -> void:
 
 
 ## Light the tab for [param dest] and dim the rest. Call from a screen's setup so the dock
-## shows where the player is.
+## shows where the player is. Tabs are rebuilt whole — four of them, and the icon tint,
+## pill and label weight all change together.
 func set_active(dest: StringName) -> void:
 	_active = dest
-	for i in _row.get_child_count():
-		var button: Button = _row.get_child(i)
-		_style_tab(button, TABS[i][0] == dest, TABS[i][0] == PRIMARY_TAB)
+	_rebuild_tabs()
 
 
-func _build_tab(dest: StringName, label: String) -> Button:
-	var button := Button.new()
-	button.text = label
-	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.custom_minimum_size = Vector2(0, HEIGHT - 8)
-	button.clip_text = true
-	button.pressed.connect(func(): navigate.emit(dest))
-	_style_tab(button, dest == _active, dest == PRIMARY_TAB)
-	return button
-
-
-## A tab draws no button chrome — just a label. The ACTIVE tab is the lit key (raised
-## face, rounded top, cyan rule). The PRIMARY tab (MAP) always carries an amber accent so
-## the way into the fight reads as the call to action even when it is not the open screen.
-func _style_tab(button: Button, active: bool, primary: bool) -> void:
+## One tab: glyph over caption. The ACTIVE tab earns the accent pill (soft accent fill,
+## accent top rule) with its icon lit in the accent; inactive tabs are quiet grey pairs.
+## The PRIMARY tab (MAP) speaks amber even at rest — the standing call to action.
+func _build_tab(dest: StringName, label: String, glyph_kind: StringName) -> Button:
+	var active := dest == _active
+	var primary := dest == PRIMARY_TAB
 	var accent := UIPalette.AMBER if primary else UIPalette.CYAN
-	var flat := StyleBoxFlat.new()
-	flat.bg_color = Color("1c2632") if active else Color(0, 0, 0, 0)
+
+	var button := Button.new()
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.custom_minimum_size = Vector2(0, HEIGHT - 10)
+	button.pressed.connect(func(): navigate.emit(dest))
+	var pill := StyleBoxFlat.new()
 	if active:
-		flat.corner_radius_top_left = 7
-		flat.corner_radius_top_right = 7
-		flat.border_width_top = 2
-		flat.border_color = accent
-	flat.set_content_margin_all(1)
-	button.add_theme_stylebox_override("normal", flat)
-	button.add_theme_stylebox_override("hover", flat)
-	button.add_theme_stylebox_override("pressed", flat)
+		pill.bg_color = Color(accent, 0.14)
+		pill.set_corner_radius_all(10)
+		pill.border_width_top = 1
+		pill.border_color = Color(accent, 0.5)
+	else:
+		pill.bg_color = Color(0, 0, 0, 0)
+	pill.set_content_margin_all(2)
+	button.add_theme_stylebox_override("normal", pill)
+	button.add_theme_stylebox_override("hover", pill)
+	button.add_theme_stylebox_override("pressed", pill)
 	button.add_theme_stylebox_override("focus", UIPalette.empty())
-	var idle := accent if primary else UIPalette.MUTED
-	button.add_theme_color_override("font_color", accent if active else idle)
-	button.add_theme_color_override("font_hover_color", accent)
-	# Four tabs share the row now, so they can breathe — a size up from the old eight-tab
-	# squeeze; the primary tab is bold.
-	button.add_theme_font_size_override("font_size", 11)
-	button.add_theme_font_override("font",
-		UIPalette.bold_font() if primary else UIPalette.display_font())
+
+	var column := VBoxContainer.new()
+	column.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	column.alignment = BoxContainer.ALIGNMENT_CENTER
+	column.add_theme_constant_override("separation", 2)
+	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(column)
+
+	var icon_tone := accent if active else \
+		(Color(accent, 0.75) if primary else Color(UIPalette.MUTED, 0.65))
+	var icon_holder := CenterContainer.new()
+	icon_holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon_holder.add_child(Glyph.make(glyph_kind, 17.0, icon_tone))
+	column.add_child(icon_holder)
+
+	var caption := Label.new()
+	caption.text = label
+	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	caption.add_theme_font_override("font", UIPalette.caption_font())
+	caption.add_theme_font_size_override("font_size", 8)
+	caption.add_theme_color_override("font_color",
+		UIPalette.TEXT if active else (Color(accent, 0.8) if primary else UIPalette.MUTED))
+	caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_child(caption)
+	return button

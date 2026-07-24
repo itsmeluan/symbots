@@ -403,3 +403,46 @@ func test_a_level_one_part_advertises_what_upgrading_buys() -> void:
 	inst.part_levels[1] = 1
 	assert_true(_shop._part_stats_text(1).contains("/LV"),
 		"falls back to the per-level rate")
+
+
+# ---------------------------------------------------------------------------
+# Roster drawer & dossier
+# ---------------------------------------------------------------------------
+
+func test_swiping_up_fills_the_roster_drawer_with_the_whole_roster() -> void:
+	# Act: the carousel's swipe-up gesture lands here.
+	_shop._open_roster_drawer()
+
+	# Assert: one card per owned Symbot, drawer on its way up.
+	assert_eq(_shop._roster_grid.get_child_count(), _game.ctx.roster.symbots.size())
+	await wait_seconds(0.3)
+	assert_true(_shop._roster_drawer.visible, "the drawer must be up after the tween")
+
+
+func test_the_drawer_dossier_workshop_action_selects_and_puts_everything_away() -> void:
+	# Arrange: drawer open, dossier for a non-focused Symbot.
+	_shop._open_roster_drawer()
+	var target: SymbotInstance = _game.ctx.roster.symbots.back()
+	_shop._on_roster_card_pressed(target)
+	assert_not_null(_shop._detail_modal)
+
+	# Act: press the modal's WORKSHOP action (the last button in its column).
+	var action: Button = null
+	for child in _shop._detail_modal._column.get_children():
+		if child is Button:
+			action = child
+	assert_not_null(action)
+	action.pressed.emit()
+	await wait_seconds(0.35)
+
+	# Assert: the Symbot is the one on the bench, the drawer and modal are gone.
+	assert_eq(_shop._selected, target)
+	assert_null(_shop._detail_modal, "the action dismisses the dossier")
+	assert_false(_shop._roster_drawer.visible, "and the drawer went down")
+
+
+func test_tapping_the_hero_opens_its_dossier() -> void:
+	_shop._open_hero_details()
+	assert_not_null(_shop._detail_modal)
+	assert_eq(_shop._detail_modal.unit.display_name,
+		_game.ctx.species.get_species(_shop._selected.species_id).display_name)

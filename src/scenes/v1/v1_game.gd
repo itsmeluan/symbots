@@ -243,12 +243,15 @@ func show_map() -> void:
 
 ## The Scrap sink. Reachable from the map because that is where the player lands after
 ## every fight — an upgrade screen buried a level deeper is one the player forgets exists.
-func show_workshop() -> void:
+func show_workshop(focus: SymbotInstance = null) -> void:
 	_clear_screens()
 	_workshop = WorkshopScreenScript.new()
 	_present(_workshop)
 	_workshop.navigate.connect(Callable(self, "_navigate_to"))
 	_workshop.closed.connect(Callable(self, "_on_sub_screen_closed"))
+	# The Symbots dossier's WORKSHOP action arrives already pointed at someone.
+	if focus != null:
+		_workshop.focus_on(focus)
 
 
 ## The skill-point sink. Sits beside the Workshop because the two are the same decision
@@ -269,6 +272,7 @@ func show_squad() -> void:
 	_squad = SquadScreenScript.new()
 	_present(_squad)
 	_squad.navigate.connect(Callable(self, "_navigate_to"))
+	_squad.workshop_for.connect(Callable(self, "show_workshop"))
 	_squad.closed.connect(Callable(self, "_on_sub_screen_closed"))
 
 

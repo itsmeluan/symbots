@@ -53,6 +53,27 @@ var _ult_cost: int = 100
 var _column: VBoxContainer = null
 
 
+## Build and show for an OWNED instance: the unit is assembled by the REAL pipeline
+## (parts, tree, items via UnitBuilder), so the stats shown are exactly what the next
+## fight fields. Returns false when the species or build is unresolvable.
+func open_instance(symbot: SymbotInstance, ctx: ServiceContext) -> bool:
+	if ctx == null or ctx.species == null:
+		return false
+	var species: SpeciesDef = ctx.species.get_species(symbot.species_id)
+	if species == null:
+		return false
+	var unit: BattleUnit = UnitBuilder.build(symbot, species, ctx.tree, ctx.skills,
+		BattleUnit.Side.PLAYER, 0, ctx.items)
+	if unit == null:
+		return false
+	var cost := 100
+	var ult: SkillDef = ctx.skills.get(unit.ultimate_skill)
+	if ult != null:
+		cost = ult.charge_cost
+	open(unit, ctx, cost)
+	return true
+
+
 ## Build and show. [param ult_cost] is the charge cost of the unit's ult, injected by the
 ## battle screen which owns the skill table.
 func open(p_unit: BattleUnit, ctx: ServiceContext, ult_cost: int) -> void:
@@ -96,11 +117,13 @@ func _build() -> void:
 ## Append a primary action to the modal's foot (e.g. the squad screen's ADD TO SQUAD).
 ## The modal stays a pure viewer — the CALLER owns what the action does; pressing it
 ## runs the callable and dismisses. Call after [method open].
-func add_action(label: String, on_pressed: Callable) -> void:
+func add_action(label: String, on_pressed: Callable, primary: bool = true) -> void:
 	if _column == null:
 		return
 	var button := Button.new()
-	button.theme_type_variation = &"Primary"
+	if primary:
+		button.theme_type_variation = &"Primary"
+		button.add_child(UIPalette.gloss())
 	button.text = label
 	button.custom_minimum_size = Vector2(0, 44)
 	button.pressed.connect(func() -> void:
