@@ -353,20 +353,29 @@ func test_the_wave_chip_is_always_shown_even_for_single_fights() -> void:
 	assert_eq(_screen._wave_label.text, "WAVE 1/1")
 
 
-func test_an_uncharged_ultimate_card_reports_its_charge() -> void:
-	var ult := SkillDefScript.new()
-	ult.id = &"nova"
-	ult.display_name = "Nova"
-	ult.target_mode = SkillDefScript.TargetMode.ALL_ENEMIES
-	ult.is_ultimate = true
-	ult.charge_cost = 100
+func test_an_uncharged_ultimate_reports_its_charge_in_the_info_box() -> void:
+	# The ult tile is now icon-only (Rodada 2 §d/§e): its charge reads from the filling amber
+	# ring on the tile, and the exact numbers live in the info box that opens on tap.
+	var nova := SkillDefScript.new()
+	nova.id = &"nova"
+	nova.display_name = "Nova"
+	nova.target_mode = SkillDefScript.TargetMode.ALL_ENEMIES
+	nova.is_ultimate = true
+	nova.charge_cost = 100
 
-	var p := _unit("p", BattleUnit.Side.PLAYER)
+	var p := _unit("p", BattleUnit.Side.PLAYER, 200, SpeciesDefScript.Role.DPS, 30)
 	p.ultimate_skill = &"nova"
 	p.ultimate_charge = 40
-	assert_eq(_screen._skill_state_text(ult, p, true), "CHARGE 40%")
-	p.ultimate_charge = 100
-	assert_eq(_screen._skill_state_text(ult, p, true), "READY")
+	var table := _table()
+	table[&"nova"] = nova
+	var e := BattleEngineScript.new([p], [_unit("x", BattleUnit.Side.ENEMY)],
+		table, _cfg, _rng, _ctx.log)
+	_screen.begin_battle(e, table)
+
+	_screen._on_skill_pressed(&"nova")
+	assert_true(_screen._info_box.visible, "tapping the ult tile opens its readout")
+	assert_string_contains(_screen._info_detail.text, "Charge: 40 / 100",
+		"the exact charge lives in the info box now, not on the tile")
 
 
 # ---------------------------------------------------------------------------

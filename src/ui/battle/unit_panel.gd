@@ -58,8 +58,9 @@ var _ground: Control
 var _structure_bar: ProgressBar
 var _shield_bar: ProgressBar
 var _charge_bar: ProgressBar
-var _status_row: HBoxContainer
+var _status_row: VBoxContainer
 var _root: VBoxContainer
+var _bars: VBoxContainer
 
 ## The running structure-bar slide, killed and replaced on every refresh.
 var _bar_tween: Tween = null
@@ -82,6 +83,14 @@ func _init() -> void:
 	_root.add_theme_constant_override("separation", 1)
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_root)
+
+	# The readout bars ride ABOVE the figure's head (structure, then shield, then the ult's
+	# "overload" charge) — the enemy-HP-over-the-sprite convention every battler shares, and
+	# it stops the bars fighting the feet-ring and the ground shadow for the same few pixels.
+	_bars = VBoxContainer.new()
+	_bars.add_theme_constant_override("separation", 1)
+	_bars.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_root.add_child(_bars)
 
 	# The figure: a ground shadow drawn first (so it sits behind), the sprite over it.
 	var stage := Control.new()
@@ -111,14 +120,16 @@ func _init() -> void:
 	_nameplate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	stage.add_child(_nameplate)
 
-	# Active status effects, as a row of small glyphs floating over the figure's head —
-	# buffs green-tinted, debuffs coral. Populated by refresh() from the unit's statuses.
-	_status_row = HBoxContainer.new()
+	# Active status effects, as a VERTICAL column of small glyphs standing beside the figure
+	# — buffs green-tinted, debuffs coral, one distinct glyph per kind. Vertical and to the
+	# side (not stacked over the head) so a unit carrying three statuses stays legible and the
+	# icons never collide with the bars now living above the head. Populated by refresh().
+	_status_row = VBoxContainer.new()
 	_status_row.add_theme_constant_override("separation", 2)
 	_status_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	_status_row.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	_status_row.offset_top = -12
-	_status_row.offset_bottom = -2
+	_status_row.set_anchors_preset(Control.PRESET_CENTER_LEFT)
+	_status_row.grow_horizontal = Control.GROW_DIRECTION_END
+	_status_row.grow_vertical = Control.GROW_DIRECTION_BOTH
 	_status_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	stage.add_child(_status_row)
 
@@ -134,16 +145,16 @@ func _init() -> void:
 	_sprite.mouse_filter = Control.MOUSE_FILTER_IGNORE  # taps go to the panel, not the image
 	stage.add_child(_sprite)
 
-	# Hairline bars under the feet. Structure always; the other two only when they mean
+	# Hairline bars, now above the head. Structure always; the other two only when they mean
 	# something. Anything thicker starts reading as UI pasted over the scene.
 	_structure_bar = _make_bar(UIPalette.GREEN, BAR_HEIGHT)
-	_root.add_child(_structure_bar)
+	_bars.add_child(_structure_bar)
 
 	_shield_bar = _make_bar(Color(0.45, 0.70, 0.95), 2)
-	_root.add_child(_shield_bar)
+	_bars.add_child(_shield_bar)
 
 	_charge_bar = _make_bar(UIPalette.AMBER, 2)
-	_root.add_child(_charge_bar)
+	_bars.add_child(_charge_bar)
 
 
 func _make_bar(colour: Color, height: int) -> ProgressBar:
@@ -245,7 +256,11 @@ func refresh() -> void:
 		_charge_bar.max_value = maxi(1, _ult_cost)
 		_charge_bar.value = mini(unit.ultimate_charge, _ult_cost)
 
-	modulate = Color(0.45, 0.45, 0.45) if not unit.is_alive() else Color.WHITE
+	# Death reads as a drained, dimmed husk: the shader drains the COLOUR (modulate cannot),
+	# and a light modulate dim seats it back into the scene. A living unit is full colour.
+	var dead := not unit.is_alive()
+	_sprite_material().set_shader_parameter(&"desat", 1.0 if dead else 0.0)
+	modulate = Color(0.6, 0.6, 0.6) if dead else Color.WHITE
 	_refresh_status_row()
 	_ground.queue_redraw()
 
@@ -264,15 +279,32 @@ func _refresh_status_row() -> void:
 		_status_row.add_child(Glyph.make(glyph_kind, 9.0, tone))
 
 
-## Whitening shader for the hit blink. `modulate` can only multiply DOWN, so a true
-## white flash needs a mix toward white in the fragment shader.
+## Sprite shader: a white `flash` for the hit blink AND a `desat` that greys the figure on
+## death. `modulate` can only multiply DOWN — it can dim a dead unit but not drain its
+## colour — so a true grey-out (and a true white flash) both need a fragment mix.
 const FLASH_SHADER_CODE := "
 shader_type canvas_item;
 uniform float flash : hint_range(0.0, 1.0) = 0.0;
+uniform float desat : hint_range(0.0, 1.0) = 0.0;
 void fragment() {
 	vec4 c = texture(TEXTURE, UV);
-	COLOR = vec4(mix(c.rgb, vec3(1.0), flash), c.a);
+	float l = dot(c.rgb, vec3(0.299, 0.587, 0.114));
+	vec3 rgb = mix(c.rgb, vec3(l), desat);
+	rgb = mix(rgb, vec3(1.0), flash);
+	COLOR = vec4(rgb, c.a);
 }"
+
+
+## Lazily attach (once) the shared flash/desat material to the sprite and return it, so the
+## hit blink and the death grey-out draw from one material rather than fighting over it.
+func _sprite_material() -> ShaderMaterial:
+	if _sprite.material == null:
+		var shader := Shader.new()
+		shader.code = FLASH_SHADER_CODE
+		var mat := ShaderMaterial.new()
+		mat.shader = shader
+		_sprite.material = mat
+	return _sprite.material
 
 
 ## The classic hit read: two quick white blinks on the sprite. Shader-driven, so the
@@ -280,13 +312,7 @@ void fragment() {
 func flash_hit() -> void:
 	if _sprite == null or not is_inside_tree():
 		return
-	if _sprite.material == null:
-		var shader := Shader.new()
-		shader.code = FLASH_SHADER_CODE
-		var mat := ShaderMaterial.new()
-		mat.shader = shader
-		_sprite.material = mat
-	var mat: ShaderMaterial = _sprite.material
+	var mat := _sprite_material()
 	var tween := _sprite.create_tween()
 	tween.tween_method(func(v: float) -> void:
 		mat.set_shader_parameter(&"flash", v), 0.0, 1.0, 0.05)

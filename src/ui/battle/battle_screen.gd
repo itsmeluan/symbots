@@ -405,7 +405,8 @@ func _build_layout() -> void:
 	root.add_child(bar_margin)
 
 	_skill_bar = HBoxContainer.new()
-	_skill_bar.add_theme_constant_override("separation", 6)
+	_skill_bar.add_theme_constant_override("separation", 8)
+	_skill_bar.alignment = BoxContainer.ALIGNMENT_CENTER  # square tiles cluster in the middle
 	_skill_bar.custom_minimum_size = Vector2(0, SKILL_CARD_HEIGHT)
 	bar_margin.add_child(_skill_bar)
 
@@ -939,8 +940,10 @@ func _add_skill_button(skill_id: StringName, enabled: bool, actor: BattleUnit,
 		glow = Color(UIPalette.AMBER, 0.45)
 
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(0, SKILL_CARD_HEIGHT)
-	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# A SQUARE tile, not a wide labelled card: the name and full readout moved to the info
+	# box that opens on tap (Rodada 2 §d), so the bar reads as a hotbar of glyphs.
+	button.custom_minimum_size = Vector2(SKILL_CARD_HEIGHT, SKILL_CARD_HEIGHT)
+	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.disabled = not enabled and not is_ult
 	button.add_theme_stylebox_override("normal", UIPalette.chunky(surface, face_state, glow))
 	button.add_theme_stylebox_override("hover", UIPalette.chunky(surface, face_state, glow))
@@ -951,68 +954,74 @@ func _add_skill_button(skill_id: StringName, enabled: bool, actor: BattleUnit,
 	# The top-half sheen that sells the volume.
 	button.add_child(UIPalette.gloss())
 
-	# The card's two lines. Centered as a column; mouse_filter IGNORE so every pixel of
-	# the card is still the button's tap target.
-	var column := VBoxContainer.new()
-	column.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	column.alignment = BoxContainer.ALIGNMENT_CENTER
-	column.add_theme_constant_override("separation", 1)
-	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	button.add_child(column)
+	# Just the skill's glyph, centred and large. mouse_filter IGNORE so every pixel of the
+	# tile is still the button's tap target. The name and full readout are one tap away in
+	# the info box — the tile carries only the family colour and (for the ult) its charge.
+	var icon_tone := _glyph_colour(glyph_kind, UIPalette.TEXT)
+	if is_ult:
+		# The ult tile has three reads: DISCHARGED greys the glyph, CHARGING greys it while an
+		# amber outline fills (see below), READY lights it full amber.
+		icon_tone = UIPalette.AMBER if enabled else Color(UIPalette.MUTED, 0.6)
+	elif not enabled:
+		icon_tone = UIPalette.DISABLED
 
-	var name_tone := UIPalette.TEXT
-	if not enabled:
-		name_tone = UIPalette.DISABLED
-	elif is_ult:
-		name_tone = UIPalette.AMBER
+	var icon_holder := CenterContainer.new()
+	icon_holder.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	icon_holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon_holder.add_child(SkillIcons.make(skill, 30.0, icon_tone))
+	button.add_child(icon_holder)
 
-	# Name row: the skill's icon beside its name, centered as a pair. The row clips at
-	# the card's edge — clip_text on the LABEL would zero its minimum width inside an
-	# HBox and the name would vanish entirely.
-	var name_row := HBoxContainer.new()
-	name_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	name_row.add_theme_constant_override("separation", 4)
-	name_row.clip_contents = true
-	name_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	column.add_child(name_row)
-
-	name_row.add_child(SkillIcons.make(skill, 15.0,
-		_glyph_colour(glyph_kind, name_tone) if enabled else UIPalette.DISABLED))
-
-	var name_label := Label.new()
-	name_label.text = skill.display_name
-	name_label.add_theme_font_override("font", UIPalette.display_font())
-	name_label.add_theme_font_size_override("font_size", 12)
-	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	name_label.add_theme_color_override("font_color", name_tone)
-	name_row.add_child(name_label)
-
-	var state_label := Label.new()
-	state_label.text = _skill_state_text(skill, actor, is_ult)
-	state_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	state_label.add_theme_font_size_override("font_size", 9)
-	state_label.clip_text = true
-	state_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	state_label.add_theme_color_override("font_color",
-		UIPalette.AMBER if (is_ult and enabled) else UIPalette.MUTED)
-	column.add_child(state_label)
+	# The ult's charge, drawn as an amber outline that fills clockwise around the tile as it
+	# builds and closes into a full border at READY. This is the "overload" gauge on the card.
+	if is_ult:
+		var ratio := clampf(float(actor.ultimate_charge) / maxf(1.0, skill.charge_cost), 0.0, 1.0)
+		button.add_child(_ult_charge_ring(ratio))
 
 	_skill_bar.add_child(button)
 
 
-## The one-line state readout under a skill's name. The rule: say why a card is dark
-## (cooling down, still charging), otherwise say what tapping it will aim at.
-func _skill_state_text(skill: SkillDef, actor: BattleUnit, is_ult: bool) -> String:
-	if is_ult:
-		if actor.is_ultimate_ready(skill.charge_cost):
-			return "READY"
-		return "CHARGE %d%%" % int(actor.ultimate_charge * 100.0 / maxf(1.0, skill.charge_cost))
-	var cooling: int = int(actor.cooldowns.get(skill.id, 0))
-	if cooling > 0:
-		return "COOLDOWN %d" % cooling
-	if not skill.is_single_target():
-		return "AREA"
-	return "SINGLE TARGET" if skill.targets_enemies() else "ALLY"
+## An overlay that traces an amber outline [param ratio] of the way around the tile — the
+## ult's "overload" charge. A faint full rim shows the empty track; the amber runs clockwise
+## from top-left and, at ratio 1.0, closes into the complete READY border.
+func _ult_charge_ring(ratio: float) -> Control:
+	var ring := Control.new()
+	ring.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ring.draw.connect(func() -> void: _draw_charge_ring(ring, ratio))
+	return ring
+
+
+func _draw_charge_ring(ring: Control, ratio: float) -> void:
+	var w := ring.size.x
+	var h := ring.size.y
+	if w <= 0.0 or h <= 0.0:
+		return
+	var inset := 2.0
+	var tl := Vector2(inset, inset)
+	var tr := Vector2(w - inset, inset)
+	var br := Vector2(w - inset, h - inset)
+	var bl := Vector2(inset, h - inset)
+	# Empty track: a faint rim always present, so a barely-charged ult still shows its outline.
+	var track := Color(UIPalette.AMBER, 0.18)
+	ring.draw_polyline(PackedVector2Array([tl, tr, br, bl, tl]), track, 2.0)
+	if ratio <= 0.0:
+		return
+	# Corners in clockwise order from top-left; walk the perimeter up to ratio and draw amber.
+	var corners := [tl, tr, br, bl, tl]
+	var total := 2.0 * (w - 2.0 * inset) + 2.0 * (h - 2.0 * inset)
+	var want := ratio * total
+	var pts := PackedVector2Array([tl])
+	for i in 4:
+		var seg: float = corners[i].distance_to(corners[i + 1])
+		if want >= seg:
+			pts.append(corners[i + 1])
+			want -= seg
+		else:
+			pts.append(corners[i].lerp(corners[i + 1], want / maxf(1.0, seg)))
+			want = 0.0
+			break
+	var full := ratio >= 1.0
+	ring.draw_polyline(pts, UIPalette.AMBER, 3.0 if full else 2.5)
 
 
 ## Card face colour per skill family: the material the chunky button is "made of".
