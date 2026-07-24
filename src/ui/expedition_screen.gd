@@ -236,7 +236,20 @@ func _refresh_duration_selector() -> void:
 		ExpeditionBoardScript.Duration.MEDIUM, ExpeditionBoardScript.Duration.LONG]
 	for i in _duration_row.get_child_count():
 		var b: Button = _duration_row.get_child(i)
-		b.button_pressed = (order[i] == _armed_duration)
+		var armed: bool = order[i] == _armed_duration
+		b.button_pressed = armed
+		# The armed duration wears the selection language, not just a tint.
+		var glow := Color(UIPalette.CYAN, 0.5) if armed else Color.TRANSPARENT
+		var state := "selected" if armed else "normal"
+		b.add_theme_stylebox_override("normal",
+			UIPalette.chunky(UIPalette.CARD_FACE, state, glow))
+		b.add_theme_stylebox_override("hover",
+			UIPalette.chunky(UIPalette.CARD_FACE, state, glow))
+		b.add_theme_stylebox_override("pressed",
+			UIPalette.chunky(UIPalette.CARD_FACE, "pressed"))
+		b.add_theme_stylebox_override("focus", UIPalette.empty())
+		b.add_theme_color_override("font_color",
+			UIPalette.CYAN if armed else UIPalette.MUTED)
 
 
 func _on_duration_pressed(duration: int) -> void:

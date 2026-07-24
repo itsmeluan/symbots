@@ -119,8 +119,8 @@ func _build_tab(dest: StringName, label: String, glyph_kind: StringName) -> Butt
 	var caption := Label.new()
 	caption.text = label
 	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	caption.add_theme_font_override("font", UIPalette.caption_font())
-	caption.add_theme_font_size_override("font_size", 8)
+	caption.add_theme_font_override("font", UIPalette.display_font())
+	caption.add_theme_font_size_override("font_size", 9)
 	caption.add_theme_color_override("font_color",
 		UIPalette.TEXT if active else (Color(accent, 0.8) if primary else UIPalette.MUTED))
 	caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
