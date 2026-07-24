@@ -27,7 +27,9 @@ static func build(ctx: ServiceContext, symbot: SymbotInstance,
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.tooltip_text = "%s\n%s%s" % [display_name.to_upper(), caption,
 		"   ·   FIELDED" if fielded else ""]
-	var face := Color("1b242f") if fielded else Color("161e27")
+	# Same surface as the detail modals (the lighter OVERLAY fill): the list cards and the
+	# dossier now read as one raised family. Fielded keeps its solid amber rim.
+	var face := UIPalette.OVERLAY
 	var rim := UIPalette.AMBER if fielded else Color.TRANSPARENT
 	button.add_theme_stylebox_override("normal",
 		UIPalette.chunky(face, "normal", Color.TRANSPARENT, rim))
