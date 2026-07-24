@@ -48,10 +48,15 @@ func _bench_one(id := "bench") -> SymbotInstance:
 func _bench_send_buttons() -> Array:
 	var out: Array = []
 	for row in _screen._bench_box.get_children():
-		for c in row.get_children():
-			if c is Button:
-				out.append(c)
+		_collect_buttons(row, out)
 	return out
+
+
+func _collect_buttons(node: Node, out: Array) -> void:
+	for c in node.get_children():
+		if c is Button:
+			out.append(c)
+		_collect_buttons(c, out)
 
 
 # ---------------------------------------------------------------------------
@@ -179,8 +184,17 @@ func test_the_screen_is_reachable_from_the_map_and_returns() -> void:
 
 
 func _slot_text(index: int) -> String:
+	return _all_text(_screen._slots_box.get_child(index))
+
+
+## Every Label and Button caption under a node — the slot's text however it is nested now
+## that a slot is a framed card, not a flat row.
+func _all_text(node: Node) -> String:
 	var out := ""
-	for c in _screen._slots_box.get_child(index).get_children():
+	for c in node.get_children():
 		if c is Label:
 			out += c.text
+		elif c is Button:
+			out += c.text
+		out += _all_text(c)
 	return out

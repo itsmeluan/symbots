@@ -13,6 +13,7 @@ class_name ExpeditionScreen
 extends Screen
 
 const ExpeditionBoardScript := preload("res://src/core/expeditions/expedition_board.gd")
+const UnitPanelScript := preload("res://src/ui/battle/unit_panel.gd")
 
 signal closed
 
@@ -61,11 +62,13 @@ func _build_layout() -> void:
 		var b := Button.new()
 		b.text = _duration_label(d)
 		b.toggle_mode = true
-		b.custom_minimum_size = Vector2(0, 44)
+		b.custom_minimum_size = Vector2(0, 40)
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		b.clip_text = true
+		b.add_theme_font_size_override("font_size", 11)
 		b.pressed.connect(Callable(self, "_on_duration_pressed").bind(d))
 		_duration_row.add_child(b)
+	_duration_row.add_theme_constant_override("separation", 6)
 
 	var bench_title := Label.new()
 	bench_title.text = "Bench — tap Send to dispatch"
@@ -81,10 +84,16 @@ func _build_layout() -> void:
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	content.add_child(scroll)
+	UIPalette.thin_scrollbar(scroll)
+	var bench_pad := MarginContainer.new()
+	bench_pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bench_pad.add_theme_constant_override("margin_top", 4)
+	bench_pad.add_theme_constant_override("margin_right", 8)
+	scroll.add_child(bench_pad)
 	_bench_box = VBoxContainer.new()
 	_bench_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_bench_box.add_theme_constant_override("separation", 4)
-	scroll.add_child(_bench_box)
+	_bench_box.add_theme_constant_override("separation", 6)
+	bench_pad.add_child(_bench_box)
 
 	# The countdown ticker. See the polling note on the class.
 	_tick = Timer.new()
@@ -134,24 +143,50 @@ func _build_active_slot(index: int) -> Control:
 	var symbot := _ctx.roster.get_symbot(entry.get("symbot_id", &""))
 	var species: SpeciesDef = _ctx.species.get_species(symbot.species_id) \
 		if symbot != null else null
+	var ready := board.is_ready(index)
 
+	# A running run glows amber when ready to collect, cyan while still out.
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(0, 56)
+	panel.add_theme_stylebox_override("panel", UIPalette.chunky(Color("1b242f"), "normal",
+		Color.TRANSPARENT, UIPalette.AMBER if ready else Color(UIPalette.CYAN, 0.5)))
 	var row := HBoxContainer.new()
-	row.custom_minimum_size = Vector2(0, MIN_ROW_HEIGHT)
+	row.add_theme_constant_override("separation", 8)
+	panel.add_child(row)
 
-	var label := Label.new()
-	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	label.clip_text = true
+	if symbot != null:
+		row.add_child(_face(symbot, 38))
+
+	var text := VBoxContainer.new()
+	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	text.add_theme_constant_override("separation", 1)
+	row.add_child(text)
+
 	var name := species.display_name if species != null else String(entry.get("symbot_id"))
-	label.text = "%s  ·  %s  ·  %s" % [name,
-		_duration_label(int(entry.get("duration", 1))),
+	var name_label := Label.new()
+	name_label.text = name
+	name_label.add_theme_font_override("font", UIPalette.bold_font())
+	name_label.add_theme_font_size_override("font_size", 12)
+	name_label.clip_text = true
+	text.add_child(name_label)
+
+	var sub := Label.new()
+	sub.text = "%s  ·  %s" % [_duration_label(int(entry.get("duration", 1))),
 		_time_text(board.seconds_remaining(index))]
-	row.add_child(label)
+	sub.add_theme_font_size_override("font_size", 10)
+	sub.add_theme_color_override("font_color", UIPalette.AMBER if ready else UIPalette.MUTED)
+	sub.clip_text = true
+	text.add_child(sub)
 
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(110, MIN_ROW_HEIGHT)
+	button.custom_minimum_size = Vector2(96, 40)
 	button.clip_text = true
-	if board.is_ready(index):
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	if ready:
 		button.text = "Collect"
+		button.theme_type_variation = &"Primary"
+		button.add_child(UIPalette.gloss())
 		button.pressed.connect(Callable(self, "_on_collect_pressed").bind(index))
 	else:
 		# Recalling pays nothing — the label warns, because losing the run's reward to an
@@ -159,22 +194,37 @@ func _build_active_slot(index: int) -> Control:
 		button.text = "Recall"
 		button.pressed.connect(Callable(self, "_on_recall_pressed").bind(index))
 	row.add_child(button)
-	return row
+	return panel
 
 
 func _build_empty_slot() -> Control:
 	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", UIPalette.row(UIPalette.LINE, true))
+	panel.custom_minimum_size = Vector2(0, 56)
+	var box := UIPalette.chunky(Color(UIPalette.INK, 0.5))
+	box.border_color = Color(UIPalette.LINE_SOFT, 0.7)
+	panel.add_theme_stylebox_override("panel", box)
 	var label := Label.new()
 	label.theme_type_variation = &"Light"
 	label.text = "EMPTY SLOT"
 	label.add_theme_font_size_override("font_size", 11)
 	label.add_theme_color_override("font_color", UIPalette.DISABLED)
-	label.custom_minimum_size = Vector2(0, MIN_ROW_HEIGHT - 14)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	panel.add_child(label)
 	return panel
+
+
+## The Symbot's face, sized square — shared by the slot and bench cards.
+func _face(symbot: SymbotInstance, px: int) -> TextureRect:
+	var face := TextureRect.new()
+	face.texture = UnitPanelScript.art_texture(symbot.species_id, symbot.mark)
+	face.custom_minimum_size = Vector2(px, px)
+	face.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	face.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return face
 
 
 # ---------------------------------------------------------------------------
@@ -230,25 +280,46 @@ func _rebuild_bench() -> void:
 
 func _build_bench_row(symbot: SymbotInstance, a_slot_is_free: bool) -> Control:
 	var species: SpeciesDef = _ctx.species.get_species(symbot.species_id)
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(0, 56)
+	panel.add_theme_stylebox_override("panel", UIPalette.chunky(Color("161e27")))
 	var row := HBoxContainer.new()
-	row.custom_minimum_size = Vector2(0, MIN_ROW_HEIGHT)
+	row.add_theme_constant_override("separation", 8)
+	panel.add_child(row)
 
-	var label := Label.new()
-	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	label.clip_text = true
-	label.text = "%s  L%d" % [
-		species.display_name if species != null else String(symbot.species_id), symbot.level]
-	row.add_child(label)
+	row.add_child(_face(symbot, 38))
+
+	var text := VBoxContainer.new()
+	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	text.add_theme_constant_override("separation", 1)
+	row.add_child(text)
+
+	var name_label := Label.new()
+	name_label.text = species.display_name if species != null else String(symbot.species_id)
+	name_label.add_theme_font_override("font", UIPalette.bold_font())
+	name_label.add_theme_font_size_override("font_size", 12)
+	name_label.clip_text = true
+	text.add_child(name_label)
+
+	var sub := Label.new()
+	sub.text = "LV.%d" % symbot.level
+	sub.add_theme_font_size_override("font_size", 10)
+	sub.add_theme_color_override("font_color", UIPalette.MUTED)
+	text.add_child(sub)
 
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(110, MIN_ROW_HEIGHT)
+	button.custom_minimum_size = Vector2(96, 40)
 	button.clip_text = true
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.text = "Send" if a_slot_is_free else "Slots full"
 	button.disabled = not a_slot_is_free
 	if a_slot_is_free:
+		button.theme_type_variation = &"Primary"
+		button.add_child(UIPalette.gloss())
 		button.pressed.connect(Callable(self, "_on_send_pressed").bind(symbot.instance_id))
 	row.add_child(button)
-	return row
+	return panel
 
 
 # ---------------------------------------------------------------------------
