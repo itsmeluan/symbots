@@ -55,13 +55,13 @@ func test_each_symbot_shows_its_role() -> void:
 	# field it.
 	var text := ""
 	for i in _screen._bench.get_child_count():
-		text += _bench_button(i).text
+		text += _bench_button(i).tooltip_text
 	for role_name in ["DPS", "TANK", "HEAL", "SUPP"]:
 		assert_true(text.contains(role_name), "%s missing from the bench" % role_name)
 
 
 func test_a_fielded_symbot_is_marked_on_the_bench() -> void:
-	assert_true(_bench_button(0).text.contains("FIELDED"),
+	assert_true(_bench_button(0).tooltip_text.contains("FIELDED"),
 		"otherwise the player cannot tell who is already in")
 
 
@@ -89,9 +89,9 @@ func test_arming_a_slot_and_tapping_a_symbot_fields_them() -> void:
 	assert_eq(_screen._armed_slot, -1, "and the slot disarms after use")
 
 
-func test_tapping_a_symbot_with_no_slot_armed_uses_the_first_empty_one() -> void:
-	# Forcing the player to arm a slot for the common case would be a step with no decision
-	# in it.
+func test_an_idle_tap_opens_the_dossier_and_its_action_fields_them() -> void:
+	# Same grammar as the battle: idle tap inspects. Fielding stays one tap away via the
+	# modal's ADD TO SQUAD action.
 	_game.ctx.roster.clear_squad_slot(0)
 	var extra := SymbotInstanceScript.new(&"extra", &"voltfang")
 	_game.ctx.roster.add(extra)
@@ -99,7 +99,8 @@ func test_tapping_a_symbot_with_no_slot_armed_uses_the_first_empty_one() -> void
 
 	_screen._on_bench_pressed(extra)
 
-	assert_eq(_game.ctx.roster.squad[0], &"extra")
+	assert_not_null(_screen._detail_modal, "an idle tap inspects rather than assigns")
+	assert_eq(_game.ctx.roster.squad[0], &"", "nothing was assigned by the tap itself")
 
 
 func test_fielding_someone_already_in_the_squad_moves_them() -> void:
@@ -122,8 +123,9 @@ func test_tapping_an_armed_slot_again_empties_it() -> void:
 	assert_eq(_screen._armed_slot, -1)
 
 
-func test_a_full_squad_with_nothing_armed_ignores_a_bench_tap() -> void:
-	# Rather than silently displacing someone the player did not choose.
+func test_a_full_squad_with_nothing_armed_never_displaces_anyone() -> void:
+	# Rather than silently displacing someone the player did not choose, the idle tap
+	# opens the dossier — and with no empty slot, it offers no ADD action either.
 	var extra := SymbotInstanceScript.new(&"extra", &"voltfang")
 	_game.ctx.roster.add(extra)
 	_screen.refresh()
@@ -131,6 +133,7 @@ func test_a_full_squad_with_nothing_armed_ignores_a_bench_tap() -> void:
 	_screen._on_bench_pressed(extra)
 
 	assert_false(_game.ctx.roster.squad.has(&"extra"))
+	assert_not_null(_screen._detail_modal)
 
 
 # ---------------------------------------------------------------------------

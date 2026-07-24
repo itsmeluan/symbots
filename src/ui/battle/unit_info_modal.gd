@@ -50,6 +50,7 @@ var unit: BattleUnit = null
 
 var _ctx: ServiceContext = null
 var _ult_cost: int = 100
+var _column: VBoxContainer = null
 
 
 ## Build and show. [param ult_cost] is the charge cost of the unit's ult, injected by the
@@ -78,18 +79,34 @@ func _build() -> void:
 	panel.custom_minimum_size = Vector2(328, 0)
 	add_child(panel)
 
-	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 8)
-	panel.add_child(column)
+	_column = VBoxContainer.new()
+	_column.add_theme_constant_override("separation", 8)
+	panel.add_child(_column)
 
 	var species: SpeciesDef = null
 	if _ctx != null and _ctx.species != null:
 		species = _ctx.species.get_species(unit.species_id)
 
-	column.add_child(_header(species))
-	column.add_child(_evolution_strip(species))
-	column.add_child(_stats_grid())
-	column.add_child(_skill_list())
+	_column.add_child(_header(species))
+	_column.add_child(_evolution_strip(species))
+	_column.add_child(_stats_grid())
+	_column.add_child(_skill_list())
+
+
+## Append a primary action to the modal's foot (e.g. the squad screen's ADD TO SQUAD).
+## The modal stays a pure viewer — the CALLER owns what the action does; pressing it
+## runs the callable and dismisses. Call after [method open].
+func add_action(label: String, on_pressed: Callable) -> void:
+	if _column == null:
+		return
+	var button := Button.new()
+	button.theme_type_variation = &"Primary"
+	button.text = label
+	button.custom_minimum_size = Vector2(0, 44)
+	button.pressed.connect(func() -> void:
+		on_pressed.call()
+		_dismiss())
+	_column.add_child(button)
 
 
 # ---------------------------------------------------------------------------
