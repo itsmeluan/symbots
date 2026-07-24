@@ -83,12 +83,35 @@ static func _resolve_skills(inst: SymbotInstance, species: SpeciesDef, tree: Ski
 	if skills.has(species.basic_attack_id):
 		out.append(species.basic_attack_id)
 
+	# The full learned pool can be BIGGER than the three battle slots (the tree grants more
+	# actives than fit), so the player CHOOSES which three field via `active_skills`. Honour
+	# that choice; fall back to the first three learned only when nothing is slotted yet, so
+	# a brand-new Symbot still fights with a sensible default instead of an empty bar.
+	var learned := learned_actives(inst, species, tree, skills)
+	var chosen: Array[StringName] = []
+	for sid in inst.active_skills:
+		if sid != &"" and learned.has(sid) and not chosen.has(sid):
+			chosen.append(sid)
+	if chosen.is_empty():
+		chosen = learned.slice(0, ACTIVE_SLOTS)
+	else:
+		chosen = chosen.slice(0, ACTIVE_SLOTS)
+	out.append_array(chosen)
+	return out
+
+
+## Every non-ult skill this Symbot has LEARNED and could slot, in a stable order (species
+## starters first, then tree grants), deduped and minus the basic attack. This is the pool
+## the loadout UI offers and the source of truth `_resolve_skills` picks the fielded three
+## from — one function so the picker can never list a skill the builder would not honour.
+static func learned_actives(inst: SymbotInstance, species: SpeciesDef, tree: SkillTree,
+		skills: Dictionary) -> Array[StringName]:
+	var out: Array[StringName] = []
 	var seen: Dictionary = {species.basic_attack_id: true}
 	var candidates: Array[StringName] = []
 	candidates.append_array(species.starting_skills)
 	if tree != null:
 		candidates.append_array(TreeAllocator.granted_skills(tree, inst, species))
-
 	for sid in candidates:
 		if seen.has(sid) or not skills.has(sid):
 			continue
@@ -97,9 +120,18 @@ static func _resolve_skills(inst: SymbotInstance, species: SpeciesDef, tree: Ski
 			continue  # the ult has its own slot (§3.4b)
 		seen[sid] = true
 		out.append(sid)
-		if out.size() > ACTIVE_SLOTS:
-			break
 	return out
+
+
+## The actives this Symbot currently FIELDS (honouring its loadout, or the default first-three
+## when nothing is slotted) — the basic attack stripped off. The loadout picker highlights
+## exactly these, so what the picker shows as "on" is what the next fight brings.
+static func fielded_actives(inst: SymbotInstance, species: SpeciesDef, tree: SkillTree,
+		skills: Dictionary) -> Array[StringName]:
+	var all := _resolve_skills(inst, species, tree, skills)
+	if not all.is_empty() and all[0] == species.basic_attack_id:
+		return all.slice(1)
+	return all
 
 
 ## Three active slots plus the basic attack (§3.4).

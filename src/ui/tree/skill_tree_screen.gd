@@ -66,6 +66,7 @@ func _build_layout() -> void:
 	_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_view.node_tapped.connect(Callable(self, "_on_node_tapped"))
+	_view.hero_tapped.connect(Callable(self, "_on_hero_tapped"))
 	content.add_child(_view)
 
 	# The roster is the workshop's carousel: bare sprites, no chrome, swipe up for the
@@ -144,6 +145,13 @@ func focus_on(symbot: SymbotInstance) -> void:
 	if symbot == null:
 		return
 	_on_symbot_selected(symbot)
+
+
+## Tapping the hero sprite at the graph's centre opens the dossier for the Symbot the tree
+## is currently pointed at — the same modal the roster cards open.
+func _on_hero_tapped() -> void:
+	if _selected_symbot != null:
+		_on_roster_card_pressed(_selected_symbot)
 
 
 func _on_roster_card_pressed(symbot: SymbotInstance) -> void:

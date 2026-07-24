@@ -291,6 +291,23 @@ func test_the_sheet_fits_every_stage_not_just_one() -> void:
 			"'%s' does not fit the sheet's height ceiling" % stage.display_name)
 
 
+func test_a_home_opened_screen_goes_back_to_home() -> void:
+	# Forge/Tree/Send/Bag open FROM Home, so their back arrow (and Esc / system-back / swipe,
+	# all routed through _go_back) returns there rather than stranding the player.
+	_game.show_home()
+	_game.show_foundry()
+	assert_not_null(_game._foundry, "precondition: the Forge is up")
+
+	assert_true(_game._foundry._go_back(), "a Home-opened screen has somewhere to go back to")
+	assert_not_null(_game._home, "and back lands on Home")
+
+
+func test_a_primary_tab_has_no_back_target() -> void:
+	# The Map is a dock tab — it IS a top level, so there is nothing above it to go back to.
+	_game.show_map()
+	assert_false(_game._map._go_back(), "a dock tab does not swallow back")
+
+
 func test_closing_the_sheet_dismisses_it_without_committing() -> void:
 	# Browsing the map must have a way OUT that is not DEPLOY. The close control hides the
 	# sheet and drops the selection, so no fight is queued.

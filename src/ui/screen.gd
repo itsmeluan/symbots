@@ -59,6 +59,21 @@ var _chrome_alloy: Label
 var _chrome_dock: BottomDock
 var _chrome_ctx: ServiceContext = null
 
+## The four dock destinations. A screen sitting on one of these is a top-level tab and gets
+## no back arrow; anything else (Forge, Tree, Send, Bag) is opened FROM one and does.
+const PRIMARY_TABS: Array[StringName] = [&"home", &"squad", &"workshop", &"map"]
+
+## Where "back" goes, set by build_chrome for secondary screens. Invalid on primary tabs.
+## Driven by the header arrow, the Esc key, the Android/system back button, and the
+## left-edge swipe — all four routed through [method _go_back] so they never disagree.
+var _back_target: Callable = Callable()
+
+## Live left-edge back-swipe tracking. A drag that STARTS within EDGE_SWIPE_MARGIN of the
+## left edge and travels EDGE_SWIPE_TRIGGER to the right is a back gesture.
+const EDGE_SWIPE_MARGIN := 24.0
+const EDGE_SWIPE_TRIGGER := 64.0
+var _edge_swipe_from := -1.0
+
 
 ## Build the shared screen frame and return the CONTENT box for the screen to fill.
 ##
@@ -79,7 +94,11 @@ func build_chrome(ctx: ServiceContext, title: String, active: StringName,
 	root.add_theme_constant_override("separation", 0)
 	add_child(root)
 
-	root.add_child(_build_chrome_header(title, insets.x))
+	# Secondary screens (opened from Home) carry a back arrow and answer Esc / system-back /
+	# left-swipe; primary tabs do not, because the dock already is their "up".
+	if not PRIMARY_TABS.has(active):
+		_back_target = func() -> void: on_nav.call(&"home")
+	root.add_child(_build_chrome_header(title, insets.x, _back_target.is_valid()))
 
 	var pad := MarginContainer.new()
 	pad.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -124,7 +143,7 @@ func fit_hero(hero: TextureRect, mark: int) -> void:
 	hero.offset_top = -HERO_BAND * MARK_ZOOM[clampi(mark, 1, MARK_ZOOM.size()) - 1]
 
 
-func _build_chrome_header(title: String, safe_top: float) -> Control:
+func _build_chrome_header(title: String, safe_top: float, show_back: bool = false) -> Control:
 	var bar := MarginContainer.new()
 	bar.add_theme_constant_override("margin_top", int(safe_top + 6))
 	bar.add_theme_constant_override("margin_bottom", 2)
@@ -132,7 +151,25 @@ func _build_chrome_header(title: String, safe_top: float) -> Control:
 	bar.add_theme_constant_override("margin_right", 14)
 
 	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
 	bar.add_child(row)
+
+	# The back arrow: flat glyph on the far left, before the title. Only on secondary screens.
+	if show_back:
+		var back := Button.new()
+		back.text = "‹"
+		back.flat = true
+		back.focus_mode = Control.FOCUS_NONE
+		back.custom_minimum_size = Vector2(30, 30)
+		back.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		back.add_theme_font_size_override("font_size", 26)
+		back.add_theme_color_override("font_color", UIPalette.MUTED)
+		back.add_theme_color_override("font_hover_color", UIPalette.TEXT)
+		back.add_theme_color_override("font_pressed_color", UIPalette.TEXT)
+		for state in ["normal", "hover", "pressed", "focus"]:
+			back.add_theme_stylebox_override(state, UIPalette.empty())
+		back.pressed.connect(_go_back)
+		row.add_child(back)
 
 	var name_label := Label.new()
 	name_label.theme_type_variation = &"Heading"
@@ -289,6 +326,43 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_EXIT_TREE:
 		_disconnect_all_owned()
 		_on_exit_tree()
+	elif what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		# The Android/system back button. On a screen that has somewhere to go back to, take it.
+		_go_back()
+
+
+## Route every back affordance — arrow, Esc, system-back, edge-swipe — through one place, so
+## a screen can never disagree with itself about what "back" means. A no-op on primary tabs.
+func _go_back() -> bool:
+	if _back_target.is_valid():
+		_back_target.call()
+		return true
+	return false
+
+
+## Esc is "back" on the desktop build. unhandled so a focused control (a text field) can still
+## claim it first; consumed only when we actually navigate.
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel") and _go_back():
+		get_viewport().set_input_as_handled()
+
+
+## The left-edge back-swipe. Uses _input (not _gui_input) so the gesture is caught before the
+## scrollable content claims the drag: a press that lands in the left margin arms it, and
+## enough rightward travel before release fires back. Only one Screen is ever in the tree, so
+## this global hook belongs to whoever is showing.
+func _input(event: InputEvent) -> void:
+	if not _back_target.is_valid():
+		return
+	if event is InputEventScreenTouch or event is InputEventMouseButton:
+		if event.pressed:
+			_edge_swipe_from = event.position.x if event.position.x <= EDGE_SWIPE_MARGIN else -1.0
+		else:
+			_edge_swipe_from = -1.0
+	elif event is InputEventScreenDrag or event is InputEventMouseMotion:
+		if _edge_swipe_from >= 0.0 and event.position.x - _edge_swipe_from >= EDGE_SWIPE_TRIGGER:
+			_edge_swipe_from = -1.0
+			_go_back()
 
 
 ## Subclass hook called after owned connections are disconnected. Override for

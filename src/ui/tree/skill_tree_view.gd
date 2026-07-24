@@ -14,6 +14,9 @@ extends Control
 ## not know the allocation rules.
 signal node_tapped(node_id: StringName)
 
+## Emitted when the player taps the central hero sprite — opens the Symbot's dossier.
+signal hero_tapped
+
 const TAP_SLOP := 22.0     ## generous: a dot is the rendering, not the target
 
 ## Where the focused node sits vertically on open: below the middle, because the
@@ -180,6 +183,18 @@ func _draw_hero() -> void:
 		Rect2(centre - draw_size * 0.5, draw_size), false, Color(1, 1, 1, 0.94))
 
 
+## The on-screen rectangle the hero sprite occupies, matching _draw_hero's geometry so the
+## tap target and the drawn sprite are always the same box. Empty when there is no hero.
+func _hero_rect() -> Rect2:
+	if hero_texture == null:
+		return Rect2()
+	var centre := _hero_at + _pan
+	var tex_size := hero_texture.get_size()
+	var sprite_scale := minf(150.0 / tex_size.x, 150.0 / tex_size.y)
+	var draw_size := tex_size * sprite_scale
+	return Rect2(centre - draw_size * 0.5, draw_size)
+
+
 func _radius_of(node: SkillNodeDef) -> float:
 	return RADII.get(node.node_type, 9.0)
 
@@ -302,9 +317,14 @@ func _gui_input(event: InputEvent) -> void:
 		else:
 			_dragging = false
 			if _drag_distance <= DRAG_THRESHOLD:
-				var hit := node_at(event.position)
-				if hit != &"":
-					node_tapped.emit(hit)
+				# The hero sits on top of the graph's centre, so test it BEFORE the nodes —
+				# a tap on the sprite opens the dossier rather than the node beneath it.
+				if _hero_rect().has_point(event.position):
+					hero_tapped.emit()
+				else:
+					var hit := node_at(event.position)
+					if hit != &"":
+						node_tapped.emit(hit)
 		accept_event()
 	elif event is InputEventMouseMotion and _dragging:
 		_has_user_panned = true

@@ -53,6 +53,18 @@ var _ult_cost: int = 100
 var _column: VBoxContainer = null
 var _skill_detail: SkillDetailModal = null
 
+## The owned instance behind this dossier, when opened from a meta screen. Present ⇒ the
+## Skills tab lets the player edit the battle loadout; absent (opened in battle, or an
+## enemy) ⇒ the tabs are read-only. This is the single switch between "consult" and "edit".
+var _symbot: SymbotInstance = null
+var _species: SpeciesDef = null
+
+## Tab state. STATS / SKILLS / PASSIVES, always-visible buttons over a swapped content area.
+const TAB_NAMES := ["STATS", "SKILLS", "PASSIVES"]
+var _tab: int = 0
+var _tab_buttons: Array = []
+var _content: VBoxContainer = null
+
 
 ## Build and show for an OWNED instance: the unit is assembled by the REAL pipeline
 ## (parts, tree, items via UnitBuilder), so the stats shown are exactly what the next
@@ -71,6 +83,9 @@ func open_instance(symbot: SymbotInstance, ctx: ServiceContext) -> bool:
 	var ult: SkillDef = ctx.skills.get(unit.ultimate_skill)
 	if ult != null:
 		cost = ult.charge_cost
+	# Keep the instance: it makes the Skills tab an editable loadout and is the thing whose
+	# active_skills the edit writes to (the roster's autosave then persists it).
+	_symbot = symbot
 	open(unit, ctx, cost)
 	return true
 
@@ -111,21 +126,235 @@ func _build() -> void:
 	var species: SpeciesDef = null
 	if _ctx != null and _ctx.species != null:
 		species = _ctx.species.get_species(unit.species_id)
+	_species = species
 
 	_column.add_child(_header(species))
 	_column.add_child(_evolution_strip(species))
 
-	# Stats fill the left; the skills take the empty space to their right — two columns,
-	# not a stack, so the dossier reads at a glance and stays short.
-	var body := HBoxContainer.new()
-	body.add_theme_constant_override("separation", 14)
-	var stats := _stats_grid()
-	stats.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	body.add_child(stats)
-	var skills := _skill_list()
-	skills.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body.add_child(skills)
-	_column.add_child(body)
+	# The dossier now reads as tabs — STATS, the battle SKILLS loadout, and PASSIVES — over a
+	# swapped content area, rather than a stats/skills split. Tab buttons stay visible so the
+	# player always sees the three faces of a Symbot.
+	_column.add_child(_build_tab_bar())
+	_content = VBoxContainer.new()
+	_content.add_theme_constant_override("separation", 6)
+	# A floor height keeps the panel from jumping as the player flips between tabs of
+	# different lengths.
+	_content.custom_minimum_size = Vector2(0, 176)
+	_column.add_child(_content)
+	_show_tab(_tab)
+
+
+# ---------------------------------------------------------------------------
+# Tabs
+# ---------------------------------------------------------------------------
+
+func _build_tab_bar() -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 4)
+	_tab_buttons = []
+	for i in TAB_NAMES.size():
+		var button := Button.new()
+		button.text = TAB_NAMES[i]
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.custom_minimum_size = Vector2(0, 30)
+		button.focus_mode = Control.FOCUS_NONE
+		button.add_theme_font_size_override("font_size", 11)
+		button.pressed.connect(_show_tab.bind(i))
+		row.add_child(button)
+		_tab_buttons.append(button)
+	return row
+
+
+func _show_tab(index: int) -> void:
+	_tab = index
+	for i in _tab_buttons.size():
+		_style_tab(_tab_buttons[i], i == index)
+	if _content == null:
+		return
+	for child in _content.get_children():
+		_content.remove_child(child)
+		child.queue_free()
+	match index:
+		0: _content.add_child(_stats_grid())
+		1: _content.add_child(_skills_tab())
+		2: _content.add_child(_passives_tab())
+
+
+## The active tab wears a cyan pill with an underline; the rest sit quiet. One place so the
+## selected/idle grammar matches the bottom dock's tabs.
+func _style_tab(button: Button, active: bool) -> void:
+	var box := StyleBoxFlat.new()
+	box.set_corner_radius_all(6)
+	box.set_content_margin_all(4)
+	if active:
+		box.bg_color = Color(UIPalette.CYAN, 0.16)
+		box.border_width_bottom = 2
+		box.border_color = UIPalette.CYAN
+	else:
+		box.bg_color = Color(UIPalette.INK, 0.35)
+	for state in ["normal", "hover", "pressed", "focus"]:
+		button.add_theme_stylebox_override(state, box)
+	button.add_theme_color_override("font_color",
+		UIPalette.TEXT if active else UIPalette.MUTED)
+
+
+# ---------------------------------------------------------------------------
+# Skills tab — the battle loadout
+# ---------------------------------------------------------------------------
+
+## The Skills tab. Editable (a picker) when the dossier is backed by an owned instance;
+## read-only (just the fielded kit) in battle or when inspecting an enemy — you consult a
+## loadout mid-fight, you never rebuild it (Rodada 4 decision).
+func _skills_tab() -> Control:
+	if not _can_edit_loadout():
+		return _skill_list()
+
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 4)
+
+	var learned := UnitBuilder.learned_actives(_symbot, _species, _ctx.tree, _ctx.skills)
+	var fielded := UnitBuilder.fielded_actives(_symbot, _species, _ctx.tree, _ctx.skills)
+
+	var heading := Label.new()
+	heading.text = "BATTLE SKILLS   %d / %d" % [fielded.size(), UnitBuilder.ACTIVE_SLOTS]
+	heading.add_theme_font_size_override("font_size", 10)
+	heading.add_theme_color_override("font_color", UIPalette.MUTED)
+	col.add_child(heading)
+
+	if learned.is_empty():
+		col.add_child(_note("No skills learned yet — unlock them in the tree."))
+		return col
+
+	for sid in learned:
+		col.add_child(_loadout_row(sid, fielded.has(sid)))
+	col.add_child(_note(
+		"Tap to slot or unslot. The basic attack and ultimate always come for free."))
+	return col
+
+
+func _can_edit_loadout() -> bool:
+	return _symbot != null and _species != null and _ctx != null
+
+
+## One learnable active as a toggle: slotted rows glow cyan and read ON; the rest sit dark
+## and read OFF. Tapping the whole row flips it (a tap on the icon still opens the detail).
+func _loadout_row(sid: StringName, on: bool) -> Control:
+	var skill: SkillDef = _ctx.skills.get(sid)
+	var button := Button.new()
+	button.custom_minimum_size = Vector2(0, 42)
+	button.focus_mode = Control.FOCUS_NONE
+	var glow := Color(UIPalette.CYAN, 0.5) if on else Color.TRANSPARENT
+	var face := Color("1b2a33") if on else Color("161e27")
+	button.add_theme_stylebox_override("normal", UIPalette.chunky(face, "normal", glow))
+	button.add_theme_stylebox_override("hover", UIPalette.chunky(face, "normal", glow))
+	button.add_theme_stylebox_override("pressed", UIPalette.chunky(face, "pressed"))
+	button.add_theme_stylebox_override("focus", UIPalette.empty())
+	button.pressed.connect(_toggle_loadout.bind(sid))
+
+	var row := HBoxContainer.new()
+	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	row.offset_left = 8
+	row.offset_right = -8
+	row.add_theme_constant_override("separation", 8)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(row)
+
+	if skill != null:
+		row.add_child(SkillIcons.make(skill, 22.0,
+			UIPalette.TEXT if on else UIPalette.MUTED))
+
+	var name_label := Label.new()
+	name_label.text = skill.display_name if skill != null else String(sid)
+	name_label.add_theme_font_size_override("font_size", 12)
+	name_label.add_theme_color_override("font_color", UIPalette.TEXT if on else UIPalette.MUTED)
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(name_label)
+
+	var state := Label.new()
+	state.text = "ON" if on else "OFF"
+	state.add_theme_font_size_override("font_size", 10)
+	state.add_theme_color_override("font_color", UIPalette.CYAN if on else UIPalette.DISABLED)
+	state.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	state.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(state)
+	return button
+
+
+## Flip a skill in or out of the fielded three. Seeds from the CURRENT fielded set (which may
+## be the default first-three), so the first edit off a fresh Symbot is well-defined. Blocks
+## at three — the player removes one before adding another rather than a silent swap.
+func _toggle_loadout(sid: StringName) -> void:
+	if not _can_edit_loadout():
+		return
+	var current := Array(UnitBuilder.fielded_actives(
+		_symbot, _species, _ctx.tree, _ctx.skills))
+	if current.has(sid):
+		current.erase(sid)
+	elif current.size() < UnitBuilder.ACTIVE_SLOTS:
+		current.append(sid)
+	else:
+		return
+	for i in _symbot.active_skills.size():
+		_symbot.active_skills[i] = current[i] if i < current.size() else &""
+	_show_tab(1)
+
+
+# ---------------------------------------------------------------------------
+# Passives tab
+# ---------------------------------------------------------------------------
+
+func _passives_tab() -> Control:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 5)
+	if _symbot == null or _ctx == null or _ctx.tree == null:
+		col.add_child(_note("Passives show on your own Symbots' dossier."))
+		return col
+	var ids := TreeAllocator.granted_passives(_ctx.tree, _symbot, _species)
+	if ids.is_empty():
+		col.add_child(_note("No passives yet — allocate PASSIVE nodes in the skill tree."))
+		return col
+	for pid in ids:
+		col.add_child(_passive_row(pid))
+	return col
+
+
+func _passive_row(passive_id: StringName) -> Control:
+	var def = PassiveDB.get_passive(passive_id) if PassiveDB.has_passive(passive_id) else null
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	row.add_child(Glyph.make(&"hex", 16.0, UIPalette.AMBER))
+
+	var text := VBoxContainer.new()
+	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text.add_theme_constant_override("separation", 1)
+	row.add_child(text)
+
+	var name_label := Label.new()
+	name_label.text = def.display_name if def != null else String(passive_id)
+	name_label.add_theme_font_override("font", UIPalette.bold_font())
+	name_label.add_theme_font_size_override("font_size", 12)
+	text.add_child(name_label)
+
+	var desc_text: String = def.short_description if def != null else ""
+	if desc_text != "":
+		var desc := Label.new()
+		desc.text = desc_text
+		desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		desc.add_theme_font_size_override("font_size", 10)
+		desc.add_theme_color_override("font_color", UIPalette.MUTED)
+		text.add_child(desc)
+	return row
+
+
+func _note(message: String) -> Control:
+	var label := Label.new()
+	label.text = message
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.add_theme_font_size_override("font_size", 10)
+	label.add_theme_color_override("font_color", UIPalette.MUTED)
+	return label
 
 
 ## Append a primary action to the modal's foot (e.g. the squad screen's ADD TO SQUAD).
