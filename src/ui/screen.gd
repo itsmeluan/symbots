@@ -94,11 +94,15 @@ func build_chrome(ctx: ServiceContext, title: String, active: StringName,
 	root.add_theme_constant_override("separation", 0)
 	add_child(root)
 
-	# Secondary screens (opened from Home) carry a back arrow and answer Esc / system-back /
+	# Secondary screens (opened from Home) carry a back control and answer Esc / system-back /
 	# left-swipe; primary tabs do not, because the dock already is their "up".
 	if not PRIMARY_TABS.has(active):
 		_back_target = func() -> void: on_nav.call(&"home")
-	root.add_child(_build_chrome_header(title, insets.x, _back_target.is_valid()))
+	root.add_child(_build_chrome_header(title, insets.x))
+	# The back control sits on its OWN row BELOW the title, so the screen name keeps its
+	# original place at the top-left rather than being shoved right by an arrow beside it.
+	if _back_target.is_valid():
+		root.add_child(_build_back_row())
 
 	var pad := MarginContainer.new()
 	pad.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -143,7 +147,32 @@ func fit_hero(hero: TextureRect, mark: int) -> void:
 	hero.offset_top = -HERO_BAND * MARK_ZOOM[clampi(mark, 1, MARK_ZOOM.size()) - 1]
 
 
-func _build_chrome_header(title: String, safe_top: float, show_back: bool = false) -> Control:
+## A left-aligned back control on its own row, sitting just under the screen title. Only
+## built for secondary screens (see build_chrome), where _back_target is valid.
+func _build_back_row() -> Control:
+	var bar := MarginContainer.new()
+	bar.add_theme_constant_override("margin_left", 14)
+	bar.add_theme_constant_override("margin_right", 14)
+	bar.add_theme_constant_override("margin_bottom", 2)
+
+	var back := Button.new()
+	back.text = "‹  BACK"
+	back.flat = true
+	back.focus_mode = Control.FOCUS_NONE
+	back.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	back.custom_minimum_size = Vector2(0, 26)
+	back.add_theme_font_size_override("font_size", 13)
+	back.add_theme_color_override("font_color", UIPalette.MUTED)
+	back.add_theme_color_override("font_hover_color", UIPalette.TEXT)
+	back.add_theme_color_override("font_pressed_color", UIPalette.TEXT)
+	for state in ["normal", "hover", "pressed", "focus"]:
+		back.add_theme_stylebox_override(state, UIPalette.empty())
+	back.pressed.connect(_go_back)
+	bar.add_child(back)
+	return bar
+
+
+func _build_chrome_header(title: String, safe_top: float) -> Control:
 	var bar := MarginContainer.new()
 	bar.add_theme_constant_override("margin_top", int(safe_top + 6))
 	bar.add_theme_constant_override("margin_bottom", 2)
@@ -151,25 +180,7 @@ func _build_chrome_header(title: String, safe_top: float, show_back: bool = fals
 	bar.add_theme_constant_override("margin_right", 14)
 
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
 	bar.add_child(row)
-
-	# The back arrow: flat glyph on the far left, before the title. Only on secondary screens.
-	if show_back:
-		var back := Button.new()
-		back.text = "‹"
-		back.flat = true
-		back.focus_mode = Control.FOCUS_NONE
-		back.custom_minimum_size = Vector2(30, 30)
-		back.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-		back.add_theme_font_size_override("font_size", 26)
-		back.add_theme_color_override("font_color", UIPalette.MUTED)
-		back.add_theme_color_override("font_hover_color", UIPalette.TEXT)
-		back.add_theme_color_override("font_pressed_color", UIPalette.TEXT)
-		for state in ["normal", "hover", "pressed", "focus"]:
-			back.add_theme_stylebox_override(state, UIPalette.empty())
-		back.pressed.connect(_go_back)
-		row.add_child(back)
 
 	var name_label := Label.new()
 	name_label.theme_type_variation = &"Heading"
