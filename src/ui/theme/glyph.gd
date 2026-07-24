@@ -174,6 +174,38 @@ func _draw() -> void:
 			_line(Vector2(0.12, 0.5), Vector2(0.88, 0.5), s)
 			_line(Vector2(0.28, 0.28), Vector2(0.72, 0.72), s)
 			_line(Vector2(0.72, 0.28), Vector2(0.28, 0.72), s)
+		&"bag":
+			# A pouch: a rounded body under a drawstring neck.
+			var body := PackedVector2Array([
+				p(Vector2(0.24, 0.42), s), p(Vector2(0.76, 0.42), s),
+				p(Vector2(0.82, 0.86), s), p(Vector2(0.18, 0.86), s)])
+			draw_polyline(body + PackedVector2Array([body[0]]), colour, thickness)
+			_line(Vector2(0.34, 0.42), Vector2(0.40, 0.20), s)
+			_line(Vector2(0.66, 0.42), Vector2(0.60, 0.20), s)
+			_line(Vector2(0.40, 0.20), Vector2(0.60, 0.20), s)
+		&"branch":
+			# A trunk that forks twice — the skill tree.
+			_line(Vector2(0.5, 0.90), Vector2(0.5, 0.52), s)
+			_line(Vector2(0.5, 0.52), Vector2(0.26, 0.28), s)
+			_line(Vector2(0.5, 0.52), Vector2(0.74, 0.28), s)
+			draw_circle(p(Vector2(0.26, 0.24), s), s * 0.09, colour)
+			draw_circle(p(Vector2(0.74, 0.24), s), s * 0.09, colour)
+			draw_circle(p(Vector2(0.5, 0.52), s), s * 0.07, colour)
+		&"anvil":
+			# A blocky anvil — the forge.
+			var anvil := PackedVector2Array([
+				p(Vector2(0.16, 0.40), s), p(Vector2(0.84, 0.40), s),
+				p(Vector2(0.70, 0.52), s), p(Vector2(0.60, 0.52), s),
+				p(Vector2(0.60, 0.66), s), p(Vector2(0.40, 0.66), s),
+				p(Vector2(0.40, 0.52), s), p(Vector2(0.30, 0.52), s)])
+			draw_colored_polygon(anvil, colour)
+			draw_rect(Rect2(p(Vector2(0.34, 0.72), s), Vector2(s * 0.32, s * 0.10)), colour)
+		&"send":
+			# A paper plane pointing up-right — dispatch.
+			var plane := PackedVector2Array([
+				p(Vector2(0.14, 0.52), s), p(Vector2(0.86, 0.18), s),
+				p(Vector2(0.52, 0.86), s), p(Vector2(0.44, 0.58), s)])
+			draw_colored_polygon(plane, colour)
 		_:
 			draw_arc(p(Vector2(0.5, 0.5), s), s * 0.3, 0.0, TAU, 12, colour, thickness)
 

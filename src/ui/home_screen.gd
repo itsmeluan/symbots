@@ -1,20 +1,26 @@
-## HomeScreen — where the game opens (Core Design §6).
+## HomeScreen — the hub the game opens on (Core Design §6; nav IA 2026-07-23).
 ##
-## The player used to land straight on the stage list, which asks "where do you want to fight"
-## before showing them what they have. Home answers "who are you and who is with you" first:
-## the squad's lead Symbot standing centre, and the player's own badge above it.
-##
-## Deliberately thin for now. The profile is a placeholder until accounts exist, and the
-## Symbot is a portrait rather than a control — everything actionable already has a screen,
-## and duplicating it here would give the same action two homes.
+## Answers "who are you and who is with you" first: the squad's lead Symbot standing in the
+## room, the player's badge above it. It is also the HUB — the four secondary destinations
+## (Forge, Tree, Send, Bag) are facility buttons here rather than footer tabs, keeping the
+## dock to the four primary loops (Home/Squad/Workshop/Map). A big BATTLE button is the way
+## into the fight.
 class_name HomeScreen
 extends Screen
 
-## Bottom-dock navigation; the game root routes it.
+## Bottom-dock AND facility-button navigation; the game root routes it.
 signal navigate(dest: StringName)
 
 const ART_DIR := "res://assets/art/symbots/"
 const AVATAR_SIZE := 56.0
+
+## The hub's facility buttons: [dest, label, glyph].
+const FACILITIES: Array = [
+	[&"foundry", "FORGE", &"anvil"],
+	[&"tree", "TREE", &"branch"],
+	[&"expeditions", "SEND", &"send"],
+	[&"bag", "BAG", &"bag"],
+]
 
 var _ctx: ServiceContext = null
 var _hero: TextureRect
@@ -41,7 +47,70 @@ func setup(ctx: ServiceContext) -> void:
 	_hero.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	stage.add_child(_hero)
 
+	content.add_child(_build_battle_cta())
+	content.add_child(_build_facilities())
+
 	refresh()
+
+
+## The primary call to action: a big amber button into the core loop. Routes to the map,
+## the stage picker — the one deliberate "go play" affordance on the hub.
+func _build_battle_cta() -> Control:
+	var button := Button.new()
+	button.text = "▶  BATTLE"
+	button.theme_type_variation = &"Primary"
+	button.custom_minimum_size = Vector2(0, 54)
+	button.add_theme_font_size_override("font_size", 20)
+	button.add_child(UIPalette.gloss())
+	_connect_owned(button.pressed, func() -> void: navigate.emit(&"map"))
+	return button
+
+
+## The hub rail: one facility per secondary destination, glyph over label, in the chunky
+## card language. This is what lets the footer stay at four tabs.
+func _build_facilities() -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	row.custom_minimum_size = Vector2(0, 62)
+	for facility in FACILITIES:
+		row.add_child(_build_facility(facility[0], facility[1], facility[2]))
+	return row
+
+
+func _build_facility(dest: StringName, label: String, glyph_kind: StringName) -> Button:
+	var button := Button.new()
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.custom_minimum_size = Vector2(0, 62)
+	button.add_theme_stylebox_override("normal", UIPalette.chunky(Color("1b2530")))
+	button.add_theme_stylebox_override("hover", UIPalette.chunky(Color("1b2530"), "selected"))
+	button.add_theme_stylebox_override("pressed", UIPalette.chunky(Color("1b2530"), "pressed"))
+	button.add_theme_stylebox_override("focus", UIPalette.empty())
+	button.add_child(UIPalette.gloss(0.06))
+	_connect_owned(button.pressed, func() -> void: navigate.emit(dest))
+
+	var column := VBoxContainer.new()
+	column.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	column.offset_top = 6
+	column.offset_bottom = -8
+	column.alignment = BoxContainer.ALIGNMENT_CENTER
+	column.add_theme_constant_override("separation", 3)
+	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(column)
+
+	var icon_holder := CenterContainer.new()
+	icon_holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon_holder.add_child(Glyph.make(glyph_kind, 22.0, UIPalette.CYAN))
+	column.add_child(icon_holder)
+
+	var name_label := Label.new()
+	name_label.text = label
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.add_theme_font_override("font", UIPalette.display_font())
+	name_label.add_theme_font_size_override("font_size", 9)
+	name_label.add_theme_color_override("font_color", UIPalette.MUTED)
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_child(name_label)
+	return button
 
 
 func _on_exit_tree() -> void:

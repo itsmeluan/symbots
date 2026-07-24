@@ -13,18 +13,18 @@ signal navigate(dest: StringName)
 
 const HEIGHT := 56
 
-## dest id -> short label. Order is left-to-right. Kept short because six tabs share one
-## row; the label is a reminder, not a sentence.
+## dest id -> short label. Order is left-to-right. Four PRIMARY destinations only —
+## the secondary ones (Forge, Tree, Send, Bag) live on the Home hub now (research: a
+## mobile bottom bar tops out at ~5). MAP is the emphasised "play" tab.
 const TABS: Array = [
 	[&"home", "HOME"],
-	[&"map", "MAP"],
 	[&"squad", "SQUAD"],
 	[&"workshop", "WORKSHOP"],
-	[&"tree", "TREE"],
-	[&"foundry", "FORGE"],
-	[&"expeditions", "SEND"],
-	[&"bag", "BAG"],
+	[&"map", "MAP"],
 ]
+
+## The tab drawn as the primary call to action — the way into the core loop.
+const PRIMARY_TAB := &"map"
 
 var _active: StringName = &"home"
 var _row: HBoxContainer
@@ -65,7 +65,7 @@ func set_active(dest: StringName) -> void:
 	_active = dest
 	for i in _row.get_child_count():
 		var button: Button = _row.get_child(i)
-		_style_tab(button, TABS[i][0] == dest)
+		_style_tab(button, TABS[i][0] == dest, TABS[i][0] == PRIMARY_TAB)
 
 
 func _build_tab(dest: StringName, label: String) -> Button:
@@ -75,29 +75,32 @@ func _build_tab(dest: StringName, label: String) -> Button:
 	button.custom_minimum_size = Vector2(0, HEIGHT - 8)
 	button.clip_text = true
 	button.pressed.connect(func(): navigate.emit(dest))
-	_style_tab(button, dest == _active)
+	_style_tab(button, dest == _active, dest == PRIMARY_TAB)
 	return button
 
 
-## A tab draws no button chrome — just a label. The ACTIVE tab is the one lit key:
-## raised face, rounded top corners and the cyan top rule, so the bar keeps reading as a
-## bar while the current place gets the game's volumetric accent.
-func _style_tab(button: Button, active: bool) -> void:
+## A tab draws no button chrome — just a label. The ACTIVE tab is the lit key (raised
+## face, rounded top, cyan rule). The PRIMARY tab (MAP) always carries an amber accent so
+## the way into the fight reads as the call to action even when it is not the open screen.
+func _style_tab(button: Button, active: bool, primary: bool) -> void:
+	var accent := UIPalette.AMBER if primary else UIPalette.CYAN
 	var flat := StyleBoxFlat.new()
 	flat.bg_color = Color("1c2632") if active else Color(0, 0, 0, 0)
 	if active:
 		flat.corner_radius_top_left = 7
 		flat.corner_radius_top_right = 7
 		flat.border_width_top = 2
-		flat.border_color = UIPalette.CYAN
+		flat.border_color = accent
 	flat.set_content_margin_all(1)
 	button.add_theme_stylebox_override("normal", flat)
 	button.add_theme_stylebox_override("hover", flat)
 	button.add_theme_stylebox_override("pressed", flat)
 	button.add_theme_stylebox_override("focus", UIPalette.empty())
-	button.add_theme_color_override("font_color",
-		UIPalette.CYAN if active else UIPalette.MUTED)
-	button.add_theme_color_override("font_hover_color", UIPalette.CYAN)
-	# Small enough that the longest label ("WORKSHOP") fits its seventh of the row without
-	# clipping — the tabs are equal width, so the longest one sets the size.
-	button.add_theme_font_size_override("font_size", 8)
+	var idle := accent if primary else UIPalette.MUTED
+	button.add_theme_color_override("font_color", accent if active else idle)
+	button.add_theme_color_override("font_hover_color", accent)
+	# Four tabs share the row now, so they can breathe — a size up from the old eight-tab
+	# squeeze; the primary tab is bold.
+	button.add_theme_font_size_override("font_size", 11)
+	button.add_theme_font_override("font",
+		UIPalette.bold_font() if primary else UIPalette.display_font())
