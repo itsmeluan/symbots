@@ -345,3 +345,12 @@ func test_map_cards_never_overlap_their_nodes() -> void:
 		else:
 			assert_lte(card.position.x + card.size.x, centre - radius,
 				"left-side card %d rides over its node" % i)
+
+
+func test_the_dossier_tree_action_lands_focused() -> void:
+	_game.show_squad()
+	var target: SymbotInstance = _game.ctx.roster.symbots[1]
+	_game._squad.tree_for.emit(target)
+	assert_not_null(_game._tree_screen)
+	assert_eq(_game._tree_screen._selected_symbot, target,
+		"arriving unfocused would make the dossier button a lie")

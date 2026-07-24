@@ -426,11 +426,8 @@ func test_the_drawer_dossier_workshop_action_selects_and_puts_everything_away() 
 	_shop._on_roster_card_pressed(target)
 	assert_not_null(_shop._detail_modal)
 
-	# Act: press the modal's WORKSHOP action (the last button in its column).
-	var action: Button = null
-	for child in _shop._detail_modal._column.get_children():
-		if child is Button:
-			action = child
+	# Act: press the modal's WORKSHOP action (now half of the nav row).
+	var action: Button = _find_button(_shop._detail_modal, "WORKSHOP")
 	assert_not_null(action)
 	action.pressed.emit()
 	await wait_seconds(0.35)
@@ -446,3 +443,13 @@ func test_tapping_the_hero_opens_its_dossier() -> void:
 	assert_not_null(_shop._detail_modal)
 	assert_eq(_shop._detail_modal.unit.display_name,
 		_game.ctx.species.get_species(_shop._selected.species_id).display_name)
+
+
+func _find_button(node: Node, text: String) -> Button:
+	for child in node.get_children():
+		if child is Button and child.text == text:
+			return child
+		var found := _find_button(child, text)
+		if found != null:
+			return found
+	return null

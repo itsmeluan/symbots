@@ -249,6 +249,7 @@ func show_workshop(focus: SymbotInstance = null) -> void:
 	_present(_workshop)
 	_workshop.navigate.connect(Callable(self, "_navigate_to"))
 	_workshop.closed.connect(Callable(self, "_on_sub_screen_closed"))
+	_workshop.tree_for.connect(Callable(self, "show_tree"))
 	# The Symbots dossier's WORKSHOP action arrives already pointed at someone.
 	if focus != null:
 		_workshop.focus_on(focus)
@@ -257,12 +258,16 @@ func show_workshop(focus: SymbotInstance = null) -> void:
 ## The skill-point sink. Sits beside the Workshop because the two are the same decision
 ## seen twice — where does this Symbot's investment go — and splitting them across the menu
 ## would hide that.
-func show_tree() -> void:
+func show_tree(focus: SymbotInstance = null) -> void:
 	_clear_screens()
 	_tree_screen = SkillTreeScreenScript.new()
 	_present(_tree_screen)
 	_tree_screen.navigate.connect(Callable(self, "_navigate_to"))
 	_tree_screen.closed.connect(Callable(self, "_on_sub_screen_closed"))
+	_tree_screen.workshop_for.connect(Callable(self, "show_workshop"))
+	# A dossier's TREE action arrives already pointed at someone.
+	if focus != null:
+		_tree_screen.focus_on(focus)
 
 
 ## Squad composition is the strategic layer that replaced build-from-parts, so it sits at
@@ -273,6 +278,7 @@ func show_squad() -> void:
 	_present(_squad)
 	_squad.navigate.connect(Callable(self, "_navigate_to"))
 	_squad.workshop_for.connect(Callable(self, "show_workshop"))
+	_squad.tree_for.connect(Callable(self, "show_tree"))
 	_squad.closed.connect(Callable(self, "_on_sub_screen_closed"))
 
 

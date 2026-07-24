@@ -20,6 +20,9 @@ signal navigate(dest: StringName)
 ## The dossier's WORKSHOP action: open the workshop already pointed at this Symbot.
 signal workshop_for(symbot: SymbotInstance)
 
+## The dossier's TREE action: open the skill tree already pointed at this Symbot.
+signal tree_for(symbot: SymbotInstance)
+
 const MIN_ROW_HEIGHT := 52
 
 ## Bench card geometry: three across at the 360 base width, tall enough for name over
@@ -134,11 +137,14 @@ func _build_slot(slot: int) -> Button:
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.toggle_mode = true
 	button.button_pressed = armed
+	# An occupied bay wears the same solid amber frame as the fielded cards below — the
+	# formation and the list speak one language. Arming overrides it with the cyan glow.
 	var glow := Color(UIPalette.CYAN, 0.55) if armed else Color.TRANSPARENT
 	var face := Color("1b242f") if symbot != null else Color("141b23")
+	var rim := Color.TRANSPARENT if armed or symbot == null else UIPalette.AMBER
 	var state := "selected" if armed else "normal"
-	button.add_theme_stylebox_override("normal", UIPalette.chunky(face, state, glow))
-	button.add_theme_stylebox_override("hover", UIPalette.chunky(face, state, glow))
+	button.add_theme_stylebox_override("normal", UIPalette.chunky(face, state, glow, rim))
+	button.add_theme_stylebox_override("hover", UIPalette.chunky(face, state, glow, rim))
 	button.add_theme_stylebox_override("pressed", UIPalette.chunky(face, "selected", glow))
 	button.add_theme_stylebox_override("focus", UIPalette.empty())
 	button.pressed.connect(Callable(self, "_on_slot_pressed").bind(slot))
@@ -294,8 +300,9 @@ func _open_details(symbot: SymbotInstance) -> void:
 			if slot >= 0:
 				_ctx.roster.set_squad_slot(slot, symbot.instance_id)
 			refresh())
-	_detail_modal.add_action("WORKSHOP", func() -> void:
-		workshop_for.emit(symbot), false)
+	_detail_modal.add_nav_actions(
+		func() -> void: workshop_for.emit(symbot),
+		func() -> void: tree_for.emit(symbot))
 
 
 func _first_empty_slot() -> int:

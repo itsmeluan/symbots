@@ -117,6 +117,30 @@ func _build() -> void:
 ## Append a primary action to the modal's foot (e.g. the squad screen's ADD TO SQUAD).
 ## The modal stays a pure viewer — the CALLER owns what the action does; pressing it
 ## runs the callable and dismisses. Call after [method open].
+## The pair of navigation actions every roster dossier carries: WORKSHOP | TREE, half
+## width each on one row. Each runs its callable and dismisses.
+func add_nav_actions(on_workshop: Callable, on_tree: Callable) -> void:
+	if _column == null:
+		return
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	_column.add_child(row)
+	for pair in [["WORKSHOP", on_workshop, &"wrench"], ["TREE", on_tree, &"branch"]]:
+		var button := Button.new()
+		button.text = pair[0]
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.custom_minimum_size = Vector2(0, 40)
+		button.add_theme_font_size_override("font_size", 12)
+		button.add_theme_constant_override("h_separation", 5)
+		button.add_theme_constant_override("icon_max_width", 14)
+		var callable: Callable = pair[1]
+		button.icon = null
+		button.pressed.connect(func() -> void:
+			callable.call()
+			_dismiss())
+		row.add_child(button)
+
+
 func add_action(label: String, on_pressed: Callable, primary: bool = true) -> void:
 	if _column == null:
 		return

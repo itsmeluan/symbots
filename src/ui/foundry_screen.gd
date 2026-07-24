@@ -119,7 +119,7 @@ func _build_card(species: SpeciesDef) -> Control:
 	card.add_child(column)
 
 	var name_label := Label.new()
-	name_label.text = species.display_name if known else "???"
+	name_label.text = ("Blueprint: %s" % species.display_name) if known else "???"
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.add_theme_font_override("font", UIPalette.bold_font())
 	name_label.add_theme_font_size_override("font_size", 12)
@@ -187,9 +187,74 @@ func _count_owned(species_id: StringName) -> int:
 
 func _on_craft_pressed(species_id: StringName) -> void:
 	_craft_counter += 1
-	CraftingServiceScript.craft(species_id, _ctx.species, _ctx.blueprints,
+	var crafted := CraftingServiceScript.craft(species_id, _ctx.species, _ctx.blueprints,
 		_ctx.wallet, _ctx.roster, _craft_counter)
 	refresh()
+	if crafted != null:
+		_show_craft_success(_ctx.species.get_species(species_id))
+
+
+## The forge moment: SUCCESS stamps over a scrim with the newborn standing under it —
+## the same celebration grammar as the battle's victory. Any tap dismisses.
+func _show_craft_success(species: SpeciesDef) -> void:
+	if species == null:
+		return
+	var overlay := Control.new()
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(overlay)
+
+	var scrim := ColorRect.new()
+	scrim.color = Color(UIPalette.INK, 0.82)
+	scrim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scrim.gui_input.connect(func(event: InputEvent) -> void:
+		if event is InputEventMouseButton and event.pressed:
+			overlay.queue_free())
+	overlay.add_child(scrim)
+
+	var column := VBoxContainer.new()
+	column.set_anchors_preset(Control.PRESET_CENTER)
+	column.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	column.grow_vertical = Control.GROW_DIRECTION_BOTH
+	column.alignment = BoxContainer.ALIGNMENT_CENTER
+	column.add_theme_constant_override("separation", 14)
+	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.add_child(column)
+
+	var stamp := Label.new()
+	stamp.text = "SUCCESS"
+	stamp.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stamp.add_theme_font_override("font", UIPalette.bold_font())
+	stamp.add_theme_font_size_override("font_size", 40)
+	stamp.add_theme_color_override("font_color", UIPalette.GREEN)
+	stamp.add_theme_color_override("font_outline_color", UIPalette.INK)
+	stamp.add_theme_constant_override("outline_size", 8)
+	column.add_child(stamp)
+
+	var sprite := TextureRect.new()
+	sprite.texture = UnitPanel.art_texture(species.id, 1)
+	sprite.custom_minimum_size = Vector2(0, 132)
+	sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	sprite.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	column.add_child(sprite)
+
+	var caption := Label.new()
+	caption.text = "%s joins the roster" % species.display_name
+	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	caption.add_theme_font_size_override("font_size", 12)
+	caption.add_theme_color_override("font_color", UIPalette.MUTED)
+	column.add_child(caption)
+
+	# The stamp-and-reveal: title scales in, the newborn fades up under it.
+	stamp.modulate.a = 0.0
+	stamp.scale = Vector2(1.35, 1.35)
+	stamp.resized.connect(func() -> void: stamp.pivot_offset = stamp.size * 0.5)
+	sprite.modulate.a = 0.0
+	var tween := overlay.create_tween()
+	tween.tween_property(stamp, "modulate:a", 1.0, 0.12)
+	tween.parallel().tween_property(stamp, "scale", Vector2.ONE, 0.2) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(sprite, "modulate:a", 1.0, 0.22)
 
 
 func _on_close_pressed() -> void:
