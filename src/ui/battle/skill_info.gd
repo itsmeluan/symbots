@@ -127,6 +127,10 @@ static func _mask() -> ShaderMaterial:
 static func square_button(skill: SkillDef, size: float, on_pressed: Callable) -> Button:
 	var button := Button.new()
 	button.custom_minimum_size = Vector2(size, size)
+	# Stay square: a row taller than the tile (a wrapped description) must not stretch it
+	# into a portrait rectangle — hold size and centre it in the row.
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.clip_contents = true
 	button.add_theme_stylebox_override("normal", _backing(size))
 	button.add_theme_stylebox_override("hover", _backing(size, 0.06))
