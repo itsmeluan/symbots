@@ -91,45 +91,108 @@ static func _status_detail(effect: Dictionary) -> String:
 	return "%s — %s for %d turns" % [name, body, turns]
 
 
-## The round icon chip from the mockup: the skill's art in a coloured ring. Amber for
-## ults, cyan for everything else.
-static func round_chip(skill: SkillDef, diameter: float) -> Control:
-	var chip := PanelContainer.new()
-	chip.custom_minimum_size = Vector2(diameter, diameter)
-	chip.add_theme_stylebox_override("panel", _ring(skill, diameter))
-	chip.add_child(SkillIcons.make(skill, diameter * 0.6,
-		UIPalette.AMBER if skill.is_ultimate else UIPalette.CYAN))
-	return chip
+## Corner-rounding fraction of a skill tile's edge — small, so the square reads as a
+## square with softened corners, not a rounded button.
+const TILE_RADIUS_FRAC := 0.16
+
+## Rounds the corners of the skill art itself: the sprite FILLS the tile edge to edge and
+## only its corner pixels are masked away, so the coloured border traces the real sprite
+## edge instead of framing a shrunken image inside a box.
+const MASK_SHADER := "
+shader_type canvas_item;
+uniform float radius : hint_range(0.0, 0.5) = 0.16;
+void fragment() {
+	vec2 p = min(UV, vec2(1.0) - UV);
+	vec2 c = max(vec2(radius) - p, vec2(0.0));
+	COLOR = texture(TEXTURE, UV);
+	COLOR.a *= 1.0 - smoothstep(radius - 0.012, radius, length(c));
+}"
+
+static var _mask_material: ShaderMaterial = null
 
 
-## The same round chip as a BUTTON — tapping it opens the skill's detail modal. The icon
-## and ring live inside so the whole disc is the tap target.
-static func round_button(skill: SkillDef, diameter: float, on_pressed: Callable) -> Button:
-	var accent := UIPalette.AMBER if skill.is_ultimate else UIPalette.CYAN
+static func _mask() -> ShaderMaterial:
+	if _mask_material == null:
+		var shader := Shader.new()
+		shader.code = MASK_SHADER
+		_mask_material = ShaderMaterial.new()
+		_mask_material.shader = shader
+		_mask_material.set_shader_parameter(&"radius", TILE_RADIUS_FRAC)
+	return _mask_material
+
+
+## The square skill TILE from the mockup as a BUTTON — tap it for the skill's detail. The
+## sprite fills the rounded square; a border in the skill's accent (amber for ults, cyan
+## otherwise) hugs that exact edge.
+static func square_button(skill: SkillDef, size: float, on_pressed: Callable) -> Button:
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(diameter, diameter)
-	button.add_theme_stylebox_override("normal", _ring(skill, diameter))
-	button.add_theme_stylebox_override("hover", _ring(skill, diameter, 0.12))
-	button.add_theme_stylebox_override("pressed", _ring(skill, diameter, 0.2))
+	button.custom_minimum_size = Vector2(size, size)
+	button.clip_contents = true
+	button.add_theme_stylebox_override("normal", _backing(size))
+	button.add_theme_stylebox_override("hover", _backing(size, 0.06))
+	button.add_theme_stylebox_override("pressed", _backing(size, 0.12))
 	button.add_theme_stylebox_override("focus", _empty())
 	button.pressed.connect(on_pressed)
-	var icon := SkillIcons.make(skill, diameter * 0.6, accent)
-	icon.set_anchors_preset(Control.PRESET_CENTER)
-	button.add_child(icon)
+	_fill_tile(button, skill, size)
 	return button
 
 
-static func _ring(skill: SkillDef, diameter: float, lighten: float = 0.0) -> StyleBoxFlat:
+## The same tile, non-interactive — the detail modal's header wears one.
+static func square_chip(skill: SkillDef, size: float) -> Control:
+	var tile := Panel.new()
+	tile.custom_minimum_size = Vector2(size, size)
+	tile.clip_contents = true
+	tile.add_theme_stylebox_override("panel", _backing(size))
+	_fill_tile(tile, skill, size)
+	return tile
+
+
+## Lay the art (masked to rounded corners) and the accent border into a tile control.
+static func _fill_tile(tile: Control, skill: SkillDef, size: float) -> void:
 	var accent := UIPalette.AMBER if skill.is_ultimate else UIPalette.CYAN
+	var tex := SkillIcons.texture_for(skill.id)
+	if tex != null:
+		var art := TextureRect.new()
+		art.texture = tex
+		art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		# SCALE fills the square exactly; the icons are near-square so aspect drift is
+		# tiny, and a clean 0..1 UV is what lets the corner mask line up with the border.
+		art.stretch_mode = TextureRect.STRETCH_SCALE
+		art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		art.material = _mask()
+		art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tile.add_child(art)
+	else:
+		var holder := CenterContainer.new()
+		holder.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		holder.add_child(Glyph.make(Glyph.for_skill(skill), size * 0.55, accent))
+		tile.add_child(holder)
+	tile.add_child(_border(size, accent))
+
+
+static func _backing(size: float, lighten: float = 0.0) -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
 	box.bg_color = Color(UIPalette.INK, 0.6).lightened(lighten)
-	box.set_corner_radius_all(int(diameter * 0.5))
+	box.set_corner_radius_all(int(size * TILE_RADIUS_FRAC))
+	box.corner_detail = 12
+	box.anti_aliasing_size = 1.0
+	return box
+
+
+static func _border(size: float, accent: Color) -> Panel:
+	var frame := Panel.new()
+	frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var box := StyleBoxFlat.new()
+	box.bg_color = Color(0, 0, 0, 0)
+	box.set_corner_radius_all(int(size * TILE_RADIUS_FRAC))
 	box.corner_detail = 12
 	box.anti_aliasing_size = 1.0
 	box.set_border_width_all(2)
 	box.border_color = accent
-	box.set_content_margin_all(int(diameter * 0.18))
-	return box
+	frame.add_theme_stylebox_override("panel", box)
+	return frame
 
 
 static func _empty() -> StyleBoxEmpty:

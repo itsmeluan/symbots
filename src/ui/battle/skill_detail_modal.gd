@@ -67,7 +67,7 @@ func _header() -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 
-	row.add_child(SkillInfo.round_chip(_skill, 60.0))
+	row.add_child(SkillInfo.square_chip(_skill, 60.0))
 
 	var text := VBoxContainer.new()
 	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL

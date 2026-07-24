@@ -98,7 +98,7 @@ func _build() -> void:
 	panel.set_anchors_preset(Control.PRESET_CENTER)
 	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
-	panel.custom_minimum_size = Vector2(328, 0)
+	panel.custom_minimum_size = Vector2(360, 0)
 	add_child(panel)
 
 	_column = VBoxContainer.new()
@@ -111,8 +111,18 @@ func _build() -> void:
 
 	_column.add_child(_header(species))
 	_column.add_child(_evolution_strip(species))
-	_column.add_child(_stats_grid())
-	_column.add_child(_skill_list())
+
+	# Stats fill the left; the skills take the empty space to their right — two columns,
+	# not a stack, so the dossier reads at a glance and stays short.
+	var body := HBoxContainer.new()
+	body.add_theme_constant_override("separation", 14)
+	var stats := _stats_grid()
+	stats.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	body.add_child(stats)
+	var skills := _skill_list()
+	skills.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_child(skills)
+	_column.add_child(body)
 
 
 ## Append a primary action to the modal's foot (e.g. the squad screen's ADD TO SQUAD).
@@ -165,11 +175,13 @@ func _header(species: SpeciesDef) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 
+	# Name and tags cluster together on the LEFT — the tags belong to the name, not to
+	# the close button they used to sit against.
 	var name_label := Label.new()
 	name_label.text = unit.display_name
 	name_label.add_theme_font_override("font", UIPalette.bold_font())
 	name_label.add_theme_font_size_override("font_size", 16)
-	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(name_label)
 
 	var tags := Label.new()
@@ -184,6 +196,12 @@ func _header(species: SpeciesDef) -> Control:
 	tags.add_theme_color_override("font_color", UIPalette.MUTED)
 	tags.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(tags)
+
+	# The gap that pushes the X to the far right.
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(spacer)
 
 	# Just the glyph — no button box. Muted, brightening on press.
 	var close_button := Button.new()
@@ -335,7 +353,7 @@ func _skill_row(skill: SkillDef) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
 
-	row.add_child(SkillInfo.round_button(skill, 44.0,
+	row.add_child(SkillInfo.square_button(skill, 46.0,
 		func() -> void: _open_skill_detail(skill)))
 
 	var text := VBoxContainer.new()
