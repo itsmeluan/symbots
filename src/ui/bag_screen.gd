@@ -1,9 +1,10 @@
 ## BagScreen — everything the player owns that is not a Symbot (Core Design §5, §6.2).
 ##
-## Three things used to be invisible: Chipsets (spent in the Workshop), socket
-## components (spent in the skill tree), and learned blueprints (spent in the Forge). Each was
-## earned somewhere and consumed somewhere else, with no screen in between where the player
-## could see what they were holding — so a drop felt like nothing and a plan was impossible.
+## Two things used to be invisible: Chipsets (spent in the Workshop) and socket components
+## (spent in the skill tree). Each was earned somewhere and consumed somewhere else, with no
+## screen in between where the player could see what they were holding — so a drop felt like
+## nothing and a plan was impossible. Learned blueprints are NOT shown here: they live on the
+## Forge, where they are spent, and splitting the collection across two screens helped no one.
 ##
 ## Read-only on purpose. Items are spent where they are used; the Bag is the ledger, not a
 ## second place to act, which keeps one action in one place.
@@ -64,10 +65,9 @@ func refresh() -> void:
 		_list.remove_child(child)
 		child.queue_free()
 
-	# Blueprints lead: they are the collection prize a run is chasing, not another consumable,
-	# so the Bag opens on them rather than burying them under the utility stock.
+	# Blueprints are NOT shown here — they already have a home on the Forge, where they are
+	# spent, and duplicating them in the Bag only split the collection across two screens.
 	var empty := true
-	empty = _add_blueprints() == 0 and empty
 	empty = _add_key_items() == 0 and empty
 	empty = _add_components() == 0 and empty
 	if empty:
@@ -111,81 +111,6 @@ func _add_components() -> int:
 			_ctx.inventory_items.count(id), UIPalette.CYAN, _component_glyph(id), null))
 		rows += 1
 	return rows
-
-
-func _add_blueprints() -> int:
-	if _ctx.blueprints == null or _ctx.species == null:
-		return 0
-	var grid: GridContainer = null
-	var rows := 0
-	for id in _ctx.blueprints.known_ids():
-		var species: SpeciesDef = _ctx.species.get_species(id)
-		if species == null:
-			continue
-		if grid == null:
-			_list.add_child(_section("BLUEPRINTS"))
-			grid = _grid()
-			_list.add_child(grid)
-		grid.add_child(_blueprint_card(species))
-		rows += 1
-	return rows
-
-
-## A blueprint reads as a COLLECTION tile, not an inventory chip: the creature's own face
-## shown large over its name, framed in Alloy (the currency that forges it), with a "craft in
-## the Forge" footer. Tapping opens the same read-only dossier as any other bag item.
-func _blueprint_card(species: SpeciesDef) -> Control:
-	var card := Button.new()
-	card.custom_minimum_size = Vector2(0, 132)
-	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	card.tooltip_text = "%s\nCraftable in the Forge." % species.display_name
-	var face := Color("1c2530")
-	var rim := Color(UIPalette.ALLOY, 0.55)
-	card.add_theme_stylebox_override("normal", UIPalette.chunky(face, "normal", Color.TRANSPARENT, rim))
-	card.add_theme_stylebox_override("hover", UIPalette.chunky(face, "normal", Color(UIPalette.ALLOY, 0.18), rim))
-	card.add_theme_stylebox_override("pressed", UIPalette.chunky(face, "pressed", Color.TRANSPARENT, rim))
-	card.add_theme_stylebox_override("focus", UIPalette.empty())
-	card.pressed.connect(_open_item_details.bind(species.display_name,
-		"Craftable in the Forge with Alloy.", 0, UIPalette.ALLOY, &"hex",
-		UnitPanel.art_texture(species.id, 1)))
-
-	var column := VBoxContainer.new()
-	column.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	column.offset_top = 8
-	column.offset_bottom = -8
-	column.add_theme_constant_override("separation", 2)
-	column.alignment = BoxContainer.ALIGNMENT_CENTER
-	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_child(column)
-
-	var sprite := TextureRect.new()
-	sprite.texture = UnitPanel.art_texture(species.id, 1)
-	sprite.custom_minimum_size = Vector2(0, 64)
-	sprite.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	sprite.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	sprite.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	column.add_child(sprite)
-
-	var name_label := Label.new()
-	name_label.text = species.display_name
-	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_label.add_theme_font_override("font", UIPalette.bold_font())
-	name_label.add_theme_font_size_override("font_size", 12)
-	name_label.add_theme_color_override("font_color", UIPalette.TEXT)
-	name_label.clip_text = true
-	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	column.add_child(name_label)
-
-	var craft := Label.new()
-	craft.text = "◆ CRAFT IN FORGE"
-	craft.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	craft.add_theme_font_size_override("font_size", 8)
-	craft.add_theme_color_override("font_color", UIPalette.ALLOY)
-	craft.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	column.add_child(craft)
-	return card
 
 
 func _section(title: String) -> Control:
