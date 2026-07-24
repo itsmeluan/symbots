@@ -51,6 +51,7 @@ var unit: BattleUnit = null
 var _ctx: ServiceContext = null
 var _ult_cost: int = 100
 var _column: VBoxContainer = null
+var _skill_detail: SkillDetailModal = null
 
 
 ## Build and show for an OWNED instance: the unit is assembled by the REAL pipeline
@@ -184,11 +185,19 @@ func _header(species: SpeciesDef) -> Control:
 	tags.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(tags)
 
+	# Just the glyph — no button box. Muted, brightening on press.
 	var close_button := Button.new()
 	close_button.text = "✕"
-	close_button.custom_minimum_size = Vector2(44, 44)
-	close_button.add_theme_stylebox_override("normal", UIPalette.button())
-	close_button.add_theme_stylebox_override("pressed", UIPalette.button("pressed"))
+	close_button.flat = true
+	close_button.custom_minimum_size = Vector2(24, 24)
+	close_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	close_button.add_theme_font_size_override("font_size", 16)
+	close_button.add_theme_color_override("font_color", UIPalette.MUTED)
+	close_button.add_theme_color_override("font_hover_color", UIPalette.TEXT)
+	close_button.add_theme_color_override("font_pressed_color", UIPalette.TEXT)
+	close_button.add_theme_stylebox_override("normal", UIPalette.empty())
+	close_button.add_theme_stylebox_override("hover", UIPalette.empty())
+	close_button.add_theme_stylebox_override("pressed", UIPalette.empty())
 	close_button.add_theme_stylebox_override("focus", UIPalette.empty())
 	close_button.pressed.connect(_dismiss)
 	row.add_child(close_button)
@@ -316,25 +325,49 @@ func _skill_list() -> Control:
 		var skill: SkillDef = _ctx.skills.get(sid) if _ctx != null else null
 		if skill == null:
 			continue
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 6)
-
-		var icon_holder := VBoxContainer.new()
-		icon_holder.add_child(SkillIcons.make(skill, 14.0,
-			UIPalette.AMBER if skill.is_ultimate else UIPalette.MUTED))
-		row.add_child(icon_holder)
-
-		var text := Label.new()
-		text.text = skill.display_name \
-			+ ("  —  " + skill.description if not skill.description.is_empty() else "")
-		text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		text.add_theme_font_size_override("font_size", 10)
-		text.add_theme_color_override("font_color",
-			UIPalette.AMBER if skill.is_ultimate else UIPalette.TEXT)
-		row.add_child(text)
-		column.add_child(row)
+		column.add_child(_skill_row(skill))
 	return column
+
+
+## One skill row (mockup): the round icon chip on the left — tap it for the full detail
+## modal — then the name in bold over its description in a thinner, muted line.
+func _skill_row(skill: SkillDef) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+
+	row.add_child(SkillInfo.round_button(skill, 44.0,
+		func() -> void: _open_skill_detail(skill)))
+
+	var text := VBoxContainer.new()
+	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	text.add_theme_constant_override("separation", 1)
+	row.add_child(text)
+
+	var name_label := Label.new()
+	name_label.text = skill.display_name
+	name_label.add_theme_font_override("font", UIPalette.bold_font())
+	name_label.add_theme_font_size_override("font_size", 13)
+	name_label.add_theme_color_override("font_color",
+		UIPalette.AMBER if skill.is_ultimate else UIPalette.TEXT)
+	text.add_child(name_label)
+
+	var desc := Label.new()
+	desc.text = skill.description
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc.add_theme_font_size_override("font_size", 10)
+	desc.add_theme_color_override("font_color", UIPalette.MUTED)
+	text.add_child(desc)
+	return row
+
+
+func _open_skill_detail(skill: SkillDef) -> void:
+	if _skill_detail != null:
+		return
+	_skill_detail = SkillDetailModal.new()
+	_skill_detail.closed.connect(func() -> void: _skill_detail = null)
+	add_child(_skill_detail)
+	_skill_detail.open(skill, unit, _ult_cost)
 
 
 # ---------------------------------------------------------------------------

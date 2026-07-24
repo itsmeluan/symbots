@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"ult_resonance_field"
 display_name = "Resonance Field"
-description = "Empowers the whole squad for 3 turns: +35% power and +25% armor and resistance."
+description = "Empowers the whole squad for 3 turns: +35% power and +35% armor and resistance."
 target_mode = 3
 cooldown = 0
 initial_cooldown = 0
