@@ -185,12 +185,47 @@ func _on_chrome_balance_changed(_currency: StringName, _amount: int) -> void:
 	refresh_chrome_wallet()
 
 
+## The running wallet tick, plus what the header is currently SHOWING (which trails the
+## model while the tick runs).
+var _chrome_wallet_tween: Tween = null
+var _chrome_scrap_shown: int = 0
+var _chrome_alloy_shown: int = 0
+var _chrome_wallet_primed: bool = false
+
+
 ## Redraw the header's currency readouts. Safe to call before the chrome exists.
+##
+## After the first (snap) draw, changes TICK to the new value over a third of a second —
+## spending and earning read as movement, not as a teleporting number. The first draw
+## snaps so a freshly opened screen never counts up from zero.
 func refresh_chrome_wallet() -> void:
 	if _chrome_scrap == null or _chrome_ctx == null or _chrome_ctx.wallet == null:
 		return
-	_chrome_scrap.text = fmt_thousands(_chrome_ctx.wallet.scrap)
-	_chrome_alloy.text = fmt_thousands(_chrome_ctx.wallet.alloy)
+	var scrap := _chrome_ctx.wallet.scrap
+	var alloy := _chrome_ctx.wallet.alloy
+	if not _chrome_wallet_primed or not is_inside_tree() \
+			or (scrap == _chrome_scrap_shown and alloy == _chrome_alloy_shown):
+		_chrome_wallet_primed = true
+		_set_chrome_wallet_text(scrap, alloy)
+		return
+
+	if _chrome_wallet_tween != null and _chrome_wallet_tween.is_valid():
+		_chrome_wallet_tween.kill()
+	var from_scrap := _chrome_scrap_shown
+	var from_alloy := _chrome_alloy_shown
+	_chrome_wallet_tween = create_tween()
+	_chrome_wallet_tween.tween_method(
+		func(t: float) -> void:
+			_set_chrome_wallet_text(
+				int(lerpf(from_scrap, scrap, t)), int(lerpf(from_alloy, alloy, t))),
+		0.0, 1.0, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+
+func _set_chrome_wallet_text(scrap: int, alloy: int) -> void:
+	_chrome_scrap_shown = scrap
+	_chrome_alloy_shown = alloy
+	_chrome_scrap.text = fmt_thousands(scrap)
+	_chrome_alloy.text = fmt_thousands(alloy)
 
 
 ## Group thousands with a dot, matching the prototype's currency readout (8.085).

@@ -85,6 +85,7 @@ var _hint: SwipeHint
 # the very button the player is holding down, killing the auto-repeat mid-press.
 var _part_level_labels: Array = []
 var _part_buttons: Array = []
+var _part_icons: Array = []
 
 # Hold-to-repeat on the Upgrade pill: one level lands on press, then it keeps levelling while
 # held — pausing first so a single tap is still a single level, and accelerating so a long
@@ -364,7 +365,10 @@ func _style_drawer_tab(button: Button, active: bool) -> void:
 	box.set_content_margin(SIDE_LEFT, 6)
 	box.set_content_margin(SIDE_RIGHT, 6)
 	if active:
-		box.bg_color = Color(UIPalette.PANEL, 0.8)     # matches the panel — reads as one surface
+		# The lit key, same accent grammar as the dock: raised face + cyan top rule.
+		box.bg_color = Color(UIPalette.PANEL, 0.9)
+		box.border_width_top = 2
+		box.border_color = UIPalette.CYAN
 		box.set_content_margin(SIDE_TOP, 9)
 		box.set_content_margin(SIDE_BOTTOM, 8)
 	else:
@@ -574,6 +578,8 @@ func _rebuild_parts() -> void:
 	_part_buttons.clear()
 	_part_level_labels.resize(SymbotInstanceScript.PART_COUNT)
 	_part_buttons.resize(SymbotInstanceScript.PART_COUNT)
+	_part_icons.clear()
+	_part_icons.resize(SymbotInstanceScript.PART_COUNT)
 	if _selected == null:
 		return
 	for slot in SymbotInstanceScript.PART_COUNT:
@@ -665,7 +671,9 @@ func _build_part_row(slot: int) -> Control:
 	icon.modulate = UIPalette.CYAN
 	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.pivot_offset = Vector2(PART_ICON_SIZE, PART_ICON_SIZE) * 0.5
 	top.add_child(icon)
+	_part_icons[slot] = icon
 
 	var namecol := VBoxContainer.new()
 	namecol.add_theme_constant_override("separation", 1)
@@ -752,7 +760,9 @@ func _part_stats_text(slot: int) -> String:
 		if contribution.has(stat):
 			parts.append("+%d %s" % [
 				int(contribution[stat]), StatSummary.SHORT_LABELS.get(stat, String(stat))])
-	return "  ".join(parts)
+	# The buy preview rides along: what the NEXT level adds, so the price button never
+	# asks for money without saying what it buys.
+	return "  ".join(parts) + "   ▲ " + _part_rate_text(species, slot)
 
 
 ## The authored per-level rate, shown only while the part is still at level 1 and therefore
@@ -949,7 +959,56 @@ func _on_symbot_selected(symbot: SymbotInstance) -> void:
 ## stale if the wallet moved, and a no-op beats a charge the player did not agree to.
 func _on_upgrade_pressed(slot: int) -> void:
 	if UpgradeEconomyScript.upgrade(_selected, slot, _ctx.wallet, _ctx.balance) > 0:
+		_celebrate_upgrade(slot)
 		_after_upgrade()
+
+
+# ---------------------------------------------------------------------------
+# Spend celebration
+# ---------------------------------------------------------------------------
+
+## The paid level ARRIVES: the part's badge pulses and what it just bought floats up in
+## green. The wallet ticking down happens in the shared chrome (refresh_chrome_wallet).
+func _celebrate_upgrade(slot: int) -> void:
+	if not is_inside_tree():
+		return
+	var icon: TextureRect = _part_icons[slot] if slot < _part_icons.size() else null
+	if icon != null and icon.is_inside_tree():
+		var pulse := icon.create_tween()
+		pulse.tween_property(icon, "scale", Vector2(1.3, 1.3), 0.08)
+		pulse.tween_property(icon, "scale", Vector2.ONE, 0.18) \
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+	var species := _species_of(_selected)
+	if species == null or not species.part_growth.has(slot):
+		return
+	var growth: Dictionary = species.part_growth[slot]
+	var gains: Array = []
+	for stat in StatSummary.ORDER:
+		if growth.has(stat):
+			gains.append("+%d %s" % [
+				int(growth[stat]), StatSummary.SHORT_LABELS.get(stat, String(stat))])
+	if gains.is_empty():
+		return
+
+	var float_label := Label.new()
+	float_label.text = "  ".join(gains)
+	float_label.add_theme_font_override("font", UIPalette.bold_font())
+	float_label.add_theme_font_size_override("font_size", 11)
+	float_label.add_theme_color_override("font_color", UIPalette.GREEN)
+	float_label.add_theme_color_override("font_outline_color", UIPalette.INK)
+	float_label.add_theme_constant_override("outline_size", 4)
+	float_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	float_label.z_index = 30
+	add_child(float_label)
+	var anchor: Control = icon if icon != null else self
+	float_label.global_position = anchor.global_position + Vector2(-4, -16)
+	var tween := float_label.create_tween()
+	tween.tween_property(float_label, "position:y", float_label.position.y - 26.0, 0.55) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(float_label, "modulate:a", 0.0, 0.55) \
+		.set_ease(Tween.EASE_IN)
+	tween.tween_callback(float_label.queue_free)
 
 
 ## Everything an upgrade touches, refreshed in place — rebuilding would free the held button
@@ -993,6 +1052,7 @@ func _on_repeat_tick() -> void:
 	if UpgradeEconomyScript.upgrade(_selected, _repeat_slot, _ctx.wallet, _ctx.balance) <= 0:
 		_stop_repeat()
 		return
+	_celebrate_upgrade(_repeat_slot)
 	_after_upgrade()
 	_repeat_ticks += 1
 	_repeat_timer.start(
@@ -1010,12 +1070,61 @@ func _on_gen_up_pressed() -> void:
 				# showing the old form until the screen was left and re-entered.
 				_populate_carousel(true)
 				refresh()
+				_play_retrofit_ceremony()
 		&"overclock":
 			# Spend the Core only if the level actually lands. The sprite is unchanged; only
 			# the ceiling moves.
 			if _selected.overclock_up(_max_overclock()):
 				_ctx.key_items.take(KeyItems.CHIPSET)
 				refresh()
+
+
+## The Retrofit moment: the hero flashes white over the swap to its new form, and the
+## new mark stamps in over it — the same stamp gesture as the battle's wave card, because
+## it is the same kind of announcement. refresh() has already swapped the texture.
+func _play_retrofit_ceremony() -> void:
+	if _hero == null or not is_inside_tree():
+		return
+	if _hero.material == null:
+		var shader := Shader.new()
+		shader.code = UnitPanel.FLASH_SHADER_CODE
+		var mat := ShaderMaterial.new()
+		mat.shader = shader
+		_hero.material = mat
+	var hero_mat: ShaderMaterial = _hero.material
+	var flash := _hero.create_tween()
+	flash.tween_method(func(v: float) -> void:
+		hero_mat.set_shader_parameter(&"flash", v), 0.0, 1.0, 0.10)
+	flash.tween_method(func(v: float) -> void:
+		hero_mat.set_shader_parameter(&"flash", v), 1.0, 0.0, 0.45)
+
+	var stamp := Label.new()
+	stamp.text = "MK %s" % _roman(_selected.mark)
+	stamp.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stamp.add_theme_font_override("font", UIPalette.bold_font())
+	stamp.add_theme_font_size_override("font_size", 34)
+	stamp.add_theme_color_override("font_color", UIPalette.AMBER)
+	stamp.add_theme_color_override("font_outline_color", UIPalette.INK)
+	stamp.add_theme_constant_override("outline_size", 8)
+	stamp.set_anchors_preset(Control.PRESET_CENTER)
+	stamp.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	stamp.grow_vertical = Control.GROW_DIRECTION_BOTH
+	stamp.position.y -= 30
+	stamp.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stamp.z_index = 30
+	stamp.modulate.a = 0.0
+	stamp.scale = Vector2(1.4, 1.4)
+	add_child(stamp)
+	stamp.resized.connect(
+		func() -> void: stamp.pivot_offset = stamp.size * 0.5)
+	var tween := stamp.create_tween()
+	tween.tween_interval(0.10)
+	tween.tween_property(stamp, "modulate:a", 1.0, 0.12)
+	tween.parallel().tween_property(stamp, "scale", Vector2.ONE, 0.20) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_interval(0.9)
+	tween.tween_property(stamp, "modulate:a", 0.0, 0.30)
+	tween.tween_callback(stamp.queue_free)
 
 
 func _on_close_pressed() -> void:

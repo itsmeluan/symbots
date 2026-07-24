@@ -186,6 +186,9 @@ func test_the_map_shows_the_wallet_and_follows_it() -> void:
 	_game.show_map()
 	# The header is shared chrome now (Screen.build_chrome), so the readout lives on the base.
 	_game.ctx.wallet.earn(Wallet.SCRAP, 777)
+	# The readout TICKS to the new value (spend/earn read as movement) — give the tick
+	# its 0.35s before asserting the settled text.
+	await wait_seconds(0.5)
 	assert_true(_game._map._chrome_scrap.text.contains("777"),
 		"the header renders from the signal, not from a poll")
 
