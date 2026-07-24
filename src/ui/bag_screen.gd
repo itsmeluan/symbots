@@ -13,7 +13,7 @@ extends Screen
 ## Bottom-dock navigation; the game root routes it.
 signal navigate(dest: StringName)
 
-const ROW_HEIGHT := 46
+const ROW_HEIGHT := 56
 
 var _ctx: ServiceContext = null
 var _list: VBoxContainer
@@ -28,11 +28,18 @@ func setup(ctx: ServiceContext) -> void:
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	content.add_child(scroll)
+	UIPalette.thin_scrollbar(scroll)
+
+	var pad := MarginContainer.new()
+	pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	pad.add_theme_constant_override("margin_top", 8)
+	pad.add_theme_constant_override("margin_right", 8)
+	scroll.add_child(pad)
 
 	_list = VBoxContainer.new()
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_list.add_theme_constant_override("separation", 4)
-	scroll.add_child(_list)
+	_list.add_theme_constant_override("separation", 6)
+	pad.add_child(_list)
 
 	if _ctx.inventory_items != null:
 		_connect_owned(_ctx.inventory_items.inventory_changed, Callable(self, "_on_inventory_changed"))
@@ -77,7 +84,7 @@ func _add_key_items() -> int:
 		if rows == 0:
 			_list.add_child(_section("KEY ITEMS"))
 		_list.add_child(_row(KeyItems.display_name(id), KeyItems.description(id),
-			count, UIPalette.AMBER))
+			count, UIPalette.AMBER, &"core"))
 		rows += 1
 	return rows
 
@@ -93,7 +100,7 @@ func _add_components() -> int:
 		if rows == 0:
 			_list.add_child(_section("COMPONENTS"))
 		_list.add_child(_row(item.display_name, item.description,
-			_ctx.inventory_items.count(id), UIPalette.CYAN))
+			_ctx.inventory_items.count(id), UIPalette.CYAN, &"chip"))
 		rows += 1
 	return rows
 
@@ -108,7 +115,8 @@ func _add_blueprints() -> int:
 			continue
 		if rows == 0:
 			_list.add_child(_section("BLUEPRINTS"))
-		_list.add_child(_row(species.display_name, "Craftable in the Forge.", 0, UIPalette.ALLOY))
+		_list.add_child(_row(species.display_name, "Craftable in the Forge.", 0,
+			UIPalette.ALLOY, &"hex"))
 		rows += 1
 	return rows
 
@@ -123,25 +131,31 @@ func _section(title: String) -> Control:
 	return label
 
 
-## One owned thing: name, what it is for, and how many. [param count] of 0 hides the tally —
-## a blueprint is known or not, never "×2".
-func _row(item_name: String, description: String, count: int, accent: Color) -> Control:
+## One owned thing: a category glyph, its name and purpose, and a count badge. Framed in
+## the chunky card language with the category's accent glyph — a Chipset, a component and
+## a blueprint read apart at a glance. [param count] of 0 hides the tally — a blueprint is
+## known or not, never "×2".
+func _row(item_name: String, description: String, count: int, accent: Color,
+		icon: StringName) -> Control:
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = Vector2(0, ROW_HEIGHT)
-	var box := StyleBoxFlat.new()
-	box.bg_color = Color(UIPalette.PANEL, 0.82)
-	box.border_width_left = 2
-	box.border_color = accent
-	box.set_corner_radius_all(3)
-	box.set_content_margin(SIDE_LEFT, 10)
-	box.set_content_margin(SIDE_RIGHT, 10)
-	box.set_content_margin(SIDE_TOP, 6)
-	box.set_content_margin(SIDE_BOTTOM, 6)
-	panel.add_theme_stylebox_override("panel", box)
+	panel.add_theme_stylebox_override("panel",
+		UIPalette.chunky(Color("18212b"), "normal", Color.TRANSPARENT, Color(accent, 0.55)))
 
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
+	row.add_theme_constant_override("separation", 10)
 	panel.add_child(row)
+
+	# The category glyph, in a round accent-tinted well.
+	var well := PanelContainer.new()
+	var well_box := StyleBoxFlat.new()
+	well_box.bg_color = Color(accent, 0.14)
+	well_box.set_corner_radius_all(8)
+	well_box.set_content_margin_all(6)
+	well.add_theme_stylebox_override("panel", well_box)
+	well.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	well.add_child(Glyph.make(icon, 18.0, accent))
+	row.add_child(well)
 
 	var text := VBoxContainer.new()
 	text.add_theme_constant_override("separation", 0)
@@ -151,6 +165,7 @@ func _row(item_name: String, description: String, count: int, accent: Color) -> 
 
 	var name_label := Label.new()
 	name_label.text = item_name
+	name_label.add_theme_font_override("font", UIPalette.bold_font())
 	name_label.add_theme_font_size_override("font_size", 12)
 	name_label.add_theme_color_override("font_color", UIPalette.TEXT)
 	name_label.clip_text = true
@@ -166,8 +181,9 @@ func _row(item_name: String, description: String, count: int, accent: Color) -> 
 
 	if count > 0:
 		var tally := Label.new()
-		tally.text = "x%d" % count
-		tally.add_theme_font_size_override("font_size", 14)
+		tally.text = "×%d" % count
+		tally.add_theme_font_override("font", UIPalette.bold_font())
+		tally.add_theme_font_size_override("font_size", 15)
 		tally.add_theme_color_override("font_color", accent)
 		tally.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		row.add_child(tally)

@@ -248,3 +248,17 @@ static func gloss(strength: float = 0.10) -> Control:
 ## A flat empty box, for containers that should draw nothing.
 static func empty() -> StyleBoxEmpty:
 	return StyleBoxEmpty.new()
+
+
+## Make a ScrollContainer's vertical bar a thin rounded rail riding the screen edge — the
+## one scrollbar look shared by every list in the game.
+static func thin_scrollbar(scroll: ScrollContainer) -> void:
+	var vsb := scroll.get_v_scroll_bar()
+	vsb.custom_minimum_size = Vector2(4, 0)
+	var grab := StyleBoxFlat.new()
+	grab.bg_color = LINE
+	grab.set_corner_radius_all(2)
+	vsb.add_theme_stylebox_override("grabber", grab)
+	vsb.add_theme_stylebox_override("grabber_highlight", grab)
+	vsb.add_theme_stylebox_override("grabber_pressed", grab)
+	vsb.add_theme_stylebox_override("scroll", empty())
