@@ -61,6 +61,15 @@ var fitted: Dictionary = {}
 var hero_texture: Texture2D = null
 var _hero_at := Vector2.ZERO
 
+## The Respec control the screen hands us to FLOAT under the hero. Kept as a child so it pans
+## with the sprite, and repositioned every time the hero is drawn so the two never drift.
+var _respec_control: Control = null
+
+## The symmetric gap that sets the name just above the sprite and the Respec just below it, so
+## the label and the button sit an equal breath from the creature.
+const HERO_LABEL_GAP := 8.0
+const HERO_SPRITE_MAX := 150.0
+
 var _pan := Vector2.ZERO
 
 ## The node the view wants centred, re-applied whenever the control is resized.
@@ -163,24 +172,57 @@ func _draw() -> void:
 ## free-standing and big enough to own the space.
 func _draw_hero() -> void:
 	if hero_texture == null:
+		if _respec_control != null:
+			_respec_control.visible = false
 		return
 	var centre := _hero_at + _pan
 	var tex_size := hero_texture.get_size()
-	var sprite_scale := minf(150.0 / tex_size.x, 150.0 / tex_size.y)
+	var sprite_scale := minf(HERO_SPRITE_MAX / tex_size.x, HERO_SPRITE_MAX / tex_size.y)
 	var draw_size := tex_size * sprite_scale
 	var top := centre.y - draw_size.y * 0.5
+	var bottom := centre.y + draw_size.y * 0.5
 	var font := UIPalette.bold_font()
-	draw_string_outline(font, Vector2(centre.x - 150.0, top - 26.0), hero_name,
+	# Name over points, both sitting just above the sprite (a single HERO_LABEL_GAP breath) so
+	# the label rides with the creature instead of drifting up into the first ring of nodes.
+	var points_baseline := top - HERO_LABEL_GAP
+	var name_baseline := points_baseline - 15.0
+	draw_string_outline(font, Vector2(centre.x - 150.0, name_baseline), hero_name,
 		HORIZONTAL_ALIGNMENT_CENTER, 300.0, 15, 5, Color("070b11"))
-	draw_string(font, Vector2(centre.x - 150.0, top - 26.0), hero_name,
+	draw_string(font, Vector2(centre.x - 150.0, name_baseline), hero_name,
 		HORIZONTAL_ALIGNMENT_CENTER, 300.0, 15, Color("f2b92b"))
 	var points_text := "%d pt" % hero_points
-	draw_string_outline(font, Vector2(centre.x - 150.0, top - 9.0), points_text,
+	draw_string_outline(font, Vector2(centre.x - 150.0, points_baseline), points_text,
 		HORIZONTAL_ALIGNMENT_CENTER, 300.0, 12, 4, Color("070b11"))
-	draw_string(font, Vector2(centre.x - 150.0, top - 9.0), points_text,
+	draw_string(font, Vector2(centre.x - 150.0, points_baseline), points_text,
 		HORIZONTAL_ALIGNMENT_CENTER, 300.0, 12, Color("47d7ea"))
 	draw_texture_rect(hero_texture,
 		Rect2(centre - draw_size * 0.5, draw_size), false, Color(1, 1, 1, 0.94))
+	_position_respec(centre.x, bottom)
+
+
+## Attach the screen's Respec button so it floats under the hero. The screen keeps ownership
+## (label, cost, the pressed handler and whether it shows at all); the view only parks it.
+func attach_respec(control: Control) -> void:
+	_respec_control = control
+	if control.get_parent() != self:
+		add_child(control)
+	queue_redraw()
+
+
+## Park the Respec centred under the sprite, the same HERO_LABEL_GAP below it as the name sits
+## above — so the two read as a matched pair bracketing the creature. The screen's own logic
+## decides whether it is visible; we only move it while it is.
+func _position_respec(centre_x: float, sprite_bottom: float) -> void:
+	if _respec_control == null or not _respec_control.visible:
+		return
+	var w := maxf(_respec_control.size.x, _respec_control.get_combined_minimum_size().x)
+	var h := maxf(_respec_control.size.y, _respec_control.get_combined_minimum_size().y)
+	# Tracks the sprite, but clamped fully on-screen: when the hero drifts to an edge (it lives
+	# at the graph's centre of mass, which the doorway-centred view can push aside) the button
+	# slides back into view rather than off the edge or under the roster strip.
+	var x := clampf(centre_x - w * 0.5, 6.0, maxf(6.0, size.x - w - 6.0))
+	var y := clampf(sprite_bottom + HERO_LABEL_GAP, 6.0, maxf(6.0, size.y - h - 6.0))
+	_respec_control.position = Vector2(x, y)
 
 
 ## The on-screen rectangle the hero sprite occupies, matching _draw_hero's geometry so the

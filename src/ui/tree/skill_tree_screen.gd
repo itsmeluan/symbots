@@ -121,11 +121,20 @@ func _build_layout() -> void:
 	_fit_row.add_theme_constant_override("v_separation", 6)
 	box.add_child(_fit_row)
 
+	# Respec floats UNDER the hero at the centre of the graph (it pans with the sprite), not in
+	# the top card — so it reads as "reset THIS Symbot" and the top band is free to vanish when
+	# no node is selected. A solid chunky face keeps it legible over the busy graph.
 	_respec_button = Button.new()
-	_respec_button.custom_minimum_size = Vector2(0, 32)
+	_respec_button.custom_minimum_size = Vector2(150, 32)
+	_respec_button.focus_mode = Control.FOCUS_NONE
 	_respec_button.add_theme_font_size_override("font_size", 11)
+	_respec_button.add_theme_stylebox_override("normal", UIPalette.chunky(UIPalette.SURFACE))
+	_respec_button.add_theme_stylebox_override("hover", UIPalette.chunky(UIPalette.SURFACE, "selected"))
+	_respec_button.add_theme_stylebox_override("pressed", UIPalette.chunky(UIPalette.SURFACE, "pressed"))
+	_respec_button.add_theme_stylebox_override("disabled", UIPalette.chunky(UIPalette.SURFACE, "disabled"))
+	_respec_button.add_theme_stylebox_override("focus", UIPalette.empty())
 	_respec_button.pressed.connect(Callable(self, "_on_respec_pressed"))
-	box.add_child(_respec_button)
+	_view.attach_respec(_respec_button)
 
 	_roster_drawer = RosterDrawer.new()
 	_roster_drawer.card_pressed.connect(_on_roster_card_pressed)
@@ -223,11 +232,12 @@ func _refresh_view() -> void:
 
 
 func _refresh_detail() -> void:
+	# Nothing selected → the whole top card vanishes. A card whose only content was "tap a
+	# node" was chrome telling the player to do the obvious; the graph already invites the tap.
 	if _selected_node == &"" or _selected_symbot == null:
-		_node_title.text = "SKILL TREE"
-		_node_detail.text = "Tap a node to inspect it. Amber nodes are within reach."
-		_allocate_button.visible = false
+		_inspector.visible = false
 		return
+	_inspector.visible = true
 	_allocate_button.visible = true
 
 	var node := _ctx.tree.get_node_def(_selected_node)
