@@ -230,13 +230,28 @@ func _show_craft_success(species: SpeciesDef) -> void:
 	stamp.add_theme_constant_override("outline_size", 8)
 	column.add_child(stamp)
 
+	# The newborn stands in a little stage so a burst of light can flare BEHIND it as it lands.
+	var stage := Control.new()
+	stage.custom_minimum_size = Vector2(0, 150)
+	stage.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_child(stage)
+
+	var burst := Control.new()
+	burst.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	burst.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	burst.draw.connect(_draw_forge_burst.bind(burst))
+	stage.add_child(burst)
+
 	var sprite := TextureRect.new()
 	sprite.texture = UnitPanel.art_texture(species.id, 1)
-	sprite.custom_minimum_size = Vector2(0, 132)
+	sprite.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	sprite.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	column.add_child(sprite)
+	sprite.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	sprite.resized.connect(func() -> void: sprite.pivot_offset = sprite.size * 0.5)
+	stage.add_child(sprite)
 
 	var caption := Label.new()
 	caption.text = "%s joins the roster" % species.display_name
@@ -245,16 +260,48 @@ func _show_craft_success(species: SpeciesDef) -> void:
 	caption.add_theme_color_override("font_color", UIPalette.MUTED)
 	column.add_child(caption)
 
-	# The stamp-and-reveal: title scales in, the newborn fades up under it.
+	# The stamp-and-reveal, now with life: the title scales in, then the newborn POPS —
+	# growing past its size while a ring of light flares out behind it, then settling back to
+	# rest. The overshoot-and-settle is the "it's alive" beat the flat fade was missing.
 	stamp.modulate.a = 0.0
 	stamp.scale = Vector2(1.35, 1.35)
 	stamp.resized.connect(func() -> void: stamp.pivot_offset = stamp.size * 0.5)
 	sprite.modulate.a = 0.0
+	sprite.pivot_offset = Vector2(sprite.size.x * 0.5, 75.0)
+	sprite.scale = Vector2(0.45, 0.45)
+	caption.modulate.a = 0.0
 	var tween := overlay.create_tween()
 	tween.tween_property(stamp, "modulate:a", 1.0, 0.12)
 	tween.parallel().tween_property(stamp, "scale", Vector2.ONE, 0.2) \
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween.tween_property(sprite, "modulate:a", 1.0, 0.22)
+	# The newborn fades in while growing PAST full size, with the light burst in lockstep.
+	tween.tween_property(sprite, "modulate:a", 1.0, 0.18)
+	tween.parallel().tween_property(sprite, "scale", Vector2(1.15, 1.15), 0.24) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_method(
+		func(v: float) -> void: burst.set_meta(&"t", v); burst.queue_redraw(), 0.0, 1.0, 0.5)
+	# ...then settles back to its true size, and the caption arrives.
+	tween.tween_property(sprite, "scale", Vector2.ONE, 0.16) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+	tween.parallel().tween_property(caption, "modulate:a", 1.0, 0.18)
+
+
+## A one-shot ring of light behind a newly-forged Symbot: twelve rays and a ring that expand
+## outward and fade as [param ctrl]'s "t" meta runs 0→1. Purely celebratory (Rodada 3).
+func _draw_forge_burst(ctrl: Control) -> void:
+	var t := float(ctrl.get_meta(&"t", 0.0))
+	if t <= 0.0 or t >= 1.0:
+		return
+	var centre := ctrl.size * 0.5
+	var reach := minf(ctrl.size.x, ctrl.size.y) * 0.62
+	var radius := reach * t
+	var alpha := 1.0 - t
+	for i in 12:
+		var ang := TAU * float(i) / 12.0
+		var dir := Vector2(cos(ang), sin(ang))
+		ctrl.draw_line(centre + dir * radius * 0.5, centre + dir * radius,
+			Color(UIPalette.AMBER, alpha * 0.8), 3.0)
+	ctrl.draw_arc(centre, radius * 0.9, 0.0, TAU, 40, Color(UIPalette.AMBER, alpha * 0.45), 2.0)
 
 
 func _on_close_pressed() -> void:

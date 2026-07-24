@@ -34,6 +34,22 @@ class Result extends RefCounted:
 	var cores_earned: int = 0
 	## One BattleEngine per fight, in order, so a caller can replay or inspect any of them.
 	var battles: Array = []
+	## Per-squad-member XP snapshot (before/after the award), for the reward screen's animated
+	## bars. Empty when no XP was granted or when a Result is built by hand for a test.
+	var xp_gains: Array = []
+
+## One squad member's XP change across a run, captured so the reward screen can animate the
+## bar filling from where it started and flag a level-up — data the aggregate xp_each cannot
+## carry. A plain object, same reason as [Result].
+class XpGain extends RefCounted:
+	var species_id: StringName = &""
+	var mark: int = 1
+	var display_name: String = ""
+	var level_before: int = 1
+	var xp_before: int = 0
+	var level_after: int = 1
+	var xp_after: int = 0
+	var levels_gained: int = 0
 
 var _stage: StageDef
 var _species: SpeciesCatalog
@@ -176,7 +192,7 @@ func award(result: Result, wallet: Wallet, progress: StageProgress,
 	if library != null and result.chest_blueprint != &"":
 		result.blueprint_was_new = library.unlock(result.chest_blueprint)
 	if result.xp_each > 0 and not squad.is_empty():
-		result.levels_gained = XpProgression.grant_squad(squad, result.xp_each, _cfg)
+		result.levels_gained = _grant_and_record(result, squad)
 	# A cleared dungeon pays a Chipset, every time — it is the long-tail reason to
 	# return to a boss the player has already beaten.
 	if result.cleared and _stage.carries_structure():
@@ -185,6 +201,29 @@ func award(result: Result, wallet: Wallet, progress: StageProgress,
 			key_items.add(KeyItems.CHIPSET)
 	if result.cleared:
 		progress.mark_cleared(_stage.id)
+
+
+## Grant XP to every squad member and record each one's before/after, so the reward screen
+## can animate the bar and flag a level-up. Returns the total levels gained across the squad.
+func _grant_and_record(result: Result, squad: Array) -> int:
+	var total := 0
+	for symbot in squad:
+		if symbot == null:
+			continue
+		var gain := XpGain.new()
+		gain.species_id = symbot.species_id
+		gain.mark = symbot.mark
+		var species: SpeciesDef = _species.get_species(symbot.species_id)
+		gain.display_name = species.display_name if species != null else String(symbot.species_id)
+		gain.level_before = symbot.level
+		gain.xp_before = symbot.xp
+		var levels := XpProgression.grant(symbot, result.xp_each, _cfg)
+		gain.level_after = symbot.level
+		gain.xp_after = symbot.xp
+		gain.levels_gained = levels
+		result.xp_gains.append(gain)
+		total += levels
+	return total
 
 
 ## Mean enemies per battle in this stage, so a three-enemy fight pays more than a lone one

@@ -30,6 +30,16 @@ func after_each() -> void:
 	_game = null
 
 
+## A ledger line is now an icon + a Label (Rodada 3), so its text lives on the child Label.
+func _line_text(line) -> String:
+	if line is Label:
+		return line.text
+	for child in line.get_children():
+		if child is Label:
+			return child.text
+	return ""
+
+
 func _strengthen_squad() -> void:
 	for s in _game.ctx.roster.squad_symbots():
 		s.level = 40
@@ -147,7 +157,7 @@ func test_the_summary_names_what_was_earned() -> void:
 
 	var text := ""
 	for line in _game._reward._lines.get_children():
-		text += line.text + "\n"
+		text += _line_text(line) + "\n"
 	assert_true(text.contains("Scrap"), "the payout is the point of the screen")
 	assert_true(text.contains("XP"))
 
@@ -161,7 +171,7 @@ func test_a_chest_is_listed_by_item_name_not_by_id() -> void:
 
 	var text := ""
 	for line in _game._reward._lines.get_children():
-		text += line.text + "\n"
+		text += _line_text(line) + "\n"
 	assert_true(text.contains("Copper Sink"), "got: %s" % text)
 
 
@@ -178,9 +188,26 @@ func test_a_defeat_still_reports_what_was_kept() -> void:
 	assert_eq(_game._reward._title.text, "DEFEAT")
 	var text := ""
 	for line in _game._reward._lines.get_children():
-		text += line.text + "\n"
+		text += _line_text(line) + "\n"
 	assert_true(text.contains("120"), "the Scrap that was kept is still shown")
 	assert_true(text.contains("No chest"), "and what was missed is named")
+
+
+func test_the_reward_screen_builds_a_squad_xp_row_per_member() -> void:
+	# The squad XP panel (Rodada 3): one row per fielded Symbot, and a skipped reveal must
+	# settle every bar at its final fill rather than freezing it mid-slide.
+	_game._on_stage_chosen(_game.ctx.stages.get_stage(&"stage_01"))
+	_game._battle._on_auto_toggled(true)
+	var reward: RewardScreen = _game._reward
+	assert_eq(reward._xp_rows.size(), _game.ctx.roster.squad_size(),
+		"every fielded Symbot earns a visible XP row")
+
+	reward._skip_reveal()
+	for data in reward._xp_rows:
+		var bar: ProgressBar = data["bar"]
+		# ProgressBar quantises value to its step, so compare within a hair rather than exactly.
+		assert_almost_eq(bar.value, float(data["after_pct"]), 0.1,
+			"a skipped reveal settles the bar at its final fill")
 
 
 func test_zero_levels_gained_is_not_shown_as_a_line() -> void:
@@ -191,7 +218,7 @@ func test_zero_levels_gained_is_not_shown_as_a_line() -> void:
 	_game.show_reward(result, _game.ctx.stages.get_stage(&"stage_01"))
 
 	for line in _game._reward._lines.get_children():
-		assert_false(line.text.contains("Levels"), "got '%s'" % line.text)
+		assert_false(_line_text(line).contains("Levels"), "got '%s'" % _line_text(line))
 
 
 func test_the_reward_screen_can_be_dismissed_back_to_the_map() -> void:

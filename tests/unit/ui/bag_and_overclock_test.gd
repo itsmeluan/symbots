@@ -161,8 +161,10 @@ func test_the_reward_screen_announces_a_chipset() -> void:
 	# is told it happened.
 	var result := _settle_clear(&"stage_05")
 	_game.show_reward(result, _game.ctx.stages.get_stage(&"stage_05"))
+	# A ledger line is an icon + a Label (Rodada 3), so read the text off the child Label.
 	var text := ""
 	for line in _game._reward._lines.get_children():
-		if line is Label:
-			text += line.text
+		for node in line.get_children():
+			if node is Label:
+				text += node.text
 	assert_true(text.contains("CHIPSET"), "a Chipset earned and never mentioned is a Chipset lost")
