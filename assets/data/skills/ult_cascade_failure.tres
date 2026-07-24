@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"ult_cascade_failure"
 display_name = "Cascade Failure"
-description = "Sets every enemy system failing at once."
+description = "Hits every enemy with energy damage and sets them Burning for 3 turns."
 target_mode = 6
 cooldown = 0
 initial_cooldown = 0

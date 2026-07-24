@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"skill_interpose"
 display_name = "Interpose"
-description = "Throws its armour over the most hurt ally."
+description = "Shields the most damaged ally and raises its armor and resistance by 35% for 2 turns."
 target_mode = 4
 cooldown = 2
 initial_cooldown = 0

@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"ult_reassembly"
 display_name = "Reassembly"
-description = "Puts a destroyed Symbot back together mid-fight."
+description = "Rebuilds one destroyed ally back into the fight at 50% structure."
 target_mode = 2
 cooldown = 0
 initial_cooldown = 0

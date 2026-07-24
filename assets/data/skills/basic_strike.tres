@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"basic_strike"
 display_name = "Strike"
-description = "A plain mechanical blow. Always available."
+description = "Strikes one enemy with a physical blow. Always ready, no cooldown."
 target_mode = 5
 cooldown = 0
 initial_cooldown = 0

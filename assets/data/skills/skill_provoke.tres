@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"skill_provoke"
 display_name = "Provoke"
-description = "Makes itself impossible to ignore, and harder to hurt."
+description = "Forces enemies to attack this Symbot for 3 turns, and raises its own armor and resistance by 40%."
 target_mode = 1
 cooldown = 3
 initial_cooldown = 0

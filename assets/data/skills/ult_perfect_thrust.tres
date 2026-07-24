@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"ult_perfect_thrust"
 display_name = "Perfect Thrust"
-description = "Draws the blade and picks one throat."
+description = "A single devastating strike on one enemy — 650% physical power."
 target_mode = 5
 cooldown = 0
 initial_cooldown = 0

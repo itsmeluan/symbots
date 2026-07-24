@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"ult_overgrowth"
 display_name = "Overgrowth"
-description = "Blankets the whole squad in a tide of green."
+description = "Heals the whole squad a little at the start of each of the next 4 turns."
 target_mode = 3
 cooldown = 0
 initial_cooldown = 0

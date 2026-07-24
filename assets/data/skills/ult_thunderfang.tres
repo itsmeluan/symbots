@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"ult_thunderfang"
 display_name = "Thunderfang"
-description = "Leaps the front line entirely and bites down."
+description = "Leaps the front line and bites one enemy for massive energy damage — 500% energy power."
 target_mode = 5
 cooldown = 0
 initial_cooldown = 0

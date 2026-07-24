@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"ult_communal_light"
 display_name = "Communal Light"
-description = "Rekindles the fallen and mends the rest."
+description = "Revives any fallen ally at 40% structure and heals the whole squad."
 target_mode = 3
 cooldown = 0
 initial_cooldown = 0

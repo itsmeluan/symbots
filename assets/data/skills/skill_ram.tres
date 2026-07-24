@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"skill_ram"
 display_name = "Ram"
-description = "Drives forward and plants itself as the target."
+description = "Charges one enemy for physical damage and taunts the enemy line onto this Symbot."
 target_mode = 5
 cooldown = 2
 initial_cooldown = 0

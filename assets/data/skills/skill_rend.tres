@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"skill_rend"
 display_name = "Rend"
-description = "Tears plating open, leaving it corroding."
+description = "Tears one enemy for physical damage and leaves it Corroding for 3 turns."
 target_mode = 5
 cooldown = 2
 initial_cooldown = 0

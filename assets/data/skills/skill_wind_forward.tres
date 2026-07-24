@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"skill_wind_forward"
 display_name = "Wind Forward"
-description = "Advances an ally's clock."
+description = "Speeds one ally up (+45% mobility) for 3 turns, moving it up the turn order."
 target_mode = 2
 cooldown = 3
 initial_cooldown = 0

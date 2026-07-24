@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"skill_patch"
 display_name = "Patch"
-description = "Spot-welds the worst of the damage."
+description = "Repairs the most damaged ally. Short cooldown."
 target_mode = 4
 cooldown = 1
 initial_cooldown = 0

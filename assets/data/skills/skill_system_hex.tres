@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"skill_system_hex"
 display_name = "System Hex"
-description = "Scrambles a target's threat routines."
+description = "Cancels one enemy's taunt and cuts its physical and energy power by 30% for 2 turns."
 target_mode = 5
 cooldown = 3
 initial_cooldown = 0

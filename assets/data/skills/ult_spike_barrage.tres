@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"ult_spike_barrage"
 display_name = "Spike Barrage"
-description = "Empties every launcher at once."
+description = "Rains spikes on every enemy for physical damage and leaves them Corroding for 2 turns."
 target_mode = 6
 cooldown = 0
 initial_cooldown = 0

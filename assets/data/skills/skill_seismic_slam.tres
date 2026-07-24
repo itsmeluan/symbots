@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"skill_seismic_slam"
 display_name = "Seismic Slam"
-description = "Cracks the floor. Everything standing on it slows."
+description = "Slams the ground for physical damage to every enemy and Slows them (-40% mobility) for 2 turns."
 target_mode = 6
 cooldown = 3
 initial_cooldown = 0

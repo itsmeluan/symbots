@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"ult_full_restoration"
 display_name = "Full Restoration"
-description = "Rebuilds the squad and burns off what ails it."
+description = "Fully heals the squad and clears every debuff from it."
 target_mode = 3
 cooldown = 0
 initial_cooldown = 0

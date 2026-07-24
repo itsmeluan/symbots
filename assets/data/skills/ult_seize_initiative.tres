@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"ult_seize_initiative"
 display_name = "Seize Initiative"
-description = "Sets the whole squad ahead of the enemy."
+description = "Rushes the whole squad up the turn order (+40% mobility) and raises its power by 25% for 3 turns."
 target_mode = 3
 cooldown = 0
 initial_cooldown = 0

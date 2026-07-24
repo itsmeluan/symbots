@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"skill_overclock_ally"
 display_name = "Overclock"
-description = "Pushes an ally past its rated output."
+description = "Raises one ally's physical and energy power by 40% for 3 turns."
 target_mode = 2
 cooldown = 3
 initial_cooldown = 0

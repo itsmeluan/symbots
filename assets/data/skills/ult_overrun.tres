@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"ult_overrun"
 display_name = "Overrun"
-description = "Charges the whole line and dares it to answer."
+description = "Charges the whole enemy line for physical damage and taunts them onto this Symbot."
 target_mode = 6
 cooldown = 0
 initial_cooldown = 0

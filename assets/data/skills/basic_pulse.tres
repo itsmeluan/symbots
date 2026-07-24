@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"basic_pulse"
 display_name = "Pulse"
-description = "A short energy discharge. Always available."
+description = "Fires a burst of energy at one enemy. Always ready, no cooldown."
 target_mode = 5
 cooldown = 0
 initial_cooldown = 0

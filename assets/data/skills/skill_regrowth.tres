@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"skill_regrowth"
 display_name = "Regrowth"
-description = "Seeds the most hurt ally with slow-mending moss."
+description = "Heals the most damaged ally a little at the start of each of the next 3 turns."
 target_mode = 4
 cooldown = 2
 initial_cooldown = 0

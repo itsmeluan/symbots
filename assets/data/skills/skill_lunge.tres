@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"skill_lunge"
 display_name = "Lunge"
-description = "A single committed thrust."
+description = "A committed thrust that deals heavy physical damage to one enemy."
 target_mode = 5
 cooldown = 2
 initial_cooldown = 0

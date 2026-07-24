@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"ult_shelter_wall"
 display_name = "Shelter Wall"
-description = "Unfolds completely over the whole squad."
+description = "Shields the whole squad and raises its armor and resistance by 30% for 3 turns."
 target_mode = 3
 cooldown = 0
 initial_cooldown = 0

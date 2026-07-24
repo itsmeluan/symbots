@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"ult_last_stand"
 display_name = "Last Stand"
-description = "Locks its frame and stops giving ground."
+description = "Braces this Symbot for 4 turns: +80% armor and resistance, +50% physical power."
 target_mode = 1
 cooldown = 0
 initial_cooldown = 0

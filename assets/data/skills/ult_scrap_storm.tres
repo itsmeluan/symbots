@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"ult_scrap_storm"
 display_name = "Scrap Storm"
-description = "Flings every loose shard it has been hoarding."
+description = "Blasts every enemy with heavy physical damage."
 target_mode = 6
 cooldown = 0
 initial_cooldown = 0

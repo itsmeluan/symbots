@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"ult_full_uplink"
 display_name = "Full Uplink"
-description = "Every ally on one circuit, amplifying the rest."
+description = "Buffs the whole squad for 3 turns: +30% power, +60% crit chance, +25% armor and resistance."
 target_mode = 3
 cooldown = 0
 initial_cooldown = 0

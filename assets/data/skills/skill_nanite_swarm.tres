@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"skill_nanite_swarm"
 display_name = "Nanite Swarm"
-description = "Seeds the squad with repair nanites."
+description = "Heals the whole squad a little at the start of each of the next 3 turns."
 target_mode = 3
 cooldown = 3
 initial_cooldown = 0

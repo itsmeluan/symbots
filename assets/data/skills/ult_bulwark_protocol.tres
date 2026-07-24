@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"ult_bulwark_protocol"
 display_name = "Bulwark Protocol"
-description = "Extends its shell over the whole squad."
+description = "Shields the entire squad."
 target_mode = 3
 cooldown = 0
 initial_cooldown = 0

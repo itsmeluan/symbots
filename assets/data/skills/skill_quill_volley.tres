@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"skill_quill_volley"
 display_name = "Quill Volley"
-description = "A spread of spikes across the enemy line."
+description = "Sprays physical damage across every enemy."
 target_mode = 6
 cooldown = 2
 initial_cooldown = 0

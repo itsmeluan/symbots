@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"skill_link"
 display_name = "Link"
-description = "Wires the squad together, sharing strength."
+description = "Raises the whole squad's physical and energy power by 30% for 3 turns."
 target_mode = 3
 cooldown = 3
 initial_cooldown = 0

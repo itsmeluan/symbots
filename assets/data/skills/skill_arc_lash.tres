@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 id = &"skill_arc_lash"
 display_name = "Arc Lash"
-description = "A whipping arc that leaves the target shocked."
+description = "Whips one enemy for heavy energy damage and leaves it Shocked, taking damage for 2 turns."
 target_mode = 5
 cooldown = 2
 initial_cooldown = 0
