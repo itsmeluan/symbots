@@ -70,6 +70,34 @@ var _respec_control: Control = null
 const HERO_LABEL_GAP := 8.0
 const HERO_SPRITE_MAX := 150.0
 
+## Zoom. Every authored point maps to the screen through _screen(): p * _zoom + _pan. The
+## mouse wheel and a two-finger pinch drive it, always toward the focal point so the thing
+## under the cursor/fingers stays put.
+var _zoom := 1.0
+const ZOOM_MIN := 0.5
+const ZOOM_MAX := 1.9
+const ZOOM_WHEEL_STEP := 1.12
+## Live pinch tracking: active touch index -> position, and the last two-finger span.
+var _touches: Dictionary = {}
+var _pinch_span := -1.0
+
+
+## Map an authored graph point to its on-screen position under the current pan and zoom. The
+## single place the transform lives, so draw, hit-testing and centring can never disagree.
+func _screen(authored: Vector2) -> Vector2:
+	return authored * _zoom + _pan
+
+
+## Zoom to [param target] keeping [param focal] (a screen point) pinned to the same graph
+## point, so the tree grows/shrinks around the cursor or the pinch centre rather than jumping.
+func _apply_zoom(target: float, focal: Vector2) -> void:
+	var next := clampf(target, ZOOM_MIN, ZOOM_MAX)
+	if is_equal_approx(next, _zoom):
+		return
+	_pan = focal - (focal - _pan) * (next / _zoom)
+	_zoom = next
+	queue_redraw()
+
 var _pan := Vector2.ZERO
 
 ## The node the view wants centred, re-applied whenever the control is resized.
@@ -132,7 +160,7 @@ func center_on(node_id: StringName) -> void:
 		# Anchored at 62% height, not the middle: the inspector overlays the top band,
 		# so "centred" visually means below it — this keeps the hero and its nameplate
 		# out from underneath the card.
-		_pan = Vector2(size.x * 0.5, size.y * VERTICAL_ANCHOR) - _display_pos(node)
+		_pan = Vector2(size.x * 0.5, size.y * VERTICAL_ANCHOR) - _display_pos(node) * _zoom
 	queue_redraw()
 
 
@@ -152,12 +180,12 @@ func _draw() -> void:
 	_draw_hero()
 	# Edges first so nodes sit on top of them. Live edges get a soft under-glow pass.
 	for node in tree.nodes:
-		var from := _display_pos(node) + _pan
+		var from := _screen(_display_pos(node))
 		for other_id in node.neighbours:
 			var other := tree.get_node_def(other_id)
 			if other == null:
 				continue
-			var to := _display_pos(other) + _pan
+			var to := _screen(_display_pos(other))
 			if allocated.has(node.id) and allocated.has(other_id):
 				draw_line(from, to, Color(COLOUR_EDGE_LIVE, 0.22), 5.0)
 				draw_line(from, to, COLOUR_EDGE_LIVE, 2.0)
@@ -175,9 +203,9 @@ func _draw_hero() -> void:
 		if _respec_control != null:
 			_respec_control.visible = false
 		return
-	var centre := _hero_at + _pan
+	var centre := _screen(_hero_at)
 	var tex_size := hero_texture.get_size()
-	var sprite_scale := minf(HERO_SPRITE_MAX / tex_size.x, HERO_SPRITE_MAX / tex_size.y)
+	var sprite_scale := minf(HERO_SPRITE_MAX / tex_size.x, HERO_SPRITE_MAX / tex_size.y) * _zoom
 	var draw_size := tex_size * sprite_scale
 	var top := centre.y - draw_size.y * 0.5
 	var bottom := centre.y + draw_size.y * 0.5
@@ -230,9 +258,9 @@ func _position_respec(centre_x: float, sprite_bottom: float) -> void:
 func _hero_rect() -> Rect2:
 	if hero_texture == null:
 		return Rect2()
-	var centre := _hero_at + _pan
+	var centre := _screen(_hero_at)
 	var tex_size := hero_texture.get_size()
-	var sprite_scale := minf(150.0 / tex_size.x, 150.0 / tex_size.y)
+	var sprite_scale := minf(HERO_SPRITE_MAX / tex_size.x, HERO_SPRITE_MAX / tex_size.y) * _zoom
 	var draw_size := tex_size * sprite_scale
 	return Rect2(centre - draw_size * 0.5, draw_size)
 
@@ -258,8 +286,8 @@ func _radius_of(node: SkillNodeDef) -> float:
 
 
 func _draw_node(node: SkillNodeDef) -> void:
-	var centre := _display_pos(node) + _pan
-	var radius := _radius_of(node)
+	var centre := _screen(_display_pos(node))
+	var radius := _radius_of(node) * _zoom
 	var colour := _colour_for(node)
 	var is_allocated := allocated.has(node.id)
 	var is_frontier := frontier.has(node.id)
@@ -356,7 +384,7 @@ func node_at(point: Vector2) -> StringName:
 	var best := &""
 	var best_distance := TAP_SLOP
 	for node in tree.nodes:
-		var d := point.distance_to(_display_pos(node) + _pan)
+		var d := point.distance_to(_screen(_display_pos(node)))
 		if d <= best_distance:
 			best_distance = d
 			best = node.id
@@ -367,6 +395,36 @@ func node_at(point: Vector2) -> StringName:
 ## travels past DRAG_THRESHOLD is a tap. Without that threshold every pan would also
 ## allocate whatever node it started on.
 func _gui_input(event: InputEvent) -> void:
+	# Mouse wheel zooms toward the cursor (desktop).
+	if event is InputEventMouseButton and event.pressed \
+			and event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+		var factor := ZOOM_WHEEL_STEP if event.button_index == MOUSE_BUTTON_WHEEL_UP \
+			else 1.0 / ZOOM_WHEEL_STEP
+		_apply_zoom(_zoom * factor, event.position)
+		accept_event()
+		return
+
+	# Two-finger pinch zooms toward the pinch centre (touch). Tracked from the raw screen
+	# events so it works alongside the emulated-mouse pan the first finger also produces.
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			_touches[event.index] = event.position
+		else:
+			_touches.erase(event.index)
+		if _touches.size() < 2:
+			_pinch_span = -1.0
+		return
+	if event is InputEventScreenDrag:
+		_touches[event.index] = event.position
+		if _touches.size() >= 2:
+			var pts: Array = _touches.values()
+			var span: float = pts[0].distance_to(pts[1])
+			if _pinch_span > 0.0 and span > 0.0:
+				_apply_zoom(_zoom * (span / _pinch_span), (pts[0] + pts[1]) * 0.5)
+			_pinch_span = span
+			accept_event()
+			return
+
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
 			_dragging = true
@@ -384,7 +442,8 @@ func _gui_input(event: InputEvent) -> void:
 					if hit != &"":
 						node_tapped.emit(hit)
 		accept_event()
-	elif event is InputEventMouseMotion and _dragging:
+	elif event is InputEventMouseMotion and _dragging and _touches.size() < 2:
+		# Suppressed while pinching: two fingers zoom, they don't also pan.
 		_has_user_panned = true
 		_pan += event.relative
 		_drag_distance += event.relative.length()
