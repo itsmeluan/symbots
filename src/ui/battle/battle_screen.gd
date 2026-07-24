@@ -725,6 +725,8 @@ func _open_unit_modal(unit: BattleUnit) -> void:
 	if _unit_modal != null:
 		return
 	_unit_modal = UnitInfoModalScript.new()
+	# Above every battle effect — the wave card and floats carry z 10-20.
+	_unit_modal.z_index = 30
 	_unit_modal.closed.connect(func() -> void: _unit_modal = null)
 	add_child(_unit_modal)
 	_unit_modal.open(unit, _ctx, _ult_cost_of(unit))
