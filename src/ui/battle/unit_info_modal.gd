@@ -358,7 +358,8 @@ func _skill_row(skill: SkillDef) -> Control:
 
 	var text := VBoxContainer.new()
 	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	text.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	# Top-aligned so the name lines up with the top of the tile beside it.
+	text.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	text.add_theme_constant_override("separation", 1)
 	row.add_child(text)
 
@@ -373,6 +374,9 @@ func _skill_row(skill: SkillDef) -> Control:
 	var desc := Label.new()
 	desc.text = skill.description
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	# At most two lines here — the rest lives in the detail modal.
+	desc.max_lines_visible = 2
+	desc.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	desc.add_theme_font_size_override("font_size", 10)
 	desc.add_theme_color_override("font_color", UIPalette.MUTED)
 	text.add_child(desc)

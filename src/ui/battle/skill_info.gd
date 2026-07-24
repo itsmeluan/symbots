@@ -95,43 +95,22 @@ static func _status_detail(effect: Dictionary) -> String:
 ## square with softened corners, not a rounded button.
 const TILE_RADIUS_FRAC := 0.16
 
-## Rounds the corners of the skill art itself: the sprite FILLS the tile edge to edge and
-## only its corner pixels are masked away, so the coloured border traces the real sprite
-## edge instead of framing a shrunken image inside a box.
-const MASK_SHADER := "
-shader_type canvas_item;
-uniform float radius : hint_range(0.0, 0.5) = 0.16;
-void fragment() {
-	vec2 p = min(UV, vec2(1.0) - UV);
-	vec2 c = max(vec2(radius) - p, vec2(0.0));
-	COLOR = texture(TEXTURE, UV);
-	COLOR.a *= 1.0 - smoothstep(radius - 0.012, radius, length(c));
-}"
-
-static var _mask_material: ShaderMaterial = null
-
-
-static func _mask() -> ShaderMaterial:
-	if _mask_material == null:
-		var shader := Shader.new()
-		shader.code = MASK_SHADER
-		_mask_material = ShaderMaterial.new()
-		_mask_material.shader = shader
-		_mask_material.set_shader_parameter(&"radius", TILE_RADIUS_FRAC)
-	return _mask_material
+## Fraction of the tile kept as inner padding around the art. The icon is CONTAINED
+## inside this inset — whole icon shown, undistorted — so it never reaches the rounded
+## corners, which is what makes a corner poking past the border impossible. No mask.
+const TILE_PAD_FRAC := 0.14
 
 
 ## The square skill TILE from the mockup as a BUTTON — tap it for the skill's detail. The
-## sprite fills the rounded square; a border in the skill's accent (amber for ults, cyan
-## otherwise) hugs that exact edge.
+## whole icon sits inside a rounded square; a border in the skill's accent (amber for
+## ults, cyan otherwise) traces the tile edge.
 static func square_button(skill: SkillDef, size: float, on_pressed: Callable) -> Button:
 	var button := Button.new()
 	button.custom_minimum_size = Vector2(size, size)
-	# Stay square: a row taller than the tile (a wrapped description) must not stretch it
-	# into a portrait rectangle — hold size and centre it in the row.
-	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	# Stay square: a taller row (a wrapped description) must not stretch the tile into a
+	# portrait rectangle. SHRINK_BEGIN pins it to the TOP, level with the skill name.
+	button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	button.clip_contents = true
 	button.add_theme_stylebox_override("normal", _backing(size))
 	button.add_theme_stylebox_override("hover", _backing(size, 0.06))
 	button.add_theme_stylebox_override("pressed", _backing(size, 0.12))
@@ -145,32 +124,38 @@ static func square_button(skill: SkillDef, size: float, on_pressed: Callable) ->
 static func square_chip(skill: SkillDef, size: float) -> Control:
 	var tile := Panel.new()
 	tile.custom_minimum_size = Vector2(size, size)
-	tile.clip_contents = true
+	tile.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	tile.add_theme_stylebox_override("panel", _backing(size))
 	_fill_tile(tile, skill, size)
 	return tile
 
 
-## Lay the art (masked to rounded corners) and the accent border into a tile control.
+## Lay the WHOLE icon (contained, inset by a margin so it never touches the rounded
+## corners) and the accent border into a tile control.
 static func _fill_tile(tile: Control, skill: SkillDef, size: float) -> void:
 	var accent := UIPalette.AMBER if skill.is_ultimate else UIPalette.CYAN
+	var pad := roundf(size * TILE_PAD_FRAC)
 	var tex := SkillIcons.texture_for(skill.id)
 	if tex != null:
 		var art := TextureRect.new()
 		art.texture = tex
 		art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		# SCALE fills the square exactly; the icons are near-square so aspect drift is
-		# tiny, and a clean 0..1 UV is what lets the corner mask line up with the border.
-		art.stretch_mode = TextureRect.STRETCH_SCALE
+		art.offset_left = pad
+		art.offset_top = pad
+		art.offset_right = -pad
+		art.offset_bottom = -pad
+		# CONTAINED shows the whole icon undistorted; EXPAND_IGNORE_SIZE stops the ~86px
+		# texture from forcing the tile bigger than its size.
+		art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-		art.material = _mask()
 		art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		tile.add_child(art)
 	else:
 		var holder := CenterContainer.new()
 		holder.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		holder.add_child(Glyph.make(Glyph.for_skill(skill), size * 0.55, accent))
+		holder.add_child(Glyph.make(Glyph.for_skill(skill), size * 0.5, accent))
 		tile.add_child(holder)
 	tile.add_child(_border(size, accent))
 
