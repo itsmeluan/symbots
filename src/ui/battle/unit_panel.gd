@@ -58,7 +58,7 @@ var _ground: Control
 var _structure_bar: ProgressBar
 var _shield_bar: ProgressBar
 var _charge_bar: ProgressBar
-var _status_row: VBoxContainer
+var _status_row: HBoxContainer
 var _root: VBoxContainer
 var _bars: VBoxContainer
 
@@ -120,19 +120,6 @@ func _init() -> void:
 	_nameplate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	stage.add_child(_nameplate)
 
-	# Active status effects, as a VERTICAL column of small glyphs standing beside the figure
-	# — buffs green-tinted, debuffs coral, one distinct glyph per kind. Vertical and to the
-	# side (not stacked over the head) so a unit carrying three statuses stays legible and the
-	# icons never collide with the bars now living above the head. Populated by refresh().
-	_status_row = VBoxContainer.new()
-	_status_row.add_theme_constant_override("separation", 2)
-	_status_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	_status_row.set_anchors_preset(Control.PRESET_CENTER_LEFT)
-	_status_row.grow_horizontal = Control.GROW_DIRECTION_END
-	_status_row.grow_vertical = Control.GROW_DIRECTION_BOTH
-	_status_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	stage.add_child(_status_row)
-
 	# A fixed display HEIGHT is what normalises the wildly varying source sizes (102-323px):
 	# every Symbot reads at the scale its formation row calls for, regardless of how big its
 	# PNG happened to be exported.
@@ -155,6 +142,16 @@ func _init() -> void:
 
 	_charge_bar = _make_bar(UIPalette.AMBER, 2)
 	_bars.add_child(_charge_bar)
+
+	# Active status effects, as a horizontal row of small glyphs sitting just BELOW the bars
+	# (still above the figure) — buffs green-tinted, debuffs coral, one distinct glyph per
+	# kind. Populated by refresh() from the unit's statuses.
+	_status_row = HBoxContainer.new()
+	_status_row.add_theme_constant_override("separation", 2)
+	_status_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	_status_row.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_status_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_bars.add_child(_status_row)
 
 
 func _make_bar(colour: Color, height: int) -> ProgressBar:

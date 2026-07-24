@@ -223,6 +223,12 @@ func _resolve_skill(actor: BattleUnit, skill: SkillDef, target: BattleUnit,
 ## [BattleTargeting] so targeting stays pure and only the engine touches the RNG.
 func _resolve_targets(skill: SkillDef, chosen: BattleUnit, legal: Array) -> Array:
 	match skill.target_mode:
+		SkillDefScript.TargetMode.SELF:
+			# SELF lands on the caster, whom legal_targets already resolved to. Without this
+			# case a SELF skill fell to the `chosen`-based default and, on the player's manual
+			# path (which submits a null target for non-single-target skills), applied to
+			# NOTHING — Provoke's taunt and self-buff both silently no-op'd.
+			return legal
 		SkillDefScript.TargetMode.ALL_ALLIES, SkillDefScript.TargetMode.ALL_ENEMIES:
 			return legal
 		SkillDefScript.TargetMode.RANDOM_ENEMY:

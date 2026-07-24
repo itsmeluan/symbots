@@ -172,6 +172,42 @@ func test_targeting_past_a_taunter_is_refused() -> void:
 	assert_true(e.submit_action(&"strike", tank))
 
 
+func test_a_self_skill_lands_on_the_caster_via_the_manual_null_target_path() -> void:
+	# Provoke is SELF, and the player's manual path submits a NULL target for any skill that
+	# is not single-target. The SELF status must still land on the caster — the bug was that
+	# it resolved to an empty target set and applied to nothing.
+	var provoke := SkillDefScript.new()
+	provoke.id = &"provoke"
+	provoke.target_mode = SkillDefScript.TargetMode.SELF
+	provoke.effects = [{"kind": SkillDefScript.EffectKind.APPLY_STATUS,
+		"status": StatusEffectScript.Kind.FORCED_TAUNT, "turns": 3, "is_debuff": false}]
+	var p := _unit("p", BattleUnit.Side.PLAYER, 100, SpeciesDefScript.Role.TANK, 30)
+	p.skills = [&"provoke"]
+	var x := _unit("x", BattleUnit.Side.ENEMY, 100, SpeciesDefScript.Role.DPS, 5)
+	var e := _engine([p], [x], {&"provoke": provoke})
+	e.start()
+	assert_eq(e.current_actor().unit_id, &"p", "precondition: the taunter acts first")
+
+	assert_true(e.submit_action(&"provoke", null), "a SELF skill submits with a null target")
+	assert_true(p.has_forced_taunt(), "the taunt lands on the caster, not on nothing")
+
+
+func test_a_provoked_tank_pulls_the_enemy_auto_attack() -> void:
+	# End to end: once a player carries a taunt, the enemy's single-target auto action is
+	# compelled onto the taunter and never reaches the squishy behind it.
+	var tank := _unit("tank", BattleUnit.Side.PLAYER, 300, SpeciesDefScript.Role.TANK, 5)
+	var squishy := _unit("squishy", BattleUnit.Side.PLAYER, 80, SpeciesDefScript.Role.DPS, 5, 1)
+	tank.add_status(StatusEffectScript.taunt(3))
+	var enemy := _unit("enemy", BattleUnit.Side.ENEMY, 100, SpeciesDefScript.Role.DPS, 30)
+	var e := _engine([tank, squishy], [enemy])
+	e.start()
+	assert_eq(e.current_actor().unit_id, &"enemy", "precondition: the enemy is fastest")
+
+	e.take_auto_action()
+	assert_lt(tank.current_structure, 300, "the enemy was compelled onto the taunter")
+	assert_eq(squishy.current_structure, 80, "and never touched the squishy behind it")
+
+
 func test_a_skill_on_cooldown_is_refused() -> void:
 	var heavy := _strike()
 	heavy.id = &"heavy"
