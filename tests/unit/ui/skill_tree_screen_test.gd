@@ -69,7 +69,10 @@ func test_the_view_is_centred_on_the_symbots_doorway() -> void:
 	var species: SpeciesDef = _game.ctx.species.get_species(_symbot().species_id)
 	var entry := _game.ctx.tree.get_node_def(species.tree_entry_node)
 	var on_screen := entry.position + _screen._view._pan
-	assert_almost_eq(on_screen, _screen._view.size * 0.5, Vector2(1, 1))
+	# The anchor sits at 62% height, not the middle — the inspector overlays the top
+	# band, so "centred" visually means below it.
+	assert_almost_eq(on_screen, Vector2(_screen._view.size.x * 0.5,
+		_screen._view.size.y * SkillTreeView.VERTICAL_ANCHOR), Vector2(1, 1))
 
 
 func test_the_doorway_shows_as_already_held() -> void:
@@ -85,7 +88,7 @@ func test_the_frontier_is_highlighted_separately_from_what_is_locked() -> void:
 
 func test_the_roster_strip_shows_each_symbots_own_points() -> void:
 	# Points are per Symbot (§4.2), so a shared count would be a lie.
-	assert_eq(_screen._roster_strip.get_child_count(), _game.ctx.roster.symbots.size())
+	assert_eq(_screen._roster_strip.item_count(), _game.ctx.roster.symbots.size())
 
 
 # ---------------------------------------------------------------------------

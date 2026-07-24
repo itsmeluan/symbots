@@ -29,14 +29,15 @@ var _selected_node: StringName = &""
 
 var _view: SkillTreeView
 var _points_label: Label
-var _roster_strip: HBoxContainer
+var _roster_strip: SymbotCarousel
+var _inspector: PanelContainer
 var _node_title: Label
 var _node_detail: Label
 var _allocate_button: Button
 var _respec_button: Button
 
 ## Fit / unfit controls, shown only when the selected node is a socket.
-var _fit_row: HBoxContainer
+var _fit_row: HFlowContainer
 
 var _roster_drawer: RosterDrawer
 var _detail_modal: UnitInfoModal = null
@@ -61,36 +62,49 @@ func _build_layout() -> void:
 	_set_background("res://assets/art/workshop/bench_backdrop.png", 0.62)
 	var content := build_chrome(_ctx, "TREE", &"tree", func(d): navigate.emit(d))
 
-	# The node inspector rides the TOP, framed, clear of the dock: title + points up
-	# front, the description under them, then the one actionable row.
-	var inspector := PanelContainer.new()
-	inspector.add_theme_stylebox_override("panel", UIPalette.chunky(UIPalette.SURFACE))
-	content.add_child(inspector)
+	_view = SkillTreeViewScript.new()
+	_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_view.node_tapped.connect(Callable(self, "_on_node_tapped"))
+	content.add_child(_view)
+
+	# The roster is the workshop's carousel: bare sprites, no chrome, swipe up for the
+	# full drawer. An amber pip marks who still has points to spend.
+	_roster_strip = SymbotCarousel.new()
+	_roster_strip.custom_minimum_size = Vector2(0, 64)
+	_roster_strip.focused_changed.connect(_on_carousel_focus)
+	_roster_strip.dragged_up.connect(func() -> void: _roster_drawer.open_with(_ctx))
+	var strip_margin := MarginContainer.new()
+	strip_margin.add_theme_constant_override("margin_bottom", 6)
+	strip_margin.add_child(_roster_strip)
+	content.add_child(strip_margin)
+
+	# The inspector FLOATS over the graph, anchored to the top — opening a node must
+	# never reflow the tree behind it.
+	var insets := _safe_insets()
+	_inspector = PanelContainer.new()
+	_inspector.add_theme_stylebox_override("panel", UIPalette.chunky(UIPalette.SURFACE))
+	_inspector.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	_inspector.offset_left = 10
+	_inspector.offset_right = -10
+	_inspector.offset_top = insets.x + 56
+	_inspector.grow_vertical = Control.GROW_DIRECTION_END
+	add_child(_inspector)
+
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 5)
-	inspector.add_child(box)
+	_inspector.add_child(box)
 
-	var head := HBoxContainer.new()
-	head.add_theme_constant_override("separation", 8)
-	box.add_child(head)
 	_node_title = Label.new()
 	_node_title.add_theme_font_override("font", UIPalette.bold_font())
 	_node_title.add_theme_font_size_override("font_size", 16)
-	_node_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_node_title.clip_text = true
-	head.add_child(_node_title)
-	_points_label = Label.new()
-	_points_label.add_theme_font_override("font", UIPalette.caption_font())
-	_points_label.add_theme_font_size_override("font_size", 12)
-	_points_label.add_theme_color_override("font_color", UIPalette.CYAN)
-	_points_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	head.add_child(_points_label)
+	box.add_child(_node_title)
 
 	_node_detail = Label.new()
 	_node_detail.add_theme_font_size_override("font_size", 11)
 	_node_detail.add_theme_color_override("font_color", UIPalette.MUTED)
 	_node_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_node_detail.custom_minimum_size = Vector2(0, 30)
 	box.add_child(_node_detail)
 
 	_allocate_button = Button.new()
@@ -100,8 +114,10 @@ func _build_layout() -> void:
 	_allocate_button.pressed.connect(Callable(self, "_on_allocate_pressed"))
 	box.add_child(_allocate_button)
 
-	_fit_row = HBoxContainer.new()
-	_fit_row.add_theme_constant_override("separation", 6)
+	# Fit options WRAP instead of running off the screen edge.
+	_fit_row = HFlowContainer.new()
+	_fit_row.add_theme_constant_override("h_separation", 6)
+	_fit_row.add_theme_constant_override("v_separation", 6)
 	box.add_child(_fit_row)
 
 	_respec_button = Button.new()
@@ -110,47 +126,17 @@ func _build_layout() -> void:
 	_respec_button.pressed.connect(Callable(self, "_on_respec_pressed"))
 	box.add_child(_respec_button)
 
-	_view = SkillTreeViewScript.new()
-	_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_view.node_tapped.connect(Callable(self, "_on_node_tapped"))
-	content.add_child(_view)
-
-	# The roster rides the BOTTOM as a slim filmstrip: faces only, a point pip on who
-	# still has something to spend. Swiping it up opens the full drawer.
-	var roster_margin := MarginContainer.new()
-	roster_margin.add_theme_constant_override("margin_bottom", 6)
-	content.add_child(roster_margin)
-	var roster_scroll := ScrollContainer.new()
-	roster_scroll.custom_minimum_size = Vector2(0, 54)
-	roster_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	roster_scroll.gui_input.connect(_on_roster_strip_input)
-	roster_margin.add_child(roster_scroll)
-	_roster_strip = HBoxContainer.new()
-	_roster_strip.add_theme_constant_override("separation", 6)
-	roster_scroll.add_child(_roster_strip)
-
 	_roster_drawer = RosterDrawer.new()
 	_roster_drawer.card_pressed.connect(_on_roster_card_pressed)
 	add_child(_roster_drawer)
 
 
-## A vertical pull on the filmstrip opens the full roster drawer — the same gesture as
-## the workshop's carousel.
-var _strip_lift: float = 0.0
-var _strip_pressed: bool = false
-
-func _on_roster_strip_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		_strip_pressed = event.pressed
-		_strip_lift = 0.0
-	elif _strip_pressed and (event is InputEventScreenDrag or event is InputEventMouseMotion):
-		_strip_lift += -event.relative.y
-		if _strip_lift > 26.0:
-			_strip_pressed = false
-			_strip_lift = 0.0
-			_roster_drawer.open_with(_ctx)
-			accept_event()
+func _on_carousel_focus(index: int) -> void:
+	if index < 0 or index >= _ctx.roster.symbots.size():
+		return
+	if _ctx.roster.symbots[index] == _selected_symbot:
+		return
+	_on_symbot_selected(_ctx.roster.symbots[index])
 
 
 ## Point the tree at [param symbot] — the dossier TREE actions land here.
@@ -189,70 +175,29 @@ func refresh() -> void:
 
 
 func _rebuild_roster_strip() -> void:
-	for child in _roster_strip.get_children():
-		_roster_strip.remove_child(child)
-		child.queue_free()
+	var textures: Array = []
+	var badges: Array = []
 	for symbot in _ctx.roster.symbots:
-		var species: SpeciesDef = _ctx.species.get_species(symbot.species_id)
-		if species == null:
-			continue
-		_roster_strip.add_child(_build_roster_chip(symbot, species))
-
-
-## A filmstrip chip: just the Symbot's face; an amber pip marks who still has points
-## to spend, the selected one glows cyan. Details live in the tooltip and the drawer.
-func _build_roster_chip(symbot: SymbotInstance, species: SpeciesDef) -> Button:
-	var selected := _selected_symbot == symbot
-	var points := TreeAllocator.unspent_points(symbot)
-	var button := Button.new()
-	button.custom_minimum_size = Vector2(48, 48)
-	button.toggle_mode = true
-	button.button_pressed = selected
-	button.tooltip_text = "%s · %d pt" % [species.display_name, points]
-	var glow := Color(UIPalette.CYAN, 0.55) if selected else Color.TRANSPARENT
-	button.add_theme_stylebox_override("normal",
-		UIPalette.chunky(UIPalette.CARD_FACE, "normal", glow))
-	button.add_theme_stylebox_override("hover",
-		UIPalette.chunky(UIPalette.CARD_FACE, "normal", glow))
-	button.add_theme_stylebox_override("pressed",
-		UIPalette.chunky(UIPalette.CARD_FACE, "pressed"))
-	button.add_theme_stylebox_override("focus", UIPalette.empty())
-	button.pressed.connect(Callable(self, "_on_symbot_selected").bind(symbot))
-
-	var face := TextureRect.new()
-	face.texture = UnitPanel.art_texture(symbot.species_id, symbot.mark)
-	face.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	face.offset_left = 3
-	face.offset_right = -3
-	face.offset_top = 3
-	face.offset_bottom = -5
-	face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	face.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	face.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	button.add_child(face)
-
-	if points > 0:
-		var pip := Panel.new()
-		var pip_box := StyleBoxFlat.new()
-		pip_box.bg_color = UIPalette.AMBER
-		pip_box.set_corner_radius_all(4)
-		pip.add_theme_stylebox_override("panel", pip_box)
-		pip.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-		pip.offset_left = -11
-		pip.offset_top = 3
-		pip.offset_right = -3
-		pip.offset_bottom = 11
-		pip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		button.add_child(pip)
-	return button
+		textures.append(UnitPanel.art_texture(symbot.species_id, symbot.mark))
+		badges.append(TreeAllocator.unspent_points(symbot) > 0)
+	_roster_strip.set_items(textures, true)
+	_roster_strip.set_badges(badges)
+	var index := _ctx.roster.symbots.find(_selected_symbot)
+	if index >= 0 and _roster_strip.focused_index() != index:
+		_roster_strip.focus(index)
 
 
 func _refresh_points() -> void:
+	# The name and unspent points ride ABOVE the hero at the graph's heart now — the
+	# inspector stays purely about the tapped node.
 	if _selected_symbot == null:
-		_points_label.text = ""
+		_view.set_hero(null, "", 0)
 		return
-	_points_label.text = "%d points" % TreeAllocator.unspent_points(_selected_symbot)
+	var species := _species_of(_selected_symbot)
+	_view.set_hero(
+		UnitPanel.art_texture(_selected_symbot.species_id, _selected_symbot.mark),
+		species.display_name.to_upper() if species != null else "",
+		TreeAllocator.unspent_points(_selected_symbot))
 
 
 func _refresh_view() -> void:
@@ -267,13 +212,11 @@ func _refresh_view() -> void:
 	for node_id in _selected_symbot.installed_items:
 		fitted[node_id] = true
 	_view.set_state(allocated, frontier, _selected_node, fitted)
-	_view.set_hero(UnitPanel.art_texture(_selected_symbot.species_id, _selected_symbot.mark))
 
 
 func _refresh_detail() -> void:
 	if _selected_node == &"" or _selected_symbot == null:
-		var species := _species_of(_selected_symbot)
-		_node_title.text = species.display_name.to_upper() if species != null else "SKILL TREE"
+		_node_title.text = "SKILL TREE"
 		_node_detail.text = "Tap a node to inspect it. Amber nodes are within reach."
 		_allocate_button.visible = false
 		return
@@ -332,7 +275,7 @@ func _refusal_text(refusal: int, node: SkillNodeDef) -> String:
 		TreeAllocator.Refusal.SOCKET_WRONG_CATEGORY:
 			return "Wrong component fitted"
 		TreeAllocator.Refusal.IS_ENTRY_NODE:
-			return "Another species' doorway"
+			return "Another Symbot's doorway"
 	return "—"
 
 

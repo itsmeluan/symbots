@@ -15,6 +15,10 @@ extends Control
 signal node_tapped(node_id: StringName)
 
 const TAP_SLOP := 22.0     ## generous: a dot is the rendering, not the target
+
+## Where the focused node sits vertically on open: below the middle, because the
+## inspector overlays the top band and the hero (above the entry) needs headroom.
+const VERTICAL_ANCHOR := 0.80
 const DRAG_THRESHOLD := 6.0
 
 ## Colours carry the state, because on a phone there is no room for labels on 156 nodes.
@@ -96,8 +100,14 @@ func bind(p_tree: SkillTree, focus: StringName) -> void:
 	center_on(focus)
 
 
-func set_hero(texture: Texture2D) -> void:
+var hero_name: String = ""
+var hero_points: int = 0
+
+
+func set_hero(texture: Texture2D, name: String = "", points: int = 0) -> void:
 	hero_texture = texture
+	hero_name = name
+	hero_points = points
 	queue_redraw()
 
 
@@ -107,7 +117,10 @@ func center_on(node_id: StringName) -> void:
 		return
 	var node := tree.get_node_def(node_id)
 	if node != null:
-		_pan = size * 0.5 - node.position
+		# Anchored at 62% height, not the middle: the inspector overlays the top band,
+		# so "centred" visually means below it — this keeps the hero and its nameplate
+		# out from underneath the card.
+		_pan = Vector2(size.x * 0.5, size.y * VERTICAL_ANCHOR) - node.position
 	queue_redraw()
 
 
@@ -143,19 +156,28 @@ func _draw() -> void:
 		_draw_node(node)
 
 
-## The selected Symbot at the heart of the tree, seated on a soft dark disc so the pixel
-## sprite reads against the graph without fighting it.
+## The selected Symbot at the heart of the tree — name over points over the creature,
+## free-standing and big enough to own the space.
 func _draw_hero() -> void:
 	if hero_texture == null:
 		return
 	var centre := _hero_at + _pan
-	draw_circle(centre, 76.0, Color(0.03, 0.05, 0.08, 0.55))
-	draw_arc(centre, 76.0, 0.0, TAU, 48, Color(1, 1, 1, 0.06), 1.5)
 	var tex_size := hero_texture.get_size()
-	var scale := minf(104.0 / tex_size.x, 104.0 / tex_size.y)
-	var draw_size := tex_size * scale
+	var sprite_scale := minf(150.0 / tex_size.x, 150.0 / tex_size.y)
+	var draw_size := tex_size * sprite_scale
+	var top := centre.y - draw_size.y * 0.5
+	var font := UIPalette.bold_font()
+	draw_string_outline(font, Vector2(centre.x - 150.0, top - 26.0), hero_name,
+		HORIZONTAL_ALIGNMENT_CENTER, 300.0, 15, 5, Color("070b11"))
+	draw_string(font, Vector2(centre.x - 150.0, top - 26.0), hero_name,
+		HORIZONTAL_ALIGNMENT_CENTER, 300.0, 15, Color("f2b92b"))
+	var points_text := "%d pt" % hero_points
+	draw_string_outline(font, Vector2(centre.x - 150.0, top - 9.0), points_text,
+		HORIZONTAL_ALIGNMENT_CENTER, 300.0, 12, 4, Color("070b11"))
+	draw_string(font, Vector2(centre.x - 150.0, top - 9.0), points_text,
+		HORIZONTAL_ALIGNMENT_CENTER, 300.0, 12, Color("47d7ea"))
 	draw_texture_rect(hero_texture,
-		Rect2(centre - draw_size * 0.5, draw_size), false, Color(1, 1, 1, 0.92))
+		Rect2(centre - draw_size * 0.5, draw_size), false, Color(1, 1, 1, 0.94))
 
 
 func _radius_of(node: SkillNodeDef) -> float:

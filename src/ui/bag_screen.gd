@@ -173,14 +173,23 @@ func _component_glyph(id: StringName) -> StringName:
 ## [param sprite] (blueprints) replaces the glyph with the creature's own face.
 func _card(item_name: String, description: String, count: int, accent: Color,
 		icon: StringName, sprite: Texture2D) -> Control:
-	var panel := PanelContainer.new()
+	var panel := Button.new()
 	panel.custom_minimum_size = Vector2(0, 48)
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.tooltip_text = "%s\n%s" % [item_name, description]
-	panel.add_theme_stylebox_override("panel", UIPalette.chunky(Color("18212b")))
+	panel.add_theme_stylebox_override("normal", UIPalette.chunky(Color("18212b")))
+	panel.add_theme_stylebox_override("hover", UIPalette.chunky(Color("18212b")))
+	panel.add_theme_stylebox_override("pressed", UIPalette.chunky(Color("18212b"), "pressed"))
+	panel.add_theme_stylebox_override("focus", UIPalette.empty())
+	panel.pressed.connect(_open_item_details.bind(item_name, description, count, accent,
+		icon, sprite))
 
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
+	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	row.offset_left = 7
+	row.offset_right = -7
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(row)
 
 	# The uniform icon chip: accent lives on the CHIP fill, the glyph stays clean.
@@ -194,6 +203,7 @@ func _card(item_name: String, description: String, count: int, accent: Color,
 	well.add_theme_stylebox_override("panel", well_box)
 	well.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	well.custom_minimum_size = Vector2(28, 28)
+	well.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if sprite != null:
 		var face := TextureRect.new()
 		face.texture = sprite
@@ -201,6 +211,7 @@ func _card(item_name: String, description: String, count: int, accent: Color,
 		face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		face.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		face.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		well.add_child(face)
 	else:
 		well.add_child(Glyph.make(icon, 18.0, accent))
@@ -238,3 +249,88 @@ func _hint_label(text: String) -> Control:
 	label.custom_minimum_size = Vector2(0, 80)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return label
+
+
+## The item dossier: what this thing IS and where it is spent — the bag stays read-only,
+## but no longer mute. Same overlay grammar as the Symbot dossiers.
+func _open_item_details(item_name: String, description: String, count: int,
+		accent: Color, icon: StringName, sprite: Texture2D) -> void:
+	var overlay := Control.new()
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(overlay)
+
+	var scrim := ColorRect.new()
+	scrim.color = Color(UIPalette.INK, 0.78)
+	scrim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scrim.gui_input.connect(func(event: InputEvent) -> void:
+		if event is InputEventMouseButton and event.pressed:
+			overlay.queue_free())
+	overlay.add_child(scrim)
+
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", UIPalette.chunky(UIPalette.OVERLAY))
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
+	panel.custom_minimum_size = Vector2(300, 0)
+	overlay.add_child(panel)
+
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 10)
+	panel.add_child(column)
+
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 10)
+	column.add_child(head)
+
+	var well := PanelContainer.new()
+	var well_box := StyleBoxFlat.new()
+	well_box.bg_color = Color(accent, 0.16)
+	well_box.set_corner_radius_all(8)
+	well_box.set_border_width_all(1)
+	well_box.border_color = Color(accent, 0.4)
+	well_box.set_content_margin_all(8)
+	well.add_theme_stylebox_override("panel", well_box)
+	well.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	if sprite != null:
+		var face := TextureRect.new()
+		face.texture = sprite
+		face.custom_minimum_size = Vector2(30, 30)
+		face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		face.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		well.add_child(face)
+	else:
+		well.add_child(Glyph.make(icon, 24.0, accent))
+	head.add_child(well)
+
+	var title_box := VBoxContainer.new()
+	title_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	title_box.add_theme_constant_override("separation", 1)
+	head.add_child(title_box)
+	var title := Label.new()
+	title.text = item_name
+	title.add_theme_font_override("font", UIPalette.bold_font())
+	title.add_theme_font_size_override("font_size", 16)
+	title.clip_text = true
+	title_box.add_child(title)
+	if count > 0:
+		var owned := Label.new()
+		owned.text = "Owned ×%d" % count
+		owned.add_theme_font_size_override("font_size", 11)
+		owned.add_theme_color_override("font_color", accent)
+		title_box.add_child(owned)
+
+	var body := Label.new()
+	body.text = description
+	body.add_theme_font_size_override("font_size", 12)
+	body.add_theme_color_override("font_color", UIPalette.MUTED)
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	column.add_child(body)
+
+	var close_button := Button.new()
+	close_button.text = "CLOSE"
+	close_button.custom_minimum_size = Vector2(0, 40)
+	close_button.pressed.connect(overlay.queue_free)
+	column.add_child(close_button)

@@ -51,6 +51,15 @@ func _init() -> void:
 ## [param keep_focus] re-seats the same index afterwards — used when a Symbot's art changes
 ## under it (a gen-up swaps the mark sprite) and yanking the player back to the first slot
 ## would be wrong.
+## Optional per-item badge (amber pip top-right) — the tree marks who has points left.
+var badges: Array = []
+
+
+func set_badges(p_badges: Array) -> void:
+	badges = p_badges
+	queue_redraw()
+
+
 func set_items(textures: Array, keep_focus: bool = false) -> void:
 	var previous := focused_index()
 	_textures = textures
@@ -109,6 +118,9 @@ func _draw() -> void:
 		var a := lerpf(0.5, 1.0, t)
 		var rect := Rect2(x - w * 0.5, cy - h * 0.5, w, h)
 		draw_texture_rect(tex, rect, false, Color(1, 1, 1, a))
+		if i < badges.size() and badges[i]:
+			draw_circle(Vector2(rect.end.x - 2.0, rect.position.y + 4.0), 4.0,
+				Color("f2b92b", a))
 
 
 func _gui_input(event: InputEvent) -> void:
