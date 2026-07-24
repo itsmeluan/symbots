@@ -176,42 +176,44 @@ static func tech_button(accent: Color, state: String = "normal") -> StyleBoxFlat
 ## [param rim], when set, draws a SOLID coloured frame all around (equipped/selected
 ## marker) — distinct from [param glow], which is a soft outer halo. Prefer rim for a
 ## crisp "this is chosen" edge; the two can combine but usually you want one.
+## The 3D depth is a downward DROP SHADOW, not a thick bottom border: an asymmetric
+## border rounds cleanly on the outside but leaves a square INNER corner (Godot
+## StyleBoxFlat limitation), which read as the "cantos retos". A symmetric thin border
+## rounds perfectly inside and out, and the shadow — always smooth on a rounded rect —
+## carries the lift. Pressing collapses the shadow so the button sinks onto the surface.
 static func chunky(base: Color, state: String = "normal", glow: Color = Color.TRANSPARENT,
 		rim: Color = Color.TRANSPARENT) -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
-	box.set_corner_radius_all(9)
-	# Max detail + generous AA so the arc reads as a true curve, and a CONTINUOUS border
-	# ring (thin all round, thicker at the bottom for the 3D lip) so the corners never
-	# show the straight cut a bottom-only border leaves.
+	box.set_corner_radius_all(10)
 	box.corner_detail = 20
-	box.anti_aliasing_size = 1.4
+	box.anti_aliasing_size = 1.0
 	box.bg_color = base
-	var edge := base.darkened(0.55)
-	box.set_border_width_all(1)
-	box.border_width_bottom = 5
-	box.border_color = edge
-	box.set_content_margin_all(6)
-	box.content_margin_bottom = 10
+	box.set_border_width_all(2)          # symmetric — clean inner + outer corners
+	box.border_color = base.darkened(0.5)
+	box.set_content_margin_all(7)
+	box.shadow_color = Color(0.0, 0.0, 0.0, 0.5)
+	box.shadow_size = 3
+	box.shadow_offset = Vector2(0, 3)
 	match state:
 		"selected":
 			box.bg_color = base.lightened(0.10)
 		"pressed":
 			box.bg_color = base.darkened(0.10)
-			box.border_width_bottom = 2
-			box.content_margin_top = 9
-			box.content_margin_bottom = 7
+			box.shadow_size = 1
+			box.shadow_offset = Vector2(0, 1)
+			box.content_margin_top = 8
+			box.content_margin_bottom = 6
 		"disabled":
 			var grey := base.lerp(INK, 0.68)
 			box.bg_color = grey
-			edge = grey.darkened(0.45)
-			box.border_color = edge
+			box.border_color = grey.darkened(0.4)
+			box.shadow_size = 1
+			box.shadow_offset = Vector2(0, 1)
 	if rim.a > 0.0:
-		# Solid frame: the rim colour on every side, keeping the thicker bottom lip.
+		# Solid selection/equipped frame — the crisp coloured edge, still symmetric.
 		box.border_color = rim
-		box.set_border_width_all(2)
-		if state != "pressed":
-			box.border_width_bottom = 5
 	if glow.a > 0.0 and state != "disabled" and state != "pressed":
+		# A halo replaces the depth shadow (can't have both on one stylebox).
 		box.shadow_color = glow
 		box.shadow_size = 6
 		box.shadow_offset = Vector2.ZERO
@@ -220,25 +222,25 @@ static func chunky(base: Color, state: String = "normal", glow: Color = Color.TR
 
 ## A soft top-half sheen for chunky buttons: white fading to nothing. A child overlay
 ## rather than part of the stylebox, because StyleBoxFlat has no gradients.
-static func gloss(strength: float = 0.10) -> TextureRect:
-	var sheen := TextureRect.new()
-	var gradient := Gradient.new()
-	gradient.set_color(0, Color(1, 1, 1, strength))
-	gradient.set_color(1, Color(1, 1, 1, 0.0))
-	var texture := GradientTexture2D.new()
-	texture.gradient = gradient
-	texture.fill_from = Vector2(0, 0)
-	texture.fill_to = Vector2(0, 1)
-	sheen.texture = texture
+## The top sheen is a Panel whose stylebox rounds its TOP corners to match the button,
+## so it can never poke a square corner past the button's curve (the old TextureRect
+## did exactly that). Its lower edge is faded by a gradient texture drawn inside.
+static func gloss(strength: float = 0.10) -> Control:
+	var sheen := Panel.new()
+	var box := StyleBoxFlat.new()
+	box.bg_color = Color(1, 1, 1, strength)
+	box.corner_radius_top_left = 9
+	box.corner_radius_top_right = 9
+	box.corner_detail = 20
+	box.anti_aliasing_size = 1.0
+	sheen.add_theme_stylebox_override("panel", box)
 	sheen.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	sheen.anchor_bottom = 0.52
+	sheen.anchor_bottom = 0.5
 	sheen.grow_vertical = Control.GROW_DIRECTION_END
-	# Inset from the rounded corners — a square sheen poking past a 7px radius is
-	# exactly the "badly cut edge" it would otherwise read as.
-	sheen.offset_left = 5
-	sheen.offset_right = -5
-	sheen.offset_top = 4
-	sheen.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	# Inset so the sheen's rounded top sits just inside the button's 2px border.
+	sheen.offset_left = 3
+	sheen.offset_right = -3
+	sheen.offset_top = 2
 	sheen.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return sheen
 
