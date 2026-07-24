@@ -14,6 +14,10 @@ signal navigate(dest: StringName)
 const ART_DIR := "res://assets/art/symbots/"
 const AVATAR_SIZE := 56.0
 
+## How far to raise the lead sprite so its baseline lands at the SAME on-screen height as the
+## Workshop's hero (whose stage has no BATTLE button eating the bottom). Measured, not guessed.
+const HERO_LIFT := 42.0
+
 ## The hub's facility buttons: [dest, label, glyph].
 const FACILITIES: Array = [
 	[&"foundry", "FORGE", &"anvil"],
@@ -71,8 +75,9 @@ func _build_hero_nameplate() -> Control:
 	plate.add_theme_constant_override("separation", 0)
 	plate.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
 	plate.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	# Above the tallest hero band (MK III zoom) plus a small breath of air.
-	plate.offset_bottom = -(HERO_BAND * MARK_ZOOM[MARK_ZOOM.size() - 1] + 10.0)
+	# Above the tallest hero band (MK III zoom) plus a small breath of air, and raised by the
+	# same HERO_LIFT as the sprite so the nameplate keeps riding just over its head.
+	plate.offset_bottom = -(HERO_BAND * MARK_ZOOM[MARK_ZOOM.size() - 1] + 10.0 + HERO_LIFT)
 	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	_hero_name = Label.new()
@@ -256,6 +261,11 @@ func refresh() -> void:
 	_hero.texture = load(path) if ResourceLoader.exists(path) else null
 	# Same band as the Workshop, so the same Symbot is the same size on both screens.
 	fit_hero(_hero, lead.mark)
+	# ...and lifted to the SAME vertical level: Home's stage bottom sits lower than the
+	# Workshop's (the BATTLE button lives below it), so without this the identical sprite
+	# stood ~40px further down. Raising it makes the lead read at one height across screens.
+	_hero.offset_top -= HERO_LIFT
+	_hero.offset_bottom -= HERO_LIFT
 
 
 func _roman(n: int) -> String:
