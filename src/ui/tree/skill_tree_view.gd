@@ -123,7 +123,7 @@ func center_on(node_id: StringName) -> void:
 		# Anchored at 62% height, not the middle: the inspector overlays the top band,
 		# so "centred" visually means below it — this keeps the hero and its nameplate
 		# out from underneath the card.
-		_pan = Vector2(size.x * 0.5, size.y * VERTICAL_ANCHOR) - node.position
+		_pan = Vector2(size.x * 0.5, size.y * VERTICAL_ANCHOR) - _display_pos(node)
 	queue_redraw()
 
 
@@ -143,12 +143,12 @@ func _draw() -> void:
 	_draw_hero()
 	# Edges first so nodes sit on top of them. Live edges get a soft under-glow pass.
 	for node in tree.nodes:
-		var from := node.position + _pan
+		var from := _display_pos(node) + _pan
 		for other_id in node.neighbours:
 			var other := tree.get_node_def(other_id)
 			if other == null:
 				continue
-			var to := other.position + _pan
+			var to := _display_pos(other) + _pan
 			if allocated.has(node.id) and allocated.has(other_id):
 				draw_line(from, to, Color(COLOUR_EDGE_LIVE, 0.22), 5.0)
 				draw_line(from, to, COLOUR_EDGE_LIVE, 2.0)
@@ -195,12 +195,28 @@ func _hero_rect() -> Rect2:
 	return Rect2(centre - draw_size * 0.5, draw_size)
 
 
+## How far an ENTRY node is pulled toward the graph's centre when DRAWN, so it separates from
+## the first node on its spoke. The authored gap is only ~15px — less than the two radii
+## combined — so entry and its first socket sat on top of each other. A pure PRESENTATION
+## offset: the authored data is untouched, and every place that reads a screen position goes
+## through _display_pos(), so the drawn node, its edges and its tap target all move together.
+const ENTRY_INSET := 22.0
+
+
+## The on-graph position a node is drawn and hit-tested at. Identical to the authored position
+## for everything except ENTRY nodes, which are nudged inward (see ENTRY_INSET).
+func _display_pos(node: SkillNodeDef) -> Vector2:
+	if node.node_type == SkillNodeDef.NodeType.ENTRY and node.position != Vector2.ZERO:
+		return node.position - node.position.normalized() * ENTRY_INSET
+	return node.position
+
+
 func _radius_of(node: SkillNodeDef) -> float:
 	return RADII.get(node.node_type, 9.0)
 
 
 func _draw_node(node: SkillNodeDef) -> void:
-	var centre := node.position + _pan
+	var centre := _display_pos(node) + _pan
 	var radius := _radius_of(node)
 	var colour := _colour_for(node)
 	var is_allocated := allocated.has(node.id)
@@ -298,7 +314,7 @@ func node_at(point: Vector2) -> StringName:
 	var best := &""
 	var best_distance := TAP_SLOP
 	for node in tree.nodes:
-		var d := point.distance_to(node.position + _pan)
+		var d := point.distance_to(_display_pos(node) + _pan)
 		if d <= best_distance:
 			best_distance = d
 			best = node.id

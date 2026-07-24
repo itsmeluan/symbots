@@ -68,7 +68,9 @@ func test_the_view_is_centred_on_the_symbots_doorway() -> void:
 	await get_tree().process_frame
 	var species: SpeciesDef = _game.ctx.species.get_species(_symbot().species_id)
 	var entry := _game.ctx.tree.get_node_def(species.tree_entry_node)
-	var on_screen := entry.position + _screen._view._pan
+	# The DRAWN doorway (its display position, nudged inward from the authored point so it
+	# separates from the first node) is what must land on the anchor.
+	var on_screen := _screen._view._display_pos(entry) + _screen._view._pan
 	# The anchor sits at 62% height, not the middle — the inspector overlays the top
 	# band, so "centred" visually means below it.
 	assert_almost_eq(on_screen, Vector2(_screen._view.size.x * 0.5,
@@ -230,8 +232,8 @@ func test_switching_symbots_recentres_on_the_new_doorway() -> void:
 	_screen._on_symbot_selected(second)
 	var species: SpeciesDef = _game.ctx.species.get_species(second.species_id)
 	var entry := _game.ctx.tree.get_node_def(species.tree_entry_node)
-	assert_almost_eq(entry.position + _screen._view._pan, _screen._view.size * 0.5,
-		Vector2(1, 1))
+	assert_almost_eq(_screen._view._display_pos(entry) + _screen._view._pan,
+		_screen._view.size * 0.5, Vector2(1, 1))
 
 
 func test_each_symbot_keeps_its_own_allocations() -> void:
