@@ -173,14 +173,23 @@ static func tech_button(accent: Color, state: String = "normal") -> StyleBoxFlat
 ## zero-offset shadow — kept SEPARATE from the depth edge on purpose: an earlier version
 ## recoloured the borders for selection and the "3D base" turned into a fat coloured
 ## ring with ragged corner joins.
-static func chunky(base: Color, state: String = "normal", glow: Color = Color.TRANSPARENT) -> StyleBoxFlat:
+## [param rim], when set, draws a SOLID coloured frame all around (equipped/selected
+## marker) — distinct from [param glow], which is a soft outer halo. Prefer rim for a
+## crisp "this is chosen" edge; the two can combine but usually you want one.
+static func chunky(base: Color, state: String = "normal", glow: Color = Color.TRANSPARENT,
+		rim: Color = Color.TRANSPARENT) -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
-	box.set_corner_radius_all(7)
-	box.corner_detail = 12
-	box.anti_aliasing_size = 0.8
+	box.set_corner_radius_all(9)
+	# Max detail + generous AA so the arc reads as a true curve, and a CONTINUOUS border
+	# ring (thin all round, thicker at the bottom for the 3D lip) so the corners never
+	# show the straight cut a bottom-only border leaves.
+	box.corner_detail = 20
+	box.anti_aliasing_size = 1.4
 	box.bg_color = base
-	box.border_color = base.darkened(0.52)
-	box.border_width_bottom = 4
+	var edge := base.darkened(0.55)
+	box.set_border_width_all(1)
+	box.border_width_bottom = 5
+	box.border_color = edge
 	box.set_content_margin_all(6)
 	box.content_margin_bottom = 10
 	match state:
@@ -188,14 +197,20 @@ static func chunky(base: Color, state: String = "normal", glow: Color = Color.TR
 			box.bg_color = base.lightened(0.10)
 		"pressed":
 			box.bg_color = base.darkened(0.10)
-			box.border_width_bottom = 1
+			box.border_width_bottom = 2
 			box.content_margin_top = 9
 			box.content_margin_bottom = 7
 		"disabled":
 			var grey := base.lerp(INK, 0.68)
 			box.bg_color = grey
-			box.border_color = grey.darkened(0.45)
-			box.border_width_bottom = 3
+			edge = grey.darkened(0.45)
+			box.border_color = edge
+	if rim.a > 0.0:
+		# Solid frame: the rim colour on every side, keeping the thicker bottom lip.
+		box.border_color = rim
+		box.set_border_width_all(2)
+		if state != "pressed":
+			box.border_width_bottom = 5
 	if glow.a > 0.0 and state != "disabled" and state != "pressed":
 		box.shadow_color = glow
 		box.shadow_size = 6
@@ -220,9 +235,9 @@ static func gloss(strength: float = 0.10) -> TextureRect:
 	sheen.grow_vertical = Control.GROW_DIRECTION_END
 	# Inset from the rounded corners — a square sheen poking past a 7px radius is
 	# exactly the "badly cut edge" it would otherwise read as.
-	sheen.offset_left = 4
-	sheen.offset_right = -4
-	sheen.offset_top = 3
+	sheen.offset_left = 5
+	sheen.offset_right = -5
+	sheen.offset_top = 4
 	sheen.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	sheen.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return sheen

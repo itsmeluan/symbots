@@ -73,13 +73,37 @@ func _build_layout() -> void:
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	content.add_child(scroll)
+	_thin_scrollbar(scroll)
+
+	# A gutter around the grid: top so the first row is not clipped against the viewport
+	# edge, right so the thin scrollbar rides the screen edge OFF the cards rather than
+	# over them.
+	var pad := MarginContainer.new()
+	pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	pad.add_theme_constant_override("margin_top", 10)
+	pad.add_theme_constant_override("margin_right", 10)
+	scroll.add_child(pad)
 
 	_bench = GridContainer.new()
 	_bench.columns = CARD_COLUMNS
 	_bench.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_bench.add_theme_constant_override("h_separation", 6)
 	_bench.add_theme_constant_override("v_separation", 6)
-	scroll.add_child(_bench)
+	pad.add_child(_bench)
+
+
+## A 4px scrollbar with a rounded grabber, riding the screen edge — matches the workshop
+## stats drawer, so scrolling reads the same everywhere.
+func _thin_scrollbar(scroll: ScrollContainer) -> void:
+	var vsb := scroll.get_v_scroll_bar()
+	vsb.custom_minimum_size = Vector2(4, 0)
+	var grab := StyleBoxFlat.new()
+	grab.bg_color = UIPalette.LINE
+	grab.set_corner_radius_all(2)
+	vsb.add_theme_stylebox_override("grabber", grab)
+	vsb.add_theme_stylebox_override("grabber_highlight", grab)
+	vsb.add_theme_stylebox_override("grabber_pressed", grab)
+	vsb.add_theme_stylebox_override("scroll", UIPalette.empty())
 
 
 func refresh() -> void:
@@ -124,11 +148,15 @@ func _build_slot(slot: int) -> Button:
 
 	var column := VBoxContainer.new()
 	column.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	column.offset_left = 4
+	column.offset_right = -4
+	column.offset_top = 4
+	column.offset_bottom = -8
 	column.add_theme_constant_override("separation", 1)
 	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(column)
 
-	column.add_child(_sprite_view(symbot, 46.0))
+	column.add_child(_sprite_view(symbot, 42.0))
 
 	var name_label := Label.new()
 	name_label.text = _display_name_of(symbot)
@@ -197,10 +225,13 @@ func _build_bench_row(symbot: SymbotInstance) -> Control:
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.tooltip_text = "%s\n%s%s" % [_display_name_of(symbot).to_upper(), caption,
 		"   ·   FIELDED" if fielded else ""]
+	# Fielded reads from a SOLID amber frame — no soft halo. A benched card is plain.
 	var face := Color("1b242f") if fielded else Color("161e27")
-	var glow := Color(UIPalette.CYAN, 0.40) if fielded else Color.TRANSPARENT
-	button.add_theme_stylebox_override("normal", UIPalette.chunky(face, "normal", glow))
-	button.add_theme_stylebox_override("hover", UIPalette.chunky(face, "normal", glow))
+	var rim := UIPalette.AMBER if fielded else Color.TRANSPARENT
+	button.add_theme_stylebox_override("normal",
+		UIPalette.chunky(face, "normal", Color.TRANSPARENT, rim))
+	button.add_theme_stylebox_override("hover",
+		UIPalette.chunky(face, "normal", Color.TRANSPARENT, rim))
 	button.add_theme_stylebox_override("pressed", UIPalette.chunky(face, "pressed"))
 	button.add_theme_stylebox_override("focus", UIPalette.empty())
 	button.add_child(UIPalette.gloss(0.06))
@@ -210,6 +241,12 @@ func _build_bench_row(symbot: SymbotInstance) -> Control:
 
 	var column := VBoxContainer.new()
 	column.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# Inset off the frame, and clear the thicker bottom lip so the FIELDED badge is never
+	# clipped by the border.
+	column.offset_left = 5
+	column.offset_right = -5
+	column.offset_top = 5
+	column.offset_bottom = -8
 	column.add_theme_constant_override("separation", 2)
 	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(column)
@@ -238,7 +275,7 @@ func _build_bench_row(symbot: SymbotInstance) -> Control:
 	badge.text = "FIELDED" if fielded else " "
 	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	badge.add_theme_font_size_override("font_size", 8)
-	badge.add_theme_color_override("font_color", UIPalette.CYAN)
+	badge.add_theme_color_override("font_color", UIPalette.AMBER)
 	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_child(badge)
 	return button
