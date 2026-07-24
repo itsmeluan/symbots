@@ -55,16 +55,12 @@ func _build_layout() -> void:
 	_set_background("res://assets/art/workshop/bench_backdrop.png", 0.62)
 	var content := build_chrome(_ctx, "TREE", &"tree", func(d): navigate.emit(d))
 
-	_points_label = Label.new()
-	_points_label.add_theme_font_size_override("font_size", 11)
-	_points_label.add_theme_color_override("font_color", UIPalette.CYAN)
-	content.add_child(_points_label)
-
 	var roster_scroll := ScrollContainer.new()
-	roster_scroll.custom_minimum_size = Vector2(0, MIN_BUTTON_HEIGHT + 8)
+	roster_scroll.custom_minimum_size = Vector2(0, 62)
 	roster_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	content.add_child(roster_scroll)
 	_roster_strip = HBoxContainer.new()
+	_roster_strip.add_theme_constant_override("separation", 6)
 	roster_scroll.add_child(_roster_strip)
 
 	_view = SkillTreeViewScript.new()
@@ -73,29 +69,52 @@ func _build_layout() -> void:
 	_view.node_tapped.connect(Callable(self, "_on_node_tapped"))
 	content.add_child(_view)
 
+	# The node inspector: a framed panel along the foot, so the tapped node's dossier
+	# reads as one surface instead of loose labels floating over the graph.
+	var inspector := PanelContainer.new()
+	inspector.add_theme_stylebox_override("panel",
+		UIPalette.chunky(Color(UIPalette.PANEL, 0.96)))
+	content.add_child(inspector)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	inspector.add_child(box)
+
+	# Header row: the node title on the left, the unspent-points pill on the right.
+	var head := HBoxContainer.new()
+	box.add_child(head)
 	_node_title = Label.new()
-	_node_title.add_theme_font_size_override("font_size", 12)
-	content.add_child(_node_title)
+	_node_title.add_theme_font_override("font", UIPalette.bold_font())
+	_node_title.add_theme_font_size_override("font_size", 13)
+	_node_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(_node_title)
+	_points_label = Label.new()
+	_points_label.add_theme_font_override("font", UIPalette.display_font())
+	_points_label.add_theme_font_size_override("font_size", 11)
+	_points_label.add_theme_color_override("font_color", UIPalette.CYAN)
+	_points_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	head.add_child(_points_label)
 
 	_node_detail = Label.new()
 	_node_detail.add_theme_font_size_override("font_size", 9)
+	_node_detail.add_theme_color_override("font_color", UIPalette.MUTED)
 	_node_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_node_detail.custom_minimum_size = Vector2(0, 30)
-	content.add_child(_node_detail)
+	_node_detail.custom_minimum_size = Vector2(0, 26)
+	box.add_child(_node_detail)
 
 	_allocate_button = Button.new()
 	_allocate_button.custom_minimum_size = Vector2(0, MIN_BUTTON_HEIGHT)
+	_allocate_button.add_child(UIPalette.gloss())
 	_allocate_button.pressed.connect(Callable(self, "_on_allocate_pressed"))
-	content.add_child(_allocate_button)
+	box.add_child(_allocate_button)
 
 	_fit_row = HBoxContainer.new()
-	_fit_row.custom_minimum_size = Vector2(0, MIN_BUTTON_HEIGHT)
-	content.add_child(_fit_row)
+	_fit_row.add_theme_constant_override("separation", 6)
+	box.add_child(_fit_row)
 
 	_respec_button = Button.new()
-	_respec_button.custom_minimum_size = Vector2(0, MIN_BUTTON_HEIGHT)
+	_respec_button.custom_minimum_size = Vector2(0, 34)
 	_respec_button.pressed.connect(Callable(self, "_on_respec_pressed"))
-	content.add_child(_respec_button)
+	box.add_child(_respec_button)
 
 
 func refresh() -> void:
@@ -117,14 +136,51 @@ func _rebuild_roster_strip() -> void:
 		var species: SpeciesDef = _ctx.species.get_species(symbot.species_id)
 		if species == null:
 			continue
-		var button := Button.new()
-		button.text = "%s\n%d pts" % [species.display_name,
-			TreeAllocator.unspent_points(symbot)]
-		button.custom_minimum_size = Vector2(76, MIN_BUTTON_HEIGHT)
-		button.toggle_mode = true
-		button.button_pressed = (_selected_symbot == symbot)
-		button.pressed.connect(Callable(self, "_on_symbot_selected").bind(symbot))
-		_roster_strip.add_child(button)
+		_roster_strip.add_child(_build_roster_chip(symbot, species))
+
+
+## A roster chip: the Symbot's face over its unspent-point count, in the chunky
+## selection language — the selected one glows cyan, a point-carrying one shows an amber
+## pip so "who still has points to spend" reads down the strip.
+func _build_roster_chip(symbot: SymbotInstance, species: SpeciesDef) -> Button:
+	var selected := _selected_symbot == symbot
+	var points := TreeAllocator.unspent_points(symbot)
+	var button := Button.new()
+	button.custom_minimum_size = Vector2(58, 58)
+	button.toggle_mode = true
+	button.button_pressed = selected
+	var glow := Color(UIPalette.CYAN, 0.55) if selected else Color.TRANSPARENT
+	button.add_theme_stylebox_override("normal",
+		UIPalette.chunky(Color("1b242f"), "normal", glow))
+	button.add_theme_stylebox_override("hover",
+		UIPalette.chunky(Color("1b242f"), "normal", glow))
+	button.add_theme_stylebox_override("pressed",
+		UIPalette.chunky(Color("1b242f"), "pressed"))
+	button.add_theme_stylebox_override("focus", UIPalette.empty())
+	button.pressed.connect(Callable(self, "_on_symbot_selected").bind(symbot))
+
+	var face := TextureRect.new()
+	face.texture = UnitPanel.art_texture(symbot.species_id, symbot.mark)
+	face.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	face.offset_top = 3
+	face.offset_bottom = -12
+	face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	face.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(face)
+
+	var pts := Label.new()
+	pts.text = "%d pt" % points
+	pts.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	pts.add_theme_font_size_override("font_size", 8)
+	pts.add_theme_color_override("font_color",
+		UIPalette.AMBER if points > 0 else UIPalette.MUTED)
+	pts.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	pts.offset_top = -12
+	pts.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(pts)
+	return button
 
 
 func _refresh_points() -> void:
@@ -163,6 +219,9 @@ func _refresh_detail() -> void:
 		_species_of(_selected_symbot), _selected_node, _ctx.items)
 	_allocate_button.disabled = refusal != TreeAllocator.Refusal.OK
 	_allocate_button.text = _refusal_text(refusal, node)
+	# The one actionable button turns amber when it can actually be pressed.
+	_allocate_button.theme_type_variation = \
+		&"Primary" if refusal == TreeAllocator.Refusal.OK else &""
 
 
 ## What the node does, in the player's terms. Built from the authored data rather than a
