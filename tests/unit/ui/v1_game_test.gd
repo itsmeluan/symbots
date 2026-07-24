@@ -277,12 +277,10 @@ func test_the_sheet_never_says_one_fights() -> void:
 
 
 func test_the_sheet_fits_every_stage_not_just_one() -> void:
-	# The sheet's height is a fixed budget rather than derived from its contents; if the
-	# contents outgrow it, DEPLOY is the thing that falls off the bottom.
-	#
-	# EVERY stage, because `max_lines_visible` caps the description rather than reserving the
-	# space — so a one-line stage measures shorter than a two-line one, and a budget checked
-	# against a single stage passes while another clips.
+	# The sheet now hugs its contents (see _size_sheet), but its contents must still fit inside
+	# the SHEET_HEIGHT ceiling for EVERY stage — `max_lines_visible` caps the description rather
+	# than reserving the space, so a one-line stage measures shorter than a two-line one, and a
+	# budget checked against a single stage passes while another clips.
 	_game.show_map()
 	var map := _game._map
 	for stage in _game.ctx.stages.entries:
@@ -290,7 +288,21 @@ func test_the_sheet_fits_every_stage_not_just_one() -> void:
 			continue
 		map._on_stage_pressed(stage)
 		assert_lte(map._sheet.get_combined_minimum_size().y, StageSelectScreen.SHEET_HEIGHT,
-			"'%s' does not fit the sheet's fixed height" % stage.display_name)
+			"'%s' does not fit the sheet's height ceiling" % stage.display_name)
+
+
+func test_closing_the_sheet_dismisses_it_without_committing() -> void:
+	# Browsing the map must have a way OUT that is not DEPLOY. The close control hides the
+	# sheet and drops the selection, so no fight is queued.
+	_game.show_map()
+	var map := _game._map
+	map._on_stage_pressed(_game.ctx.stages.entries[0])
+	assert_true(map._sheet.visible, "precondition: the sheet is open")
+
+	map._on_sheet_close_pressed()
+
+	assert_false(map._sheet.visible, "the close control hides the sheet")
+	assert_null(map._selected, "and clears the selection, so DEPLOY has nothing to launch")
 
 
 func test_the_map_still_scrolls_with_its_bar_hidden() -> void:

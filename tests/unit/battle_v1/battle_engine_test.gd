@@ -160,9 +160,10 @@ func test_a_dead_target_is_refused() -> void:
 	assert_eq(e.current_actor().unit_id, &"p", "and the turn is NOT consumed")
 
 
-func test_targeting_past_a_tank_is_refused() -> void:
+func test_targeting_past_a_taunter_is_refused() -> void:
 	var p := _unit("p", BattleUnit.Side.PLAYER, 100, SpeciesDefScript.Role.DPS, 30)
 	var tank := _unit("tank", BattleUnit.Side.ENEMY, 200, SpeciesDefScript.Role.TANK, 5)
+	tank.add_status(StatusEffectScript.taunt(3))  # opt-in taunt, as if it had cast Provoke
 	var squishy := _unit("squishy", BattleUnit.Side.ENEMY, 50, SpeciesDefScript.Role.DPS, 5, 1)
 	var e := _engine([p], [tank, squishy])
 	e.start()

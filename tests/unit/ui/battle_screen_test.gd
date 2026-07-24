@@ -114,13 +114,14 @@ func test_the_taunt_rule_is_visible_before_the_tap() -> void:
 	# never shown a target they are then not allowed to hit.
 	var p := _unit("p", BattleUnit.Side.PLAYER, 200, SpeciesDefScript.Role.DPS, 30)
 	var tank := _unit("tank", BattleUnit.Side.ENEMY, 400, SpeciesDefScript.Role.TANK, 5)
+	tank.add_status(StatusEffect.taunt(3))  # taunt is opt-in — the tank must be provoking
 	var squishy := _unit("squishy", BattleUnit.Side.ENEMY, 100,
 		SpeciesDefScript.Role.DPS, 5, 1)
 	_start([p], [tank, squishy])
 
 	_screen._on_skill_pressed(&"strike")
 
-	assert_true(_screen._enemy_panels[0].is_targetable, "the tank is highlighted")
+	assert_true(_screen._enemy_panels[0].is_targetable, "the taunter is highlighted")
 	assert_false(_screen._enemy_panels[1].is_targetable,
 		"the protected unit is NOT — the rule is shown, not enforced by rejection")
 
@@ -128,6 +129,7 @@ func test_the_taunt_rule_is_visible_before_the_tap() -> void:
 func test_tapping_a_protected_unit_changes_nothing() -> void:
 	var p := _unit("p", BattleUnit.Side.PLAYER, 200, SpeciesDefScript.Role.DPS, 30)
 	var tank := _unit("tank", BattleUnit.Side.ENEMY, 400, SpeciesDefScript.Role.TANK, 5)
+	tank.add_status(StatusEffect.taunt(3))  # taunt is opt-in — the tank must be provoking
 	var squishy := _unit("squishy", BattleUnit.Side.ENEMY, 100,
 		SpeciesDefScript.Role.DPS, 5, 1)
 	_start([p], [tank, squishy])

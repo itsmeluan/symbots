@@ -129,8 +129,17 @@ func is_stunned() -> bool:
 	return false
 
 
+## True when this unit currently pulls aggro — it carries a taunt status (from Provoke).
+## Taunt is opt-in: a TANK compels attacks only while taunting, never by role alone (§3.3).
+func has_forced_taunt() -> bool:
+	for s in statuses:
+		if s.forces_taunt():
+			return true
+	return false
+
+
 ## True when this unit's taunt is suppressed, so enemies may look past it even though it
-## is a living tank (§3.3 taunt-break).
+## carries a taunt (§3.3 taunt-break).
 func is_taunt_suppressed() -> bool:
 	for s in statuses:
 		if s.suppresses_taunt():

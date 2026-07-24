@@ -1,8 +1,10 @@
 ## BattleTargeting — who a skill may legally hit, and the Taunt rule (Core Design §3.3).
 ##
-## This is the system that makes TANK a role rather than a stat spread: while a living,
-## untaunt-broken tank stands on the defending side, single-target attacks must go to a
-## tank. Everything interesting about the battle layer hangs off the exceptions.
+## Taunt is OPT-IN, not a role default: a unit compels single-target attacks onto itself
+## only while it carries a taunt status (applied by Provoke), never merely by being a TANK.
+## While a living, untaunt-broken taunter stands on the defending side, single-target
+## attacks must go to a taunter. Everything interesting about the battle layer hangs off
+## the exceptions (pierce, taunt-break, AoE).
 ##
 ## Pure static functions over arrays of [BattleUnit] — no state, no side effects, so the
 ## same question always has the same answer and the auto-battler and the manual UI cannot
@@ -33,7 +35,7 @@ static func legal_targets(caster: BattleUnit, skill: SkillDef,
 			return _living(allies)
 		SkillDefScript.TargetMode.LOWEST_HP_ALLY:
 			var hurt := _living(allies)
-			return [] if hurt.is_empty() else [_lowest_structure(hurt)]
+			return [] if hurt.is_empty() else [_most_wounded(hurt)]
 		SkillDefScript.TargetMode.ALL_ENEMIES, SkillDefScript.TargetMode.RANDOM_ENEMY:
 			# Multi-target and random effects are not CHOOSING a target, so there is
 			# nothing for taunt to redirect (§3.3). This is deliberate, not an oversight:
@@ -44,8 +46,10 @@ static func legal_targets(caster: BattleUnit, skill: SkillDef,
 	return []
 
 
-## The taunt rule proper. A single-target attack sees only the living tanks — unless the
-## caster or the skill pierces, or every tank's taunt is suppressed.
+## The taunt rule proper. A single-target attack sees only the living taunters — unless the
+## caster or the skill pierces, or every taunter's taunt is suppressed. With no active
+## taunt on the field the whole line is open, which is the common case now that taunt is a
+## deliberate Provoke rather than a passive tank aura.
 static func _single_enemy_targets(caster: BattleUnit, skill: SkillDef,
 		enemies: Array) -> Array:
 	var living := _living(enemies)
@@ -54,17 +58,17 @@ static func _single_enemy_targets(caster: BattleUnit, skill: SkillDef,
 	# Pierce from either source: the skill is flagged, or the caster holds the effect.
 	if skill.ignores_taunt or caster.ignores_taunt():
 		return living
-	var tanks := active_taunters(living)
-	# No tank, or every tank taunt-broken → the whole line is open.
-	return tanks if not tanks.is_empty() else living
+	var taunters := active_taunters(living)
+	# No taunter, or every taunt suppressed → the whole line is open.
+	return taunters if not taunters.is_empty() else living
 
 
-## Living tanks whose taunt is actually in force. A tank under TAUNT_BREAK is still a
-## tank and still a legal target — it just stops COMPELLING attacks toward itself.
+## Living units whose taunt is actually in force. A taunter under TAUNT_BREAK is still a
+## legal target — it just stops COMPELLING attacks toward itself.
 static func active_taunters(units: Array) -> Array:
 	var out: Array = []
 	for u in units:
-		if u.is_alive() and u.is_tank() and not u.is_taunt_suppressed():
+		if u.is_alive() and u.has_forced_taunt() and not u.is_taunt_suppressed():
 			out.append(u)
 	return out
 
@@ -89,14 +93,7 @@ static func auto_pick(caster: BattleUnit, skill: SkillDef,
 	if skill.targets_enemies():
 		return _lowest_structure(legal)
 	# Support and healing: the ally furthest from full, so an overheal is never the pick.
-	var best: BattleUnit = legal[0]
-	var best_missing := -1
-	for u in legal:
-		var missing: int = u.max_structure - u.current_structure
-		if missing > best_missing:
-			best_missing = missing
-			best = u
-	return best
+	return _most_wounded(legal)
 
 
 static func _living(units: Array) -> Array:
@@ -113,5 +110,19 @@ static func _lowest_structure(units: Array) -> BattleUnit:
 	var best: BattleUnit = units[0]
 	for u in units:
 		if u.current_structure < best.current_structure:
+			best = u
+	return best
+
+
+## The unit MISSING the most structure (max − current), ties going to the earliest slot.
+## Healing resolves by missing health, not by lowest absolute HP: picking the lowest
+## absolute would lock a heal onto a small-cap ally sitting at FULL health — the Patch bug.
+static func _most_wounded(units: Array) -> BattleUnit:
+	var best: BattleUnit = units[0]
+	var best_missing := best.max_structure - best.current_structure
+	for u in units:
+		var missing: int = u.max_structure - u.current_structure
+		if missing > best_missing:
+			best_missing = missing
 			best = u
 	return best

@@ -69,19 +69,20 @@ const CARD_GAP := 10.0
 
 const MIN_ROW_HEIGHT := 60  ## comfortably past the 44pt touch minimum
 
-## Height of the detail sheet.
+## Initial/fallback height of the detail sheet, before it is measured.
 ##
-## Fixed rather than derived from its contents. Deriving it meant asking an autowrapped Label
-## for a minimum height before layout had given the sheet a width — it wrapped to one
-## character per line and reported a height taller than the screen. The description is capped
-## at two lines (see _build_sheet) so this budget always holds.
-##
-## Sized for the TALLEST stage (measured: 172px, stage_01's two-line description), not for a
-## typical one. `max_lines_visible` is a ceiling rather than a reservation, so a one-line
-## description genuinely needs less room — a budget fitted to one stage clips another. The
-## sheet therefore looks a little roomy on short descriptions, which is the price of DEPLOY
-## never moving under the player's thumb as they browse.
-const SHEET_HEIGHT := 218.0
+## The sheet used to be FIXED at this height, which left a slab of dead space under DEPLOY on
+## short-description stages. It is now sized to its actual content by _size_sheet() once layout
+## has given the VBox a real width (so the autowrapped, two-line-capped description reports a
+## truthful height rather than the one-character-per-line blowup it gives before width is set).
+## This value is only what the sheet shows for the one frame before that measurement lands,
+## so it is set to comfortably clear the tallest measured content (224px) — nothing clips even
+## on that first frame.
+const SHEET_HEIGHT := 240.0
+
+## The sheet never eats more than this fraction of the screen, so a future long description can
+## never push DEPLOY off the top or bury the map entirely.
+const SHEET_MAX_FRACTION := 0.62
 
 ## Inset from the screen edges, and the gap left between the sheet and the dock, so the sheet
 ## reads as a card floating over the map rather than as a slab welded to the bottom.
@@ -102,6 +103,7 @@ var _nodes: Array[Control] = []
 
 # The detail sheet along the bottom.
 var _sheet: PanelContainer
+var _sheet_content: VBoxContainer
 var _sheet_name: Label
 var _sheet_chips: HBoxContainer
 var _sheet_enemies: HBoxContainer
@@ -266,6 +268,14 @@ func _build_sheet() -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 5)
 	_sheet.add_child(v)
+	_sheet_content = v
+
+	# Header row: the stage name, and a close control at the right. Browsing the map opens
+	# this sheet on every card tap, so a way OUT that is not "commit to a fight" or "tap a
+	# different card" is the difference between a browsable map and a trap.
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 6)
+	v.add_child(header)
 
 	# No "SELECTED STAGE" eyebrow: the sheet only ever appears because the player just
 	# selected a stage, so the label spent a line restating the gesture that opened it.
@@ -274,7 +284,20 @@ func _build_sheet() -> void:
 	_sheet_name.add_theme_font_size_override("font_size", 17)
 	_sheet_name.add_theme_color_override("font_color", UIPalette.TEXT)
 	_sheet_name.clip_text = true
-	v.add_child(_sheet_name)
+	_sheet_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_sheet_name.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	header.add_child(_sheet_name)
+
+	var close := Button.new()
+	close.text = "✕"
+	close.custom_minimum_size = Vector2(32, 32)  # keeps the touch target at the 44pt-ish floor
+	close.flat = true
+	close.add_theme_font_size_override("font_size", 16)
+	close.add_theme_color_override("font_color", UIPalette.MUTED)
+	close.add_theme_color_override("font_hover_color", UIPalette.TEXT)
+	close.add_theme_stylebox_override("focus", UIPalette.empty())
+	_connect_owned(close.pressed, Callable(self, "_on_sheet_close_pressed"))
+	header.add_child(close)
 
 	_sheet_chips = HBoxContainer.new()
 	_sheet_chips.add_theme_constant_override("separation", 6)
@@ -535,6 +558,26 @@ func _on_stage_pressed(stage: StageDef) -> void:
 	_selected = stage
 	_fill_sheet(stage)
 	_sheet.visible = true
+	# Measure once layout has given the sheet a real width — before that, the autowrapped
+	# description reports a bogus height.
+	call_deferred("_size_sheet")
+
+
+## Dismiss the sheet without committing. Browsing must have a way back to just the map.
+func _on_sheet_close_pressed() -> void:
+	_sheet.visible = false
+	_selected = null
+
+
+## Shrink the sheet to hug its contents so DEPLOY sits just above the dock rather than atop a
+## slab of empty space. Clamped so it can never swallow the map.
+func _size_sheet() -> void:
+	if _sheet == null or _sheet_content == null or not _sheet.visible:
+		return
+	var content_h := _sheet_content.get_combined_minimum_size().y
+	var chrome := 24.0  # the panel's 12px content margin, top and bottom
+	var h := clampf(content_h + chrome, 120.0, size.y * SHEET_MAX_FRACTION)
+	_sheet.offset_top = _sheet.offset_bottom - h
 
 
 func _on_deploy_pressed() -> void:

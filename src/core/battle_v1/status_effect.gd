@@ -18,6 +18,10 @@ enum Kind {
 	## Tempo — HASTE is the positive counterpart of SLOW (mobility up), used by the
 	## tactician support to move an ally up the turn order.
 	HASTE = 13,
+	## Aggro — the holder COMPELS single-target enemy attacks onto itself while active
+	## (§3.3). Taunt is opt-in: a unit only pulls aggro while it carries this status
+	## (applied by Provoke), never merely by being a TANK. TAUNT_BREAK suppresses it.
+	FORCED_TAUNT = 14,
 	## Defensive
 	REGEN = 20, DAMAGE_REDUCTION = 21,
 	## Offensive
@@ -31,7 +35,7 @@ enum Kind {
 const KIND_NAMES := {
 	Kind.BURN: "Burn", Kind.CORRODE: "Corrode", Kind.SHOCK: "Shock",
 	Kind.STUN: "Stun", Kind.SLOW: "Slow", Kind.TAUNT_BREAK: "Taunt Break",
-	Kind.HASTE: "Haste",
+	Kind.HASTE: "Haste", Kind.FORCED_TAUNT: "Taunt",
 	Kind.REGEN: "Regen", Kind.DAMAGE_REDUCTION: "Damage Reduction",
 	Kind.ATTACK_UP: "Attack Up", Kind.ATTACK_DOWN: "Attack Down",
 	Kind.CRIT_UP: "Crit Up", Kind.PIERCE: "Pierce",
@@ -78,9 +82,15 @@ func prevents_action() -> bool:
 
 
 ## True when this effect stops the unit's taunt from redirecting attacks (§3.3).
-## Note this is applied TO a tank by an attacker, so it is a debuff on the tank.
+## Note this is applied TO a taunting unit by an attacker, so it is a debuff on it.
 func suppresses_taunt() -> bool:
 	return kind == Kind.TAUNT_BREAK
+
+
+## True when this effect COMPELS single-target enemy attacks onto its holder (§3.3).
+## The one source of taunt in the game — being a TANK no longer taunts on its own.
+func forces_taunt() -> bool:
+	return kind == Kind.FORCED_TAUNT
 
 
 ## True when this effect lets its holder attack past an enemy tank (§3.3 Pierce).
@@ -125,6 +135,15 @@ static func stun(turns: int, source: StringName = &"") -> StatusEffect:
 
 static func taunt_break(turns: int, source: StringName = &"") -> StatusEffect:
 	var e := StatusEffect.new(Kind.TAUNT_BREAK, turns, true)
+	e.source_id = source
+	return e
+
+
+## A self-applied taunt: while it lasts, single-target enemy attacks are compelled onto
+## the holder. Beneficial to its owner's plan, so NOT a debuff — a friendly cleanse must
+## not strip a tank's own Provoke.
+static func taunt(turns: int, source: StringName = &"") -> StatusEffect:
+	var e := StatusEffect.new(Kind.FORCED_TAUNT, turns, false)
 	e.source_id = source
 	return e
 

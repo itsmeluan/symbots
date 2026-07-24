@@ -14,6 +14,11 @@ power_percent = 0
 scaling_stat = &"physical_power"
 effects = Array[Dictionary]([{
 "kind": 4,
+"status": 14,
+"turns": 3,
+"is_debuff": false
+}, {
+"kind": 4,
 "status": 21,
 "turns": 3,
 "is_debuff": false,

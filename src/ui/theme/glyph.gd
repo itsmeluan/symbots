@@ -69,6 +69,7 @@ const FOR_STATUS := {
 	StatusEffect.Kind.STUN: &"spiral",
 	StatusEffect.Kind.SLOW: &"clock",
 	StatusEffect.Kind.TAUNT_BREAK: &"hex",
+	StatusEffect.Kind.FORCED_TAUNT: &"reticle",
 	StatusEffect.Kind.HASTE: &"chevrons",
 	StatusEffect.Kind.REGEN: &"wrench",
 	StatusEffect.Kind.DAMAGE_REDUCTION: &"shield",

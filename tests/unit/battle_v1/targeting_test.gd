@@ -1,9 +1,9 @@
 ## Targeting + the Taunt rule (Core Design §3.3).
 ##
-## The taunt rule is the system that makes TANK a role, so its exceptions get the most
-## coverage here — a tank wall with no way through is a wall, and a tank wall that leaks
-## is not a tank. Each exception has its own test rather than being folded into one, so a
-## regression names which exception broke.
+## Taunt is opt-in: a unit compels attacks only while it carries a taunt status (Provoke),
+## never merely by being a TANK. Its exceptions get the most coverage here — a taunt wall
+## with no way through is a wall, and one that leaks is not a wall. Each exception has its
+## own test rather than being folded into one, so a regression names which exception broke.
 extends GutTest
 
 const BattleTargetingScript := preload("res://src/core/battle_v1/targeting.gd")
@@ -41,81 +41,97 @@ func _tank(n: String, slot: int = 0, hp: int = 200) -> BattleUnit:
 	return _unit(n, SpeciesDefScript.Role.TANK, BattleUnit.Side.ENEMY, hp, slot)
 
 
+## A unit actively pulling aggro (as if it had cast Provoke). Returns it for chaining.
+func _taunting(u: BattleUnit) -> BattleUnit:
+	u.add_status(StatusEffectScript.taunt(3))
+	return u
+
+
 # ---------------------------------------------------------------------------
 # The rule
 # ---------------------------------------------------------------------------
 
-func test_single_target_must_hit_the_tank_when_one_lives() -> void:
+func test_single_target_must_hit_the_taunter_when_one_lives() -> void:
+	var caster := _unit("me", SpeciesDefScript.Role.DPS, BattleUnit.Side.PLAYER)
+	var enemies := [_taunting(_tank("tank")), _dps("squishy", 1)]
+	var legal := BattleTargetingScript.legal_targets(
+		caster, _skill(SkillDefScript.TargetMode.SINGLE_ENEMY), [caster], enemies)
+	assert_eq(legal.size(), 1, "Only the taunter is targetable")
+	assert_eq(legal[0].unit_id, &"tank")
+
+
+func test_a_tank_that_is_not_taunting_does_not_compel_attacks() -> void:
+	# The core rule change: being a TANK no longer pulls aggro. Without an active taunt the
+	# whole line is open even though a tank is standing in it.
 	var caster := _unit("me", SpeciesDefScript.Role.DPS, BattleUnit.Side.PLAYER)
 	var enemies := [_tank("tank"), _dps("squishy", 1)]
 	var legal := BattleTargetingScript.legal_targets(
 		caster, _skill(SkillDefScript.TargetMode.SINGLE_ENEMY), [caster], enemies)
-	assert_eq(legal.size(), 1, "Only the tank is targetable")
-	assert_eq(legal[0].unit_id, &"tank")
+	assert_eq(legal.size(), 2, "A silent tank compels nothing — taunt must be cast")
 
 
-func test_whole_line_opens_when_no_tank_is_present() -> void:
+func test_whole_line_opens_when_no_one_taunts() -> void:
 	var caster := _unit("me", SpeciesDefScript.Role.DPS, BattleUnit.Side.PLAYER)
 	var enemies := [_dps("a"), _dps("b", 1)]
 	var legal := BattleTargetingScript.legal_targets(
 		caster, _skill(SkillDefScript.TargetMode.SINGLE_ENEMY), [caster], enemies)
-	assert_eq(legal.size(), 2, "With no tank, every living enemy is fair game")
+	assert_eq(legal.size(), 2, "With no taunter, every living enemy is fair game")
 
 
-func test_line_opens_once_the_last_tank_dies() -> void:
+func test_line_opens_once_the_last_taunter_dies() -> void:
 	var caster := _unit("me", SpeciesDefScript.Role.DPS, BattleUnit.Side.PLAYER)
-	var tank := _tank("tank")
+	var tank := _taunting(_tank("tank"))
 	var enemies := [tank, _dps("squishy", 1)]
 	tank.current_structure = 0
 	var legal := BattleTargetingScript.legal_targets(
 		caster, _skill(SkillDefScript.TargetMode.SINGLE_ENEMY), [caster], enemies)
-	assert_eq(legal.size(), 1, "A dead tank protects nothing")
+	assert_eq(legal.size(), 1, "A dead taunter protects nothing")
 	assert_eq(legal[0].unit_id, &"squishy")
 
 
-func test_multiple_tanks_are_all_choosable() -> void:
+func test_multiple_taunters_are_all_choosable() -> void:
 	var caster := _unit("me", SpeciesDefScript.Role.DPS, BattleUnit.Side.PLAYER)
-	var enemies := [_tank("t1"), _tank("t2", 1), _dps("squishy", 2)]
+	var enemies := [_taunting(_tank("t1")), _taunting(_tank("t2", 1)), _dps("squishy", 2)]
 	var legal := BattleTargetingScript.legal_targets(
 		caster, _skill(SkillDefScript.TargetMode.SINGLE_ENEMY), [caster], enemies)
-	assert_eq(legal.size(), 2, "The attacker picks freely among living tanks")
+	assert_eq(legal.size(), 2, "The attacker picks freely among living taunters")
 
 
 # ---------------------------------------------------------------------------
 # The four exceptions — one test each, so a break names itself
 # ---------------------------------------------------------------------------
 
-func test_exception_pierce_skill_reaches_past_the_tank() -> void:
+func test_exception_pierce_skill_reaches_past_the_taunter() -> void:
 	var caster := _unit("me", SpeciesDefScript.Role.DPS, BattleUnit.Side.PLAYER)
-	var enemies := [_tank("tank"), _dps("squishy", 1)]
+	var enemies := [_taunting(_tank("tank")), _dps("squishy", 1)]
 	var legal := BattleTargetingScript.legal_targets(
 		caster, _skill(SkillDefScript.TargetMode.SINGLE_ENEMY, true), [caster], enemies)
 	assert_eq(legal.size(), 2, "A skill flagged ignores_taunt sees the whole line")
 
 
-func test_exception_backline_caster_reaches_past_the_tank() -> void:
+func test_exception_backline_caster_reaches_past_the_taunter() -> void:
 	var caster := _unit("me", SpeciesDefScript.Role.DPS, BattleUnit.Side.PLAYER)
 	caster.add_status(StatusEffectScript.pierce(3))
-	var enemies := [_tank("tank"), _dps("squishy", 1)]
+	var enemies := [_taunting(_tank("tank")), _dps("squishy", 1)]
 	var legal := BattleTargetingScript.legal_targets(
 		caster, _skill(SkillDefScript.TargetMode.SINGLE_ENEMY), [caster], enemies)
 	assert_eq(legal.size(), 2, "PIERCE on the CASTER opens the line too, not just on the skill")
 
 
-func test_exception_taunt_break_opens_the_line_but_keeps_the_tank_targetable() -> void:
+func test_exception_taunt_break_opens_the_line_but_keeps_the_taunter_targetable() -> void:
 	var caster := _unit("me", SpeciesDefScript.Role.DPS, BattleUnit.Side.PLAYER)
-	var tank := _tank("tank")
+	var tank := _taunting(_tank("tank"))
 	tank.add_status(StatusEffectScript.taunt_break(2))
 	var enemies := [tank, _dps("squishy", 1)]
 	var legal := BattleTargetingScript.legal_targets(
 		caster, _skill(SkillDefScript.TargetMode.SINGLE_ENEMY), [caster], enemies)
-	assert_eq(legal.size(), 2, "A taunt-broken tank stops compelling attacks")
+	assert_eq(legal.size(), 2, "A taunt-broken taunter stops compelling attacks")
 	assert_true(legal.has(tank), "but is still a legal target — it is still a unit on the field")
 
 
 func test_exception_aoe_ignores_taunt_by_construction() -> void:
 	var caster := _unit("me", SpeciesDefScript.Role.DPS, BattleUnit.Side.PLAYER)
-	var enemies := [_tank("tank"), _dps("squishy", 1)]
+	var enemies := [_taunting(_tank("tank")), _dps("squishy", 1)]
 	var legal := BattleTargetingScript.legal_targets(
 		caster, _skill(SkillDefScript.TargetMode.ALL_ENEMIES), [caster], enemies)
 	assert_eq(legal.size(), 2,
@@ -144,6 +160,21 @@ func test_lowest_hp_ally_resolves_to_exactly_one() -> void:
 		healer, _skill(SkillDefScript.TargetMode.LOWEST_HP_ALLY), [healer, hurt], [])
 	assert_eq(legal.size(), 1, "The convenience mode resolves without a manual pick")
 	assert_eq(legal[0].unit_id, &"hurt")
+
+
+func test_lowest_hp_ally_picks_by_missing_health_not_absolute() -> void:
+	# The Patch bug: `small` has the lowest ABSOLUTE structure but is at FULL health, while
+	# `big` has more HP left yet is the one actually wounded. LOWEST_HP_ALLY must heal `big`.
+	var healer := _unit("healer", SpeciesDefScript.Role.HEALER, BattleUnit.Side.PLAYER, 100)
+	var small := _unit("small", SpeciesDefScript.Role.DPS, BattleUnit.Side.PLAYER, 60, 1)
+	small.current_structure = 60  # full — must NOT be chosen
+	var big := _unit("big", SpeciesDefScript.Role.TANK, BattleUnit.Side.PLAYER, 400, 2)
+	big.current_structure = 150   # missing 250
+	var legal := BattleTargetingScript.legal_targets(
+		healer, _skill(SkillDefScript.TargetMode.LOWEST_HP_ALLY), [healer, small, big], [])
+	assert_eq(legal.size(), 1)
+	assert_eq(legal[0].unit_id, &"big",
+		"Patch heals the MOST WOUNDED, never a full-health ally that merely has a small pool")
 
 
 func test_no_living_enemies_yields_no_targets() -> void:
